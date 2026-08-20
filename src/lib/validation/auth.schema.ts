@@ -12,9 +12,9 @@ export const SignupSchema = z
     email: z.string().min(1, "Email is required").email("Please enter a valid email address"),
     preferredCurrency: CurrencyCodeSchema.default("KES"),
     password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string().min(1, "Please confirm your password"),
+    confirmPassword: z.string().optional(),
   })
-  .refine((data) => data.password === data.confirmPassword, {
+  .refine((data) => !data.confirmPassword || data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
