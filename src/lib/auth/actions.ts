@@ -104,72 +104,84 @@ export async function loginAction(data: LoginInput): Promise<AuthActionResult> {
 }
 
 export async function signupAction(data: SignupInput): Promise<AuthActionResult> {
-  const parsed = SignupSchema.safeParse(data);
-  if (!parsed.success) {
-    return {
-      success: false,
-      message: "Please correct the errors in the form.",
-      errors: parsed.error.flatten().fieldErrors,
-    };
-  }
-
-  const { email, password, fullName, preferredCurrency } = parsed.data;
-  const supabase = await createClient();
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-
-  const { data: authData, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        full_name: fullName,
-        preferred_currency: preferredCurrency,
-      },
-      emailRedirectTo: `${appUrl}/auth/callback`,
-    },
-  });
-
-  if (error) {
-    let friendlyMessage = error.message || "Unable to create account. Please try again.";
-    if (error.message.toLowerCase().includes("already registered") || error.status === 422) {
-      friendlyMessage = "An account with this email address already exists.";
-    }
-    return {
-      success: false,
-      message: friendlyMessage,
-    };
-  }
-
-  // Ensure profile row exists in public.profiles
-  if (authData.user) {
-    await supabase.from("profiles").upsert({
-      id: authData.user.id,
-      full_name: fullName,
-      preferred_currency: preferredCurrency,
-      onboarding_completed: false,
-    } as any);
-  }
-
-  // If signUp created the user without an active session (e.g. email confirmation requirement), attempt instant sign in
-  if (authData.user && !authData.session) {
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (signInError && signInError.message.toLowerCase().includes("email not confirmed")) {
+  try {
+    const parsed = SignupSchema.safeParse(data);
+    if (!parsed.success) {
       return {
         success: false,
-        message: "Account created! Please check your email inbox to confirm your account before logging in.",
+        message: "Please check your form details.",
+        errors: parsed.error.flatten().fieldErrors,
       };
     }
-  }
 
-  return {
-    success: true,
-    redirectTo: "/onboarding",
-  };
+    const { email, password, fullName, preferredCurrency } = parsed.data;
+    const supabase = await createClient();
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+    const { data: authData, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+          preferred_currency: preferredCurrency,
+        },
+        emailRedirectTo: `${appUrl}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      let friendlyMessage = error.message || "Unable to create account. Please try again.";
+      if (error.message.toLowerCase().includes("already registered") || error.status === 422) {
+        friendlyMessage = "An account with this email address already exists.";
+      }
+      return {
+        success: false,
+        message: friendlyMessage,
+      };
+    }
+
+    // Ensure profile row exists in public.profiles
+    if (authData.user) {
+      try {
+        await supabase.from("profiles").upsert({
+          id: authData.user.id,
+          full_name: fullName,
+          preferred_currency: preferredCurrency,
+          onboarding_completed: false,
+        } as any);
+      } catch (profileErr) {
+        console.error("Profile upsert error:", profileErr);
+      }
+    }
+
+    // If signUp created the user without an active session, attempt instant sign in
+    if (authData.user && !authData.session) {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError && signInError.message.toLowerCase().includes("email not confirmed")) {
+        return {
+          success: false,
+          message: "Account created! Please check your email inbox to confirm your account before logging in.",
+        };
+      }
+    }
+
+    return {
+      success: true,
+      redirectTo: "/onboarding",
+    };
+  } catch (err: any) {
+    console.error("signupAction exception:", err);
+    return {
+      success: false,
+      message: err?.message || "An error occurred while creating your account. Please try again.",
+    };
+  }
 }
 
 export async function forgotPasswordAction(data: ForgotPasswordInput): Promise<AuthActionResult> {

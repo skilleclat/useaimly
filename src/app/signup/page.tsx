@@ -48,9 +48,15 @@ export default function SignupPage() {
     setServerError(null);
     setSuccessMessage(null);
 
-    const nameVal = fullName.trim();
-    const emailVal = email.trim();
-    const passVal = password.trim();
+    const formData = new FormData(e.currentTarget);
+    const formFullName = (formData.get("fullName") as string) || fullName;
+    const formEmail = (formData.get("email") as string) || email;
+    const formCurrency = ((formData.get("preferredCurrency") as string) || preferredCurrency) as CurrencyCode;
+    const formPassword = (formData.get("password") as string) || password;
+
+    const nameVal = (formFullName || "").trim();
+    const emailVal = (formEmail || "").trim();
+    const passVal = (formPassword || "").trim();
 
     if (!nameVal || nameVal.length < 2) {
       setServerError("Please enter your full name (at least 2 characters).");
@@ -70,7 +76,7 @@ export default function SignupPage() {
         const result = await signupAction({
           fullName: nameVal,
           email: emailVal,
-          preferredCurrency,
+          preferredCurrency: formCurrency || preferredCurrency,
           password: passVal,
         });
 
