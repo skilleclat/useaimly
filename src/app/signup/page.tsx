@@ -2,13 +2,11 @@
 
 import React, { useState, useTransition } from "react";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { SignupSchema, SignupInput } from "@/lib/validation/auth.schema";
 import { signupAction, signInWithGoogleAction } from "@/lib/auth/actions";
 import { UseaimlyLogo } from "@/components/design-system/UseaimlyLogo";
 import { useRouter } from "next/navigation";
-import { User, Mail, Lock, Globe, ArrowRight, Eye, EyeOff, AlertCircle, Sparkles, ShieldCheck, RefreshCw } from "lucide-react";
+import { User, Mail, Globe, ArrowRight, Eye, EyeOff, AlertCircle, ShieldCheck, RefreshCw } from "lucide-react";
+import { CurrencyCode } from "@/lib/types/finance";
 
 function GoogleIcon({ className = "w-5 h-5" }: { className?: string }) {
   return (
@@ -36,30 +34,46 @@ function GoogleIcon({ className = "w-5 h-5" }: { className?: string }) {
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [isGooglePending, setIsGooglePending] = useState(false);
-  const router = useRouter();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<SignupInput>({
-    resolver: zodResolver(SignupSchema),
-    defaultValues: {
-      fullName: "",
-      email: "",
-      preferredCurrency: "KES",
-      password: "",
-      confirmPassword: "",
-    },
-  });
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [preferredCurrency, setPreferredCurrency] = useState<CurrencyCode>("KES");
+  const [password, setPassword] = useState("");
 
-  const onSubmit = (data: SignupInput) => {
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     setServerError(null);
+    setSuccessMessage(null);
+
+    const nameVal = fullName.trim();
+    const emailVal = email.trim();
+    const passVal = password.trim();
+
+    if (!nameVal || nameVal.length < 2) {
+      setServerError("Please enter your full name (at least 2 characters).");
+      return;
+    }
+    if (!emailVal || !emailVal.includes("@")) {
+      setServerError("Please enter a valid email address.");
+      return;
+    }
+    if (!passVal || passVal.length < 6) {
+      setServerError("Password must be at least 6 characters.");
+      return;
+    }
+
     startTransition(async () => {
       try {
-        const result = await signupAction(data);
+        const result = await signupAction({
+          fullName: nameVal,
+          email: emailVal,
+          preferredCurrency,
+          password: passVal,
+        });
+
         if (!result.success) {
           setServerError(result.message || "Failed to create account.");
         } else if (result.redirectTo) {
@@ -71,15 +85,9 @@ export default function SignupPage() {
     });
   };
 
-  const onInvalid = (formErrors: any) => {
-    const firstError = Object.values(formErrors)[0] as any;
-    if (firstError?.message) {
-      setServerError(firstError.message);
-    }
-  };
-
   const handleGoogleSignIn = async () => {
     setServerError(null);
+    setSuccessMessage(null);
     setIsGooglePending(true);
     try {
       const result = await signInWithGoogleAction();
@@ -120,6 +128,13 @@ export default function SignupPage() {
             </div>
           )}
 
+          {successMessage && (
+            <div className="flex items-center gap-2 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-3.5 text-xs text-emerald-500 font-medium">
+              <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-500" />
+              <span>{successMessage}</span>
+            </div>
+          )}
+
           {/* 1. Google / Gmail Sign In Button */}
           <button
             type="button"
@@ -144,23 +159,23 @@ export default function SignupPage() {
           </div>
 
           {/* 2. Email & Password Form */}
-          <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-4">
+          <form onSubmit={handleFormSubmit} className="space-y-4">
             {/* Full Name */}
             <div className="space-y-1.5">
               <label className="text-xs font-mono font-bold text-foreground">Full Name</label>
               <div className="relative">
                 <input
-                  {...register("fullName")}
+                  name="fullName"
                   type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                   placeholder="Alex Mercer"
                   autoComplete="name"
+                  required
                   className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none transition-colors"
                 />
                 <User className="absolute right-3.5 top-3.5 w-4 h-4 text-muted-foreground pointer-events-none" />
               </div>
-              {errors.fullName && (
-                <p className="text-[11px] font-mono text-destructive">{errors.fullName.message}</p>
-              )}
             </div>
 
             {/* Email Address */}
@@ -168,17 +183,17 @@ export default function SignupPage() {
               <label className="text-xs font-mono font-bold text-foreground">Email Address</label>
               <div className="relative">
                 <input
-                  {...register("email")}
+                  name="email"
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
                   autoComplete="email"
+                  required
                   className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none transition-colors"
                 />
                 <Mail className="absolute right-3.5 top-3.5 w-4 h-4 text-muted-foreground pointer-events-none" />
               </div>
-              {errors.email && (
-                <p className="text-[11px] font-mono text-destructive">{errors.email.message}</p>
-              )}
             </div>
 
             {/* Preferred Currency */}
@@ -186,7 +201,9 @@ export default function SignupPage() {
               <label className="text-xs font-mono font-bold text-foreground">Preferred Currency</label>
               <div className="relative">
                 <select
-                  {...register("preferredCurrency")}
+                  name="preferredCurrency"
+                  value={preferredCurrency}
+                  onChange={(e) => setPreferredCurrency(e.target.value as CurrencyCode)}
                   className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-xs text-foreground focus:border-primary focus:outline-none appearance-none cursor-pointer transition-colors"
                 >
                   <option value="KES">KES — Kenyan Shilling (KES)</option>
@@ -203,10 +220,14 @@ export default function SignupPage() {
               <label className="text-xs font-mono font-bold text-foreground">Password</label>
               <div className="relative">
                 <input
-                  {...register("password")}
+                  name="password"
                   type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
                   autoComplete="new-password"
+                  required
+                  minLength={6}
                   className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none transition-colors"
                 />
                 <button
@@ -217,9 +238,6 @@ export default function SignupPage() {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              {errors.password && (
-                <p className="text-[11px] font-mono text-destructive">{errors.password.message}</p>
-              )}
             </div>
 
             {/* Submit Button */}
@@ -227,10 +245,19 @@ export default function SignupPage() {
               <button
                 type="submit"
                 disabled={isPending || isGooglePending}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white font-bold text-xs sm:text-sm px-6 py-3.5 shadow-lg shadow-orange-500/25 hover:opacity-95 hover:scale-[1.01] transition-all disabled:opacity-50"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white font-bold text-xs sm:text-sm px-6 py-3.5 shadow-lg shadow-orange-500/25 hover:opacity-95 hover:scale-[1.01] transition-all disabled:opacity-50 cursor-pointer"
               >
-                <span>{isPending ? "Setting up..." : "Create Account"}</span>
-                <ArrowRight className="w-4 h-4" />
+                {isPending ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Creating Account...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Create Account</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </div>
           </form>
