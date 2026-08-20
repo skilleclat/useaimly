@@ -3,6 +3,7 @@ import { formatMonthYear } from "@/lib/utils/date";
 import { simulateDecision as runDeterministicSimulation, BaselineFinancialProfile } from "@/lib/finance";
 import { INITIAL_DESTINATIONS } from "@/lib/destinations/destinations-data";
 import { CurrencyCode } from "@/lib/types/finance";
+import { TrajectoryState } from "@/components/design-system/FinancialStatus";
 
 export interface ConversationalContextSummary {
   profile: {
@@ -23,7 +24,7 @@ export interface ConversationalContextSummary {
     targetDate: string;
     projectedArrivalDate: string;
     monthlyContribution: number;
-    status: string;
+    status: TrajectoryState;
     progressPercentage: number;
   };
   otherActiveDestinations: {
@@ -31,7 +32,7 @@ export interface ConversationalContextSummary {
     targetAmount: number;
     currentAmount: number;
     monthlyContribution: number;
-    status: string;
+    status: TrajectoryState;
   }[];
   debtSummary: {
     totalBalance: number;
