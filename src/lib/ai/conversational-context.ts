@@ -72,7 +72,10 @@ export function getFinancialSummary(currency: CurrencyCode = "KES") {
   };
 }
 
-export function getDestinationStatus() {
+export function getDestinationStatus(): {
+  primary: ConversationalContextSummary["primaryDestination"];
+  others: ConversationalContextSummary["otherActiveDestinations"];
+} {
   const primary = INITIAL_DESTINATIONS[0];
   const others = INITIAL_DESTINATIONS.slice(1);
 
@@ -84,7 +87,7 @@ export function getDestinationStatus() {
       targetDate: primary.targetDate,
       projectedArrivalDate: primary.projectedCompletionDate,
       monthlyContribution: primary.monthlyContribution,
-      status: primary.status,
+      status: primary.status as TrajectoryState,
       progressPercentage: Math.round((primary.currentAmount / primary.targetAmount) * 100),
     },
     others: others.map((o) => ({
@@ -92,7 +95,7 @@ export function getDestinationStatus() {
       targetAmount: o.targetAmount,
       currentAmount: o.currentAmount,
       monthlyContribution: o.monthlyContribution,
-      status: o.status,
+      status: o.status as TrajectoryState,
     })),
   };
 }
@@ -179,6 +182,7 @@ export function buildConversationalContext(
     destStatus.primary = {
       ...destStatus.primary,
       ...overridePrimaryDest,
+      status: (overridePrimaryDest.status ?? destStatus.primary.status) as TrajectoryState,
     };
   }
   const debts = getDebtSummary();
