@@ -1,5 +1,5 @@
-﻿-- ==============================================================================
--- Useaimly Complete Supabase PostgreSQL Schema
+-- ==============================================================================
+-- Useaimly Complete Supabase PostgreSQL Schema (Idempotent / Safe Re-run)
 -- "See tomorrow before deciding today"
 -- Multi-User Goal-Aware Decision Intelligence Platform
 -- ==============================================================================
@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS set_profiles_updated_at ON public.profiles;
 CREATE TRIGGER set_profiles_updated_at
   BEFORE UPDATE ON public.profiles
   FOR EACH ROW
@@ -54,7 +55,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE OR REPLACE TRIGGER on_auth_user_created
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
@@ -77,6 +79,7 @@ CREATE TABLE IF NOT EXISTS public.financial_goals (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS set_financial_goals_updated_at ON public.financial_goals;
 CREATE TRIGGER set_financial_goals_updated_at
   BEFORE UPDATE ON public.financial_goals
   FOR EACH ROW
@@ -98,6 +101,7 @@ CREATE TABLE IF NOT EXISTS public.income_sources (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS set_income_sources_updated_at ON public.income_sources;
 CREATE TRIGGER set_income_sources_updated_at
   BEFORE UPDATE ON public.income_sources
   FOR EACH ROW
@@ -108,7 +112,7 @@ CREATE TRIGGER set_income_sources_updated_at
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.expense_categories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE, -- NULL if system default
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   type TEXT NOT NULL DEFAULT 'FIXED' CHECK (type IN ('FIXED', 'VARIABLE', 'DISCRETIONARY', 'DEBT_SERVICE')),
   icon TEXT,
@@ -132,6 +136,7 @@ CREATE TABLE IF NOT EXISTS public.expenses (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS set_expenses_updated_at ON public.expenses;
 CREATE TRIGGER set_expenses_updated_at
   BEFORE UPDATE ON public.expenses
   FOR EACH ROW
@@ -150,6 +155,7 @@ CREATE TABLE IF NOT EXISTS public.savings_accounts (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS set_savings_accounts_updated_at ON public.savings_accounts;
 CREATE TRIGGER set_savings_accounts_updated_at
   BEFORE UPDATE ON public.savings_accounts
   FOR EACH ROW
@@ -171,6 +177,7 @@ CREATE TABLE IF NOT EXISTS public.debts (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS set_debts_updated_at ON public.debts;
 CREATE TRIGGER set_debts_updated_at
   BEFORE UPDATE ON public.debts
   FOR EACH ROW
@@ -192,6 +199,7 @@ CREATE TABLE IF NOT EXISTS public.financial_commitments (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS set_financial_commitments_updated_at ON public.financial_commitments;
 CREATE TRIGGER set_financial_commitments_updated_at
   BEFORE UPDATE ON public.financial_commitments
   FOR EACH ROW
@@ -223,6 +231,7 @@ CREATE TABLE IF NOT EXISTS public.financial_decisions (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS set_financial_decisions_updated_at ON public.financial_decisions;
 CREATE TRIGGER set_financial_decisions_updated_at
   BEFORE UPDATE ON public.financial_decisions
   FOR EACH ROW
@@ -280,6 +289,7 @@ CREATE TABLE IF NOT EXISTS public.conversations (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS set_conversations_updated_at ON public.conversations;
 CREATE TRIGGER set_conversations_updated_at
   BEFORE UPDATE ON public.conversations
   FOR EACH ROW
@@ -328,6 +338,7 @@ CREATE TABLE IF NOT EXISTS public.saved_scenarios (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS set_saved_scenarios_updated_at ON public.saved_scenarios;
 CREATE TRIGGER set_saved_scenarios_updated_at
   BEFORE UPDATE ON public.saved_scenarios
   FOR EACH ROW
@@ -353,77 +364,127 @@ ALTER TABLE public.insights ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.saved_scenarios ENABLE ROW LEVEL SECURITY;
 
 -- Profiles Policies
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can delete own profile" ON public.profiles;
 CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Users can insert own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 CREATE POLICY "Users can delete own profile" ON public.profiles FOR DELETE USING (auth.uid() = id);
 
 -- Financial Goals Policies
+DROP POLICY IF EXISTS "Users can view own goals" ON public.financial_goals;
+DROP POLICY IF EXISTS "Users can create own goals" ON public.financial_goals;
+DROP POLICY IF EXISTS "Users can update own goals" ON public.financial_goals;
+DROP POLICY IF EXISTS "Users can delete own goals" ON public.financial_goals;
 CREATE POLICY "Users can view own goals" ON public.financial_goals FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can create own goals" ON public.financial_goals FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own goals" ON public.financial_goals FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own goals" ON public.financial_goals FOR DELETE USING (auth.uid() = user_id);
 
 -- Income Sources Policies
+DROP POLICY IF EXISTS "Users can view own income sources" ON public.income_sources;
+DROP POLICY IF EXISTS "Users can insert own income sources" ON public.income_sources;
+DROP POLICY IF EXISTS "Users can update own income sources" ON public.income_sources;
+DROP POLICY IF EXISTS "Users can delete own income sources" ON public.income_sources;
 CREATE POLICY "Users can view own income sources" ON public.income_sources FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own income sources" ON public.income_sources FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own income sources" ON public.income_sources FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own income sources" ON public.income_sources FOR DELETE USING (auth.uid() = user_id);
 
 -- Expense Categories Policies
+DROP POLICY IF EXISTS "Users can view system and own categories" ON public.expense_categories;
+DROP POLICY IF EXISTS "Users can insert own custom categories" ON public.expense_categories;
+DROP POLICY IF EXISTS "Users can update own custom categories" ON public.expense_categories;
+DROP POLICY IF EXISTS "Users can delete own custom categories" ON public.expense_categories;
 CREATE POLICY "Users can view system and own categories" ON public.expense_categories FOR SELECT USING (is_default = TRUE OR user_id IS NULL OR auth.uid() = user_id);
 CREATE POLICY "Users can insert own custom categories" ON public.expense_categories FOR INSERT WITH CHECK (auth.uid() = user_id AND is_default = FALSE);
 CREATE POLICY "Users can update own custom categories" ON public.expense_categories FOR UPDATE USING (auth.uid() = user_id AND is_default = FALSE) WITH CHECK (auth.uid() = user_id AND is_default = FALSE);
 CREATE POLICY "Users can delete own custom categories" ON public.expense_categories FOR DELETE USING (auth.uid() = user_id AND is_default = FALSE);
 
 -- Expenses Policies
+DROP POLICY IF EXISTS "Users can view own expenses" ON public.expenses;
+DROP POLICY IF EXISTS "Users can insert own expenses" ON public.expenses;
+DROP POLICY IF EXISTS "Users can update own expenses" ON public.expenses;
+DROP POLICY IF EXISTS "Users can delete own expenses" ON public.expenses;
 CREATE POLICY "Users can view own expenses" ON public.expenses FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own expenses" ON public.expenses FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own expenses" ON public.expenses FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own expenses" ON public.expenses FOR DELETE USING (auth.uid() = user_id);
 
 -- Savings Accounts Policies
+DROP POLICY IF EXISTS "Users can view own savings accounts" ON public.savings_accounts;
+DROP POLICY IF EXISTS "Users can insert own savings accounts" ON public.savings_accounts;
+DROP POLICY IF EXISTS "Users can update own savings accounts" ON public.savings_accounts;
+DROP POLICY IF EXISTS "Users can delete own savings accounts" ON public.savings_accounts;
 CREATE POLICY "Users can view own savings accounts" ON public.savings_accounts FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own savings accounts" ON public.savings_accounts FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own savings accounts" ON public.savings_accounts FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own savings accounts" ON public.savings_accounts FOR DELETE USING (auth.uid() = user_id);
 
 -- Debts Policies
+DROP POLICY IF EXISTS "Users can view own debts" ON public.debts;
+DROP POLICY IF EXISTS "Users can insert own debts" ON public.debts;
+DROP POLICY IF EXISTS "Users can update own debts" ON public.debts;
+DROP POLICY IF EXISTS "Users can delete own debts" ON public.debts;
 CREATE POLICY "Users can view own debts" ON public.debts FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own debts" ON public.debts FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own debts" ON public.debts FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own debts" ON public.debts FOR DELETE USING (auth.uid() = user_id);
 
 -- Financial Commitments Policies
+DROP POLICY IF EXISTS "Users can view own commitments" ON public.financial_commitments;
+DROP POLICY IF EXISTS "Users can insert own commitments" ON public.financial_commitments;
+DROP POLICY IF EXISTS "Users can update own commitments" ON public.financial_commitments;
+DROP POLICY IF EXISTS "Users can delete own commitments" ON public.financial_commitments;
 CREATE POLICY "Users can view own commitments" ON public.financial_commitments FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own commitments" ON public.financial_commitments FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own commitments" ON public.financial_commitments FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own commitments" ON public.financial_commitments FOR DELETE USING (auth.uid() = user_id);
 
 -- Financial Decisions Policies
+DROP POLICY IF EXISTS "Users can view own decisions" ON public.financial_decisions;
+DROP POLICY IF EXISTS "Users can insert own decisions" ON public.financial_decisions;
+DROP POLICY IF EXISTS "Users can update own decisions" ON public.financial_decisions;
+DROP POLICY IF EXISTS "Users can delete own decisions" ON public.financial_decisions;
 CREATE POLICY "Users can view own decisions" ON public.financial_decisions FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own decisions" ON public.financial_decisions FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own decisions" ON public.financial_decisions FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own decisions" ON public.financial_decisions FOR DELETE USING (auth.uid() = user_id);
 
 -- Decision Simulations Policies
+DROP POLICY IF EXISTS "Users can view own simulations" ON public.decision_simulations;
+DROP POLICY IF EXISTS "Users can insert own simulations" ON public.decision_simulations;
+DROP POLICY IF EXISTS "Users can update own simulations" ON public.decision_simulations;
+DROP POLICY IF EXISTS "Users can delete own simulations" ON public.decision_simulations;
 CREATE POLICY "Users can view own simulations" ON public.decision_simulations FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own simulations" ON public.decision_simulations FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own simulations" ON public.decision_simulations FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own simulations" ON public.decision_simulations FOR DELETE USING (auth.uid() = user_id);
 
 -- Financial Snapshots Policies
+DROP POLICY IF EXISTS "Users can view own snapshots" ON public.financial_snapshots;
+DROP POLICY IF EXISTS "Users can insert own snapshots" ON public.financial_snapshots;
+DROP POLICY IF EXISTS "Users can delete own snapshots" ON public.financial_snapshots;
 CREATE POLICY "Users can view own snapshots" ON public.financial_snapshots FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own snapshots" ON public.financial_snapshots FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own snapshots" ON public.financial_snapshots FOR DELETE USING (auth.uid() = user_id);
 
 -- Conversations Policies
+DROP POLICY IF EXISTS "Users can view own conversations" ON public.conversations;
+DROP POLICY IF EXISTS "Users can insert own conversations" ON public.conversations;
+DROP POLICY IF EXISTS "Users can update own conversations" ON public.conversations;
+DROP POLICY IF EXISTS "Users can delete own conversations" ON public.conversations;
 CREATE POLICY "Users can view own conversations" ON public.conversations FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own conversations" ON public.conversations FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own conversations" ON public.conversations FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own conversations" ON public.conversations FOR DELETE USING (auth.uid() = user_id);
 
 -- Messages Policies (Scoped to conversation owner)
+DROP POLICY IF EXISTS "Users can view messages in own conversations" ON public.messages;
+DROP POLICY IF EXISTS "Users can insert messages into own conversations" ON public.messages;
+DROP POLICY IF EXISTS "Users can delete messages in own conversations" ON public.messages;
 CREATE POLICY "Users can view messages in own conversations" ON public.messages FOR SELECT
   USING (EXISTS (SELECT 1 FROM public.conversations c WHERE c.id = messages.conversation_id AND c.user_id = auth.uid()));
 CREATE POLICY "Users can insert messages into own conversations" ON public.messages FOR INSERT
@@ -432,12 +493,20 @@ CREATE POLICY "Users can delete messages in own conversations" ON public.message
   USING (EXISTS (SELECT 1 FROM public.conversations c WHERE c.id = messages.conversation_id AND c.user_id = auth.uid()));
 
 -- Insights Policies
+DROP POLICY IF EXISTS "Users can view own insights" ON public.insights;
+DROP POLICY IF EXISTS "Users can insert own insights" ON public.insights;
+DROP POLICY IF EXISTS "Users can update own insights" ON public.insights;
+DROP POLICY IF EXISTS "Users can delete own insights" ON public.insights;
 CREATE POLICY "Users can view own insights" ON public.insights FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own insights" ON public.insights FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own insights" ON public.insights FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own insights" ON public.insights FOR DELETE USING (auth.uid() = user_id);
 
 -- Saved Scenarios Policies
+DROP POLICY IF EXISTS "Users can view own saved scenarios" ON public.saved_scenarios;
+DROP POLICY IF EXISTS "Users can insert own saved scenarios" ON public.saved_scenarios;
+DROP POLICY IF EXISTS "Users can update own saved scenarios" ON public.saved_scenarios;
+DROP POLICY IF EXISTS "Users can delete own saved scenarios" ON public.saved_scenarios;
 CREATE POLICY "Users can view own saved scenarios" ON public.saved_scenarios FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own saved scenarios" ON public.saved_scenarios FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own saved scenarios" ON public.saved_scenarios FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
