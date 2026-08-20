@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { defaultExplanationEngine } from "@/lib/ai/explanation-engine";
 import { DecisionExplanationPayload } from "@/lib/types/ai";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
     const payload: DecisionExplanationPayload = await req.json();
