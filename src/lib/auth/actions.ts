@@ -151,6 +151,21 @@ export async function signupAction(data: SignupInput): Promise<AuthActionResult>
     } as any);
   }
 
+  // If signUp created the user without an active session (e.g. email confirmation requirement), attempt instant sign in
+  if (authData.user && !authData.session) {
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError && signInError.message.toLowerCase().includes("email not confirmed")) {
+      return {
+        success: false,
+        message: "Account created! Please check your email inbox to confirm your account before logging in.",
+      };
+    }
+  }
+
   return {
     success: true,
     redirectTo: "/onboarding",
