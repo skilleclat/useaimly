@@ -58,14 +58,24 @@ export default function SignupPage() {
   const onSubmit = (data: SignupInput) => {
     setServerError(null);
     startTransition(async () => {
-      const result = await signupAction(data);
-      if (!result.success) {
-        setServerError(result.message || "Failed to create account.");
-      } else if (result.redirectTo) {
-        router.push(result.redirectTo);
-        router.refresh();
+      try {
+        const result = await signupAction(data);
+        if (!result.success) {
+          setServerError(result.message || "Failed to create account.");
+        } else if (result.redirectTo) {
+          window.location.href = result.redirectTo;
+        }
+      } catch (err: any) {
+        setServerError(err?.message || "An unexpected error occurred during signup.");
       }
     });
+  };
+
+  const onInvalid = (formErrors: any) => {
+    const firstError = Object.values(formErrors)[0] as any;
+    if (firstError?.message) {
+      setServerError(firstError.message);
+    }
   };
 
   const handleGoogleSignIn = async () => {
@@ -134,7 +144,7 @@ export default function SignupPage() {
           </div>
 
           {/* 2. Email & Password Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-4">
             {/* Full Name */}
             <div className="space-y-1.5">
               <label className="text-xs font-mono font-bold text-foreground">Full Name</label>

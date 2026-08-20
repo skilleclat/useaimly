@@ -131,7 +131,7 @@ export async function signupAction(data: SignupInput): Promise<AuthActionResult>
   });
 
   if (error) {
-    let friendlyMessage = "Unable to create account. Please try again.";
+    let friendlyMessage = error.message || "Unable to create account. Please try again.";
     if (error.message.toLowerCase().includes("already registered") || error.status === 422) {
       friendlyMessage = "An account with this email address already exists.";
     }
