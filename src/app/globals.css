@@ -1,0 +1,210 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* LIGHT MODE: Warm linen ivory canvas, deep ink typography, crisp white rounded containers, sunset coral primary */
+  :root {
+    --background: 30 20% 98%;           /* Warm Linen #FAF9F6 */
+    --foreground: 20 20% 10%;           /* Deep Ink Espresso #1A1615 */
+
+    --card: 0 0% 100%;                  /* Crisp White #FFFFFF */
+    --card-foreground: 20 20% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 20% 10%;
+
+    --primary: 14 100% 57%;             /* Vibrant Sunset Coral #FF5533 */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 30 14% 94%;            /* Soft Warm Alabaster #F3EFEA */
+    --secondary-foreground: 20 20% 15%;
+
+    --muted: 30 12% 92%;                /* #EBE7E1 */
+    --muted-foreground: 20 10% 46%;    /* #6E6864 */
+
+    --accent: 14 100% 57%;              /* Sunset Coral #FF5533 */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 14% 89%;               /* Subtle Sandstone #E2DDD6 */
+    --input: 30 14% 89%;
+    --ring: 14 100% 57%;
+
+    --radius: 1.25rem;
+
+    /* Semantic Trajectory Tokens (Light) */
+    --trajectory-on-track: 152 68% 34%;
+    --trajectory-on-track-foreground: 152 80% 12%;
+    --trajectory-on-track-muted: 152 45% 94%;
+    --trajectory-on-track-border: 152 45% 80%;
+
+    --trajectory-at-risk: 37 92% 44%;
+    --trajectory-at-risk-foreground: 37 90% 16%;
+    --trajectory-at-risk-muted: 37 60% 94%;
+    --trajectory-at-risk-border: 37 55% 78%;
+
+    --trajectory-off-track: 14 90% 50%;
+    --trajectory-off-track-foreground: 14 70% 16%;
+    --trajectory-off-track-muted: 14 50% 95%;
+    --trajectory-off-track-border: 14 45% 80%;
+
+    --trajectory-ahead: 182 70% 36%;
+    --trajectory-ahead-foreground: 182 80% 12%;
+    --trajectory-ahead-muted: 182 45% 94%;
+    --trajectory-ahead-border: 182 45% 78%;
+
+    /* Financial Semantics (Light) */
+    --finance-income: 152 68% 34%;
+    --finance-income-muted: 152 40% 94%;
+    --finance-expense: 14 90% 50%;
+    --finance-expense-muted: 14 45% 95%;
+    --finance-savings: 182 70% 36%;
+    --finance-savings-muted: 182 40% 94%;
+    --finance-debt: 350 70% 50%;
+    --finance-debt-muted: 350 45% 95%;
+    --finance-goal: 14 100% 57%;
+    --finance-goal-muted: 14 40% 95%;
+    --finance-projection: 260 55% 50%;
+    --finance-projection-muted: 260 35% 95%;
+  }
+
+  /* DARK MODE: Deep moody espresso background, crisp dark espresso cards (#171412), vibrant coral highlights */
+  .dark {
+    --background: 20 18% 5%;            /* Deep Moody Espresso #0D0B0A */
+    --foreground: 30 15% 96%;           /* Warm Bone White #F7F5F2 */
+
+    --card: 20 14% 8%;                  /* Dark Espresso Card #171412 */
+    --card-foreground: 30 15% 96%;
+
+    --popover: 20 14% 8%;
+    --popover-foreground: 30 15% 96%;
+
+    --primary: 14 100% 58%;             /* Vibrant Sunset Coral #FF5938 */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 20 12% 14%;            /* #25201D */
+    --secondary-foreground: 30 15% 96%;
+
+    --muted: 20 10% 16%;                /* #2A2522 */
+    --muted-foreground: 30 10% 64%;    /* #A8A29D */
+
+    --accent: 14 100% 58%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 52%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 20 10% 18%;               /* #312A26 */
+    --input: 20 10% 18%;
+    --ring: 14 100% 58%;
+
+    /* Semantic Trajectory Tokens (Dark) */
+    --trajectory-on-track: 152 68% 46%;
+    --trajectory-on-track-foreground: 152 90% 96%;
+    --trajectory-on-track-muted: 152 50% 12%;
+    --trajectory-on-track-border: 152 45% 24%;
+
+    --trajectory-at-risk: 37 92% 56%;
+    --trajectory-at-risk-foreground: 37 90% 96%;
+    --trajectory-at-risk-muted: 37 50% 14%;
+    --trajectory-at-risk-border: 37 45% 28%;
+
+    --trajectory-off-track: 14 90% 60%;
+    --trajectory-off-track-foreground: 14 90% 96%;
+    --trajectory-off-track-muted: 14 50% 14%;
+    --trajectory-off-track-border: 14 45% 28%;
+
+    --trajectory-ahead: 182 70% 50%;
+    --trajectory-ahead-foreground: 182 90% 96%;
+    --trajectory-ahead-muted: 182 50% 12%;
+    --trajectory-ahead-border: 182 45% 24%;
+
+    /* Financial Semantics (Dark) */
+    --finance-income: 152 68% 46%;
+    --finance-income-muted: 152 50% 12%;
+    --finance-expense: 14 90% 60%;
+    --finance-expense-muted: 14 50% 14%;
+    --finance-savings: 182 70% 50%;
+    --finance-savings-muted: 182 50% 12%;
+    --finance-debt: 350 75% 62%;
+    --finance-debt-muted: 350 50% 14%;
+    --finance-goal: 14 100% 58%;
+    --finance-goal-muted: 14 50% 14%;
+    --finance-projection: 260 65% 64%;
+    --finance-projection-muted: 260 45% 15%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-foreground;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* Technical Precision Grid Background */
+.bg-grid-pattern {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(120, 120, 120, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(120, 120, 120, 0.05) 1px, transparent 1px);
+}
+
+.dark .bg-grid-pattern {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+
+/* Subtle Technical Dotted Leader */
+.dotted-leader {
+  flex: 1 1 auto;
+  border-bottom: 1px dotted currentColor;
+  opacity: 0.25;
+  margin: 0 0.5rem;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-pulseGlow {
+  animation: pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Custom Hide Scrollbar Utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

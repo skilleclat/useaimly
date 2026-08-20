@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Outer Circular Track with bottom-right aperture -->
+  <path
+    d="M 86 65 A 39 39 0 1 1 89 50"
+    stroke="#FF4D26"
+    stroke-width="8.5"
+    stroke-linecap="round"
+  />
+  <!-- Inner Directional Chevron Arrow -->
+  <path
+    d="M 50 24 L 75 66 L 50 55 L 25 66 Z"
+    fill="#FF4D26"
+  />
+</svg>

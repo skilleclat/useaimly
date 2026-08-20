@@ -1,0 +1,181 @@
+"use client";
+
+import React, { useState } from "react";
+import { useAuth } from "@/lib/auth/auth-context";
+import { CurrencyCode } from "@/lib/types/finance";
+import {
+  Settings as SettingsIcon,
+  User,
+  Globe,
+  Bell,
+  Shield,
+  Download,
+  Check,
+  CheckCircle2,
+  Lock,
+  Compass,
+  ArrowRight,
+} from "lucide-react";
+
+export default function SettingsPage() {
+  const { user, profile } = useAuth();
+  const [preferredCurrency, setPreferredCurrency] = useState<CurrencyCode>(
+    (profile?.preferred_currency || "KES") as CurrencyCode
+  );
+  const [fullName, setFullName] = useState(profile?.full_name || "Finance Strategist");
+  const [thresholdAmount, setThresholdAmount] = useState<number>(15000);
+  const [notifyShortfall, setNotifyShortfall] = useState(true);
+  const [notifyCommitments, setNotifyCommitments] = useState(true);
+  const [isSaved, setIsSaved] = useState(false);
+
+  const handleSaveSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 3500);
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10 animate-fadeIn">
+      {/* Header */}
+      <div className="space-y-1.5 border-b border-border/70 pb-6">
+        <div className="flex items-center gap-2 text-xs font-mono font-bold text-primary">
+          <Compass className="w-4 h-4" />
+          <span>System Preferences</span>
+        </div>
+        <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
+          Settings
+        </h1>
+        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+          Manage your account profile, preferred currency, proactive notification rules, and security preferences.
+        </p>
+      </div>
+
+      {isSaved && (
+        <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-2 animate-fadeIn">
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
+          <span>Your settings and preferences have been updated.</span>
+        </div>
+      )}
+
+      <form onSubmit={handleSaveSettings} className="space-y-8">
+        {/* 1. PROFILE & IDENTITY */}
+        <div className="rounded-[2.5rem] border border-border/80 bg-card p-6 sm:p-9 space-y-6 shadow-elevation-1">
+          <div className="flex items-center gap-2 text-sm font-bold text-foreground">
+            <User className="w-4 h-4 text-primary" />
+            <span>Profile & Account</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs">
+            <div className="space-y-1.5">
+              <label className="font-mono font-bold text-foreground">Full Name</label>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-xs text-foreground focus:border-primary focus:outline-none transition-colors"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-mono font-bold text-foreground">Email Address</label>
+              <input
+                type="email"
+                disabled
+                value={user?.email || "user@example.com"}
+                className="w-full rounded-2xl border border-border bg-muted/60 px-4 py-3 text-xs text-muted-foreground cursor-not-allowed"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 2. REGIONAL & CURRENCY */}
+        <div className="rounded-[2.5rem] border border-border/80 bg-card p-6 sm:p-9 space-y-6 shadow-elevation-1">
+          <div className="flex items-center gap-2 text-sm font-bold text-foreground">
+            <Globe className="w-4 h-4 text-primary" />
+            <span>Currency & Display</span>
+          </div>
+
+          <div className="space-y-3">
+            <label className="text-xs font-mono font-bold text-foreground">Active Currency</label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {(["KES", "USD", "EUR", "GBP"] as CurrencyCode[]).map((curr) => {
+                const isSelected = preferredCurrency === curr;
+                return (
+                  <button
+                    key={curr}
+                    type="button"
+                    onClick={() => setPreferredCurrency(curr)}
+                    className={`p-4 rounded-2xl border text-center transition-all ${
+                      isSelected
+                        ? "border-primary bg-primary/5 text-primary ring-2 ring-primary/20 font-bold"
+                        : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                    }`}
+                  >
+                    <div className="text-base font-mono">{curr}</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">
+                      {curr === "KES" && "Kenyan Shilling"}
+                      {curr === "USD" && "US Dollar"}
+                      {curr === "EUR" && "Euro"}
+                      {curr === "GBP" && "British Pound"}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* 3. PROACTIVE INSIGHT ALERTS */}
+        <div className="rounded-[2.5rem] border border-border/80 bg-card p-6 sm:p-9 space-y-6 shadow-elevation-1">
+          <div className="flex items-center gap-2 text-sm font-bold text-foreground">
+            <Bell className="w-4 h-4 text-primary" />
+            <span>Proactive Insight Rules</span>
+          </div>
+
+          <div className="space-y-4 text-xs">
+            <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-secondary/50 border border-border/60">
+              <div>
+                <div className="font-bold text-foreground">Pace Shortfall Alerts</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">
+                  Notify when monthly savings fall behind the pace needed to hit target dates.
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={notifyShortfall}
+                onChange={(e) => setNotifyShortfall(e.target.checked)}
+                className="w-4 h-4 rounded text-primary focus:ring-primary accent-[#FF5533]"
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-secondary/50 border border-border/60">
+              <div>
+                <div className="font-bold text-foreground">Large Commitment Reminders</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">
+                  Proactively warn 30 days before annual or quarterly obligations are due.
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={notifyCommitments}
+                onChange={(e) => setNotifyCommitments(e.target.checked)}
+                className="w-4 h-4 rounded text-primary focus:ring-primary accent-[#FF5533]"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Save Button */}
+        <div className="flex justify-end pt-2">
+          <button
+            type="submit"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white font-bold text-xs sm:text-sm px-8 py-3.5 shadow-lg shadow-orange-500/25 hover:opacity-95 hover:scale-[1.01] transition-all"
+          >
+            <Check className="w-4 h-4" />
+            <span>Save Preferences</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}

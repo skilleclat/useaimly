@@ -1,0 +1,14 @@
+/**
+ * Supabase Browser Client
+ * Used exclusively in Client Components and custom hooks.
+ */
+
+import { createBrowserClient } from "@supabase/ssr";
+import { Database } from "./database.types";
+
+export function createClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://mock-Useaimly.supabase.co";
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "mock-anon-key";
+
+  return createBrowserClient<Database>(supabaseUrl, supabaseAnonKey);
+}
