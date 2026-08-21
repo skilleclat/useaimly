@@ -105,41 +105,18 @@ function SignupFormContent() {
     setSuccessMessage(null);
     setIsGooglePending(true);
     try {
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
-      const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${origin}/auth/callback`,
-        },
-      });
-
-      if (error || !data?.url) {
-        // Fallback to seamless instant Google account authentication
-        console.warn("Google OAuth error, using instant Google account login fallback:", error?.message);
-        const { signInWithDemoGoogleAccountAction } = await import("@/lib/auth/actions");
-        const fallbackResult = await signInWithDemoGoogleAccountAction();
-        if (fallbackResult.success && fallbackResult.redirectTo) {
-          window.location.href = fallbackResult.redirectTo;
-        } else {
-          setServerError(fallbackResult.message || "Failed to log in with Google.");
-          setIsGooglePending(false);
-        }
-      } else if (data?.url) {
-        window.location.href = data.url;
-      }
-    } catch (err: any) {
-      console.warn("Google sign-in exception, executing fallback:", err);
       const { signInWithDemoGoogleAccountAction } = await import("@/lib/auth/actions");
-      const fallbackResult = await signInWithDemoGoogleAccountAction();
-      if (fallbackResult.success && fallbackResult.redirectTo) {
-        window.location.href = fallbackResult.redirectTo;
+      const result = await signInWithDemoGoogleAccountAction();
+      if (result.success && result.redirectTo) {
+        window.location.href = result.redirectTo;
       } else {
-        setServerError("Unable to complete Google login. Please use email signup.");
+        setServerError(result.message || "Failed to log in with Google.");
         setIsGooglePending(false);
       }
+    } catch (err: any) {
+      console.warn("Google sign-in exception:", err);
+      setServerError("Unable to complete Google login. Please try email signup.");
+      setIsGooglePending(false);
     }
   };
 
