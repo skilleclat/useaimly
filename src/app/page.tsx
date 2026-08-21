@@ -87,36 +87,31 @@ export default function LandingPage() {
   }, [heroAmount, selectedStrategy, currency]);
 
   return (
-    <div className="bg-background text-foreground min-h-screen font-sans selection:bg-primary/20 selection:text-foreground">
-      {/* ========================================================================= */}
-      {/* TELEMETRY TOP BAR */}
-      {/* ========================================================================= */}
-      <div className="border-b border-border/60 bg-secondary/40 py-2 px-4 sm:px-8 text-[11px] font-mono flex items-center justify-between text-muted-foreground">
+    <div className="bg-background text-foreground min-h-screen font-sans selection:bg-primary/15 selection:text-foreground">
+      {/* Quiet top announcement line */}
+      <div className="border-b border-border/40 bg-secondary/30 py-2 px-4 sm:px-8 text-xs flex items-center justify-between text-muted-foreground">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulseGlow" />
-          <span className="font-bold text-foreground">SYSTEM OPERATIONAL</span>
-          <span className="hidden sm:inline text-muted-foreground/60">•</span>
-          <span className="hidden sm:inline">ENGINE V2.4 DETERMINISTIC</span>
+          <span className="w-2 h-2 rounded-full bg-emerald-500" />
+          <span className="font-semibold text-foreground">Goal-Aware Financial Intelligence</span>
         </div>
-        <div className="flex items-center gap-4">
-          <span className="hidden md:inline">ZERO BANK PASSWORDS REQUIRED</span>
-          <span className="text-primary font-bold">KES / USD / EUR SUPPORTED</span>
+        <div className="flex items-center gap-4 text-xs">
+          <span className="hidden md:inline font-medium">Privacy-First • No Bank Password Required</span>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12 space-y-16 sm:space-y-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16 space-y-16 sm:space-y-24">
         {/* ========================================================================= */}
-        {/* SECTION 1: HERO CANVAS & VISUALIZATION */}
+        {/* SECTION 1: HERO CANVAS & DECISION EXPERIENCE */}
         {/* ========================================================================= */}
-        <section className="relative rounded-3xl border border-border/80 bg-card p-6 sm:p-12 lg:p-16 overflow-hidden bg-grid-pattern shadow-sm">
-          {/* Engineered Top Metadata */}
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-8 sm:mb-12 border-b border-border/60 pb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-secondary/60 text-xs font-mono font-medium text-foreground">
+        <section className="relative rounded-2xl border border-border/60 bg-card p-6 sm:p-12 lg:p-14 overflow-hidden shadow-xs">
+          {/* Subtle Top Category Header */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-8 border-b border-border/40 pb-5">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border/60 bg-secondary/40 text-xs font-medium text-foreground">
               <Activity className="w-3.5 h-3.5 text-primary" />
-              <span>Goal-Aware Financial Intelligence</span>
+              <span>Predictive Decision Support</span>
             </div>
-            <div className="text-xs font-mono text-muted-foreground">
-              MODEL STATUS: <span className="text-emerald-600 dark:text-emerald-400 font-bold">100% DETERMINISTIC TS</span>
+            <div className="text-xs text-muted-foreground font-medium">
+              Verified Formula Engine
             </div>
           </div>
 
@@ -125,13 +120,13 @@ export default function LandingPage() {
             {/* Left Column: Typographic Headline & Copy */}
             <div className="lg:col-span-6 space-y-6 sm:space-y-8 text-left">
               <div className="space-y-4">
-                <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tighter text-foreground leading-[0.95]">
+                <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-foreground leading-[1.02]">
                   See tomorrow<br />
                   <span className="text-muted-foreground font-normal">before deciding</span><br />
                   today.
                 </h1>
                 <p className="text-base sm:text-lg text-muted-foreground max-w-xl font-normal leading-relaxed">
-                  Understand how today&apos;s financial decisions affect the destinations you&apos;re working toward. Because <span className="text-foreground font-semibold underline decoration-primary/50 underline-offset-4">cash affordability is not plan affordability</span>.
+                  Understand how today&apos;s financial choices affect your life goals before cash leaves your bank. Because <span className="text-foreground font-semibold underline decoration-primary/40 underline-offset-4">cash affordability is not plan affordability</span>.
                 </p>
               </div>
 
@@ -139,72 +134,65 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
                 <Link
                   href="/app"
-                  className="inline-flex items-center justify-center gap-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm px-7 py-3.5 shadow-sm hover:opacity-95 transition-all"
+                  className="inline-flex items-center justify-center gap-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm px-7 py-3.5 shadow-xs hover:opacity-95 transition-all"
                 >
-                  <span>Launch Intelligence Engine</span>
+                  <span>Start Your Financial Path</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
                 <Link
                   href="/app/decide"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-secondary/50 text-foreground font-medium text-sm px-6 py-3.5 hover:bg-secondary transition-colors"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-border/80 bg-secondary/40 text-foreground font-medium text-sm px-6 py-3.5 hover:bg-secondary transition-colors"
                 >
                   <Sliders className="w-4 h-4 text-muted-foreground" />
-                  <span>Simulate a Purchase</span>
+                  <span>Simulate a Decision</span>
                 </Link>
               </div>
 
-              {/* Micro Metrics Line */}
-              <div className="pt-4 border-t border-border/60 grid grid-cols-3 gap-4 text-left">
+              {/* Trust Indicators */}
+              <div className="pt-6 border-t border-border/50 grid grid-cols-3 gap-4 text-left">
                 <div>
-                  <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Computation</div>
-                  <div className="text-xs font-mono font-bold text-foreground">0ms Latency</div>
+                  <div className="text-xs text-muted-foreground font-medium">Trajectory</div>
+                  <div className="text-sm font-semibold text-foreground">Exact Goal Impact</div>
                 </div>
                 <div>
-                  <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Privacy</div>
-                  <div className="text-xs font-mono font-bold text-foreground">Client Isolation</div>
+                  <div className="text-xs text-muted-foreground font-medium">Privacy</div>
+                  <div className="text-sm font-semibold text-foreground">100% Private</div>
                 </div>
                 <div>
-                  <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Accuracy</div>
-                  <div className="text-xs font-mono font-bold text-primary">Exact Days</div>
+                  <div className="text-xs text-muted-foreground font-medium">Method</div>
+                  <div className="text-sm font-semibold text-primary">Goal-Aware</div>
                 </div>
               </div>
             </div>
 
-            {/* Right Column: High-Precision Trajectory Visualization & System Outputs */}
+            {/* Right Column: Trajectory Visualization & System Outputs */}
             <div className="lg:col-span-6 space-y-4">
               {/* Product Trajectory Graph Box */}
-              <div className="rounded-2xl border border-border bg-background p-5 space-y-4 shadow-xs">
-                <div className="flex items-center justify-between text-xs border-b border-border/60 pb-3">
-                  <div className="flex items-center gap-2 font-mono font-bold">
+              <div className="rounded-xl border border-border/80 bg-background p-5 space-y-4 shadow-xs">
+                <div className="flex items-center justify-between text-xs border-b border-border/50 pb-3">
+                  <div className="flex items-center gap-2 font-semibold">
                     <TrendingUp className="w-4 h-4 text-primary" />
-                    <span>FINANCIAL TRAJECTORY CANVAS</span>
+                    <span>Financial Trajectory Preview</span>
                   </div>
-                  <span className="text-[11px] font-mono text-muted-foreground">GOAL: START MY BUSINESS (500K)</span>
+                  <span className="text-xs text-muted-foreground">Target: Business Launch</span>
                 </div>
 
                 {/* SVG Graph: Baseline vs Decision Delay */}
-                <div className="relative h-44 w-full bg-secondary/30 rounded-xl border border-border/40 p-3 flex flex-col justify-between">
-                  {/* Grid Lines */}
-                  <div className="absolute inset-0 flex flex-col justify-between p-3 pointer-events-none opacity-20">
-                    <div className="border-b border-dashed border-foreground/50 w-full" />
-                    <div className="border-b border-dashed border-foreground/50 w-full" />
-                    <div className="border-b border-dashed border-foreground/50 w-full" />
-                  </div>
-
+                <div className="relative h-44 w-full bg-secondary/20 rounded-lg border border-border/40 p-3 flex flex-col justify-between">
                   <svg className="w-full h-full overflow-visible" viewBox="0 0 400 120">
                     {/* Target Horizon Line */}
-                    <line x1="0" y1="20" x2="400" y2="20" stroke="currentColor" strokeDasharray="3 3" strokeOpacity="0.3" strokeWidth="1" />
-                    <text x="390" y="15" textAnchor="end" fill="currentColor" opacity="0.5" className="text-[9px] font-mono">Target: 500k KES</text>
+                    <line x1="0" y1="20" x2="400" y2="20" stroke="currentColor" strokeDasharray="3 3" strokeOpacity="0.25" strokeWidth="1" />
+                    <text x="390" y="15" textAnchor="end" fill="currentColor" opacity="0.5" className="text-[10px] font-medium">Target: 500,000</text>
 
-                    {/* Baseline Path (Solid Green Line) */}
+                    {/* Baseline Path */}
                     <path
                       d="M 10 100 Q 150 80, 260 50 T 320 20"
                       fill="none"
                       stroke="#10B981"
-                      strokeWidth="2"
+                      strokeWidth="2.5"
                     />
 
-                    {/* Decision Impact Path (Dashed Orange Line) */}
+                    {/* Decision Impact Path */}
                     <path
                       d="M 10 100 Q 150 80, 260 75 T 380 20"
                       fill="none"
@@ -215,62 +203,62 @@ export default function LandingPage() {
 
                     {/* Nodes */}
                     <circle cx="10" cy="100" r="4" fill="currentColor" />
-                    <text x="10" y="115" fill="currentColor" opacity="0.6" className="text-[9px] font-mono">Today</text>
+                    <text x="10" y="115" fill="currentColor" opacity="0.6" className="text-[10px]">Today</text>
 
                     {/* Decision Point */}
                     <circle cx="150" cy="80" r="4" fill="#FF5533" />
-                    <text x="150" y="98" fill="#FF5533" className="text-[9px] font-mono font-bold" textAnchor="middle">-30k KES</text>
+                    <text x="150" y="98" fill="#FF5533" className="text-[10px] font-bold" textAnchor="middle">Purchase</text>
 
                     {/* Baseline Arrival Marker */}
                     <circle cx="320" cy="20" r="4" fill="#10B981" />
-                    <text x="320" y="12" fill="#10B981" className="text-[9px] font-mono font-bold" textAnchor="middle">Nov 2027</text>
+                    <text x="320" y="12" fill="#10B981" className="text-[10px] font-bold" textAnchor="middle">Nov 2027</text>
 
                     {/* Delayed Arrival Marker */}
                     <circle cx="380" cy="20" r="4" fill="#FF5533" />
-                    <text x="380" y="12" fill="#FF5533" className="text-[9px] font-mono font-bold" textAnchor="end">Jan 2028 (+45d)</text>
+                    <text x="380" y="12" fill="#FF5533" className="text-[10px] font-bold" textAnchor="end">Jan 2028 (+45d)</text>
                   </svg>
                 </div>
 
                 {/* Graph Legend */}
-                <div className="flex items-center justify-between text-[11px] font-mono text-muted-foreground pt-1">
+                <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
                   <div className="flex items-center gap-2">
-                    <span className="w-3 h-0.5 bg-emerald-500 inline-block" />
+                    <span className="w-3 h-0.5 bg-emerald-500 inline-block rounded-full" />
                     <span>Baseline Arrival (Nov 2027)</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-0.5 bg-primary border-t border-dashed border-primary inline-block" />
-                    <span className="text-primary font-bold">Simulated Purchase (+45 days)</span>
+                    <span className="text-primary font-medium">With Purchase (+45 days)</span>
                   </div>
                 </div>
               </div>
 
-              {/* Floating Engineered Telemetry Output Cards */}
+              {/* Primary Consequence Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* System Card 1: Primary Insight */}
-                <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-2 text-left">
-                  <div className="flex items-center justify-between text-[10px] font-mono font-bold text-primary uppercase">
-                    <span>Primary Trajectory Shift</span>
-                    <span className="px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20 text-primary">● IMPACT</span>
+                <div className="rounded-xl border border-primary/25 bg-primary/5 p-4 space-y-1.5 text-left">
+                  <div className="flex items-center justify-between text-xs font-semibold text-primary">
+                    <span>Goal Timeline Shift</span>
+                    <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold">Impact</span>
                   </div>
-                  <div className="text-lg font-mono font-extrabold text-foreground">
+                  <div className="text-lg font-bold text-foreground">
                     +45 Days Delay
                   </div>
-                  <div className="text-xs text-muted-foreground font-medium">
-                    &ldquo;Start my business&rdquo; milestone shifts from Nov 2027 to Jan 2028.
+                  <div className="text-xs text-muted-foreground leading-relaxed">
+                    &ldquo;Business Launch&rdquo; moves from Nov 2027 to Jan 2028.
                   </div>
                 </div>
 
                 {/* System Card 2: Secondary Insight */}
-                <div className="rounded-xl border border-border bg-card p-4 space-y-2 text-left">
-                  <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground uppercase">
-                    <span>Resilience Cushion</span>
+                <div className="rounded-xl border border-border/80 bg-card p-4 space-y-1.5 text-left">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground font-semibold">
+                    <span>Resilience Buffer</span>
                     <span className="text-emerald-600 dark:text-emerald-400 font-bold">2.4 Months</span>
                   </div>
-                  <div className="text-lg font-mono font-extrabold text-foreground">
+                  <div className="text-lg font-bold text-foreground">
                     {formatCurrency(150000, currency)}
                   </div>
-                  <div className="text-xs text-muted-foreground font-medium">
-                    Liquid reserves remain above the minimum 2-month threshold.
+                  <div className="text-xs text-muted-foreground leading-relaxed">
+                    Liquid reserves stay above the minimum 2-month safety buffer.
                   </div>
                 </div>
               </div>

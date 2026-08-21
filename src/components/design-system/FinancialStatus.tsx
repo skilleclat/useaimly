@@ -31,66 +31,66 @@ const STATUS_CONFIG: Record<
   }
 > = {
   ON_TRACK: {
-    label: "ON TRACK",
-    narrative: "You're moving toward your destination.",
-    badgeStyle: "bg-Useaimly-on-track-muted text-Useaimly-on-track-foreground border-Useaimly-on-track-border",
-    bannerStyle: "bg-Useaimly-on-track-muted/50 border-Useaimly-on-track-border text-Useaimly-on-track-foreground",
+    label: "On Track",
+    narrative: "You are on schedule for your target arrival date.",
+    badgeStyle: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20",
+    bannerStyle: "bg-emerald-500/10 border-emerald-500/20 text-emerald-800 dark:text-emerald-200",
     icon: CheckCircle2,
   },
   SAFE: {
-    label: "SAFE",
-    narrative: "Decision fully preserves your buffer and destination arrival.",
-    badgeStyle: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-    bannerStyle: "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400",
+    label: "Plan Protected",
+    narrative: "Decision fully preserves your liquid reserves and target date.",
+    badgeStyle: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20",
+    bannerStyle: "bg-emerald-500/10 border-emerald-500/20 text-emerald-800 dark:text-emerald-200",
     icon: ShieldCheck,
   },
   MANAGEABLE: {
-    label: "MANAGEABLE",
-    narrative: "Affordable with buffer, but introduces arrival delay.",
-    badgeStyle: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
-    bannerStyle: "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400",
+    label: "Pace Shift",
+    narrative: "Affordable in cash, but creates a slight shift in your target date.",
+    badgeStyle: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20",
+    bannerStyle: "bg-amber-500/10 border-amber-500/20 text-amber-800 dark:text-amber-200",
     icon: AlertTriangle,
   },
   HIGH_IMPACT: {
-    label: "HIGH IMPACT",
-    narrative: "Significantly lowers your emergency reserves below recommended threshold.",
-    badgeStyle: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
-    bannerStyle: "bg-orange-500/10 border-orange-500/20 text-orange-600 dark:text-orange-400",
+    label: "Buffer Risk",
+    narrative: "Lowers your emergency cushion below the safe 3-month threshold.",
+    badgeStyle: "bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/20",
+    bannerStyle: "bg-orange-500/10 border-orange-500/20 text-orange-800 dark:text-orange-200",
     icon: ShieldAlert,
   },
   AT_RISK: {
-    label: "AT RISK",
-    narrative: "Your current path may delay your destination.",
-    badgeStyle: "bg-Useaimly-at-risk-muted text-Useaimly-at-risk-foreground border-Useaimly-at-risk-border",
-    bannerStyle: "bg-Useaimly-at-risk-muted/50 border-Useaimly-at-risk-border text-Useaimly-at-risk-foreground",
+    label: "Timeline Shift",
+    narrative: "Your current pace is falling behind the required monthly allocation.",
+    badgeStyle: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20",
+    bannerStyle: "bg-amber-500/10 border-amber-500/20 text-amber-800 dark:text-amber-200",
     icon: AlertTriangle,
   },
   OFF_TRACK: {
-    label: "OFF TRACK",
-    narrative: "Your current trajectory does not reach the target.",
-    badgeStyle: "bg-Useaimly-off-track-muted text-Useaimly-off-track-foreground border-Useaimly-off-track-border",
-    bannerStyle: "bg-Useaimly-off-track-muted/50 border-Useaimly-off-track-border text-Useaimly-off-track-foreground",
+    label: "Goal Delay Risk",
+    narrative: "Current trajectory will not reach target by target date without adjustments.",
+    badgeStyle: "bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20",
+    bannerStyle: "bg-red-500/10 border-red-500/20 text-red-800 dark:text-red-200",
     icon: AlertOctagon,
   },
   AHEAD: {
-    label: "AHEAD",
-    narrative: "You're currently ahead of the required pace.",
-    badgeStyle: "bg-Useaimly-ahead-muted text-Useaimly-ahead-foreground border-Useaimly-ahead-border",
-    bannerStyle: "bg-Useaimly-ahead-muted/50 border-Useaimly-ahead-border text-Useaimly-ahead-foreground",
+    label: "Ahead of Schedule",
+    narrative: "Your savings pace is accelerating your goal arrival date.",
+    badgeStyle: "bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/20",
+    bannerStyle: "bg-teal-500/10 border-teal-500/20 text-teal-800 dark:text-teal-200",
     icon: TrendingUp,
   },
   COMPLETED: {
-    label: "COMPLETED",
-    narrative: "Target capital milestone achieved.",
+    label: "Target Achieved",
+    narrative: "Goal milestone successfully achieved.",
     badgeStyle: "bg-primary/10 text-primary border-primary/20",
     bannerStyle: "bg-primary/10 border-primary/20 text-primary",
     icon: Sparkles,
   },
   OVERDUE: {
-    label: "OVERDUE",
-    narrative: "Target date has passed with remaining shortfall.",
-    badgeStyle: "bg-destructive/10 text-destructive border-destructive/20",
-    bannerStyle: "bg-destructive/10 border-destructive/20 text-destructive",
+    label: "Action Needed",
+    narrative: "Target date reached with remaining shortfall.",
+    badgeStyle: "bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20",
+    bannerStyle: "bg-red-500/10 border-red-500/20 text-red-800 dark:text-red-200",
     icon: AlertOctagon,
   },
 };
@@ -108,7 +108,7 @@ export function FinancialStatus({
     return (
       <span
         className={cn(
-          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border font-mono uppercase tracking-wider",
+          "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border transition-colors",
           config.badgeStyle,
           className
         )}
@@ -123,7 +123,7 @@ export function FinancialStatus({
     return (
       <div
         className={cn(
-          "flex items-center gap-3 p-3.5 rounded-2xl border text-xs font-medium",
+          "flex items-center gap-3 p-3.5 rounded-xl border text-xs font-medium",
           config.bannerStyle,
           className
         )}
@@ -138,13 +138,13 @@ export function FinancialStatus({
     return (
       <div
         className={cn(
-          "p-4 rounded-2xl border flex flex-col justify-between gap-2",
+          "p-4 rounded-xl border flex flex-col justify-between gap-2",
           config.bannerStyle,
           className
         )}
       >
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold font-mono uppercase tracking-wider">
+          <span className="text-xs font-bold uppercase tracking-wider">
             {config.label}
           </span>
           <Icon className="w-4 h-4" />

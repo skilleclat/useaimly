@@ -51,52 +51,52 @@ export function RecentDecisionsSection({ currency = "KES" }: { currency: Currenc
     <section className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl sm:text-2xl font-bold font-editorial text-foreground tracking-tight">
-            Recent decisions
+          <h3 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+            Recent Decisions Evaluated
           </h3>
           <p className="text-xs text-muted-foreground">
-            A history of evaluated spending and their deterministic consequences.
+            A history of evaluated spending choices and their calculated trajectory consequences.
           </p>
         </div>
 
-        <span className="text-xs font-mono text-muted-foreground">
-          3 decisions simulated
+        <span className="text-xs text-muted-foreground font-medium">
+          3 decisions evaluated
         </span>
       </div>
 
-      {/* Decision Table / Cards */}
-      <div className="rounded-3xl border border-border bg-card overflow-hidden shadow-elevation-1">
+      {/* Decision Table */}
+      <div className="rounded-xl border border-border/80 bg-card overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="border-b border-border/80 bg-secondary/50 font-mono text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+            <thead className="border-b border-border/60 bg-secondary/40 text-xs font-semibold text-muted-foreground">
               <tr>
-                <th className="py-3.5 px-4 sm:px-6">Decision & Category</th>
-                <th className="py-3.5 px-4 sm:px-6">Amount</th>
-                <th className="py-3.5 px-4 sm:px-6">Trajectory Impact</th>
-                <th className="py-3.5 px-4 sm:px-6 text-right">Result</th>
+                <th className="py-3 px-4 sm:px-6">Decision & Category</th>
+                <th className="py-3 px-4 sm:px-6">Amount</th>
+                <th className="py-3 px-4 sm:px-6">Trajectory Impact</th>
+                <th className="py-3 px-4 sm:px-6 text-right">Result</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/60 font-medium">
+            <tbody className="divide-y divide-border/50 font-medium">
               {RECENT_DECISIONS.map((item) => (
-                <tr key={item.id} className="hover:bg-secondary/30 transition-colors">
-                  <td className="py-4 px-4 sm:px-6">
-                    <div className="font-bold font-editorial text-foreground text-sm">
+                <tr key={item.id} className="hover:bg-secondary/20 transition-colors">
+                  <td className="py-3.5 px-4 sm:px-6">
+                    <div className="font-semibold text-foreground text-sm">
                       {item.decision}
                     </div>
-                    <div className="text-[11px] text-muted-foreground font-mono">
+                    <div className="text-xs text-muted-foreground">
                       {item.category} • {item.date}
                     </div>
                   </td>
 
-                  <td className="py-4 px-4 sm:px-6 font-financial font-bold text-foreground text-sm">
+                  <td className="py-3.5 px-4 sm:px-6 font-bold text-foreground text-sm">
                     {formatCurrency(item.amount, currency)}
                   </td>
 
-                  <td className="py-4 px-4 sm:px-6 text-muted-foreground text-xs max-w-sm leading-relaxed">
+                  <td className="py-3.5 px-4 sm:px-6 text-muted-foreground text-xs max-w-sm leading-relaxed">
                     {item.impact}
                   </td>
 
-                  <td className="py-4 px-4 sm:px-6 text-right">
+                  <td className="py-3.5 px-4 sm:px-6 text-right">
                     <div className="inline-block">
                       <FinancialStatus status={item.result} variant="badge" />
                     </div>

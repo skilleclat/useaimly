@@ -26,98 +26,98 @@ export function YourPathSection({
     <section className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl sm:text-2xl font-bold font-editorial text-foreground tracking-tight">
-            Your path
+          <h3 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+            Your Monthly Rhythm
           </h3>
           <p className="text-xs text-muted-foreground">
-            The steady engine driving your trajectory month over month.
+            The cash flow engine powering your life goals month over month.
           </p>
         </div>
 
-        <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-mono text-muted-foreground">
+        <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-secondary/40 px-3 py-1 text-xs text-muted-foreground font-medium">
           <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-          <span>{savingsRate}% converted to future goals</span>
+          <span>{savingsRate}% directed to goals</span>
         </span>
       </div>
 
-      {/* 4 Spacious Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 4 Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {/* Monthly Income */}
-        <div className="rounded-3xl border border-border bg-card p-5 sm:p-6 space-y-3 shadow-elevation-1 hover:border-primary/30 transition-all">
+        <div className="rounded-xl border border-border/80 bg-card p-5 space-y-2.5 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-mono font-bold uppercase tracking-wider">
+            <span className="text-xs font-medium text-muted-foreground">
               Monthly Inflow
             </span>
-            <div className="p-2 rounded-xl bg-primary/10 text-primary">
+            <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <div className="text-2xl sm:text-3xl font-bold font-financial text-foreground">
+            <div className="text-2xl font-bold text-foreground">
               {formatCurrency(monthlyIncome, currency)}
             </div>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              Active salary & consulting inflow
+            <p className="text-xs text-muted-foreground mt-1">
+              Active income & consulting
             </p>
           </div>
         </div>
 
         {/* Monthly Commitments */}
-        <div className="rounded-3xl border border-border bg-card p-5 sm:p-6 space-y-3 shadow-elevation-1 hover:border-Useaimly-expense/30 transition-all">
+        <div className="rounded-xl border border-border/80 bg-card p-5 space-y-2.5 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-mono font-bold uppercase tracking-wider">
-              Monthly Commitments
+            <span className="text-xs font-medium text-muted-foreground">
+              Mandatory Outflows
             </span>
-            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
               <ShoppingBag className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <div className="text-2xl sm:text-3xl font-bold font-financial text-foreground">
+            <div className="text-2xl font-bold text-foreground">
               {formatCurrency(monthlyCommitments, currency)}
             </div>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              Living costs, debt & obligations
+            <p className="text-xs text-muted-foreground mt-1">
+              Living costs & commitments
             </p>
           </div>
         </div>
 
         {/* Available for Goals */}
-        <div className="rounded-3xl border border-primary/30 bg-primary/5 p-5 sm:p-6 space-y-3 shadow-elevation-1 hover:border-primary/50 transition-all">
+        <div className="rounded-xl border border-primary/25 bg-primary/5 p-5 space-y-2.5 shadow-xs">
           <div className="flex items-center justify-between text-primary">
-            <span className="text-xs font-mono font-bold uppercase tracking-wider">
+            <span className="text-xs font-semibold text-primary">
               Available for Goals
             </span>
-            <div className="p-2 rounded-xl bg-primary/20 text-primary">
+            <div className="p-1.5 rounded-lg bg-primary/15 text-primary">
               <Target className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <div className="text-2xl sm:text-3xl font-bold font-financial text-primary">
+            <div className="text-2xl font-bold text-primary">
               {formatCurrency(availableForGoals, currency)}
             </div>
-            <p className="text-[11px] text-primary/80 mt-1">
-              Free cash flow dedicated to destination
+            <p className="text-xs text-primary/80 mt-1">
+              Dedicated goal cash flow
             </p>
           </div>
         </div>
 
         {/* Current Savings */}
-        <div className="rounded-3xl border border-border bg-card p-5 sm:p-6 space-y-3 shadow-elevation-1 hover:border-Useaimly-savings/30 transition-all">
+        <div className="rounded-xl border border-border/80 bg-card p-5 space-y-2.5 shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-mono font-bold uppercase tracking-wider">
-              Current Reserves
+            <span className="text-xs font-medium text-muted-foreground">
+              Liquid Reserves
             </span>
-            <div className="p-2 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400">
+            <div className="p-1.5 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400">
               <Wallet className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <div className="text-2xl sm:text-3xl font-bold font-financial text-foreground">
+            <div className="text-2xl font-bold text-foreground">
               {formatCurrency(currentSavings, currency)}
             </div>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              Total liquid checking & MMF buffer
+            <p className="text-xs text-muted-foreground mt-1">
+              Checking & cash buffer
             </p>
           </div>
         </div>

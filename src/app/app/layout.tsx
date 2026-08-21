@@ -30,45 +30,45 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   {
-    label: "TODAY",
+    label: "Overview",
     href: "/app",
-    description: "Your current financial position.",
+    description: "Your financial trajectory & briefing.",
     icon: <Compass className="w-4 h-4" />,
   },
   {
-    label: "DESTINATIONS",
+    label: "Destinations",
     href: "/app/goals",
     description: "What your money is working toward.",
     icon: <Target className="w-4 h-4" />,
   },
   {
-    label: "DECIDE",
+    label: "Decide",
     href: "/app/decide",
-    description: "Ask before making a financial decision.",
+    description: "Test spending impact before committing.",
     icon: <HelpCircle className="w-4 h-4" />,
   },
   {
-    label: "WHAT IF?",
+    label: "What If?",
     href: "/app/what-if",
     description: "Explore hypothetical scenarios.",
     icon: <TrendingUp className="w-4 h-4" />,
   },
   {
-    label: "MONEY",
+    label: "Money Ledger",
     href: "/app/money",
-    description: "Manage your financial reality.",
+    description: "Manage your cash flows & reserves.",
     icon: <Wallet className="w-4 h-4" />,
   },
   {
-    label: "INSIGHTS",
+    label: "Insights",
     href: "/app/insights",
-    description: "See what Useaimly thinks you should know.",
+    description: "Proactive warnings & observations.",
     icon: <Sparkles className="w-4 h-4" />,
   },
   {
-    label: "ASK",
+    label: "Assistant",
     href: "/app/ask",
-    description: "Have a conversation with Useaimly.",
+    description: "Financial decision conversation.",
     icon: <MessageSquare className="w-4 h-4" />,
   },
 ];
@@ -82,10 +82,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const currency = profile?.preferred_currency || "KES";
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary/20">
+    <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary/15">
       {/* Authenticated Top Navigation */}
-      <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/85 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-3 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/90 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4 lg:gap-8">
             <Link href="/app" className="flex items-center gap-2">
               <div className="hidden sm:block">
@@ -97,7 +97,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1">
+            <nav className="hidden lg:flex items-center gap-1.5">
               {NAV_ITEMS.map((item) => {
                 const isActive =
                   item.href === "/app"
@@ -109,9 +109,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                     key={item.label}
                     href={item.href}
                     title={item.description}
-                    className={`px-3 py-1.5 rounded-xl text-[11px] font-mono uppercase tracking-wider font-bold flex items-center gap-1.5 transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
                       isActive
-                        ? "bg-primary/10 text-primary"
+                        ? "bg-primary/10 text-primary font-bold"
                         : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
                     }`}
                   >

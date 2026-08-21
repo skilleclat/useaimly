@@ -4,7 +4,7 @@ import { formatMonthYear } from "@/lib/utils/date";
 import { MoneyAmount } from "./MoneyAmount";
 import { FinancialStatus, TrajectoryState } from "./FinancialStatus";
 import { cn } from "@/lib/utils/cn";
-import { Zap, ArrowRight, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Sparkles, ShieldCheck, AlertTriangle, ArrowUpRight, Clock } from "lucide-react";
 
 export interface DecisionImpactCardProps {
   decisionTitle: string;
@@ -44,55 +44,75 @@ export function DecisionImpactCard({
   return (
     <div
       className={cn(
-        "rounded-3xl border border-border bg-card p-6 text-card-foreground shadow-elevation-1 space-y-5",
+        "rounded-2xl border border-border/80 bg-card p-6 text-card-foreground shadow-xs space-y-5",
         className
       )}
     >
-      {/* Header */}
+      {/* LEVEL 1: CONTEXT */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-4">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20">
-            <Zap className="w-4 h-4" />
-          </div>
-          <div>
-            <span className="text-[11px] font-mono uppercase tracking-wider text-primary font-bold">
-              Decision Simulation Impact
-            </span>
-            <h3 className="text-base font-bold font-editorial text-foreground">
-              {decisionTitle}
-            </h3>
-          </div>
+        <div>
+          <span className="text-xs text-muted-foreground font-medium block">
+            Decision Simulation
+          </span>
+          <h3 className="text-lg font-bold text-foreground">
+            {decisionTitle}
+          </h3>
         </div>
 
         <MoneyAmount amount={decisionAmount} currency={currency as any} size="lg" intent="expense" showSign />
       </div>
 
-      {/* Distinction Matrix: Cash Affordability vs Plan Affordability */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {/* LEVEL 2: PRIMARY INSIGHT (HERO CONFLICT/VERDICT) */}
+      <div className={cn(
+        "rounded-xl p-4 space-y-1.5 border transition-all",
+        delayMonths > 0 
+          ? "bg-amber-500/5 border-amber-500/20 text-amber-900 dark:text-amber-200" 
+          : "bg-emerald-500/5 border-emerald-500/20 text-emerald-900 dark:text-emerald-200"
+      )}>
+        <div className="text-xs font-semibold uppercase tracking-wider opacity-80 flex items-center gap-1.5">
+          <Clock className="w-3.5 h-3.5" />
+          <span>Primary Goal Consequence</span>
+        </div>
+        <div className="text-xl font-extrabold tracking-tight">
+          {delayMonths > 0 
+            ? `+${delayMonths} Month${delayMonths > 1 ? "s" : ""} Delay on "${goalTitle}"`
+            : `"${goalTitle}" Goal Remains On Schedule`
+          }
+        </div>
+        <p className="text-xs opacity-90 leading-relaxed font-normal">
+          {delayMonths > 0
+            ? `Paying ${formatCurrency(decisionAmount, currency as any)} today reduces your monthly trajectory contribution, shifting target arrival.`
+            : `Your current liquid reserves absorb this purchase without delaying your life goal.`
+          }
+        </p>
+      </div>
+
+      {/* LEVEL 4: EVIDENCE (CASH VS PLAN DISTINCTION) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
         {/* Cash Perspective */}
-        <div className="rounded-2xl border border-border bg-secondary/40 p-4 space-y-1.5">
+        <div className="rounded-xl border border-border/70 bg-secondary/30 p-4 space-y-2">
           <div className="flex items-center justify-between text-xs font-semibold">
-            <span className="text-muted-foreground">Cash Today</span>
+            <span className="text-muted-foreground">Cash Affordability</span>
             {cashAffordable ? (
-              <span className="text-primary font-bold flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5" /> Affordable
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5" /> Covered
               </span>
             ) : (
-              <span className="text-destructive font-bold flex items-center gap-1">
+              <span className="text-destructive font-medium flex items-center gap-1">
                 <AlertTriangle className="w-3.5 h-3.5" /> Shortfall
               </span>
             )}
           </div>
 
-          <div className="text-xs text-muted-foreground pt-1">
-            <span>Liquid Cash: </span>
-            <strong className="text-foreground font-financial font-medium">
+          <div className="text-xs text-muted-foreground">
+            <span>Reserves: </span>
+            <strong className="text-foreground font-semibold">
               {formatCurrency(liquidCashBefore, currency as any)}
             </strong>{" "}
             →{" "}
             <strong
               className={cn(
-                "font-financial font-bold",
+                "font-bold",
                 cashAffordable ? "text-foreground" : "text-destructive"
               )}
             >
@@ -102,38 +122,32 @@ export function DecisionImpactCard({
         </div>
 
         {/* Plan Perspective */}
-        <div className="rounded-2xl border border-border bg-secondary/40 p-4 space-y-1.5">
+        <div className="rounded-xl border border-border/70 bg-secondary/30 p-4 space-y-2">
           <div className="flex items-center justify-between text-xs font-semibold">
-            <span className="text-muted-foreground">Plan for &ldquo;{goalTitle}&rdquo;</span>
+            <span className="text-muted-foreground">Plan Impact</span>
             <FinancialStatus status={trajectoryState} variant="badge" />
           </div>
 
-          <div className="text-xs text-muted-foreground pt-1">
+          <div className="text-xs text-muted-foreground">
             {delayMonths > 0 ? (
-              <span>
-                Timeline Shift:{" "}
-                <strong className="text-amber-600 dark:text-amber-300 font-financial font-bold">
-                  +{delayMonths} month{delayMonths > 1 ? "s" : ""} delay
-                </strong>
-              </span>
+              <span>Target shifted past <strong>{formatMonthYear(targetDate)}</strong></span>
             ) : (
-              <span className="text-primary font-semibold">
-                No shift in goal timeline
-              </span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium">On track for {formatMonthYear(targetDate)}</span>
             )}
           </div>
         </div>
       </div>
 
-      {/* Recovery requirement summary */}
+      {/* LEVEL 5: ACTION / RECOVERY OPTION */}
       {delayMonths > 0 && recoveryMonthlyAmount > 0 && (
-        <div className="rounded-2xl border border-border bg-card p-3.5 text-xs flex items-center justify-between">
-          <span className="text-muted-foreground">To maintain {formatMonthYear(targetDate)}:</span>
-          <span className="font-financial font-bold text-primary">
-            +{formatCurrency(recoveryMonthlyAmount, currency as any)} / month
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-xs flex items-center justify-between">
+          <span className="text-muted-foreground font-medium">To stay on track for {formatMonthYear(targetDate)}:</span>
+          <span className="font-bold text-primary flex items-center gap-1">
+            +{formatCurrency(recoveryMonthlyAmount, currency as any)} / mo
           </span>
         </div>
       )}
     </div>
   );
 }
+

@@ -91,33 +91,33 @@ export default function DecidePage() {
     return [
       {
         id: "CASH" as const,
-        title: "Payer comptant",
+        title: "Pay Cash Today",
         subtitle: "One-off Cash Buffer",
         metric: formatCurrency(Math.max(0, cashRemaining), currency),
-        metricLabel: "Buffer résiduel",
-        badge: "100% liquidité préservée",
-        badgeStyle: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-        delayText: `+${simulation.delta.delayInDays} jours sur l'objectif`,
+        metricLabel: "Remaining Buffer",
+        badge: "Liquid Buffer Intact",
+        badgeStyle: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20",
+        delayText: `+${simulation.delta.delayInDays} days shift`,
       },
       {
         id: "SPREAD" as const,
-        title: "Échelonner sur 3 mois",
-        subtitle: "3-Month Free Cash Flow",
+        title: "Spread over 3 Months",
+        subtitle: "Monthly Cash Flow",
         metric: `${formatCurrency(spreadMonthly, currency)} / mo`,
-        metricLabel: "Impact mensuel",
-        badge: "Pression lissée",
-        badgeStyle: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
-        delayText: `+${Math.round(simulation.delta.delayInDays * 0.7)} jours sur l'objectif`,
+        metricLabel: "Monthly Payment",
+        badge: "Pace Smoothing",
+        badgeStyle: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20",
+        delayText: `+${Math.round(simulation.delta.delayInDays * 0.7)} days shift`,
       },
       {
         id: "POSTPONE" as const,
-        title: "Reporter de 60 jours",
-        subtitle: "Accumuler d'abord",
+        title: "Postpone 60 Days",
+        subtitle: "Save in Advance",
         metric: formatCurrency(0, currency),
-        metricLabel: "Impact immédiat",
-        badge: "Trajectoire intacte",
-        badgeStyle: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
-        delayText: "0 jour de décalage",
+        metricLabel: "Immediate Cash Impact",
+        badge: "Zero Goal Delay",
+        badgeStyle: "bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/20",
+        delayText: "0 days shift",
       },
     ];
   }, [amount, currency, simulation]);
@@ -133,21 +133,21 @@ export default function DecidePage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
-      {/* Top Breadcrumb & Actions Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/70 pb-5">
+      {/* Top Header & Action Controls Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
         <div className="space-y-1">
           <Link
             href="/app"
-            className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-primary hover:underline"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Boîte à outils / Simulateur</span>
+            <span>Return to Overview</span>
           </Link>
-          <h1 className="text-2xl sm:text-4xl font-bold font-editorial text-foreground tracking-tight">
-            Résultat de simulation ({formatCurrency(amount, currency)})
+          <h1 className="text-2xl sm:text-4xl font-bold text-foreground tracking-tight">
+            Decision Studio — {title} ({formatCurrency(amount, currency)})
           </h1>
-          <p className="text-xs font-mono text-muted-foreground">
-            {new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" })} • Décision : {title}
+          <p className="text-xs text-muted-foreground font-medium">
+            Simulating decision impact on primary destination: &ldquo;Start my business&rdquo;
           </p>
         </div>
 
@@ -159,19 +159,19 @@ export default function DecidePage() {
               setQueryInput("");
               setIsEditingInputs(true);
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-card text-foreground hover:bg-secondary/70 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border/80 bg-card text-foreground hover:bg-secondary/60 transition-colors"
           >
             <Plus className="w-3.5 h-3.5 text-primary" />
-            <span>Nouveau</span>
+            <span>New Query</span>
           </button>
 
           <button
             type="button"
             onClick={() => setIsEditingInputs(!isEditingInputs)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-card text-foreground hover:bg-secondary/70 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border/80 bg-card text-foreground hover:bg-secondary/60 transition-colors"
           >
             <Edit3 className="w-3.5 h-3.5 text-foreground" />
-            <span>Modifier</span>
+            <span>Adjust Input</span>
           </button>
 
           <button
@@ -180,48 +180,48 @@ export default function DecidePage() {
             className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border transition-colors ${
               isFavorite
                 ? "border-rose-500/30 bg-rose-500/10 text-rose-600"
-                : "border-border bg-card text-foreground hover:bg-secondary/70"
+                : "border-border/80 bg-card text-foreground hover:bg-secondary/60"
             }`}
           >
             <Heart className={`w-3.5 h-3.5 ${isFavorite ? "fill-rose-500 text-rose-500" : "text-foreground"}`} />
-            <span>Favoris</span>
+            <span>Save Decision</span>
           </button>
         </div>
       </div>
 
-      {/* Interactive Natural Language Prompt / Edit Drawer */}
+      {/* Interactive Input Drawer */}
       {isEditingInputs && (
-        <form onSubmit={handleParseSubmit} className="rounded-3xl border border-primary/30 bg-primary/5 p-6 space-y-4 animate-fadeIn">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-primary">
+        <form onSubmit={handleParseSubmit} className="rounded-xl border border-primary/25 bg-primary/5 p-5 space-y-3 animate-fadeIn">
+          <div className="flex items-center gap-2 text-xs font-semibold text-primary">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Décrivez votre décision en langage naturel</span>
+            <span>Describe your financial decision in plain language</span>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
             <input
               type="text"
               value={queryInput}
               onChange={(e) => setQueryInput(e.target.value)}
-              placeholder="Ex: Je souhaite acheter un ordinateur à 45 000 KES..."
-              className="flex-1 rounded-2xl border border-border bg-background px-4 py-3 text-xs sm:text-sm text-foreground focus:outline-none focus:border-primary"
+              placeholder="e.g. Can I spend 30,000 KES on a laptop upgrade?"
+              className="flex-1 rounded-xl border border-border/80 bg-background px-4 py-2.5 text-xs sm:text-sm text-foreground focus:outline-hidden focus:border-primary"
             />
             <button
               type="submit"
-              className="px-6 py-3 rounded-2xl bg-primary text-primary-foreground text-xs font-bold hover:opacity-95 transition-opacity shrink-0"
+              className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:opacity-95 transition-opacity shrink-0"
             >
-              Simuler
+              Simulate
             </button>
           </div>
         </form>
       )}
 
-      {/* Main Grid: Left Detailed Breakdown + Right Explainer Video & Synthesis */}
+      {/* Main Grid: Left Strategies & Evidence + Right Synthesis */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column (8 cols): Strategies + Detailed Dotted Line Item Breakdown */}
+        {/* Left Column (8 cols): 3 Strategy Cards + Breakdown */}
         <div className="lg:col-span-8 space-y-6">
           {/* 3 Strategy Selector Cards */}
-          <div className="space-y-2">
-            <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">
-              3 stratégies pour réaliser cette décision
+          <div className="space-y-3">
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              3 Financial Strategies
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
@@ -232,19 +232,19 @@ export default function DecidePage() {
                     key={strat.id}
                     type="button"
                     onClick={() => setSelectedStrategy(strat.id)}
-                    className={`rounded-2xl p-5 text-left transition-all border relative flex flex-col justify-between ${
+                    className={`rounded-xl p-4 text-left transition-all border relative flex flex-col justify-between ${
                       isActive
-                        ? "border-primary bg-card shadow-sm ring-2 ring-primary/20"
+                        ? "border-primary bg-card shadow-xs ring-2 ring-primary/20"
                         : "border-border/80 bg-card hover:border-border"
                     }`}
                   >
                     <div className="space-y-1">
-                      <div className="text-xs font-semibold text-muted-foreground">{strat.title}</div>
-                      <div className="text-xl sm:text-2xl font-bold font-financial text-foreground">
+                      <div className="text-xs font-medium text-muted-foreground">{strat.title}</div>
+                      <div className="text-xl font-bold text-foreground">
                         {strat.metric}
                       </div>
                     </div>
-                    <div className="pt-3 mt-2 border-t border-border/50 flex items-center justify-between text-[11px] font-mono">
+                    <div className="pt-3 mt-2 border-t border-border/50 flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">{strat.metricLabel}</span>
                       <span className="text-primary font-bold">{strat.delayText}</span>
                     </div>
@@ -254,202 +254,158 @@ export default function DecidePage() {
             </div>
           </div>
 
-          {/* Deep-Dive Breakdown Container Card (Jump-Style) */}
-          <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 space-y-6 shadow-elevation-1">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/70 pb-5">
+          {/* Strategy Consequence Card */}
+          <div className="rounded-xl border border-border/80 bg-card p-6 space-y-6 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
               <div className="space-y-1">
-                <h3 className="text-xl sm:text-2xl font-bold font-editorial text-foreground flex items-center gap-2">
+                <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
                   <span>
                     {selectedStrategy === "CASH"
-                      ? "Payer au comptant depuis votre buffer"
+                      ? "Pay in full from liquid cash buffer"
                       : selectedStrategy === "SPREAD"
-                      ? "Lisser sur votre flux de trésorerie"
-                      : "Reporter l'achat pour préserver la date"}
+                      ? "Spread across 3 monthly cash flow cycles"
+                      : "Postpone 60 days to save in advance"}
                   </span>
-                  <span>{selectedStrategy === "CASH" ? "💳" : selectedStrategy === "SPREAD" ? "📅" : "⏳"}</span>
                 </h3>
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                    {selectedStrategy === "CASH" ? "100% autofinancé" : selectedStrategy === "SPREAD" ? "3 mensualités" : "0 dette"}
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="inline-flex items-center gap-1 font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                    {selectedStrategy === "CASH" ? "Self-funded" : selectedStrategy === "SPREAD" ? "3 Payments" : "Zero Debt"}
                   </span>
-                  <span className="text-xs text-muted-foreground">
-                    Destination liée : <strong>Start my business</strong>
+                  <span className="text-muted-foreground font-medium">
+                    Destination: <strong>Start my business</strong>
                   </span>
                 </div>
               </div>
 
               <div className="text-left sm:text-right">
-                <div className="text-[11px] font-mono text-muted-foreground uppercase">
-                  Décalage d&apos;arrivée
+                <div className="text-xs text-muted-foreground font-medium">
+                  Goal Timeline Shift
                 </div>
-                <div className="text-2xl sm:text-3xl font-bold font-financial text-primary">
+                <div className="text-2xl font-bold text-primary">
                   {selectedStrategy === "CASH"
-                    ? `+${simulation.delta.delayInDays} jours`
+                    ? `+${simulation.delta.delayInDays} days`
                     : selectedStrategy === "SPREAD"
-                    ? `+${Math.round(simulation.delta.delayInDays * 0.7)} jours`
-                    : "0 jour"}
+                    ? `+${Math.round(simulation.delta.delayInDays * 0.7)} days`
+                    : "0 days"}
                 </div>
-                <div className="text-[11px] text-muted-foreground font-mono">
-                  Horizon : {simulation.delta.newCompletionDate || "Février 2028"}
+                <div className="text-xs text-muted-foreground font-medium">
+                  Target Arrival: {simulation.delta.newCompletionDate || "February 2028"}
                 </div>
               </div>
             </div>
 
-            {/* Dotted Leader Line Breakdown (Jump Masterpiece Pattern) */}
-            <div className="space-y-3.5 text-xs sm:text-sm">
-              {/* Row 1 */}
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
-                  <span>Trésorerie disponible avant décision</span>
-                </span>
-                <span className="flex-1 border-b border-dotted border-muted-foreground/30 mx-2" />
-                <span className="font-mono font-bold text-foreground shrink-0">
+            {/* Financial Line Item Breakdown */}
+            <div className="space-y-3 text-xs sm:text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium">Liquid Cash Before Decision</span>
+                <span className="font-bold text-foreground">
                   {formatCurrency(baselineProfile.liquidSavings, currency)}
                 </span>
               </div>
 
-              {/* Row 2 */}
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
-                  <span>Montant de la dépense simulée</span>
-                </span>
-                <span className="flex-1 border-b border-dotted border-muted-foreground/30 mx-2" />
-                <span className="font-mono font-bold text-rose-600 dark:text-rose-400 shrink-0">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium">Decision Outflow Amount</span>
+                <span className="font-bold text-rose-600 dark:text-rose-400">
                   -{formatCurrency(amount, currency)}
                 </span>
               </div>
 
-              {/* Row 3 */}
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
-                  <span>Trésorerie résiduelle (Buffer de sécurité)</span>
-                  <Info className="w-3 h-3 text-muted-foreground/60" />
-                </span>
-                <span className="flex-1 border-b border-dotted border-muted-foreground/30 mx-2" />
-                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium">Remaining Cash Cushion</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">
                   {formatCurrency(Math.max(0, baselineProfile.liquidSavings - amount), currency)}
                 </span>
               </div>
 
-              {/* Notice Banner */}
-              <div className="p-3.5 rounded-2xl border border-amber-500/30 bg-amber-500/5 text-amber-700 dark:text-amber-400 text-[11px] leading-relaxed">
-                Conformément à la règle de résilience Useaimly, votre buffer de sécurité reste supérieur au seuil minimal recommandé (2 mois de dépenses fixes).
+              <div className="p-3.5 rounded-lg border border-emerald-500/20 bg-emerald-500/5 text-emerald-800 dark:text-emerald-200 text-xs leading-relaxed">
+                Your remaining liquid buffer stays above the safe 2-month fixed obligation safety threshold.
               </div>
 
-              {/* Row 4 */}
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
-                  <span>Objectif cible (&ldquo;Start my business&rdquo;)</span>
-                  <Info className="w-3 h-3 text-muted-foreground/60" />
-                </span>
-                <span className="flex-1 border-b border-dotted border-muted-foreground/30 mx-2" />
-                <span className="font-mono font-bold text-foreground shrink-0">
-                  {formatCurrency(500000, currency)}
-                </span>
-              </div>
-
-              {/* Row 5 */}
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
-                  <span>Effort mensuel pour maintenir décembre 2027</span>
-                  <Info className="w-3 h-3 text-muted-foreground/60" />
-                </span>
-                <span className="flex-1 border-b border-dotted border-muted-foreground/30 mx-2" />
-                <span className="font-mono font-bold text-primary shrink-0">
-                  +{formatCurrency(simulation.delta.additionalMonthlyAmountRequired || 4200, currency)} / mois
+              <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                <span className="text-muted-foreground font-medium">Recovery effort to maintain Nov 2027 deadline</span>
+                <span className="font-bold text-primary">
+                  +{formatCurrency(simulation.delta.additionalMonthlyAmountRequired || 4200, currency)} / month
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Collapsible Technical Details (Jump Pattern) */}
-          <div className="rounded-2xl border border-border bg-card p-4">
+          {/* Collapsible Formula Details */}
+          <div className="rounded-xl border border-border/80 bg-card p-4">
             <button
               type="button"
               onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
               className="w-full flex items-center justify-between text-xs font-semibold text-foreground hover:text-primary transition-colors"
             >
-              <span className="flex items-center gap-2">
-                <span>Détail complet des calculs déterministes</span>
-                <span className="text-muted-foreground font-normal">🔎</span>
-              </span>
-              <span className="flex items-center gap-1 text-primary font-mono text-[11px]">
-                <span>{showTechnicalDetails ? "Masquer" : "Voir"}</span>
+              <span>Verified Calculation Details</span>
+              <span className="flex items-center gap-1 text-primary font-medium text-xs">
+                <span>{showTechnicalDetails ? "Hide" : "Show"}</span>
                 {showTechnicalDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               </span>
             </button>
 
             {showTechnicalDetails && (
-              <div className="pt-4 mt-3 border-t border-border/70 space-y-2 text-xs font-mono text-muted-foreground animate-fadeIn">
+              <div className="pt-3 mt-3 border-t border-border/60 space-y-2 text-xs text-muted-foreground animate-fadeIn">
                 <div className="flex justify-between">
-                  <span>Formule de normalisation :</span>
-                  <span className="text-foreground font-bold">Amorti sur 16 mois</span>
+                  <span>Normalization Formula:</span>
+                  <span className="text-foreground font-medium">Monthly trajectory allocation quotient</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Delta de flux libre :</span>
-                  <span className="text-foreground font-bold">-0 KES / mois (Paiement comptant)</span>
+                  <span>Cash Flow Delta:</span>
+                  <span className="text-foreground font-medium">0 KES / month (Cash)</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Impact sur le score de résilience :</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">Stable (84/100)</span>
+                  <span>Resilience Index:</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Resilient (84/100)</span>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Right Column (4 cols): Explainer Video Card + Interactive Slider + Plain Language Takeaway */}
+        {/* Right Column (4 cols): Recommendation Synthesis */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="rounded-3xl border border-border bg-card p-6 space-y-6 shadow-elevation-1">
+          <div className="rounded-xl border border-border/80 bg-card p-6 space-y-5 shadow-xs">
             <div className="space-y-1">
-              <h3 className="text-base font-bold font-editorial text-foreground">
-                Useaimly vous explique
+              <h3 className="text-base font-bold text-foreground">
+                UseAimly Verdict & Synthesis
               </h3>
               <p className="text-xs text-muted-foreground">
-                Synthèse visuelle de l&apos;impact sur votre trajectoire.
+                Clear trade-off assessment for your decision.
               </p>
             </div>
 
-            {/* Video-style Visual Thumbnail Card */}
-            <div className="rounded-2xl bg-zinc-950 text-white p-6 relative overflow-hidden aspect-video flex flex-col items-center justify-center text-center space-y-2 shadow-inner">
-              <div className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-transform hover:scale-105 cursor-pointer">
-                <Play className="w-5 h-5 fill-white text-white translate-x-0.5" />
-              </div>
-              <div className="text-xs font-mono font-bold tracking-wider uppercase text-zinc-300">
-                Payer comptant
-              </div>
-            </div>
-
-            {/* Visual Balance Slider */}
-            <div className="space-y-2 pt-2">
-              <div className="flex justify-between text-xs font-mono">
-                <span className="text-muted-foreground">Dépense</span>
-                <span className="text-primary font-bold">Buffer restant</span>
-                <span className="text-muted-foreground">Total</span>
+            {/* Visual Balance Bar */}
+            <div className="space-y-2 pt-1">
+              <div className="flex justify-between text-xs text-muted-foreground font-medium">
+                <span>Outflow</span>
+                <span className="text-primary font-bold">Remaining Buffer</span>
               </div>
               <div className="relative flex items-center">
-                <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
                   <div className="h-full bg-primary rounded-full" style={{ width: "83%" }} />
                 </div>
               </div>
-              <div className="flex justify-between text-[11px] font-mono text-muted-foreground">
+              <div className="flex justify-between text-xs text-muted-foreground">
                 <span>{formatCurrency(amount, currency)}</span>
                 <span className="font-bold text-foreground">{formatCurrency(150000, currency)}</span>
-                <span>{formatCurrency(180000, currency)}</span>
               </div>
             </div>
 
-            {/* Plain Language Synthesis (Jump Pattern) */}
-            <p className="text-xs text-muted-foreground leading-relaxed pt-2 border-t border-border/70">
-              <strong>La solution recommandée :</strong> financez cet achat via votre buffer liquide sans recourir à un crédit. Vous conservez votre flexibilité et il vous suffira d&apos;épargner <strong>+{formatCurrency(4200, currency)} / mois</strong> pour franchir votre cap en décembre 2027.
-            </p>
+            {/* Plain Language Synthesis */}
+            <div className="p-4 rounded-lg bg-secondary/40 border border-border/60 space-y-2 text-xs text-muted-foreground leading-relaxed">
+              <div className="font-semibold text-foreground">Recommended Action Plan</div>
+              <p>
+                Pay for this purchase in cash using your liquid reserves rather than taking on debt. To preserve your original November 2027 goal arrival date, save an extra <strong>+{formatCurrency(4200, currency)} / month</strong> for the next 16 months.
+              </p>
+            </div>
 
             <div className="pt-2">
               <Link
                 href="/app/what-if"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-xs font-bold text-primary-foreground hover:opacity-95 transition-all shadow-xs"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-xs font-semibold text-primary-foreground hover:opacity-95 transition-all shadow-xs"
               >
-                <span>Tester une variante dans What If?</span>
+                <span>Explore Variants in What-If Sandbox</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>

@@ -26,6 +26,11 @@ export function Header() {
   const { user, profile, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // If inside the authenticated app shell, the AppLayout renders the top navigation
+  if (pathname.startsWith("/app")) {
+    return null;
+  }
+
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "Strategist";
 
   const NAV_LINKS = [
@@ -33,31 +38,31 @@ export function Header() {
       label: "Destinations",
       href: "/app/goals",
       icon: <Target className="w-4 h-4" />,
-      desc: "Suivi des objectifs de vie",
+      desc: "Life goals & target timelines",
     },
     {
-      label: "Simulateur Decide",
+      label: "Simulate Decision",
       href: "/app/decide",
       icon: <HelpCircle className="w-4 h-4" />,
-      desc: "Simulez l'impact avant de dépenser",
+      desc: "Test purchase impact before spending",
     },
     {
       label: "What If?",
       href: "/app/what-if",
       icon: <TrendingUp className="w-4 h-4" />,
-      desc: "Laboratoire d'hypothèses financières",
+      desc: "Financial scenario laboratory",
     },
     {
       label: "Design System",
       href: "/design-system",
       icon: <Layers className="w-4 h-4" />,
-      desc: "Catalogue de composants UI",
+      desc: "UI component foundation",
     },
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/80 bg-background/85 backdrop-blur-xl transition-colors duration-200">
-      <Container className="flex h-16 items-center justify-between px-3 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 backdrop-blur-md transition-colors duration-200">
+      <Container className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Brand Logo (Responsive sizing) */}
         <div className="flex items-center gap-3 sm:gap-6">
           <div className="hidden sm:block">
@@ -76,7 +81,7 @@ export function Header() {
                   key={link.label}
                   href={link.href}
                   className={`transition-colors font-medium hover:text-foreground ${
-                    isActive ? "text-primary font-bold" : ""
+                    isActive ? "text-primary font-semibold" : ""
                   }`}
                 >
                   {link.label}
@@ -92,16 +97,16 @@ export function Header() {
             <div className="flex items-center gap-2">
               <Link
                 href="/app"
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 sm:px-4 py-1.5 text-xs font-semibold text-foreground hover:border-primary/40 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:border-primary/40 transition-colors"
               >
-                <div className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold">
+                <div className="w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center text-[10px] font-bold">
                   {displayName.charAt(0).toUpperCase()}
                 </div>
                 <span className="hidden sm:inline">{displayName}</span>
               </Link>
               <button
                 onClick={() => signOut()}
-                className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-destructive hover:border-destructive/30 transition-colors"
+                className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-destructive hover:border-destructive/30 transition-colors"
                 title="Sign out"
               >
                 <LogOut className="w-3.5 h-3.5" />
@@ -112,17 +117,17 @@ export function Header() {
             <div className="flex items-center gap-2 sm:gap-3">
               <Link
                 href="/login"
-                className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5"
+                className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>Sign In</span>
               </Link>
               <Link
                 href="/app"
-                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#FF6B4A] to-[#FF3820] px-3.5 sm:px-5 py-1.5 sm:py-2 text-xs font-bold text-white hover:opacity-95 shadow-md shadow-orange-500/20 transition-all"
+                className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 sm:px-5 py-1.5 sm:py-2 text-xs font-semibold text-primary-foreground hover:opacity-95 shadow-xs transition-all"
               >
-                <span>Accéder à l&apos;App</span>
-                <ArrowRight className="w-3 h-3" />
+                <span>Open Application</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           )}
@@ -132,7 +137,7 @@ export function Header() {
           {/* Mobile Hamburger Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 text-foreground/80 hover:text-foreground rounded-xl border border-border bg-card focus:outline-hidden"
+            className="lg:hidden p-2 text-foreground/80 hover:text-foreground rounded-xl border border-border/80 bg-card focus:outline-hidden"
             aria-label="Toggle Menu"
           >
             {mobileMenuOpen ? <X className="w-4 h-4 text-primary" /> : <Menu className="w-4 h-4" />}

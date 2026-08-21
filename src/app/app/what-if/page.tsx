@@ -54,30 +54,30 @@ interface PresetScenario {
 const PRESET_SCENARIOS: PresetScenario[] = [
   {
     id: "sc-1",
-    name: "Épargner +10 000 KES / mois",
+    name: "Save +10,000 / month",
     type: "SAVE_MORE",
     monthlyDelta: 10000,
     oneTimeDelta: 0,
-    badge: "+4 mois d'avance",
-    desc: "Allouez 10 000 KES de plus chaque mois directement vers votre destination principale.",
+    badge: "4 months ahead",
+    desc: "Direct 10,000 extra cash flow each month to your primary destination.",
   },
   {
     id: "sc-2",
-    name: "Consulting d'appoint (+25k/mo)",
+    name: "Side Consulting (+25k/mo)",
     type: "EARN_MORE",
     monthlyDelta: 25000,
     oneTimeDelta: 0,
-    badge: "+8 mois d'avance",
-    desc: "Générez un revenu complémentaire et injectez 100% du net dans vos économies.",
+    badge: "8 months ahead",
+    desc: "Generate additional net income and allocate 100% to savings.",
   },
   {
     id: "sc-3",
-    name: "Réduire les abonnements (-12k/mo)",
+    name: "Reduce Subscriptions (-12k/mo)",
     type: "SPEND_LESS",
     monthlyDelta: 12000,
     oneTimeDelta: 0,
-    badge: "+5 mois d'avance",
-    desc: "Optimisez vos charges fixes pour libérer du flux de trésorerie disponible.",
+    badge: "5 months ahead",
+    desc: "Trim discretionary recurring expenses to expand available cash flow.",
   },
 ];
 
@@ -135,21 +135,21 @@ export default function WhatIfPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
-      {/* Top Breadcrumb & Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/70 pb-5">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
         <div className="space-y-1">
           <Link
             href="/app"
-            className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-primary hover:underline"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Boîte à outils / Simulateur What If?</span>
+            <span>Return to Overview</span>
           </Link>
-          <h1 className="text-2xl sm:text-4xl font-bold font-editorial text-foreground tracking-tight">
-            Résultat de simulation ({formatCurrency(monthlyDelta > 0 ? monthlyDelta : -monthlyDelta, currency)}/mois)
+          <h1 className="text-2xl sm:text-4xl font-bold text-foreground tracking-tight">
+            What-If Sandbox — ({formatCurrency(monthlyDelta > 0 ? monthlyDelta : -monthlyDelta, currency)}/mo)
           </h1>
-          <p className="text-xs font-mono text-muted-foreground">
-            {new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" })} • Hypothèse : {activeScenario.name}
+          <p className="text-xs text-muted-foreground font-medium">
+            Hypothesis: {activeScenario.name}
           </p>
         </div>
 
@@ -158,10 +158,10 @@ export default function WhatIfPage() {
           <button
             type="button"
             onClick={() => setShowConfirmation(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary text-primary-foreground font-bold hover:opacity-95 transition-opacity shadow-xs"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-95 transition-opacity shadow-xs"
           >
             <Check className="w-3.5 h-3.5" />
-            <span>Adopter ce plan</span>
+            <span>Adopt This Plan</span>
           </button>
 
           <button
@@ -170,30 +170,30 @@ export default function WhatIfPage() {
             className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border transition-colors ${
               isFavorite
                 ? "border-rose-500/30 bg-rose-500/10 text-rose-600"
-                : "border-border bg-card text-foreground hover:bg-secondary/70"
+                : "border-border/80 bg-card text-foreground hover:bg-secondary/60"
             }`}
           >
             <Heart className={`w-3.5 h-3.5 ${isFavorite ? "fill-rose-500 text-rose-500" : "text-foreground"}`} />
-            <span>Favoris</span>
+            <span>Save Plan</span>
           </button>
         </div>
       </div>
 
       {hasAppliedPlan && (
-        <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-2 animate-fadeIn">
+        <div className="p-4 rounded-xl border border-emerald-500/25 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200 text-xs flex items-center gap-2 animate-fadeIn">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
-          <span>Ce scénario est désormais votre plan de référence officiel pour &ldquo;{baseline.goalTitle}&rdquo;.</span>
+          <span>This scenario is now set as your active target plan for &ldquo;{baseline.goalTitle}&rdquo;.</span>
         </div>
       )}
 
-      {/* Main Grid: Left Detailed Breakdown + Right Companion Widget */}
+      {/* Main Grid: Left Detailed Breakdown + Right Synthesis */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column (8 cols): Scenarios Selector + Dotted Line Item Breakdown */}
+        {/* Left Column (8 cols): Scenarios Selector + Breakdown */}
         <div className="lg:col-span-8 space-y-6">
-          {/* 3 Strategy Selector Cards */}
-          <div className="space-y-2">
-            <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">
-              3 scénarios pour accélérer votre horizon
+          {/* 3 Scenario Selector Cards */}
+          <div className="space-y-3">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              3 Scenarios to Accelerate Timeline
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
@@ -204,21 +204,21 @@ export default function WhatIfPage() {
                     key={sc.id}
                     type="button"
                     onClick={() => setSelectedScenarioId(sc.id)}
-                    className={`rounded-2xl p-5 text-left transition-all border relative flex flex-col justify-between ${
+                    className={`rounded-xl p-4 text-left transition-all border relative flex flex-col justify-between ${
                       isActive
-                        ? "border-primary bg-card shadow-sm ring-2 ring-primary/20"
+                        ? "border-primary bg-card shadow-xs ring-2 ring-primary/20"
                         : "border-border/80 bg-card hover:border-border"
                     }`}
                   >
                     <div className="space-y-1">
-                      <div className="text-xs font-semibold text-muted-foreground">{sc.name}</div>
-                      <div className="text-xl sm:text-2xl font-bold font-financial text-foreground">
+                      <div className="text-xs font-medium text-muted-foreground">{sc.name}</div>
+                      <div className="text-xl font-bold text-foreground">
                         {formatCurrency(sc.monthlyDelta, currency)}
                       </div>
                     </div>
-                    <div className="pt-3 mt-2 border-t border-border/50 flex items-center justify-between text-[11px] font-mono">
-                      <span className="text-muted-foreground">Gain horizon</span>
-                      <span className="text-primary font-bold">{sc.badge}</span>
+                    <div className="pt-3 mt-2 border-t border-border/50 flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Timeline Gain</span>
+                      <span className="text-primary font-bold">+{sc.badge}</span>
                     </div>
                   </button>
                 );
@@ -226,126 +226,103 @@ export default function WhatIfPage() {
             </div>
           </div>
 
-          {/* Deep-Dive Breakdown Container Card (Jump-Style) */}
-          <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 space-y-6 shadow-elevation-1">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/70 pb-5">
+          {/* Deep-Dive Breakdown Card */}
+          <div className="rounded-xl border border-border/80 bg-card p-6 space-y-6 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
               <div className="space-y-1">
-                <h3 className="text-xl sm:text-2xl font-bold font-editorial text-foreground flex items-center gap-2">
-                  <span>Transformation du flux d&apos;épargne</span>
-                  <span>✨</span>
+                <h3 className="text-xl font-bold text-foreground">
+                  Savings Flow Acceleration
                 </h3>
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                    +{simulation.monthsSaved} mois d&apos;avance
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="inline-flex items-center gap-1 font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                    +{simulation.monthsSaved} Months Earlier
                   </span>
-                  <span className="text-xs text-muted-foreground">
-                    Destination : <strong>{baseline.goalTitle}</strong>
+                  <span className="text-muted-foreground font-medium">
+                    Destination: <strong>{baseline.goalTitle}</strong>
                   </span>
                 </div>
               </div>
 
               <div className="text-left sm:text-right">
-                <div className="text-[11px] font-mono text-muted-foreground uppercase">
-                  Nouvelle date d&apos;arrivée
+                <div className="text-xs text-muted-foreground font-medium">
+                  New Projected Arrival
                 </div>
-                <div className="text-2xl sm:text-3xl font-bold font-financial text-primary">
+                <div className="text-2xl font-bold text-primary">
                   {simulation.newArrivalDateStr}
                 </div>
-                <div className="text-[11px] text-muted-foreground font-mono">
-                  Initialement : {simulation.baselineArrivalStr}
+                <div className="text-xs text-muted-foreground font-medium">
+                  Originally: {simulation.baselineArrivalStr}
                 </div>
               </div>
             </div>
 
-            {/* Dotted Leader Line Breakdown */}
-            <div className="space-y-3.5 text-xs sm:text-sm">
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
-                  <span>Flux de trésorerie libre de base</span>
-                </span>
-                <span className="flex-1 border-b border-dotted border-muted-foreground/30 mx-2" />
-                <span className="font-mono font-bold text-foreground shrink-0">
-                  {formatCurrency(baseline.monthlyFreeCashFlow, currency)} / mois
+            {/* Clean Itemized Breakdown */}
+            <div className="space-y-3 text-xs sm:text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium">Base Free Cash Flow</span>
+                <span className="font-bold text-foreground">
+                  {formatCurrency(baseline.monthlyFreeCashFlow, currency)} / month
                 </span>
               </div>
 
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
-                  <span>Variation mensuelle simulée</span>
-                </span>
-                <span className="flex-1 border-b border-dotted border-muted-foreground/30 mx-2" />
-                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
-                  +{formatCurrency(monthlyDelta, currency)} / mois
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium">Simulated Monthly Increase</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                  +{formatCurrency(monthlyDelta, currency)} / month
                 </span>
               </div>
 
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
-                  <span>Nouvelle capacité allouée à l&apos;objectif</span>
-                  <Info className="w-3 h-3 text-muted-foreground/60" />
-                </span>
-                <span className="flex-1 border-b border-dotted border-muted-foreground/30 mx-2" />
-                <span className="font-mono font-bold text-primary shrink-0">
-                  {formatCurrency(simulation.newAllocated, currency)} / mois
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium">New Goal Allocation Capacity</span>
+                <span className="font-bold text-primary">
+                  {formatCurrency(simulation.newAllocated, currency)} / month
                 </span>
               </div>
 
-              {/* Notice Banner */}
-              <div className="p-3.5 rounded-2xl border border-primary/20 bg-primary/5 text-primary text-[11px] leading-relaxed">
-                Ce rythme d&apos;épargne accéléré préserve l&apos;intégralité de vos dépenses fixes essentielles ({formatCurrency(baseline.monthlyExpenses, currency)}/mois).
+              <div className="p-3.5 rounded-lg border border-primary/20 bg-primary/5 text-primary text-xs leading-relaxed">
+                This accelerated pace preserves 100% of your essential fixed living obligations ({formatCurrency(baseline.monthlyExpenses, currency)}/month).
               </div>
 
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
-                  <span>Montant restant à capitaliser</span>
-                  <Info className="w-3 h-3 text-muted-foreground/60" />
-                </span>
-                <span className="flex-1 border-b border-dotted border-muted-foreground/30 mx-2" />
-                <span className="font-mono font-bold text-foreground shrink-0">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium">Remaining Shortfall</span>
+                <span className="font-bold text-foreground">
                   {formatCurrency(baseline.remainingAmount, currency)}
                 </span>
               </div>
 
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
-                  <span>Gain net sur le calendrier</span>
-                  <Info className="w-3 h-3 text-muted-foreground/60" />
-                </span>
-                <span className="flex-1 border-b border-dotted border-muted-foreground/30 mx-2" />
-                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
-                  {simulation.monthsSaved} mois plus tôt
+              <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                <span className="text-muted-foreground font-medium">Net Schedule Gain</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                  {simulation.monthsSaved} Months Saved
                 </span>
               </div>
             </div>
           </div>
 
           {/* Collapsible Technical Details */}
-          <div className="rounded-2xl border border-border bg-card p-4">
+          <div className="rounded-xl border border-border/80 bg-card p-4">
             <button
               type="button"
               onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
               className="w-full flex items-center justify-between text-xs font-semibold text-foreground hover:text-primary transition-colors"
             >
-              <span className="flex items-center gap-2">
-                <span>Détail complet des calculs déterministes</span>
-                <span className="text-muted-foreground font-normal">🔎</span>
-              </span>
-              <span className="flex items-center gap-1 text-primary font-mono text-[11px]">
-                <span>{showTechnicalDetails ? "Masquer" : "Voir"}</span>
+              <span>Verified Calculation Details</span>
+              <span className="flex items-center gap-1 text-primary font-medium text-xs">
+                <span>{showTechnicalDetails ? "Hide" : "Show"}</span>
                 {showTechnicalDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               </span>
             </button>
 
             {showTechnicalDetails && (
-              <div className="pt-4 mt-3 border-t border-border/70 space-y-2 text-xs font-mono text-muted-foreground animate-fadeIn">
+              <div className="pt-3 mt-3 border-t border-border/60 space-y-2 text-xs text-muted-foreground animate-fadeIn">
                 <div className="flex justify-between">
-                  <span>Mois d&apos;épargne nécessaires :</span>
-                  <span className="text-foreground font-bold">{simulation.monthsRequired} mois</span>
+                  <span>Required Months to Goal:</span>
+                  <span className="text-foreground font-medium">{simulation.monthsRequired} months</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Taux d&apos;épargne effectif :</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                    {Math.round((simulation.newAllocated / baseline.monthlyGrossIncome) * 100)}% du brut
+                  <span>Effective Savings Rate:</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                    {Math.round((simulation.newAllocated / baseline.monthlyGrossIncome) * 100)}% of gross inflow
                   </span>
                 </div>
               </div>
@@ -353,59 +330,52 @@ export default function WhatIfPage() {
           </div>
         </div>
 
-        {/* Right Column (4 cols): Explainer Video Card + Interactive Slider + Summary */}
+        {/* Right Column (4 cols): Summary Recommendation */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="rounded-3xl border border-border bg-card p-6 space-y-6 shadow-elevation-1">
+          <div className="rounded-xl border border-border/80 bg-card p-6 space-y-5 shadow-xs">
             <div className="space-y-1">
-              <h3 className="text-base font-bold font-editorial text-foreground">
-                Useaimly vous explique
+              <h3 className="text-base font-bold text-foreground">
+                UseAimly Scenario Verdict
               </h3>
               <p className="text-xs text-muted-foreground">
-                Comparatif visuel entre le plan actuel et le scénario simulé.
+                Visual timeline comparison.
               </p>
             </div>
 
-            {/* Video Thumbnail */}
-            <div className="rounded-2xl bg-zinc-950 text-white p-6 relative overflow-hidden aspect-video flex flex-col items-center justify-center text-center space-y-2 shadow-inner">
-              <div className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-transform hover:scale-105 cursor-pointer">
-                <Play className="w-5 h-5 fill-white text-white translate-x-0.5" />
-              </div>
-              <div className="text-xs font-mono font-bold tracking-wider uppercase text-zinc-300">
-                Accélérer l&apos;arrivée
-              </div>
-            </div>
-
-            {/* Visual Horizon Progress Slider */}
-            <div className="space-y-2 pt-2">
-              <div className="flex justify-between text-xs font-mono">
-                <span className="text-muted-foreground">Plan actuel</span>
-                <span className="text-primary font-bold">Nouveau plan</span>
-                <span className="text-muted-foreground">Cible</span>
+            {/* Visual Horizon Progress Bar */}
+            <div className="space-y-2 pt-1">
+              <div className="flex justify-between text-xs text-muted-foreground font-medium">
+                <span>Current Plan</span>
+                <span className="text-primary font-bold">New Plan</span>
+                <span>Deadline</span>
               </div>
               <div className="relative flex items-center">
-                <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
                   <div className="h-full bg-primary rounded-full" style={{ width: "70%" }} />
                 </div>
               </div>
-              <div className="flex justify-between text-[11px] font-mono text-muted-foreground">
+              <div className="flex justify-between text-xs text-muted-foreground">
                 <span>{simulation.baselineArrivalStr}</span>
                 <span className="font-bold text-foreground">{simulation.newArrivalDateStr}</span>
-                <span>Déc 2027</span>
+                <span>Dec 2027</span>
               </div>
             </div>
 
             {/* Plain Language Summary */}
-            <p className="text-xs text-muted-foreground leading-relaxed pt-2 border-t border-border/70">
-              <strong>La solution la plus simple :</strong> en augmentant votre épargne de <strong>+{formatCurrency(monthlyDelta, currency)}/mois</strong>, vous atteignez votre destination <strong>{simulation.monthsSaved} mois plus tôt</strong> tout en conservant une réserve de sécurité optimale.
-            </p>
+            <div className="p-4 rounded-lg bg-secondary/40 border border-border/60 space-y-2 text-xs text-muted-foreground leading-relaxed">
+              <div className="font-semibold text-foreground">Recommended Strategy</div>
+              <p>
+                Increasing monthly savings by <strong>+{formatCurrency(monthlyDelta, currency)} / month</strong> reaches your destination <strong>{simulation.monthsSaved} months earlier</strong> without reducing your liquid emergency buffer.
+              </p>
+            </div>
 
             <div className="pt-2">
               <button
                 type="button"
                 onClick={() => setShowConfirmation(true)}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-xs font-bold text-primary-foreground hover:opacity-95 transition-all shadow-xs"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-xs font-semibold text-primary-foreground hover:opacity-95 transition-all shadow-xs"
               >
-                <span>Faire de ce scénario mon plan</span>
+                <span>Make This My Active Plan</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -415,17 +385,17 @@ export default function WhatIfPage() {
 
       {/* Confirmation Modal */}
       {showConfirmation && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
-          <div className="max-w-md w-full rounded-3xl border border-border bg-card p-6 sm:p-8 space-y-6 shadow-elevation-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn">
+          <div className="max-w-md w-full rounded-2xl border border-border/80 bg-card p-6 space-y-5 shadow-lg">
             <div className="space-y-2 text-center">
-              <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
-                <Check className="w-6 h-6" />
+              <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
+                <Check className="w-5 h-5" />
               </div>
-              <h3 className="text-xl font-bold font-editorial text-foreground">
-                Confirmer l&apos;adoption du plan
+              <h3 className="text-xl font-bold text-foreground">
+                Confirm Plan Adoption
               </h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Ce scénario mettra à jour votre allocation mensuelle officielle pour &ldquo;{baseline.goalTitle}&rdquo; à {formatCurrency(simulation.newAllocated, currency)}/mois.
+                This action will update your official monthly allocation for &ldquo;{baseline.goalTitle}&rdquo; to {formatCurrency(simulation.newAllocated, currency)}/month.
               </p>
             </div>
 
@@ -433,9 +403,9 @@ export default function WhatIfPage() {
               <button
                 type="button"
                 onClick={() => setShowConfirmation(false)}
-                className="w-full py-3 rounded-2xl border border-border bg-secondary text-xs font-bold text-foreground hover:bg-secondary/80 transition-colors"
+                className="w-full py-2.5 rounded-xl border border-border/80 bg-secondary/50 text-xs font-semibold text-foreground hover:bg-secondary transition-colors"
               >
-                Annuler
+                Cancel
               </button>
               <button
                 type="button"
@@ -443,9 +413,9 @@ export default function WhatIfPage() {
                   setShowConfirmation(false);
                   setHasAppliedPlan(true);
                 }}
-                className="w-full py-3 rounded-2xl bg-primary text-xs font-bold text-primary-foreground hover:opacity-95 transition-opacity shadow-xs"
+                className="w-full py-2.5 rounded-xl bg-primary text-xs font-semibold text-primary-foreground hover:opacity-95 transition-opacity shadow-xs"
               >
-                Confirmer
+                Confirm Plan
               </button>
             </div>
           </div>

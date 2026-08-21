@@ -18,7 +18,7 @@ export function LookAheadSection({ currency = "KES" }: LookAheadSectionProps) {
       timing: "Due in 45 days (Oct 5)",
       icon: <Calendar className="w-4 h-4 text-amber-500" />,
       badge: "Scheduled",
-      badgeColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+      badgeColor: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20",
       description: "Amortized monthly allowance is fully funded in reserves.",
     },
     {
@@ -28,7 +28,7 @@ export function LookAheadSection({ currency = "KES" }: LookAheadSectionProps) {
       timing: "Expected in 8 days (Aug 28)",
       icon: <TrendingUp className="w-4 h-4 text-primary" />,
       badge: "Predictable",
-      badgeColor: "bg-primary/10 text-primary",
+      badgeColor: "bg-primary/10 text-primary border-primary/20",
       description: "Will replenish monthly free cash flow by +KES 68,000.",
     },
     {
@@ -38,7 +38,7 @@ export function LookAheadSection({ currency = "KES" }: LookAheadSectionProps) {
       timing: "On track for May 2027",
       icon: <Flag className="w-4 h-4 text-teal-500" />,
       badge: "Milestone",
-      badgeColor: "bg-teal-500/10 text-teal-600 dark:text-teal-400",
+      badgeColor: "bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/20",
       description: "Crossing KES 250,000 halfway mark to 'Start my business'.",
     },
     {
@@ -48,7 +48,7 @@ export function LookAheadSection({ currency = "KES" }: LookAheadSectionProps) {
       timing: "Active risk factor",
       icon: <AlertTriangle className="w-4 h-4 text-rose-500" />,
       badge: "Watchlist",
-      badgeColor: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+      badgeColor: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20",
       description: "Unplanned monthly dining/subs above KES 15k delays arrival.",
     },
   ];
@@ -57,36 +57,36 @@ export function LookAheadSection({ currency = "KES" }: LookAheadSectionProps) {
     <section className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl sm:text-2xl font-bold font-editorial text-foreground tracking-tight">
-            Look ahead
+          <h3 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+            Foresight & Horizon
           </h3>
           <p className="text-xs text-muted-foreground">
-            Clear visibility into upcoming commitments, inflows, and risks.
+            Clear visibility into upcoming commitments, inflows, and potential friction.
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {foresightCards.map((card) => (
           <div
             key={card.label}
-            className="rounded-3xl border border-border bg-card p-5 space-y-3 shadow-elevation-1 hover:border-primary/30 transition-all flex flex-col justify-between"
+            className="rounded-xl border border-border/80 bg-card p-5 space-y-3 shadow-xs hover:border-primary/30 transition-all flex flex-col justify-between"
           >
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-mono font-bold text-muted-foreground uppercase tracking-wider">
+                <span className="text-xs font-medium text-muted-foreground">
                   {card.label}
                 </span>
-                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${card.badgeColor}`}>
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${card.badgeColor}`}>
                   {card.badge}
                 </span>
               </div>
 
               <div>
-                <h4 className="text-sm font-bold font-editorial text-foreground line-clamp-1">
+                <h4 className="text-sm font-bold text-foreground line-clamp-1">
                   {card.title}
                 </h4>
-                <div className="text-lg font-bold font-financial text-foreground mt-0.5">
+                <div className="text-lg font-bold text-foreground mt-0.5">
                   {formatCurrency(card.amount, currency)}
                 </div>
               </div>
@@ -97,7 +97,7 @@ export function LookAheadSection({ currency = "KES" }: LookAheadSectionProps) {
               </div>
             </div>
 
-            <p className="text-[11px] text-muted-foreground pt-2 border-t border-border/60 leading-relaxed">
+            <p className="text-xs text-muted-foreground pt-2.5 border-t border-border/50 leading-relaxed">
               {card.description}
             </p>
           </div>

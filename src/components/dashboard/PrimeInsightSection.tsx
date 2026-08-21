@@ -20,43 +20,41 @@ export function PrimeInsightSection({
     <section id="insights" className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl sm:text-2xl font-bold font-editorial text-foreground tracking-tight">
-            One thing to know
+          <h3 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+            Key Financial Insight
           </h3>
           <p className="text-xs text-muted-foreground">
-            The single most consequential insight governing your current trajectory.
+            The primary observation governing your current trajectory.
           </p>
         </div>
       </div>
 
-      {/* Spacious Editorial Highlight Card */}
-      <div className="relative rounded-3xl border border-primary/30 bg-gradient-to-br from-card via-card to-primary/5 p-6 sm:p-10 shadow-elevation-1 overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 max-w-3xl space-y-4">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-mono font-bold text-primary">
+      {/* Clean Insight Highlight Card */}
+      <div className="relative rounded-xl border border-primary/25 bg-primary/5 p-6 sm:p-8 shadow-xs overflow-hidden">
+        <div className="relative z-10 max-w-3xl space-y-3.5">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-0.5 text-xs font-semibold text-primary">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Prime Trajectory Insight</span>
+            <span>Primary Trajectory Observation</span>
           </div>
 
-          <blockquote className="text-lg sm:text-2xl font-bold font-editorial text-foreground leading-snug tracking-tight">
+          <blockquote className="text-lg sm:text-xl font-bold text-foreground leading-snug tracking-tight">
             &ldquo;At your current allocation of{" "}
-            <span className="text-primary font-financial">
-              {formatCurrency(monthlyFreeCashFlow, currency)}/mo
+            <span className="text-primary font-bold">
+              {formatCurrency(monthlyFreeCashFlow, currency)} / month
             </span>
-            , you will arrive at{" "}
-            <span className="text-foreground underline decoration-primary/40 underline-offset-4">
+            , you will arrive at &ldquo;
+            <span className="text-foreground font-bold">
               {goalTitle}
-            </span>{" "}
-            in <span className="text-primary font-bold">November 2027</span> — 1 month ahead of your target deadline.&rdquo;
+            </span>
+            &rdquo; in <span className="text-primary font-bold">November 2027</span> — 1 month ahead of your target deadline.&rdquo;
           </blockquote>
 
           <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-            Your financial velocity is stable. Any single discretionary expense below{" "}
-            <strong className="text-foreground font-financial">
+            Your financial pace is healthy and stable. Any single purchase below{" "}
+            <strong className="text-foreground font-semibold">
               {formatCurrency(42000, currency)}
             </strong>{" "}
-            will not delay your arrival past your December 2027 deadline. Before making an expenditure above this threshold, evaluate it with Useaimly first.
+            will not push your arrival past your December 2027 target date.
           </p>
         </div>
       </div>
