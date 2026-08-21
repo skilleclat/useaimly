@@ -19,6 +19,7 @@ import {
   Compass,
   ArrowRight,
   Sparkles,
+  Calendar,
 } from "lucide-react";
 
 const ICON_MAP: Record<string, React.ReactNode> = {
@@ -67,27 +68,27 @@ export function Step1Destination({ destination, currency, onChange, onNext }: St
   const isValid = destination.title.trim().length > 0 && destination.targetAmount > 0;
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-6 sm:space-y-8 animate-fadeIn">
       {/* Editorial Header */}
-      <div className="space-y-3">
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-mono font-bold text-primary">
+      <div className="space-y-2 text-left">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-mono font-bold text-primary">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Step 1: Your Anchor Destination</span>
+          <span>Step 1: Anchor Destination</span>
         </div>
-        <h2 className="text-3xl sm:text-4xl font-bold font-editorial text-foreground tracking-tight leading-tight">
+        <h2 className="text-2xl sm:text-4xl font-bold font-editorial text-foreground tracking-tight leading-tight">
           What do you want your money to achieve?
         </h2>
-        <p className="text-xs text-muted-foreground max-w-lg mx-auto leading-relaxed">
-          Before looking at budgets or income, Useaimly begins with your destination. Every future spending decision is evaluated against this goal.
+        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-xl">
+          UseAimly begins with your destination. Every future spending choice is evaluated against this goal.
         </p>
       </div>
 
-      {/* Preset Destination Grid */}
+      {/* Preset Destination Grid (Tactile Touch Cards on Mobile) */}
       <div className="space-y-3">
-        <label className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider block">
-          Choose a Destination or Custom Goal
+        <label className="text-[11px] font-mono font-bold text-muted-foreground uppercase tracking-wider block">
+          Select Your Life Goal
         </label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {DESTINATION_PRESETS.map((preset) => {
             const isSelected = selectedKey === preset.key;
             const icon = ICON_MAP[preset.iconName] || <Compass className="w-5 h-5" />;
@@ -97,22 +98,22 @@ export function Step1Destination({ destination, currency, onChange, onNext }: St
                 key={preset.key}
                 type="button"
                 onClick={() => handleSelectPreset(preset)}
-                className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between gap-3 h-28 ${
+                className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between gap-3 min-h-[110px] cursor-pointer ${
                   isSelected
-                    ? "border-primary bg-primary/10 ring-2 ring-primary/20 text-primary shadow-sm"
-                    : "border-border bg-card hover:border-primary/40 hover:bg-secondary/40 text-foreground"
+                    ? "border-2 border-primary bg-primary/10 ring-4 ring-primary/15 text-primary shadow-lg shadow-orange-500/15"
+                    : "border-border/80 bg-card hover:border-primary/40 hover:bg-secondary/40 text-foreground shadow-xs"
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <div className={isSelected ? "text-primary" : "text-muted-foreground"}>
+                  <div className={`p-2 rounded-xl ${isSelected ? "bg-primary text-white" : "bg-secondary text-muted-foreground"}`}>
                     {icon}
                   </div>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground">
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md bg-secondary/80 text-muted-foreground font-semibold">
                     {preset.tag}
                   </span>
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold font-editorial leading-tight line-clamp-1">
+                  <h4 className="text-xs font-bold font-editorial leading-snug line-clamp-2">
                     {preset.title}
                   </h4>
                 </div>
@@ -123,22 +124,22 @@ export function Step1Destination({ destination, currency, onChange, onNext }: St
       </div>
 
       {/* Destination Detail Form */}
-      <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 space-y-6 shadow-elevation-1">
-        <div className="space-y-4">
+      <div className="rounded-3xl border border-border/80 bg-card p-5 sm:p-8 space-y-6 shadow-xl relative overflow-hidden">
+        <div className="space-y-5">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-muted-foreground block">
-              Destination Title / Name
+            <label className="text-xs font-semibold text-foreground block">
+              Destination Title / Goal Name
             </label>
             <input
               type="text"
               value={destination.title}
               onChange={(e) => onChange({ ...destination, title: e.target.value })}
-              placeholder="e.g. Start my consultancy & digital studio"
-              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              placeholder="e.g. Start my business / Buy a home"
+              className="w-full rounded-2xl border border-border/80 bg-background px-4 py-3 text-sm font-semibold text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 min-h-[44px]"
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <MoneyInput
               label="Target Capital Needed"
               value={destination.targetAmount}
@@ -159,41 +160,40 @@ export function Step1Destination({ destination, currency, onChange, onNext }: St
           {/* Target Date with Quick Timeline Helpers */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-muted-foreground block">
-                Target Destination Date
+              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-primary" />
+                <span>Target Arrival Date</span>
               </label>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => handleQuickMonths(12)}
-                  className="rounded-lg border border-border bg-secondary/60 px-2 py-0.5 text-[11px] font-mono text-muted-foreground hover:text-foreground"
+                  className="rounded-lg border border-border/80 bg-secondary/60 px-2.5 py-1 text-[11px] font-mono text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
                 >
                   +1 Year
                 </button>
                 <button
                   type="button"
                   onClick={() => handleQuickMonths(24)}
-                  className="rounded-lg border border-border bg-secondary/60 px-2 py-0.5 text-[11px] font-mono text-muted-foreground hover:text-foreground"
+                  className="rounded-lg border border-border/80 bg-secondary/60 px-2.5 py-1 text-[11px] font-mono text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
                 >
                   +2 Years
                 </button>
                 <button
                   type="button"
                   onClick={() => handleQuickMonths(36)}
-                  className="rounded-lg border border-border bg-secondary/60 px-2 py-0.5 text-[11px] font-mono text-muted-foreground hover:text-foreground"
+                  className="rounded-lg border border-border/80 bg-secondary/60 px-2.5 py-1 text-[11px] font-mono text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
                 >
                   +3 Years
                 </button>
               </div>
             </div>
-            <div className="relative">
-              <input
-                type="date"
-                value={destination.targetDate}
-                onChange={(e) => onChange({ ...destination, targetDate: e.target.value })}
-                className="w-full rounded-2xl border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer"
-              />
-            </div>
+            <input
+              type="date"
+              value={destination.targetDate}
+              onChange={(e) => onChange({ ...destination, targetDate: e.target.value })}
+              className="w-full rounded-2xl border border-border/80 bg-background px-4 py-3 text-sm font-mono font-semibold text-foreground focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 cursor-pointer min-h-[44px]"
+            />
           </div>
         </div>
 
@@ -203,7 +203,7 @@ export function Step1Destination({ destination, currency, onChange, onNext }: St
             type="button"
             disabled={!isValid}
             onClick={onNext}
-            className="flex items-center gap-2 rounded-2xl bg-primary px-6 py-3.5 text-xs font-bold text-primary-foreground hover:opacity-95 shadow-sm transition-all disabled:opacity-50"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] px-7 py-3.5 text-xs font-bold text-white shadow-lg shadow-orange-500/25 hover:opacity-95 transition-all disabled:opacity-50 min-h-[44px] cursor-pointer"
           >
             <span>Next: Where You Are</span>
             <ArrowRight className="w-4 h-4" />
