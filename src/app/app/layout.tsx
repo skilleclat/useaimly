@@ -233,7 +233,61 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 pb-16">{children}</main>
+      <main className="flex-1 pb-20 lg:pb-16">{children}</main>
+
+      {/* Persistent Mobile Bottom Navigation Bar (Quiet Luxury Dock) */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border/80 px-3 py-2 flex items-center justify-around shadow-2xl">
+        <Link
+          href="/app"
+          className={`flex flex-col items-center justify-center gap-1 text-[10px] font-semibold transition-all ${
+            pathname === "/app" ? "text-primary font-bold" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Compass className="w-4 h-4" />
+          <span>Home</span>
+        </Link>
+
+        <Link
+          href="/app/goals"
+          className={`flex flex-col items-center justify-center gap-1 text-[10px] font-semibold transition-all ${
+            pathname.startsWith("/app/goals") ? "text-primary font-bold" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Target className="w-4 h-4" />
+          <span>Goals</span>
+        </Link>
+
+        {/* Central Primary Action CTA */}
+        <Link
+          href="/app/decide"
+          className="flex flex-col items-center justify-center -mt-5"
+        >
+          <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white flex items-center justify-center shadow-lg shadow-orange-500/30 hover:scale-105 transition-all">
+            <HelpCircle className="w-6 h-6" />
+          </div>
+          <span className="text-[10px] font-extrabold text-primary mt-1">Decide</span>
+        </Link>
+
+        <Link
+          href="/app/what-if"
+          className={`flex flex-col items-center justify-center gap-1 text-[10px] font-semibold transition-all ${
+            pathname.startsWith("/app/what-if") ? "text-primary font-bold" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <TrendingUp className="w-4 h-4" />
+          <span>What-If</span>
+        </Link>
+
+        <Link
+          href="/app/settings"
+          className={`flex flex-col items-center justify-center gap-1 text-[10px] font-semibold transition-all ${
+            pathname.startsWith("/app/settings") ? "text-primary font-bold" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Settings className="w-4 h-4" />
+          <span>Settings</span>
+        </Link>
+      </nav>
     </div>
   );
 }

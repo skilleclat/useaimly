@@ -88,13 +88,18 @@ export default function AuthenticatedDashboard() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-12 animate-fadeIn font-mono">
-      {/* 1. GREETING HEADER */}
+      {/* 1. GREETING & HIGH-LEVEL TRAJECTORY STATUS */}
       <div className="space-y-3">
-        <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-foreground">
-          {greeting}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Your future, at a glance.
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-foreground">
+            {greeting} {firstName} 👋
+          </h1>
+          <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-bold font-mono border border-emerald-500/30 shrink-0">
+            ✓ ON TRACK
+          </span>
+        </div>
+        <p className="text-xs sm:text-sm text-muted-foreground">
+          Your goals are on track. Liquid cushion protects <strong className="text-foreground font-bold">3.5 months</strong> of fixed living costs.
         </p>
       </div>
 
