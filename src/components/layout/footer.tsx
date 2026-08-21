@@ -4,7 +4,6 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Container } from "./container";
-import { UseaimlyLogo } from "../design-system/UseaimlyLogo";
 import {
   ArrowUp,
   ShieldCheck,
@@ -97,7 +96,6 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 text-xs">
           {/* Column 1: Brand & Status (Span 2 on mobile) */}
           <div className="col-span-2 space-y-4">
-            <UseaimlyLogo size="md" showTagline={false} />
             <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
               The premier decision intelligence platform connecting present spending choices to long-term financial freedom.
             </p>
