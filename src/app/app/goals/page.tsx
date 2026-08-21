@@ -170,9 +170,9 @@ export default function GoalsPage() {
         </div>
       )}
 
-      {/* FILTER TABS (Mobile responsive scroll container) */}
-      <div className="border-b border-border/60 pb-3 overflow-x-auto no-scrollbar">
-        <div className="flex items-center gap-2 min-w-max">
+      {/* FILTER TABS (Segmented Pill Bar) */}
+      <div className="overflow-x-auto no-scrollbar pb-1">
+        <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-secondary/50 border border-border/60 min-w-max">
           {(["ALL", "ACTIVE", "PAUSED", "COMPLETED"] as const).map((tab) => {
             const labels = {
               ALL: `All Destinations (${destinations.length})`,
@@ -180,15 +180,16 @@ export default function GoalsPage() {
               PAUSED: "Paused",
               COMPLETED: "Completed",
             };
+            const isActive = filterTab === tab;
             return (
               <button
                 key={tab}
                 type="button"
                 onClick={() => setFilterTab(tab)}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold shrink-0 whitespace-nowrap transition-all ${
-                  filterTab === tab
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold shrink-0 whitespace-nowrap transition-all ${
+                  isActive
                     ? "bg-primary text-primary-foreground shadow-xs"
-                    : "bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
                 }`}
               >
                 {labels[tab]}
@@ -277,13 +278,16 @@ export default function GoalsPage() {
         })}
       </div>
 
-      {/* CREATE NEW DESTINATION MODAL */}
+      {/* CREATE NEW DESTINATION MODAL (Mobile Bottom Sheet / Desktop Centered Dialog) */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-3 sm:p-4 pt-6 sm:pt-4 bg-black/60 backdrop-blur-xs animate-fadeIn overflow-y-auto">
-          <div className="max-w-lg w-full rounded-2xl border border-border/80 bg-card p-5 sm:p-6 space-y-5 shadow-2xl my-auto max-h-[88vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-border/60 pb-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl border-t sm:border border-border/80 bg-card p-5 sm:p-6 space-y-5 shadow-2xl max-h-[85vh] sm:max-h-[88vh] overflow-y-auto animate-slideUp">
+            {/* Grab Handle for Mobile */}
+            <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mx-auto sm:hidden mb-1" />
+
+            <div className="flex items-center justify-between border-b border-border/60 pb-3.5">
               <div className="space-y-0.5">
-                <h3 className="text-xl font-bold text-foreground">
+                <h3 className="text-lg sm:text-xl font-bold text-foreground">
                   Define a New Destination
                 </h3>
                 <p className="text-xs text-muted-foreground font-medium">
