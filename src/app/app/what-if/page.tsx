@@ -385,8 +385,8 @@ export default function WhatIfPage() {
 
       {/* Confirmation Modal */}
       {showConfirmation && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn">
-          <div className="max-w-md w-full rounded-2xl border border-border/80 bg-card p-6 space-y-5 shadow-lg">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-3 sm:p-4 pt-6 sm:pt-4 bg-black/60 backdrop-blur-xs animate-fadeIn overflow-y-auto">
+          <div className="max-w-md w-full rounded-2xl border border-border/80 bg-card p-5 sm:p-6 space-y-5 shadow-2xl my-auto">
             <div className="space-y-2 text-center">
               <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
                 <Check className="w-5 h-5" />

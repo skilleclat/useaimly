@@ -279,8 +279,8 @@ export default function GoalsPage() {
 
       {/* CREATE NEW DESTINATION MODAL */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-          <div className="max-w-lg w-full rounded-2xl border border-border/80 bg-card p-6 space-y-6 shadow-xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-3 sm:p-4 pt-6 sm:pt-4 bg-black/60 backdrop-blur-xs animate-fadeIn overflow-y-auto">
+          <div className="max-w-lg w-full rounded-2xl border border-border/80 bg-card p-5 sm:p-6 space-y-5 shadow-2xl my-auto max-h-[88vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-border/60 pb-4">
               <div className="space-y-0.5">
                 <h3 className="text-xl font-bold text-foreground">
