@@ -134,6 +134,24 @@ export default function LandingPage() {
             <p className="text-lg sm:text-xl text-muted-foreground font-medium">
               See tomorrow before deciding today.
             </p>
+
+            {/* Dual CTA Actions: Try Live Demo vs Get Started */}
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+              <Link
+                href="/app"
+                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white font-bold text-xs sm:text-sm px-6 py-3.5 shadow-lg shadow-orange-500/25 hover:opacity-95 hover:scale-[1.01] transition-all cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Try Live Demo (No Account Needed)</span>
+              </Link>
+              <Link
+                href="/signup"
+                className="inline-flex items-center gap-2 rounded-2xl border border-border/80 bg-card hover:bg-secondary/70 text-foreground font-bold text-xs sm:text-sm px-6 py-3.5 shadow-xs transition-all"
+              >
+                <span>Create Free Account</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
 
           {/* ========================================================================= */}

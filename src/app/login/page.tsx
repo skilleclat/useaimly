@@ -8,7 +8,7 @@ import { LoginSchema, LoginInput } from "@/lib/validation/auth.schema";
 import { loginAction, signInWithGoogleAction } from "@/lib/auth/actions";
 import { UseaimlyLogo } from "@/components/design-system/UseaimlyLogo";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Lock, Mail, ArrowRight, Eye, EyeOff, AlertCircle, CheckCircle2, ShieldCheck, RefreshCw } from "lucide-react";
+import { Lock, Mail, ArrowRight, Eye, EyeOff, AlertCircle, CheckCircle2, ShieldCheck, RefreshCw, Sparkles } from "lucide-react";
 
 function GoogleIcon({ className = "w-5 h-5" }: { className?: string }) {
   return (
@@ -142,6 +142,15 @@ function LoginForm() {
           )}
           <span>{isGooglePending ? "Connecting with Google..." : "Continue with Google"}</span>
         </button>
+
+        {/* 1.5 Instant Live Demo Option */}
+        <Link
+          href="/app"
+          className="w-full flex items-center justify-center gap-2 rounded-full border border-primary/40 bg-primary/10 hover:bg-primary/20 px-4 py-3 text-xs font-bold text-primary transition-all shadow-xs"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span>Try Live Demo (No Account Needed)</span>
+        </Link>
 
         {/* Divider */}
         <div className="relative flex items-center justify-center">

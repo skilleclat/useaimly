@@ -189,6 +189,15 @@ function SignupFormContent() {
             <span>{isGooglePending ? "Connecting with Google..." : "Continue with Google"}</span>
           </button>
 
+          {/* 1.5 Instant Live Demo Option */}
+          <Link
+            href="/app"
+            className="w-full flex items-center justify-center gap-2 rounded-full border border-primary/40 bg-primary/10 hover:bg-primary/20 px-4 py-3 text-xs font-bold text-primary transition-all shadow-xs"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Try Live Demo (No Account Needed)</span>
+          </Link>
+
           {/* Divider */}
           <div className="relative flex items-center justify-center">
             <div className="w-full border-t border-border/70" />

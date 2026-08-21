@@ -65,6 +65,22 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary/15">
+      {/* Live Demo Conversion Banner (Visible when unauthenticated) */}
+      {!user && (
+        <div className="w-full bg-gradient-to-r from-primary via-orange-500 to-amber-500 px-4 py-2 text-white text-xs font-bold flex flex-wrap items-center justify-between gap-2 shadow-sm z-50">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 shrink-0 animate-pulse" />
+            <span>You are exploring UseAimly in Live Demo Mode with sample data.</span>
+          </div>
+          <Link
+            href="/signup"
+            className="rounded-full bg-white text-primary px-3.5 py-1 text-[11px] font-extrabold hover:bg-slate-100 transition-colors shadow-xs"
+          >
+            Create Free Account to Save Trajectories →
+          </Link>
+        </div>
+      )}
+
       {/* Authenticated Top Navigation Header */}
       <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/90 backdrop-blur-md transition-colors duration-200">
         <div className="max-w-7xl mx-auto flex h-14 sm:h-16 items-center justify-between px-3 sm:px-6 lg:px-8">
@@ -101,18 +117,28 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* User Profile Pill (Visible on sm+ screens) */}
-            <div className="hidden sm:flex items-center gap-2 rounded-full border border-border/80 bg-card px-3 py-1 text-xs shadow-xs">
-              <div className="w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-[10px]">
-                {displayName.charAt(0).toUpperCase()}
+            {/* User Profile Pill / Demo Badge */}
+            {!user ? (
+              <Link
+                href="/signup"
+                className="hidden sm:flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3.5 py-1 text-xs font-bold text-primary hover:bg-primary/20 transition-all shadow-xs"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Demo Mode • Save Data</span>
+              </Link>
+            ) : (
+              <div className="hidden sm:flex items-center gap-2 rounded-full border border-border/80 bg-card px-3 py-1 text-xs shadow-xs">
+                <div className="w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-[10px]">
+                  {displayName.charAt(0).toUpperCase()}
+                </div>
+                <span className="font-semibold text-foreground max-w-[90px] truncate text-xs">
+                  {displayName}
+                </span>
+                <span className="text-[10px] text-muted-foreground font-mono font-medium border-l border-border/60 pl-1.5">
+                  {currency}
+                </span>
               </div>
-              <span className="font-semibold text-foreground max-w-[90px] truncate text-xs">
-                {displayName}
-              </span>
-              <span className="text-[10px] text-muted-foreground font-mono font-medium border-l border-border/60 pl-1.5">
-                {currency}
-              </span>
-            </div>
+            )}
 
             {/* Settings Icon Button */}
             <Link
