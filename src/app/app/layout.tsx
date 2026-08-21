@@ -83,21 +83,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary/15">
-      {/* Authenticated Top Navigation */}
-      <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/90 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4 lg:gap-8">
+      {/* Authenticated Top Navigation Header */}
+      <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/90 backdrop-blur-md transition-colors duration-200">
+        <div className="max-w-7xl mx-auto flex h-14 sm:h-16 items-center justify-between px-3 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3 lg:gap-8">
             <Link href="/app" className="flex items-center gap-2">
-              <div className="hidden sm:block">
-                <UseaimlyLogo size="sm" showTagline={false} />
-              </div>
-              <div className="block sm:hidden">
-                <UseaimlyLogo size="xs" showTagline={false} />
-              </div>
+              <UseaimlyLogo size="sm" showTagline={false} />
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1.5">
+            <nav className="hidden lg:flex items-center gap-1">
               {NAV_ITEMS.map((item) => {
                 const isActive =
                   item.href === "/app"
@@ -109,7 +104,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                     key={item.label}
                     href={item.href}
                     title={item.description}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all ${
                       isActive
                         ? "bg-primary/10 text-primary font-bold"
                         : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
@@ -123,27 +118,25 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </nav>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-3">
-            {/* User Profile Pill */}
-            <div className="flex items-center gap-1.5 sm:gap-2 rounded-2xl border border-border/80 bg-card px-2 sm:px-3 py-1 text-xs shadow-xs">
-              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-[10px] sm:text-[11px]">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* User Profile Pill (Visible on sm+ screens) */}
+            <div className="hidden sm:flex items-center gap-2 rounded-full border border-border/80 bg-card px-3 py-1 text-xs shadow-xs">
+              <div className="w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-[10px]">
                 {displayName.charAt(0).toUpperCase()}
               </div>
-              <div className="hidden sm:block text-left">
-                <span className="font-semibold text-foreground block leading-none text-xs truncate max-w-[100px]">
-                  {displayName}
-                </span>
-                <span className="text-[10px] text-muted-foreground font-mono font-medium">
-                  {currency}
-                </span>
-              </div>
+              <span className="font-semibold text-foreground max-w-[90px] truncate text-xs">
+                {displayName}
+              </span>
+              <span className="text-[10px] text-muted-foreground font-mono font-medium border-l border-border/60 pl-1.5">
+                {currency}
+              </span>
             </div>
 
-            {/* Settings Link */}
+            {/* Settings Icon Button */}
             <Link
               href="/app/settings"
               title="Settings & Preferences"
-              className={`p-1.5 sm:p-2 rounded-xl border border-border/80 bg-card text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors ${
+              className={`p-2 rounded-xl border border-border/80 bg-card text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors ${
                 pathname === "/app/settings" ? "text-primary border-primary/40 bg-primary/10" : ""
               }`}
             >
@@ -152,10 +145,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
             <ThemeToggle />
 
-            {/* Mobile Menu Toggle Button */}
+            {/* Mobile Hamburger Toggle Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 text-foreground/80 hover:text-foreground rounded-xl border border-border bg-card focus:outline-hidden"
+              className="lg:hidden p-2 text-foreground/80 hover:text-foreground rounded-xl border border-border/80 bg-card focus:outline-hidden"
               aria-label="Toggle App Menu"
             >
               {mobileMenuOpen ? <X className="w-4 h-4 text-primary" /> : <Menu className="w-4 h-4" />}
@@ -165,15 +158,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-border bg-background/95 backdrop-blur-2xl px-4 py-4 space-y-3 animate-fadeIn shadow-2xl">
-            <div className="flex items-center justify-between px-2 pb-2 border-b border-border/70">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs">
+          <div className="lg:hidden border-t border-border/60 bg-background/98 backdrop-blur-2xl px-4 py-4 space-y-4 animate-fadeIn shadow-xl max-h-[calc(100vh-3.5rem)] overflow-y-auto">
+            {/* User Profile Summary */}
+            <div className="flex items-center justify-between p-3 rounded-xl border border-border/70 bg-card">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs">
                   {displayName.charAt(0).toUpperCase()}
                 </div>
                 <div className="text-left">
                   <div className="text-xs font-bold text-foreground">{displayName}</div>
-                  <div className="text-[10px] font-mono text-muted-foreground">{currency} • Connected</div>
+                  <div className="text-[10px] text-muted-foreground font-medium">{currency} • Goal Strategist</div>
                 </div>
               </div>
 
@@ -182,14 +176,15 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   setMobileMenuOpen(false);
                   signOut();
                 }}
-                className="flex items-center gap-1 text-[11px] font-semibold text-destructive px-2 py-1 rounded-lg hover:bg-destructive/10"
+                className="flex items-center gap-1 text-xs font-medium text-rose-600 dark:text-rose-400 px-2.5 py-1 rounded-lg hover:bg-rose-500/10 transition-colors"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                <span>Sortir</span>
+                <span>Sign out</span>
               </button>
             </div>
 
-            <div className="grid grid-cols-1 gap-1">
+            {/* Nav Items List */}
+            <div className="grid grid-cols-1 gap-1 text-left">
               {NAV_ITEMS.map((item) => {
                 const isActive =
                   item.href === "/app"
@@ -201,18 +196,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                     key={item.label}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center justify-between p-3 rounded-2xl transition-all ${
+                    className={`flex items-center justify-between p-3 rounded-xl transition-all ${
                       isActive
-                        ? "bg-primary/15 text-primary font-bold border border-primary/30"
-                        : "text-foreground hover:bg-secondary/70 border border-transparent"
+                        ? "bg-primary/10 text-primary font-bold border border-primary/20"
+                        : "text-foreground hover:bg-secondary/50 border border-transparent"
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-xl ${isActive ? "bg-primary text-white" : "bg-card border border-border text-muted-foreground"}`}>
+                      <div className={`p-2 rounded-lg ${isActive ? "bg-primary text-primary-foreground" : "bg-card border border-border/80 text-muted-foreground"}`}>
                         {item.icon}
                       </div>
                       <div className="flex flex-col text-left">
-                        <span className="text-xs font-mono font-bold tracking-wider uppercase leading-tight">
+                        <span className="text-xs font-bold leading-tight">
                           {item.label}
                         </span>
                         <span className="text-[11px] text-muted-foreground font-normal">

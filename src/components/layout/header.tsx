@@ -147,12 +147,12 @@ export function Header() {
 
       {/* Mobile Dropdown Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-border bg-background/95 backdrop-blur-2xl px-4 py-4 space-y-3 animate-fadeIn shadow-2xl">
-          <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-muted-foreground px-2">
-            Navigation Rapide
+        <div className="lg:hidden border-t border-border/60 bg-background/98 backdrop-blur-2xl px-4 py-4 space-y-3 animate-fadeIn shadow-xl max-h-[calc(100vh-3.5rem)] overflow-y-auto">
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+            Quick Navigation
           </div>
 
-          <div className="grid grid-cols-1 gap-1.5">
+          <div className="grid grid-cols-1 gap-1">
             {NAV_LINKS.map((link) => {
               const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
               return (
@@ -160,19 +160,19 @@ export function Header() {
                   key={link.label}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center justify-between p-3 rounded-2xl transition-all ${
+                  className={`flex items-center justify-between p-3 rounded-xl transition-all ${
                     isActive
-                      ? "bg-primary/15 text-primary font-bold border border-primary/30"
-                      : "text-foreground hover:bg-secondary/70 border border-transparent"
+                      ? "bg-primary/10 text-primary font-bold border border-primary/20"
+                      : "text-foreground hover:bg-secondary/50 border border-transparent"
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-xl ${isActive ? "bg-primary text-white" : "bg-card border border-border text-muted-foreground"}`}>
+                    <div className={`p-2 rounded-lg ${isActive ? "bg-primary text-primary-foreground" : "bg-card border border-border/80 text-muted-foreground"}`}>
                       {link.icon}
                     </div>
                     <div className="flex flex-col text-left">
-                      <span className="text-sm font-semibold leading-tight">{link.label}</span>
-                      <span className="text-[11px] text-muted-foreground">{link.desc}</span>
+                      <span className="text-xs font-bold leading-tight">{link.label}</span>
+                      <span className="text-[11px] text-muted-foreground font-normal">{link.desc}</span>
                     </div>
                   </div>
                   <ArrowRight className="w-4 h-4 text-muted-foreground" />
@@ -181,23 +181,23 @@ export function Header() {
             })}
           </div>
 
-          <div className="pt-2 border-t border-border/70 flex flex-col gap-2">
+          <div className="pt-3 border-t border-border/60 flex flex-col gap-2">
             <Link
               href="/app"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#FF6B4A] to-[#FF3820] py-3 text-sm font-bold text-white shadow-md shadow-orange-500/20"
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-xs font-semibold text-primary-foreground hover:opacity-95 shadow-xs transition-opacity"
             >
               <Compass className="w-4 h-4" />
-              <span>Ouvrir le Tableau de Bord</span>
+              <span>Open Application</span>
             </Link>
 
             <Link
               href="/onboarding"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl border border-border bg-card py-2.5 text-xs font-semibold text-foreground hover:bg-secondary"
+              className="w-full flex items-center justify-center gap-2 rounded-xl border border-border/80 bg-card py-2 text-xs font-semibold text-foreground hover:bg-secondary transition-colors"
             >
               <Sparkles className="w-3.5 h-3.5 text-primary" />
-              <span>Recommencer l&apos;Onboarding</span>
+              <span>Explore Onboarding</span>
             </Link>
           </div>
         </div>
