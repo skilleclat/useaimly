@@ -588,6 +588,7 @@ export default function SingleDestinationPage() {
             </form>
           </div>
         </div>
+      )}
     </div>
   );
 }

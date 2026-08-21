@@ -1,78 +1,108 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
-import { parseDecisionQuery, ParsedDecisionIntent } from "@/lib/nlp/decision-query-parser";
+import { parseDecisionQuery } from "@/lib/nlp/decision-query-parser";
 import { simulateDecision, BaselineFinancialProfile } from "@/lib/finance";
 import { formatCurrency } from "@/lib/utils/currency";
 import { CurrencyCode } from "@/lib/types/finance";
 import {
-  Compass,
   Sparkles,
   ArrowRight,
-  HelpCircle,
-  Clock,
   ShieldCheck,
-  AlertTriangle,
-  Bookmark,
-  RefreshCw,
+  AlertCircle,
+  Clock,
   CheckCircle2,
-  Sliders,
-  Calendar,
-  MessageSquare,
-  Check,
-  Plus,
-  Edit3,
-  Heart,
   ChevronDown,
   ChevronUp,
-  Play,
+  Zap,
   ArrowLeft,
-  Info,
-  Layers,
+  Sliders,
+  TrendingUp,
+  DollarSign,
+  Calendar,
+  HelpCircle,
+  Heart,
+  Plus,
 } from "lucide-react";
 
-export default function DecidePage() {
+export default function DecideStudioPage() {
   const { profile } = useAuth();
+  const searchParams = useSearchParams();
+  const initialQuery = searchParams.get("q") || "Can I spend 30,000 KES on a new phone?";
   const currency = (profile?.preferred_currency || "KES") as CurrencyCode;
 
-  // Active query & input state
-  const [queryInput, setQueryInput] = useState("Can I spend KES 30,000 on a new phone?");
-  const [title, setTitle] = useState("New Phone Purchase");
+  // Decision Input States
+  const [queryInput, setQueryInput] = useState(initialQuery);
+  const [activeScenarioType, setActiveScenarioType] = useState<
+    "PURCHASE" | "RECURRING" | "INCOME" | "SAVINGS"
+  >("PURCHASE");
+  
+  const [title, setTitle] = useState("Smartphone Purchase");
   const [amount, setAmount] = useState<number>(30000);
   const [isRecurring, setIsRecurring] = useState(false);
-  const [isEditingInputs, setIsEditingInputs] = useState(false);
+
   const [selectedStrategy, setSelectedStrategy] = useState<"CASH" | "SPREAD" | "POSTPONE">("CASH");
-  const [isSaved, setIsSaved] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+
+  // Parse natural language queries when user updates queryInput
+  useEffect(() => {
+    if (!queryInput.trim()) return;
+    const parsed = parseDecisionQuery(queryInput, currency);
+    if (parsed.isValid && parsed.extractedAmount > 0) {
+      setTitle(parsed.extractedTitle);
+      setAmount(parsed.extractedAmount);
+      setIsRecurring(parsed.isRecurring);
+
+      if (parsed.decisionType === "INCOME_CHANGE" || parsed.decisionType === "WINDFALL") {
+        setActiveScenarioType("INCOME");
+      } else if (parsed.isRecurring) {
+        setActiveScenarioType("RECURRING");
+      } else {
+        setActiveScenarioType("PURCHASE");
+      }
+    }
+  }, [queryInput, currency]);
 
   // Baseline Financial Reality
-  const baselineProfile: BaselineFinancialProfile = {
-    liquidSavings: 180000,
-    incomes: [
-      { name: "Primary Income", amount: 180000, frequency: "MONTHLY", reliability: "STABLE", isActive: true },
-    ],
-    expenses: [
-      { name: "Essential Living", amount: 112000, frequency: "MONTHLY", isFixed: true },
-    ],
-    debts: [],
-    commitments: [],
-    goals: [
-      {
-        id: "primary-goal",
-        title: "Start my business",
-        targetAmount: 500000,
-        currentAmount: 180000,
-        targetDate: "2027-12-31",
-        priority: "HIGH",
-        status: "ACTIVE",
-      },
-    ],
-  };
+  const baselineProfile: BaselineFinancialProfile = useMemo(
+    () => ({
+      liquidSavings: 180000,
+      incomes: [
+        { name: "Primary Income", amount: 180000, frequency: "MONTHLY", reliability: "STABLE", isActive: true },
+      ],
+      expenses: [
+        { name: "Essential Living", amount: 112000, frequency: "MONTHLY", isFixed: true },
+      ],
+      debts: [],
+      commitments: [
+        {
+          title: "Comprehensive Motor Insurance",
+          amount: 45000,
+          frequency: "ANNUAL",
+          nextDueDate: "2026-10-05",
+          category: "INSURANCE",
+        },
+      ],
+      goals: [
+        {
+          id: "primary-goal",
+          title: "Start my business",
+          targetAmount: 500000,
+          currentAmount: 180000,
+          targetDate: "2027-12-31",
+          priority: "HIGH",
+          status: "ACTIVE",
+        },
+      ],
+    }),
+    []
+  );
 
-  // Deterministic simulation
+  // Simulation Evaluation
   const simulation = useMemo(() => {
     return simulateDecision(baselineProfile, {
       decisionTitle: title,
@@ -80,13 +110,12 @@ export default function DecidePage() {
       isRecurring,
       recurringFrequency: isRecurring ? "MONTHLY" : undefined,
     });
-  }, [title, amount, isRecurring]);
+  }, [baselineProfile, title, amount, isRecurring]);
 
-  // Strategy comparison cards calculations
+  // 3 Comparison Strategies
   const strategies = useMemo(() => {
     const cashRemaining = baselineProfile.liquidSavings - amount;
     const spreadMonthly = Math.round(amount / 3);
-    const recoveryMonthly = simulation.delta.additionalMonthlyAmountRequired || Math.round(amount / 16);
 
     return [
       {
@@ -94,20 +123,18 @@ export default function DecidePage() {
         title: "Pay Cash Today",
         subtitle: "One-off Cash Buffer",
         metric: formatCurrency(Math.max(0, cashRemaining), currency),
-        metricLabel: "Remaining Buffer",
-        badge: "Liquid Buffer Intact",
-        badgeStyle: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20",
+        metricLabel: "Remaining Liquid Cash",
         delayText: `+${simulation.delta.delayInDays} days shift`,
+        badge: "Immediate Outflow",
       },
       {
         id: "SPREAD" as const,
         title: "Spread over 3 Months",
         subtitle: "Monthly Cash Flow",
         metric: `${formatCurrency(spreadMonthly, currency)} / mo`,
-        metricLabel: "Monthly Payment",
-        badge: "Pace Smoothing",
-        badgeStyle: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20",
-        delayText: `+${Math.round(simulation.delta.delayInDays * 0.7)} days shift`,
+        metricLabel: "Monthly Outflow",
+        delayText: `+${Math.max(0, Math.round(simulation.delta.delayInDays * 0.7))} days shift`,
+        badge: "Smooth Monthly Pace",
       },
       {
         id: "POSTPONE" as const,
@@ -115,303 +142,304 @@ export default function DecidePage() {
         subtitle: "Save in Advance",
         metric: formatCurrency(0, currency),
         metricLabel: "Immediate Cash Impact",
-        badge: "Zero Goal Delay",
-        badgeStyle: "bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/20",
         delayText: "0 days shift",
+        badge: "Zero Goal Delay",
       },
     ];
-  }, [amount, currency, simulation]);
+  }, [amount, currency, simulation, baselineProfile.liquidSavings]);
 
-  const handleParseSubmit = (e: React.FormEvent) => {
+  const handleQuerySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!queryInput.trim()) return;
-    const parsed = parseDecisionQuery(queryInput);
-    setTitle(parsed.extractedTitle);
-    setAmount(parsed.extractedAmount || 30000);
-    setIsRecurring(parsed.isRecurring);
+    const parsed = parseDecisionQuery(queryInput, currency);
+    if (parsed.isValid && parsed.extractedAmount > 0) {
+      setTitle(parsed.extractedTitle);
+      setAmount(parsed.extractedAmount);
+      setIsRecurring(parsed.isRecurring);
+    }
   };
 
+  const primaryGoal = baselineProfile.goals[0];
+  const goalTitle = primaryGoal?.title || "Start my business";
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
-      {/* Top Header & Action Controls Bar */}
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
+      {/* Top Header Navigation */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
         <div className="space-y-1">
           <Link
             href="/app"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Return to Overview</span>
+            <span>Return Home</span>
           </Link>
-          <h1 className="text-2xl sm:text-4xl font-bold text-foreground tracking-tight">
-            Decision Studio — {title} ({formatCurrency(amount, currency)})
+          <h1 className="text-2xl sm:text-4xl font-bold font-editorial text-foreground tracking-tight">
+            Decision Studio
           </h1>
-          <p className="text-xs text-muted-foreground font-medium">
-            Simulating decision impact on primary destination: &ldquo;Start my business&rdquo;
+          <p className="text-xs text-muted-foreground">
+            Test any purchase, income change, or hypothetical scenario before you commit.
           </p>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex items-center gap-2 text-xs font-semibold">
+        <button
+          type="button"
+          onClick={() => setIsSaved(!isSaved)}
+          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+            isSaved
+              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+              : "bg-card border-border/80 text-foreground hover:border-primary/40"
+          }`}
+        >
+          <Heart className={`w-3.5 h-3.5 ${isSaved ? "fill-emerald-500 text-emerald-500" : ""}`} />
+          <span>{isSaved ? "Decision Saved" : "Save Decision"}</span>
+        </button>
+      </div>
+
+      {/* Universal Scenario Input Card */}
+      <section className="rounded-3xl border border-border/80 bg-card p-6 sm:p-8 space-y-6 shadow-xs">
+        {/* Scenario Type Pills */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold">
+            Scenario Type:
+          </span>
+
           <button
             type="button"
             onClick={() => {
-              setQueryInput("");
-              setIsEditingInputs(true);
+              setActiveScenarioType("PURCHASE");
+              setIsRecurring(false);
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border/80 bg-card text-foreground hover:bg-secondary/60 transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5 text-primary" />
-            <span>New Query</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsEditingInputs(!isEditingInputs)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border/80 bg-card text-foreground hover:bg-secondary/60 transition-colors"
-          >
-            <Edit3 className="w-3.5 h-3.5 text-foreground" />
-            <span>Adjust Input</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsFavorite(!isFavorite)}
-            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border transition-colors ${
-              isFavorite
-                ? "border-rose-500/30 bg-rose-500/10 text-rose-600"
-                : "border-border/80 bg-card text-foreground hover:bg-secondary/60"
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+              activeScenarioType === "PURCHASE"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-secondary/40 border-border/60 text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Heart className={`w-3.5 h-3.5 ${isFavorite ? "fill-rose-500 text-rose-500" : "text-foreground"}`} />
-            <span>Save Decision</span>
+            One-off Purchase
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveScenarioType("RECURRING");
+              setIsRecurring(true);
+            }}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+              activeScenarioType === "RECURRING"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-secondary/40 border-border/60 text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Monthly Expense
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveScenarioType("INCOME");
+              setIsRecurring(true);
+            }}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+              activeScenarioType === "INCOME"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-secondary/40 border-border/60 text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Income Boost / Raise
           </button>
         </div>
-      </div>
 
-      {/* Interactive Input Drawer */}
-      {isEditingInputs && (
-        <form onSubmit={handleParseSubmit} className="rounded-xl border border-primary/25 bg-primary/5 p-5 space-y-3 animate-fadeIn">
-          <div className="flex items-center gap-2 text-xs font-semibold text-primary">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Describe your financial decision in plain language</span>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3">
+        {/* Natural Language Query Bar */}
+        <form onSubmit={handleQuerySubmit} className="space-y-3">
+          <div className="relative flex items-center shadow-xs">
             <input
               type="text"
               value={queryInput}
               onChange={(e) => setQueryInput(e.target.value)}
-              placeholder="e.g. Can I spend 30,000 KES on a laptop upgrade?"
-              className="flex-1 rounded-xl border border-border/80 bg-background px-4 py-2.5 text-xs sm:text-sm text-foreground focus:outline-hidden focus:border-primary"
+              placeholder="e.g. Can I spend 30,000 KES on a laptop?"
+              className="w-full rounded-2xl border-2 border-border/80 bg-background px-5 py-4 text-sm sm:text-base text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:border-primary transition-all pr-32 font-medium"
             />
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:opacity-95 transition-opacity shrink-0"
+              className="absolute right-2 top-2 bottom-2 rounded-xl bg-primary text-primary-foreground px-5 text-xs font-bold hover:opacity-90 transition-all flex items-center gap-1.5 shrink-0"
             >
-              Simulate
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Simulate</span>
             </button>
           </div>
         </form>
-      )}
 
-      {/* Main Grid: Left Strategies & Evidence + Right Synthesis */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column (8 cols): 3 Strategy Cards + Breakdown */}
-        <div className="lg:col-span-8 space-y-6">
-          {/* 3 Strategy Selector Cards */}
-          <div className="space-y-3">
-            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              3 Financial Strategies
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-              {strategies.map((strat) => {
-                const isActive = selectedStrategy === strat.id;
-                return (
-                  <button
-                    key={strat.id}
-                    type="button"
-                    onClick={() => setSelectedStrategy(strat.id)}
-                    className={`rounded-xl p-4 text-left transition-all border relative flex flex-col justify-between ${
-                      isActive
-                        ? "border-primary bg-card shadow-xs ring-2 ring-primary/20"
-                        : "border-border/80 bg-card hover:border-border"
-                    }`}
-                  >
-                    <div className="space-y-1">
-                      <div className="text-xs font-medium text-muted-foreground">{strat.title}</div>
-                      <div className="text-xl font-bold text-foreground">
-                        {strat.metric}
-                      </div>
-                    </div>
-                    <div className="pt-3 mt-2 border-t border-border/50 flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">{strat.metricLabel}</span>
-                      <span className="text-primary font-bold">{strat.delayText}</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+        {/* Fine-Tuning Amount Controls */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-border/50 text-xs">
+          <div>
+            <label className="text-muted-foreground font-semibold block mb-1">
+              Decision Title
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full rounded-xl border border-border/80 bg-background px-3 py-2 text-foreground font-medium"
+            />
           </div>
 
-          {/* Strategy Consequence Card */}
-          <div className="rounded-xl border border-border/80 bg-card p-6 space-y-6 shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
-              <div className="space-y-1">
-                <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-                  <span>
-                    {selectedStrategy === "CASH"
-                      ? "Pay in full from liquid cash buffer"
-                      : selectedStrategy === "SPREAD"
-                      ? "Spread across 3 monthly cash flow cycles"
-                      : "Postpone 60 days to save in advance"}
-                  </span>
-                </h3>
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="inline-flex items-center gap-1 font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                    {selectedStrategy === "CASH" ? "Self-funded" : selectedStrategy === "SPREAD" ? "3 Payments" : "Zero Debt"}
-                  </span>
-                  <span className="text-muted-foreground font-medium">
-                    Destination: <strong>Start my business</strong>
-                  </span>
-                </div>
-              </div>
-
-              <div className="text-left sm:text-right">
-                <div className="text-xs text-muted-foreground font-medium">
-                  Goal Timeline Shift
-                </div>
-                <div className="text-2xl font-bold text-primary">
-                  {selectedStrategy === "CASH"
-                    ? `+${simulation.delta.delayInDays} days`
-                    : selectedStrategy === "SPREAD"
-                    ? `+${Math.round(simulation.delta.delayInDays * 0.7)} days`
-                    : "0 days"}
-                </div>
-                <div className="text-xs text-muted-foreground font-medium">
-                  Target Arrival: {simulation.delta.newCompletionDate || "February 2028"}
-                </div>
-              </div>
-            </div>
-
-            {/* Financial Line Item Breakdown */}
-            <div className="space-y-3 text-xs sm:text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground font-medium">Liquid Cash Before Decision</span>
-                <span className="font-bold text-foreground">
-                  {formatCurrency(baselineProfile.liquidSavings, currency)}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground font-medium">Decision Outflow Amount</span>
-                <span className="font-bold text-rose-600 dark:text-rose-400">
-                  -{formatCurrency(amount, currency)}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground font-medium">Remaining Cash Cushion</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                  {formatCurrency(Math.max(0, baselineProfile.liquidSavings - amount), currency)}
-                </span>
-              </div>
-
-              <div className="p-3.5 rounded-lg border border-emerald-500/20 bg-emerald-500/5 text-emerald-800 dark:text-emerald-200 text-xs leading-relaxed">
-                Your remaining liquid buffer stays above the safe 2-month fixed obligation safety threshold.
-              </div>
-
-              <div className="flex items-center justify-between pt-2 border-t border-border/50">
-                <span className="text-muted-foreground font-medium">Recovery effort to maintain Nov 2027 deadline</span>
-                <span className="font-bold text-primary">
-                  +{formatCurrency(simulation.delta.additionalMonthlyAmountRequired || 4200, currency)} / month
-                </span>
-              </div>
-            </div>
+          <div>
+            <label className="text-muted-foreground font-semibold block mb-1">
+              Amount ({currency})
+            </label>
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(Number(e.target.value))}
+              className="w-full rounded-xl border border-border/80 bg-background px-3 py-2 text-foreground font-medium font-mono"
+            />
           </div>
+        </div>
+      </section>
 
-          {/* Collapsible Formula Details */}
-          <div className="rounded-xl border border-border/80 bg-card p-4">
-            <button
-              type="button"
-              onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
-              className="w-full flex items-center justify-between text-xs font-semibold text-foreground hover:text-primary transition-colors"
-            >
-              <span>Verified Calculation Details</span>
-              <span className="flex items-center gap-1 text-primary font-medium text-xs">
-                <span>{showTechnicalDetails ? "Hide" : "Show"}</span>
-                {showTechnicalDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+      {/* RESULT HERO: THE ANSWER + TIME CONSEQUENCE */}
+      <section className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
+          {/* Verdict Card */}
+          <div className="md:col-span-5 rounded-3xl border border-border/80 bg-card p-6 flex flex-col justify-between space-y-4">
+            <div>
+              <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold">
+                1. Decision Verdict
               </span>
-            </button>
 
-            {showTechnicalDetails && (
-              <div className="pt-3 mt-3 border-t border-border/60 space-y-2 text-xs text-muted-foreground animate-fadeIn">
-                <div className="flex justify-between">
-                  <span>Normalization Formula:</span>
-                  <span className="text-foreground font-medium">Monthly trajectory allocation quotient</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Cash Flow Delta:</span>
-                  <span className="text-foreground font-medium">0 KES / month (Cash)</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Resilience Index:</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Resilient (84/100)</span>
-                </div>
+              <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>{simulation.headlineVerdict || "Yes. Fully Affordable."}</span>
               </div>
-            )}
-          </div>
-        </div>
+            </div>
 
-        {/* Right Column (4 cols): Recommendation Synthesis */}
-        <div className="lg:col-span-4 space-y-6">
-          <div className="rounded-xl border border-border/80 bg-card p-6 space-y-5 shadow-xs">
-            <div className="space-y-1">
-              <h3 className="text-base font-bold text-foreground">
-                UseAimly Verdict & Synthesis
+            <div>
+              <h3 className="text-xl font-bold text-foreground">
+                {title}
               </h3>
-              <p className="text-xs text-muted-foreground">
-                Clear trade-off assessment for your decision.
+              <p className="text-sm font-semibold text-muted-foreground">
+                {formatCurrency(amount, currency)} {isRecurring ? "/ month" : "one-off"}
+              </p>
+            </div>
+          </div>
+
+          {/* Time Impact Hero */}
+          <div className="md:col-span-7 rounded-3xl border border-primary/30 bg-primary/5 p-6 sm:p-8 flex flex-col justify-between space-y-4 relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono uppercase tracking-wider text-primary font-semibold">
+                2. Future Trajectory Impact
+              </span>
+              <Clock className="w-5 h-5 text-primary" />
+            </div>
+
+            <div>
+              <div className="text-4xl sm:text-6xl font-bold font-editorial text-foreground tracking-tight">
+                +{simulation.delta.delayInDays} days
+              </div>
+              <p className="text-sm text-foreground/80 mt-1">
+                Your destination <span className="font-bold text-foreground">&ldquo;{goalTitle}&rdquo;</span> shifts to{" "}
+                <span className="font-bold text-primary underline font-mono">{simulation.delta.newCompletionDate}</span>.
               </p>
             </div>
 
-            {/* Visual Balance Bar */}
-            <div className="space-y-2 pt-1">
-              <div className="flex justify-between text-xs text-muted-foreground font-medium">
-                <span>Outflow</span>
-                <span className="text-primary font-bold">Remaining Buffer</span>
-              </div>
-              <div className="relative flex items-center">
-                <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
-                  <div className="h-full bg-primary rounded-full" style={{ width: "83%" }} />
-                </div>
-              </div>
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{formatCurrency(amount, currency)}</span>
-                <span className="font-bold text-foreground">{formatCurrency(150000, currency)}</span>
-              </div>
-            </div>
-
-            {/* Plain Language Synthesis */}
-            <div className="p-4 rounded-lg bg-secondary/40 border border-border/60 space-y-2 text-xs text-muted-foreground leading-relaxed">
-              <div className="font-semibold text-foreground">Recommended Action Plan</div>
-              <p>
-                Pay for this purchase in cash using your liquid reserves rather than taking on debt. To preserve your original November 2027 goal arrival date, save an extra <strong>+{formatCurrency(4200, currency)} / month</strong> for the next 16 months.
-              </p>
-            </div>
-
-            <div className="pt-2">
-              <Link
-                href="/app/what-if"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-xs font-semibold text-primary-foreground hover:opacity-95 transition-all shadow-xs"
-              >
-                <span>Explore Variants in What-If Sandbox</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
+            <div className="pt-3 border-t border-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+              <span className="text-muted-foreground font-semibold">
+                Recovery Effort required:
+              </span>
+              <span className="font-bold text-foreground bg-background px-3 py-1 rounded-lg border border-border/80 font-mono">
+                +{formatCurrency(simulation.delta.additionalMonthlyAmountRequired || 1667, currency)} / month
+              </span>
             </div>
           </div>
         </div>
-      </div>
+
+        {/* 3 Strategy Comparison Grid */}
+        <div className="space-y-3 pt-4">
+          <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold">
+            3 Strategy Comparison
+          </span>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {strategies.map((strat) => {
+              const isActive = selectedStrategy === strat.id;
+              return (
+                <button
+                  key={strat.id}
+                  type="button"
+                  onClick={() => setSelectedStrategy(strat.id)}
+                  className={`rounded-2xl p-5 text-left transition-all border flex flex-col justify-between space-y-4 ${
+                    isActive
+                      ? "border-primary bg-card shadow-xs ring-2 ring-primary/20"
+                      : "border-border/80 bg-card hover:border-border"
+                  }`}
+                >
+                  <div className="space-y-1">
+                    <div className="text-xs font-medium text-muted-foreground">{strat.title}</div>
+                    <div className="text-xl font-bold text-foreground font-mono">
+                      {strat.metric}
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-border/50 flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground font-medium">{strat.metricLabel}</span>
+                    <span className="text-primary font-bold">{strat.delayText}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Human Language 3 Pillars Breakdown */}
+        <div className="rounded-3xl border border-border/80 bg-card p-6 space-y-4">
+          <button
+            type="button"
+            onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
+            className="w-full flex items-center justify-between text-xs font-bold uppercase tracking-wider text-foreground hover:text-primary transition-colors"
+          >
+            <span>3-Pillar Financial Health Breakdown</span>
+            <span className="flex items-center gap-1 text-primary text-xs">
+              <span>{showTechnicalDetails ? "Hide Breakdown" : "View Breakdown"}</span>
+              {showTechnicalDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </span>
+          </button>
+
+          {showTechnicalDetails && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-border/60 animate-fadeIn text-xs">
+              <div className="p-4 rounded-2xl bg-secondary/30 border border-border/60 space-y-1.5">
+                <div className="flex items-center gap-1.5 font-bold text-foreground">
+                  <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                  <span>1. Cash Affordability</span>
+                </div>
+                <p className="text-muted-foreground">
+                  Liquid cash covers this purchase with {formatCurrency(simulation.affordability.cashRemainingAfterDecision, currency)} remaining.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-secondary/30 border border-border/60 space-y-1.5">
+                <div className="flex items-center gap-1.5 font-bold text-foreground">
+                  <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                  <span>2. Essential Cushion</span>
+                </div>
+                <p className="text-muted-foreground">
+                  {simulation.affordability.obligationsPreservedMonths} months of essential expenses remain fully safe in your liquid reserves.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-secondary/30 border border-border/60 space-y-1.5">
+                <div className="flex items-center gap-1.5 font-bold text-foreground">
+                  <Clock className="w-4 h-4 text-primary" />
+                  <span>3. Goal Timeline</span>
+                </div>
+                <p className="text-muted-foreground">
+                  +{simulation.delta.delayInDays} days shift on arrival.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

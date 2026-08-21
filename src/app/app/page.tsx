@@ -1,16 +1,25 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth/auth-context";
 import { TrajectoryHeroChart } from "@/components/dashboard/TrajectoryHeroChart";
 import { YourPathSection } from "@/components/dashboard/YourPathSection";
 import { BeforeYouDecide } from "@/components/dashboard/BeforeYouDecide";
-import { LookAheadSection } from "@/components/dashboard/LookAheadSection";
 import { RecentDecisionsSection } from "@/components/dashboard/RecentDecisionsSection";
 import { PrimeInsightSection } from "@/components/dashboard/PrimeInsightSection";
 import { BaselineFinancialProfile } from "@/lib/finance";
 import { CurrencyCode } from "@/lib/types/finance";
-import { Compass, Sparkles } from "lucide-react";
+import { formatCurrency } from "@/lib/utils/currency";
+import {
+  HelpCircle,
+  Target,
+  Wallet,
+  Sparkles,
+  ArrowRight,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 
 function getTimeGreeting(): string {
   const hour = new Date().getHours();
@@ -23,7 +32,9 @@ export default function AuthenticatedDashboard() {
   const { user, profile } = useAuth();
   const currency = (profile?.preferred_currency || "KES") as CurrencyCode;
   const firstName = profile?.full_name?.split(" ")[0] || user?.email?.split("@")[0] || "Strategist";
-  const greeting = `${getTimeGreeting()}, ${firstName}.`;
+  const greeting = `${getTimeGreeting()}.`;
+
+  const [showDetailedCharts, setShowDetailedCharts] = useState(false);
 
   // Baseline Financial Profile for Deterministic Simulations
   const baselineProfile: BaselineFinancialProfile = useMemo(
@@ -52,7 +63,7 @@ export default function AuthenticatedDashboard() {
         {
           title: "Comprehensive Motor Insurance",
           amount: 45000,
-          frequency: "ANNUAL", // 3,750 / mo
+          frequency: "ANNUAL",
           nextDueDate: "2026-10-05",
           category: "INSURANCE",
         },
@@ -60,10 +71,10 @@ export default function AuthenticatedDashboard() {
       goals: [
         {
           id: "goal-1",
-          title: "Start my business",
+          title: "Buy a home",
           targetAmount: 500000,
-          currentAmount: 180000,
-          targetDate: "2027-12-31",
+          currentAmount: 260000,
+          targetDate: "2027-06-30",
           priority: "HIGH",
           status: "ACTIVE",
         },
@@ -72,66 +83,176 @@ export default function AuthenticatedDashboard() {
     []
   );
 
+  const mainGoal = baselineProfile.goals[0];
+  const goalProgressPercent = Math.min(100, Math.round((mainGoal.currentAmount / mainGoal.targetAmount) * 100));
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12 animate-fadeIn">
-      {/* Top Greeting & Emotional Core */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-xs font-mono font-bold text-primary">
-          <Compass className="w-4 h-4" />
-          <span>Useaimly Decision Intelligence</span>
-        </div>
-        <h1 className="text-3xl sm:text-5xl font-bold font-editorial text-foreground tracking-tight">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-12 animate-fadeIn font-mono">
+      {/* 1. GREETING HEADER */}
+      <div className="space-y-3">
+        <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-foreground">
           {greeting}
         </h1>
-        <p className="text-xs sm:text-sm text-muted-foreground max-w-xl leading-relaxed">
-          Here is your financial trajectory. See where your money is carrying you before making any decisions today.
+        <p className="text-sm text-muted-foreground">
+          Your future, at a glance.
         </p>
       </div>
 
-      {/* SECTION 1: MAIN HERO — Primary Destination Trajectory */}
-      <section id="goals">
-        <TrajectoryHeroChart
-          goalTitle="Start my business"
-          currentAmount={180000}
-          targetAmount={500000}
-          targetDate="2027-12-31"
-          projectedArrivalDate="2027-11-15"
-          monthlyFreeCashFlow={68000}
+      {/* 2. 2x2 GRID OF PRIMARY DESTINATION CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+        {/* Card 1: Decide */}
+        <Link
+          href="/app/decide"
+          className="group rounded-xl border-2 border-border/80 bg-card p-6 text-center hover:border-foreground transition-all flex flex-col items-center justify-center space-y-3 shadow-xs"
+        >
+          <div className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
+            Decide
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Before you spend
+          </div>
+        </Link>
+
+        {/* Card 2: Goals */}
+        <Link
+          href="/app/goals"
+          className="group rounded-xl border-2 border-border/80 bg-card p-6 text-center hover:border-foreground transition-all flex flex-col items-center justify-center space-y-3 shadow-xs"
+        >
+          <div className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
+            Goals
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Where you&apos;re going
+          </div>
+        </Link>
+
+        {/* Card 3: Money */}
+        <Link
+          href="/app/money"
+          className="group rounded-xl border-2 border-border/80 bg-card p-6 text-center hover:border-foreground transition-all flex flex-col items-center justify-center space-y-3 shadow-xs"
+        >
+          <div className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
+            Money
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Your financial picture
+          </div>
+        </Link>
+
+        {/* Card 4: Insights */}
+        <Link
+          href="/app/insights"
+          className="group rounded-xl border-2 border-border/80 bg-card p-6 text-center hover:border-foreground transition-all flex flex-col items-center justify-center space-y-3 shadow-xs"
+        >
+          <div className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
+            Insights
+          </div>
+          <div className="text-xs text-muted-foreground">
+            What you should know
+          </div>
+        </Link>
+      </div>
+
+      {/* 3. DECISION ENGINE SECTION */}
+      <section className="space-y-4 pt-4 border-t border-border/50">
+        <BeforeYouDecide
           currency={currency}
+          baselineProfile={baselineProfile}
         />
       </section>
 
-      {/* SECTION 2: "Your path" — Inflow, Commitments, Available, Savings */}
-      <section id="money">
-        <YourPathSection
-          monthlyIncome={180000}
-          monthlyCommitments={112000}
-          availableForGoals={68000}
-          currentSavings={180000}
-          currency={currency}
-        />
+      {/* 4. YOUR MAIN GOAL SECTION */}
+      <section className="space-y-4 pt-4 border-t border-border/50">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-semibold text-foreground">
+            Your main goal
+          </span>
+
+          <Link
+            href="/app/goals"
+            className="text-xs text-muted-foreground hover:text-foreground underline"
+          >
+            Manage goals
+          </Link>
+        </div>
+
+        <div className="rounded-2xl border-2 border-border/80 bg-card p-6 space-y-4 shadow-xs">
+          <div>
+            <h3 className="text-base font-bold text-foreground">
+              {mainGoal.title}
+            </h3>
+            <div className="text-sm font-bold text-muted-foreground mt-0.5">
+              {formatCurrency(mainGoal.currentAmount, currency)} / {formatCurrency(mainGoal.targetAmount, currency)}
+            </div>
+          </div>
+
+          {/* Block / Segmented Progress Bar */}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-5 bg-secondary rounded-lg overflow-hidden flex border border-border/60 p-0.5">
+              <div
+                className="h-full bg-foreground rounded-md transition-all duration-500"
+                style={{ width: `${goalProgressPercent}%` }}
+              />
+            </div>
+            <span className="text-xs font-bold text-foreground w-10 text-right">
+              {goalProgressPercent}%
+            </span>
+          </div>
+
+          <div className="text-xs text-muted-foreground pt-1 flex items-center justify-between">
+            <span>On track · June 2027</span>
+            <span className="text-[11px]">Arrival: Nov 2026</span>
+          </div>
+        </div>
       </section>
 
-      {/* SECTION 3: "Before you decide" — Decision Simulation Input & Evaluation */}
-      <BeforeYouDecide
-        currency={currency}
-        baselineProfile={baselineProfile}
-      />
+      {/* 5. OPTIONAL EXTENDED TRAJECTORY DETAILS */}
+      <section className="space-y-6 pt-4 border-t border-border/50">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">
+            Trajectory Analytics
+          </span>
 
-      {/* SECTION 4: "Look ahead" — Foresight Cards */}
-      <section id="what-if">
-        <LookAheadSection currency={currency} />
+          <button
+            type="button"
+            onClick={() => setShowDetailedCharts(!showDetailedCharts)}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground hover:underline"
+          >
+            <span>{showDetailedCharts ? "Hide Trajectory Graph" : "View Trajectory Graph"}</span>
+            {showDetailedCharts ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
+        </div>
+
+        {showDetailedCharts && (
+          <div className="space-y-6 animate-fadeIn font-sans">
+            <TrajectoryHeroChart
+              goalTitle={mainGoal.title}
+              currentAmount={mainGoal.currentAmount}
+              targetAmount={mainGoal.targetAmount}
+              targetDate="2027-06-30"
+              projectedArrivalDate="2026-11-15"
+              monthlyFreeCashFlow={68000}
+              currency={currency}
+            />
+
+            <YourPathSection
+              monthlyIncome={180000}
+              monthlyCommitments={112000}
+              availableForGoals={68000}
+              currentSavings={180000}
+              currency={currency}
+            />
+
+            <RecentDecisionsSection currency={currency} />
+
+            <PrimeInsightSection
+              goalTitle={mainGoal.title}
+              monthlyFreeCashFlow={68000}
+              currency={currency}
+            />
+          </div>
+        )}
       </section>
-
-      {/* SECTION 5: "Recent decisions" — Evaluated spending history */}
-      <RecentDecisionsSection currency={currency} />
-
-      {/* SECTION 6: "One thing to know" — Prime Insight Highlight */}
-      <PrimeInsightSection
-        goalTitle="Start my business"
-        monthlyFreeCashFlow={68000}
-        currency={currency}
-      />
     </div>
   );
 }

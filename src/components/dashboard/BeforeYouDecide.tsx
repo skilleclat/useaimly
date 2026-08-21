@@ -1,190 +1,267 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils/currency";
 import { CurrencyCode } from "@/lib/types/finance";
 import { simulateDecision, BaselineFinancialProfile } from "@/lib/finance";
-import { FinancialStatus } from "@/components/design-system/FinancialStatus";
+import { parseDecisionQuery } from "@/lib/nlp/decision-query-parser";
 import {
-  HelpCircle,
-  Sparkles,
   ArrowRight,
   ShieldCheck,
-  AlertTriangle,
+  AlertCircle,
   Clock,
   CheckCircle2,
-  RefreshCw,
-  Info,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 interface BeforeYouDecideProps {
-  currency: CurrencyCode;
+  currency?: CurrencyCode;
   baselineProfile: BaselineFinancialProfile;
+  onDecisionChange?: (amount: number, delayInDays: number) => void;
 }
 
-const PRESET_QUESTIONS = [
-  { text: "Can I afford a KES 20,000 phone?", amount: 20000, title: "New Smartphone", isRecurring: false },
-  { text: "Should I take this KES 150,000 loan?", amount: 150000, title: "New Loan Facility", isRecurring: false },
-  { text: "Can I spend KES 10,000 this weekend?", amount: 10000, title: "Weekend Entertainment", isRecurring: false },
+const QUICK_EXAMPLES = [
+  { text: `"Can I afford a $2,000 laptop?"`, amount: 2000, title: "Laptop Purchase" },
+  { text: `"Can I spend 30,000 KES on a phone?"`, amount: 30000, title: "Smartphone Purchase" },
+  { text: `"What if I get a 25,000 KES raise?"`, amount: 25000, title: "Income Increase", isIncome: true },
 ];
 
-export function BeforeYouDecide({ currency = "KES", baselineProfile }: BeforeYouDecideProps) {
+export function BeforeYouDecide({
+  currency = "KES",
+  baselineProfile,
+  onDecisionChange,
+}: BeforeYouDecideProps) {
   const [queryText, setQueryText] = useState("");
-  const [amount, setAmount] = useState<number>(20000);
-  const [decisionTitle, setDecisionTitle] = useState("New Phone Purchase");
+  const [activeAmount, setActiveAmount] = useState<number>(2000);
+  const [activeTitle, setActiveTitle] = useState("Laptop Purchase");
   const [isRecurring, setIsRecurring] = useState(false);
-  const [hasEvaluated, setHasEvaluated] = useState(false);
-  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [hasEvaluated, setHasEvaluated] = useState(true);
+  const [showPillars, setShowPillars] = useState(false);
 
-  // Deterministic simulation
-  const simulation = simulateDecision(baselineProfile, {
-    decisionTitle,
-    amount,
-    isRecurring,
-    recurringFrequency: "MONTHLY",
-  });
+  // Parse natural language input on typing
+  const parsedIntent = useMemo(() => {
+    if (!queryText.trim()) return null;
+    return parseDecisionQuery(queryText, currency);
+  }, [queryText, currency]);
 
-  const handleSelectPreset = (preset: typeof PRESET_QUESTIONS[0]) => {
-    setQueryText(preset.text);
-    setAmount(preset.amount);
-    setDecisionTitle(preset.title);
-    setIsRecurring(preset.isRecurring);
+  // Derived evaluation params
+  const evalAmount = parsedIntent?.isValid && parsedIntent.extractedAmount > 0
+    ? parsedIntent.extractedAmount
+    : activeAmount;
+    
+  const evalTitle = parsedIntent?.isValid && parsedIntent.extractedTitle
+    ? parsedIntent.extractedTitle
+    : activeTitle;
+
+  const evalRecurring = parsedIntent?.isRecurring ?? isRecurring;
+
+  // Run deterministic simulation engine
+  const simulation = useMemo(() => {
+    return simulateDecision(baselineProfile, {
+      decisionTitle: evalTitle,
+      amount: evalAmount,
+      isRecurring: evalRecurring,
+      recurringFrequency: "MONTHLY",
+    });
+  }, [baselineProfile, evalTitle, evalAmount, evalRecurring]);
+
+  const handleSelectPreset = (example: typeof QUICK_EXAMPLES[0]) => {
+    setQueryText(example.text);
+    setActiveAmount(example.amount);
+    setActiveTitle(example.title);
+    setIsRecurring(false);
     setHasEvaluated(true);
+    if (onDecisionChange) {
+      const sim = simulateDecision(baselineProfile, {
+        decisionTitle: example.title,
+        amount: example.amount,
+        isRecurring: false,
+      });
+      onDecisionChange(example.amount, sim.delta.delayInDays);
+    }
   };
 
-  const handleAsk = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    setIsEvaluating(true);
-    setTimeout(() => {
-      setIsEvaluating(false);
-      setHasEvaluated(true);
-    }, 200);
+  const handleQuerySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (parsedIntent && parsedIntent.extractedAmount > 0) {
+      setActiveAmount(parsedIntent.extractedAmount);
+      setActiveTitle(parsedIntent.extractedTitle);
+      setIsRecurring(parsedIntent.isRecurring);
+    }
+    setHasEvaluated(true);
+    if (onDecisionChange) {
+      onDecisionChange(evalAmount, simulation.delta.delayInDays);
+    }
   };
+
+  const answerColorClass =
+    simulation.status === "SAFE"
+      ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
+      : simulation.status === "MANAGEABLE"
+      ? "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20"
+      : simulation.status === "HIGH_IMPACT"
+      ? "text-orange-600 dark:text-orange-400 bg-orange-500/10 border-orange-500/20"
+      : "text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/20";
+
+  const answerHeadline =
+    simulation.status === "SAFE"
+      ? "Yes. Fully affordable."
+      : simulation.status === "MANAGEABLE"
+      ? "Yes, manageable."
+      : simulation.status === "HIGH_IMPACT"
+      ? "Proceed with caution."
+      : "Not recommended right now.";
+
+  const primaryGoal = baselineProfile.goals[0];
+  const goalTitle = primaryGoal?.title || "My Primary Goal";
 
   return (
-    <section className="rounded-2xl border border-border/80 bg-card p-6 sm:p-8 space-y-6 shadow-xs relative overflow-hidden transition-all">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
-            <HelpCircle className="w-4 h-4" />
-            <span>Before You Spend</span>
-          </div>
-          <h3 className="text-xl sm:text-2xl font-bold text-foreground">
-            What financial decision are you considering today?
-          </h3>
-        </div>
-
-        <Link
-          href="/app/decide"
-          className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 shrink-0"
-        >
-          <span>Open Full Decision Studio</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
+    <div className="space-y-4 font-mono">
+      <div className="text-sm font-semibold text-foreground">
+        What are you considering?
       </div>
 
-      {/* Input Sandbox */}
-      <form onSubmit={handleAsk} className="space-y-3">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <input
-              type="text"
-              value={queryText}
-              onChange={(e) => setQueryText(e.target.value)}
-              placeholder="e.g. Can I afford a KES 20,000 phone?"
-              className="w-full rounded-xl border border-border/80 bg-background px-4 py-3 text-xs sm:text-sm text-foreground focus:outline-hidden focus:border-primary transition-colors"
-            />
-            {queryText && (
-              <button
-                type="button"
-                onClick={() => setQueryText("")}
-                className="absolute right-3.5 top-3 text-muted-foreground hover:text-foreground text-xs"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-
+      {/* Input Box matching wireframe design: "Can I afford a $2,000 laptop?" -> */}
+      <form onSubmit={handleQuerySubmit} className="space-y-3">
+        <div className="relative flex items-center">
+          <input
+            type="text"
+            value={queryText}
+            onChange={(e) => {
+              setQueryText(e.target.value);
+              setHasEvaluated(true);
+            }}
+            placeholder={`"Can I afford a $2,000 laptop?"`}
+            className="w-full rounded-xl border-2 border-border/90 bg-card px-4 py-3.5 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:border-foreground transition-all pr-14"
+          />
           <button
             type="submit"
-            disabled={isEvaluating}
-            className="rounded-xl bg-primary text-primary-foreground px-6 py-3 text-xs font-semibold hover:opacity-95 shadow-xs transition-all shrink-0 flex items-center justify-center gap-2"
+            className="absolute right-2 top-2 bottom-2 rounded-lg bg-foreground text-background px-3 text-sm font-bold hover:opacity-90 transition-all flex items-center justify-center shrink-0"
+            title="Evaluate Decision"
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{isEvaluating ? "Calculating..." : "Test Decision"}</span>
+            →
           </button>
         </div>
 
-        {/* Quick Question Presets */}
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          <span className="text-xs text-muted-foreground font-medium">Examples:</span>
-          {PRESET_QUESTIONS.map((preset) => (
+        {/* Quick Presets */}
+        <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+          <span className="text-muted-foreground">Examples:</span>
+          {QUICK_EXAMPLES.map((example) => (
             <button
-              key={preset.text}
+              key={example.text}
               type="button"
-              onClick={() => handleSelectPreset(preset)}
-              className="text-xs rounded-lg border border-border/60 bg-secondary/40 px-3 py-1 text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+              onClick={() => handleSelectPreset(example)}
+              className="rounded-lg border border-border/70 bg-card px-2.5 py-1 text-foreground/80 hover:border-foreground transition-all text-[11px]"
             >
-              {preset.text}
+              {example.text}
             </button>
           ))}
         </div>
       </form>
 
-      {/* Evaluated Impact Sandbox Result */}
+      {/* RESULT DISPLAY */}
       {hasEvaluated && (
-        <div className="rounded-xl border border-primary/25 bg-primary/5 p-5 sm:p-6 space-y-4 animate-fadeIn">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-primary/15 pb-3">
-            <div>
-              <span className="text-xs font-semibold text-primary block">
-                Simulation Consequence
-              </span>
-              <h4 className="text-lg font-bold text-foreground">
-                {decisionTitle} ({formatCurrency(amount, currency)})
-              </h4>
+        <div className="rounded-2xl border-2 border-border/80 bg-card p-5 space-y-5 animate-fadeIn mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
+            {/* The Verdict */}
+            <div className="md:col-span-5 rounded-xl border border-border/80 bg-secondary/30 p-4 flex flex-col justify-between space-y-3">
+              <div>
+                <span className="text-[11px] uppercase text-muted-foreground font-semibold">
+                  Verdict
+                </span>
+                <div className={`mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold ${answerColorClass}`}>
+                  {simulation.status === "SAFE" ? (
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  ) : (
+                    <AlertCircle className="w-3.5 h-3.5" />
+                  )}
+                  <span>{answerHeadline}</span>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-bold text-foreground">
+                  {evalTitle}
+                </h4>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {formatCurrency(evalAmount, currency)}
+                  {evalRecurring ? " / month" : " one-time"}
+                </p>
+              </div>
             </div>
 
-            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 self-start sm:self-auto">
-              ✓ Liquid Cash Covered
-            </span>
+            {/* The Time Consequence */}
+            <div className="md:col-span-7 rounded-xl border border-border/80 bg-secondary/20 p-4 flex flex-col justify-between space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] uppercase text-muted-foreground font-semibold">
+                  Consequence in Time
+                </span>
+                <Clock className="w-3.5 h-3.5 text-foreground" />
+              </div>
+
+              <div>
+                <div className="text-3xl font-bold text-foreground">
+                  +{simulation.delta.delayInDays} days
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Goal <span className="text-foreground font-semibold">&ldquo;{goalTitle}&rdquo;</span> shifts to{" "}
+                  <span className="text-foreground font-bold">{simulation.delta.newCompletionDate}</span>.
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-border/50 flex items-center justify-between text-[11px]">
+                <span className="text-muted-foreground">Recovery Effort:</span>
+                <span className="font-bold text-foreground">
+                  +{formatCurrency(simulation.delta.additionalMonthlyAmountRequired || 1667, currency)} / mo
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* Breakdown Rows */}
-          <div className="space-y-2.5 text-xs sm:text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground font-medium">Cash Buffer Remaining</span>
-              <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                {formatCurrency(Math.max(0, baselineProfile.liquidSavings - amount), currency)}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground font-medium">Primary Goal Timeline (&ldquo;Start my business&rdquo;)</span>
-              <span className="font-bold text-primary">
-                +{simulation.delta.delayInDays} days delay
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground font-medium">To Maintain Original Date</span>
-              <span className="font-bold text-foreground">
-                Save +{formatCurrency(simulation.delta.additionalMonthlyAmountRequired || 3500, currency)} / month
-              </span>
-            </div>
+          <div className="text-xs text-muted-foreground leading-relaxed pt-1">
+            {simulation.detailedAnalysis}
           </div>
 
-          <div className="pt-2 flex justify-end border-t border-primary/15">
-            <Link
-              href="/app/decide"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+          {/* Toggle 3 Pillars */}
+          <div className="pt-1">
+            <button
+              type="button"
+              onClick={() => setShowPillars(!showPillars)}
+              className="inline-flex items-center gap-1.5 text-xs text-foreground hover:underline"
             >
-              <span>Compare alternative strategies in Decision Studio</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+              <span>{showPillars ? "Hide 3-Pillar Breakdown" : "View 3-Pillar Breakdown"}</span>
+              {showPillars ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
+
+            {showPillars && (
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-[11px]">
+                <div className="p-3 rounded-lg border border-border/70 bg-background space-y-1">
+                  <div className="font-bold text-foreground">1. Cash</div>
+                  <div className="text-muted-foreground">
+                    {simulation.affordability.canPhysicallyPay ? "Liquid Covered" : "Deficit"}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg border border-border/70 bg-background space-y-1">
+                  <div className="font-bold text-foreground">2. Cushion</div>
+                  <div className="text-muted-foreground">
+                    {simulation.affordability.obligationsPreservedMonths} mo safe
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg border border-border/70 bg-background space-y-1">
+                  <div className="font-bold text-foreground">3. Trajectory</div>
+                  <div className="text-muted-foreground">
+                    +{simulation.delta.delayInDays}d shift
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
-    </section>
+    </div>
   );
 }

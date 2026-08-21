@@ -8,7 +8,6 @@ import { formatCurrency } from "@/lib/utils/currency";
 import { formatMonthYear } from "@/lib/utils/date";
 import { CurrencyCode } from "@/lib/types/finance";
 import { FinancialStatus } from "@/components/design-system/FinancialStatus";
-import { GoalProgress } from "@/components/design-system/GoalProgress";
 import { MoneyInput } from "@/components/design-system/MoneyInput";
 import {
   Target,
@@ -17,12 +16,10 @@ import {
   AlertTriangle,
   CheckCircle2,
   Calendar,
-  Layers,
   ArrowRight,
   Sparkles,
-  TrendingUp,
   X,
-  Filter,
+  Clock,
 } from "lucide-react";
 
 export default function GoalsPage() {
@@ -42,10 +39,8 @@ export default function GoalsPage() {
   const [newPriority, setNewPriority] = useState<"HIGH" | "MEDIUM" | "LOW">("HIGH");
   const [newMonthlyContribution, setNewMonthlyContribution] = useState<number>(15000);
 
-  // Available Monthly Capacity (Free Cash Flow)
   const availableMonthlyCapacity = 68000;
 
-  // Calculate Total Active Allocations
   const totalAllocated = useMemo(() => {
     return destinations
       .filter((d) => !d.isPaused && !d.isArchived && d.status !== "COMPLETED")
@@ -55,7 +50,6 @@ export default function GoalsPage() {
   const hasCapacityConflict = totalAllocated > availableMonthlyCapacity;
   const capacityDelta = totalAllocated - availableMonthlyCapacity;
 
-  // Filtered Destinations
   const filteredDestinations = useMemo(() => {
     return destinations.filter((d) => {
       if (filterTab === "ACTIVE") return !d.isPaused && !d.isArchived && d.status !== "COMPLETED";
@@ -100,19 +94,15 @@ export default function GoalsPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8 animate-fadeIn">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
       {/* Header Row */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-semibold text-primary">
-            <Compass className="w-4 h-4" />
-            <span>Target Horizons</span>
-          </div>
-          <h1 className="text-2xl sm:text-4xl font-bold text-foreground tracking-tight">
-            Your Destinations
+          <h1 className="text-2xl sm:text-4xl font-bold font-editorial text-foreground tracking-tight">
+            Your Goals & Destinations
           </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl leading-relaxed font-medium">
-            The life goals you are actively steering toward. UseAimly balances multi-destination cash flow to keep your plans on track.
+          <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+            Where your money is taking you. Clear arrival timelines for what matters.
           </p>
         </div>
 
@@ -122,84 +112,57 @@ export default function GoalsPage() {
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-semibold text-primary-foreground hover:opacity-95 shadow-xs transition-all shrink-0 self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
-          <span>New Destination</span>
+          <span>New Goal</span>
         </button>
       </div>
 
-      {/* MULTI-DESTINATION CAPACITY CONFLICT MONITOR */}
+      {/* Capacity Monitor Bar */}
       {hasCapacityConflict ? (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-5 space-y-3 shadow-xs animate-fadeIn">
-          <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-bold text-sm sm:text-base">
-            <AlertTriangle className="w-5 h-5 shrink-0" />
-            <span>Capital Capacity Over-Allocation Detected</span>
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 space-y-2 shadow-xs">
+          <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-bold text-sm">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>Allocation Capacity Warning</span>
           </div>
-          <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed">
-            You are currently allocating{" "}
-            <strong className="font-bold">
-              {formatCurrency(totalAllocated, currency)} / month
-            </strong>{" "}
-            across active destinations, but your available monthly capacity is{" "}
-            <strong className="font-bold text-primary">
-              {formatCurrency(availableMonthlyCapacity, currency)} / month
-            </strong>
-            .
+          <p className="text-xs text-foreground/90 leading-relaxed font-medium">
+            Allocating {formatCurrency(totalAllocated, currency)} / mo across goals, exceeding capacity by -{formatCurrency(capacityDelta, currency)} / mo.
           </p>
-          <div className="flex items-center gap-2 pt-1 text-xs font-semibold text-amber-800 dark:text-amber-200">
-            <span>Monthly Shortfall: -{formatCurrency(capacityDelta, currency)} / month</span>
-          </div>
         </div>
       ) : (
-        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2.5">
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-medium">
+          <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
-            <span className="text-muted-foreground font-medium">
-              Allocating{" "}
-              <strong className="text-foreground font-bold">
-                {formatCurrency(totalAllocated, currency)} / mo
-              </strong>{" "}
-              of{" "}
-              <strong className="text-primary font-bold">
-                {formatCurrency(availableMonthlyCapacity, currency)} / mo
-              </strong>{" "}
-              capacity across active destinations.
+            <span className="text-muted-foreground">
+              Allocating <strong className="text-foreground">{formatCurrency(totalAllocated, currency)} / mo</strong> of <strong className="text-primary">{formatCurrency(availableMonthlyCapacity, currency)} / mo</strong> monthly capacity.
             </span>
           </div>
-          <span className="text-xs text-primary font-semibold bg-primary/10 px-3 py-1 rounded-full shrink-0 self-start sm:self-auto">
-            {formatCurrency(availableMonthlyCapacity - totalAllocated, currency)} / mo Unassigned Buffer
+          <span className="text-xs text-primary font-bold bg-primary/10 px-3 py-1 rounded-full shrink-0">
+            {formatCurrency(availableMonthlyCapacity - totalAllocated, currency)} / mo Free Buffer
           </span>
         </div>
       )}
 
-      {/* FILTER TABS (Segmented Pill Bar) */}
-      <div className="overflow-x-auto no-scrollbar pb-1">
-        <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-secondary/50 border border-border/60 min-w-max">
-          {(["ALL", "ACTIVE", "PAUSED", "COMPLETED"] as const).map((tab) => {
-            const labels = {
-              ALL: `All Destinations (${destinations.length})`,
-              ACTIVE: "Active",
-              PAUSED: "Paused",
-              COMPLETED: "Completed",
-            };
-            const isActive = filterTab === tab;
-            return (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setFilterTab(tab)}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold shrink-0 whitespace-nowrap transition-all ${
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-xs"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
-                }`}
-              >
-                {labels[tab]}
-              </button>
-            );
-          })}
-        </div>
+      {/* Filter Segmented Pills */}
+      <div className="flex items-center gap-1 p-1 rounded-xl bg-secondary/50 border border-border/60 w-fit">
+        {(["ALL", "ACTIVE", "PAUSED", "COMPLETED"] as const).map((tab) => {
+          const isActive = filterTab === tab;
+          return (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setFilterTab(tab)}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab === "ALL" ? `All (${destinations.length})` : tab}
+            </button>
+          );
+        })}
       </div>
 
-      {/* DESTINATIONS CARDS GRID */}
+      {/* DESTINATION CARDS GRID — DESTINATION-FIRST HIERARCHY */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredDestinations.map((dest) => {
           const progressPercent = Math.min(100, Math.round((dest.currentAmount / dest.targetAmount) * 100));
@@ -208,69 +171,64 @@ export default function GoalsPage() {
             <Link
               key={dest.id}
               href={`/app/goals/${dest.id}`}
-              className="group rounded-xl border border-border/80 bg-card p-5 sm:p-6 space-y-5 shadow-xs hover:border-primary/40 hover:shadow-sm transition-all flex flex-col justify-between"
+              className="group rounded-3xl border border-border/80 bg-card p-6 space-y-6 shadow-xs hover:border-primary/50 hover:shadow-sm transition-all flex flex-col justify-between"
             >
               <div className="space-y-4">
-                {/* Status & Priority Row */}
+                {/* Header: Status Badge */}
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-secondary text-muted-foreground">
-                    {dest.priority === "HIGH" ? "High Priority" : dest.priority === "MEDIUM" ? "Medium Priority" : "Low Priority"}
+                  <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold">
+                    Destination
                   </span>
                   <FinancialStatus status={dest.status} variant="badge" />
                 </div>
 
-                {/* Title & Amount */}
+                {/* 1. Destination Name */}
                 <div>
-                  <h3 className="text-lg sm:text-xl font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                  <h3 className="text-xl font-bold font-editorial text-foreground group-hover:text-primary transition-colors">
                     {dest.name}
                   </h3>
-                  <div className="flex items-baseline gap-2 mt-1">
-                    <span className="text-2xl font-bold text-foreground">
+
+                  {/* 2. Progress & Amounts */}
+                  <div className="mt-2 flex items-baseline justify-between">
+                    <span className="text-xl font-bold font-mono text-foreground">
                       {formatCurrency(dest.currentAmount, currency)}
                     </span>
-                    <span className="text-xs text-muted-foreground font-medium">
+                    <span className="text-xs font-medium text-muted-foreground">
                       of {formatCurrency(dest.targetAmount, currency)}
                     </span>
                   </div>
-                </div>
 
-                {/* Progress Bar */}
-                <div className="space-y-1.5">
-                  <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
+                  <div className="mt-2 w-full bg-secondary h-2.5 rounded-full overflow-hidden">
                     <div
                       className="bg-primary h-full rounded-full transition-all duration-500"
                       style={{ width: `${progressPercent}%` }}
                     />
                   </div>
-                  <div className="flex justify-between text-xs text-muted-foreground font-medium">
+
+                  <div className="mt-1 flex justify-between text-xs text-muted-foreground font-medium">
                     <span>{progressPercent}% Complete</span>
-                    <span>Remaining: {formatCurrency(dest.targetAmount - dest.currentAmount, currency)}</span>
+                    <span>Pace: {formatCurrency(dest.monthlyContribution, currency)} / mo</span>
                   </div>
                 </div>
 
-                {/* Monthly Pace & Arrival Date */}
-                <div className="p-3 rounded-lg border border-border/60 bg-secondary/30 space-y-2 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground font-medium">Monthly Pace:</span>
-                    <span className="font-bold text-foreground">
-                      {formatCurrency(dest.monthlyContribution, currency)} / month
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
+                {/* 3. Arrival Date in TIME */}
+                <div className="p-3.5 rounded-2xl border border-primary/20 bg-primary/5 space-y-1">
+                  <div className="flex items-center justify-between text-xs">
                     <span className="text-muted-foreground font-medium">Projected Arrival:</span>
-                    <span className="font-bold text-primary">
-                      {formatMonthYear(dest.projectedCompletionDate)}
-                    </span>
+                    <div className="flex items-center gap-1 text-primary font-bold font-mono">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>{formatMonthYear(dest.projectedCompletionDate)}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-muted-foreground text-xs pt-1.5 border-t border-border/50">
-                    <span>Target Date:</span>
+                  <div className="flex justify-between text-[11px] text-muted-foreground">
+                    <span>Original Target:</span>
                     <span>{formatMonthYear(dest.targetDate)}</span>
                   </div>
                 </div>
               </div>
 
               <div className="pt-3 border-t border-border/60 flex items-center justify-between text-xs font-semibold text-primary group-hover:underline">
-                <span>View Trajectory Detail</span>
+                <span>Explore Trajectory</span>
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
               </div>
             </Link>
@@ -278,40 +236,35 @@ export default function GoalsPage() {
         })}
       </div>
 
-      {/* CREATE NEW DESTINATION MODAL (Clean Attached Form & Dialog) */}
+      {/* CREATE NEW DESTINATION MODAL */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4 pt-6 sm:pt-4 animate-fadeIn overflow-y-auto">
-          <div className="w-full max-w-lg rounded-2xl border border-border/80 bg-card p-5 sm:p-6 space-y-5 shadow-2xl my-auto max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-border/60 pb-3.5">
-              <div className="space-y-0.5">
-                <h3 className="text-xl font-bold text-foreground">
-                  Define a New Destination
-                </h3>
-                <p className="text-xs text-muted-foreground font-medium">
-                  Give your money a clear target and timeline.
-                </p>
-              </div>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-lg rounded-3xl border border-border/80 bg-card p-6 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border/60 pb-3">
+              <h3 className="text-xl font-bold font-editorial text-foreground">
+                Define New Goal Destination
+              </h3>
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="p-1.5 rounded-lg border border-border/80 bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                className="p-1.5 rounded-xl border border-border/80 bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleCreateDestination} className="space-y-4">
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <label className="text-xs font-semibold text-muted-foreground block">
-                  Destination Title
+                  Goal Name
                 </label>
                 <input
                   type="text"
                   required
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="e.g. Buy a Home Deposit"
-                  className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-xs sm:text-sm font-medium text-foreground focus:outline-hidden focus:border-primary"
+                  placeholder="e.g. Launch my business"
+                  className="w-full rounded-xl border border-border/80 bg-background px-4 py-2.5 text-sm font-medium text-foreground focus:outline-hidden focus:border-primary"
                 />
               </div>
 
@@ -324,7 +277,7 @@ export default function GoalsPage() {
                 />
 
                 <MoneyInput
-                  label="Initial Capital"
+                  label="Current Saved"
                   value={newCurrentAmount}
                   onChange={(val) => setNewCurrentAmount(val)}
                   currency={currency}
@@ -339,7 +292,7 @@ export default function GoalsPage() {
                   currency={currency}
                 />
 
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <label className="text-xs font-semibold text-muted-foreground block">
                     Target Date
                   </label>
@@ -348,35 +301,12 @@ export default function GoalsPage() {
                     required
                     value={newTargetDate}
                     onChange={(e) => setNewTargetDate(e.target.value)}
-                    className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-xs font-medium text-foreground focus:outline-hidden focus:border-primary"
+                    className="w-full rounded-xl border border-border/80 bg-background px-4 py-2.5 text-xs font-medium text-foreground focus:outline-hidden focus:border-primary"
                   />
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground block">
-                  Priority Level
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(["HIGH", "MEDIUM", "LOW"] as const).map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setNewPriority(p)}
-                      className={`py-2 rounded-xl text-xs font-semibold border transition-all ${
-                        newPriority === p
-                          ? "border-primary bg-primary/10 text-primary font-bold"
-                          : "border-border/80 bg-background text-muted-foreground"
-                      }`}
-                    >
-                      {p === "HIGH" ? "High" : p === "MEDIUM" ? "Medium" : "Low"}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Action Buttons Directly Attached Below Inputs */}
-              <div className="flex items-center gap-3 pt-4 border-t border-border/60">
+              <div className="flex items-center gap-3 pt-3 border-t border-border/60">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
@@ -388,7 +318,7 @@ export default function GoalsPage() {
                   type="submit"
                   className="flex-1 rounded-xl bg-primary py-2.5 text-xs font-semibold text-primary-foreground hover:opacity-95 shadow-xs transition-opacity"
                 >
-                  Create Destination
+                  Create Goal
                 </button>
               </div>
             </form>

@@ -212,16 +212,12 @@ export default function MoneyPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10 animate-fadeIn">
       {/* Header */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-xs font-mono font-bold text-primary">
-          <Layers className="w-4 h-4" />
-          <span>Raw Financial Material</span>
-        </div>
-        <h1 className="text-3xl sm:text-5xl font-bold font-editorial text-foreground tracking-tight">
-          Money & Cash Flow
+      <div className="space-y-1">
+        <h1 className="text-2xl sm:text-4xl font-bold font-editorial text-foreground tracking-tight">
+          Your Financial Picture
         </h1>
-        <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl leading-relaxed">
-          Manage the active income streams, commitments, debts, and liquid reserves that power Useaimly&apos;s deterministic intelligence.
+        <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+          Your liquid cash, fixed costs, debts, and reserves.
         </p>
       </div>
 

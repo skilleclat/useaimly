@@ -30,46 +30,28 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   {
-    label: "Overview",
+    label: "Home",
     href: "/app",
-    description: "Your financial trajectory & briefing.",
+    description: "Your financial trajectory & daily briefing.",
     icon: <Compass className="w-4 h-4" />,
-  },
-  {
-    label: "Destinations",
-    href: "/app/goals",
-    description: "What your money is working toward.",
-    icon: <Target className="w-4 h-4" />,
   },
   {
     label: "Decide",
     href: "/app/decide",
-    description: "Test spending impact before committing.",
+    description: "Test any decision or scenario before committing.",
     icon: <HelpCircle className="w-4 h-4" />,
   },
   {
-    label: "What If?",
-    href: "/app/what-if",
-    description: "Explore hypothetical scenarios.",
-    icon: <TrendingUp className="w-4 h-4" />,
+    label: "Goals",
+    href: "/app/goals",
+    description: "Your life destinations & arrival timelines.",
+    icon: <Target className="w-4 h-4" />,
   },
   {
-    label: "Money Ledger",
+    label: "Money",
     href: "/app/money",
-    description: "Manage your cash flows & reserves.",
+    description: "Your liquid cash, fixed costs & reserves.",
     icon: <Wallet className="w-4 h-4" />,
-  },
-  {
-    label: "Insights",
-    href: "/app/insights",
-    description: "Proactive warnings & observations.",
-    icon: <Sparkles className="w-4 h-4" />,
-  },
-  {
-    label: "Assistant",
-    href: "/app/ask",
-    description: "Financial decision conversation.",
-    icon: <MessageSquare className="w-4 h-4" />,
   },
 ];
 

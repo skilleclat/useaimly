@@ -63,32 +63,11 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 backdrop-blur-md transition-colors duration-200">
       <Container className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Brand Logo (Responsive sizing) */}
-        <div className="flex items-center gap-3 sm:gap-6">
-          <div className="hidden sm:block">
-            <UseaimlyLogo size="md" />
-          </div>
-          <div className="block sm:hidden">
-            <UseaimlyLogo size="sm" showTagline={false} />
-          </div>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-6 text-xs font-semibold text-muted-foreground">
-            {NAV_LINKS.map((link) => {
-              const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
-              return (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  className={`transition-colors font-medium hover:text-foreground ${
-                    isActive ? "text-primary font-semibold" : ""
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
-          </nav>
+        {/* Brand Logo */}
+        <div className="flex items-center gap-3">
+          <Link href="/">
+            <UseaimlyLogo size="md" showTagline={false} />
+          </Link>
         </div>
 
         {/* Right Actions */}
@@ -126,7 +105,7 @@ export function Header() {
                 href="/app"
                 className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-primary px-4 sm:px-5 py-1.5 sm:py-2 text-xs font-semibold text-primary-foreground hover:opacity-95 shadow-xs transition-all shrink-0 whitespace-nowrap"
               >
-                <span>Open Application</span>
+                <span>Get Started</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -188,7 +167,7 @@ export function Header() {
               className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-xs font-semibold text-primary-foreground hover:opacity-95 shadow-xs transition-opacity"
             >
               <Compass className="w-4 h-4" />
-              <span>Open Application</span>
+              <span>Get Started</span>
             </Link>
 
             <Link
