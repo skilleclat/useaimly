@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition, useMemo } from "react";
+import React, { useState, useTransition, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { StepIndicator } from "./components/StepIndicator";
 import { Step1Destination } from "./components/Step1Destination";
@@ -24,6 +24,13 @@ export default function OnboardingWizardPage() {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isPending, startTransition] = useTransition();
   const [serverError, setServerError] = useState<string | null>(null);
+
+  // Smooth scroll to top whenever step changes on mobile/desktop
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [currentStep]);
 
   const currency = (profile?.preferred_currency || "KES") as CurrencyCode;
 
