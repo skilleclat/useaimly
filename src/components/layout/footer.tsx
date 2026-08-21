@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Container } from "./container";
@@ -21,6 +21,8 @@ import {
 
 export function Footer() {
   const pathname = usePathname();
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
   // Hide root footer on authenticated application pages
   if (pathname.startsWith("/app")) {
@@ -31,6 +33,13 @@ export function Footer() {
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+  };
+
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsletterEmail.trim()) return;
+    setIsSubscribed(true);
+    setNewsletterEmail("");
   };
 
   return (
@@ -68,27 +77,39 @@ export function Footer() {
               Get monthly decision strategy teardowns & liquidity optimization tips.
             </p>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                alert("Thank you for subscribing to UseAimly Insights!");
-              }}
-              className="flex items-center gap-2 pt-1"
-            >
-              <input
-                type="email"
-                placeholder="Enter your email address"
-                required
-                className="w-full rounded-2xl border border-border bg-card px-4 py-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none transition-colors"
-              />
-              <button
-                type="submit"
-                className="rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white px-4 py-2.5 text-xs font-bold hover:opacity-95 transition-all shadow-md shrink-0 cursor-pointer flex items-center gap-1"
-              >
-                <span>Join</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </form>
+            {isSubscribed ? (
+              <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center justify-between gap-2 animate-fadeIn">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>Subscribed! Check your inbox for monthly strategy teardowns.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsSubscribed(false)}
+                  className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 underline opacity-80 hover:opacity-100 shrink-0"
+                >
+                  Add another
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleNewsletterSubmit} className="flex items-center gap-2 pt-1">
+                <input
+                  type="email"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  placeholder="Enter your email address"
+                  required
+                  className="w-full rounded-2xl border border-border bg-card px-4 py-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-hidden transition-colors"
+                />
+                <button
+                  type="submit"
+                  className="rounded-2xl bg-primary text-primary-foreground px-5 py-2.5 text-xs font-bold hover:opacity-95 transition-all shadow-md shrink-0 cursor-pointer flex items-center gap-1"
+                >
+                  <span>Join</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </form>
+            )}
           </div>
         </div>
 

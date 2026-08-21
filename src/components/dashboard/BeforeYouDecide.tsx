@@ -125,7 +125,7 @@ export function BeforeYouDecide({
 
       {/* Input Box matching wireframe design: "Can I afford a $2,000 laptop?" -> */}
       <form onSubmit={handleQuerySubmit} className="space-y-3">
-        <div className="relative flex items-center">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-0 sm:relative">
           <input
             type="text"
             value={queryText}
@@ -134,11 +134,11 @@ export function BeforeYouDecide({
               setHasEvaluated(true);
             }}
             placeholder={`"Can I afford a $2,000 laptop?"`}
-            className="w-full rounded-xl border-2 border-border/90 bg-card px-4 py-3.5 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:border-foreground transition-all pr-14"
+            className="w-full rounded-xl border-2 border-border/90 bg-card px-4 py-3.5 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:border-foreground transition-all sm:pr-14"
           />
           <button
             type="submit"
-            className="absolute right-2 top-2 bottom-2 rounded-lg bg-foreground text-background px-3 text-sm font-bold hover:opacity-90 transition-all flex items-center justify-center shrink-0"
+            className="w-full sm:w-auto sm:absolute sm:right-2 sm:top-2 sm:bottom-2 rounded-lg bg-foreground text-background px-4 py-2.5 sm:py-0 text-sm font-bold hover:opacity-90 transition-all flex items-center justify-center shrink-0 min-h-[44px] sm:min-h-0"
             title="Evaluate Decision"
           >
             →

@@ -142,7 +142,7 @@ export default function GoalsPage() {
       )}
 
       {/* Filter Segmented Pills */}
-      <div className="flex items-center gap-1 p-1 rounded-xl bg-secondary/50 border border-border/60 w-fit">
+      <div className="flex items-center gap-1 p-1 rounded-xl bg-secondary/50 border border-border/60 w-fit max-w-full overflow-x-auto no-scrollbar">
         {(["ALL", "ACTIVE", "PAUSED", "COMPLETED"] as const).map((tab) => {
           const isActive = filterTab === tab;
           return (
@@ -150,7 +150,7 @@ export default function GoalsPage() {
               key={tab}
               type="button"
               onClick={() => setFilterTab(tab)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 ${
                 isActive
                   ? "bg-primary text-primary-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground"

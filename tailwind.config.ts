@@ -99,12 +99,12 @@ const config: Config = {
             muted: "hsl(var(--finance-projection-muted))",
           },
 
-          // African-inspired core pigments
-          clay: "#C25E3E",       // Warm Terracotta Ochre
+          // African-inspired & core pigments
+          clay: "#FF5533",       // UseAimly Vibrant Orange
           sand: "#EFECE6",       // Rift Valley Sandstone
-          acacia: "#0E1117",     // Deep Acacia Obsidian Charcoal
+          acacia: "#0E1117",     // Deep Obsidian Charcoal
           linen: "#FAF8F5",      // Pure Warm Linen
-          forest: "#1E824C",     // Serene Kenyan Highland Forest Green
+          forest: "#10B981",     // Highland Emerald
         },
       },
       borderRadius: {
@@ -124,7 +124,8 @@ const config: Config = {
         "elevation-1": "0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)",
         "elevation-2": "0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04)",
         "elevation-3": "0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03)",
-        "trajectory-glow": "0 0 24px -4px rgba(30, 130, 76, 0.15)",
+        "trajectory-glow": "0 0 32px -4px rgba(255, 85, 51, 0.2)",
+        "emerald-glow": "0 0 32px -4px rgba(16, 185, 129, 0.2)",
         "warm-subtle": "0 10px 30px -10px rgba(14, 17, 23, 0.1)",
       },
     },

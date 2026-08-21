@@ -252,17 +252,17 @@ export default function DecideStudioPage() {
 
         {/* Natural Language Query Bar */}
         <form onSubmit={handleQuerySubmit} className="space-y-3">
-          <div className="relative flex items-center shadow-xs">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-0 sm:relative shadow-xs">
             <input
               type="text"
               value={queryInput}
               onChange={(e) => setQueryInput(e.target.value)}
               placeholder="e.g. Can I spend 30,000 KES on a laptop?"
-              className="w-full rounded-2xl border-2 border-border/80 bg-background px-5 py-4 text-sm sm:text-base text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:border-primary transition-all pr-32 font-medium"
+              className="w-full rounded-2xl border-2 border-border/80 bg-background px-4 sm:px-5 py-3.5 sm:py-4 text-sm sm:text-base text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:border-primary transition-all sm:pr-32 font-medium"
             />
             <button
               type="submit"
-              className="absolute right-2 top-2 bottom-2 rounded-xl bg-primary text-primary-foreground px-5 text-xs font-bold hover:opacity-90 transition-all flex items-center gap-1.5 shrink-0"
+              className="w-full sm:w-auto sm:absolute sm:right-2 sm:top-2 sm:bottom-2 rounded-xl bg-primary text-primary-foreground px-5 py-3 sm:py-0 text-xs font-bold hover:opacity-90 transition-all flex items-center justify-center gap-1.5 shrink-0 shadow-md cursor-pointer min-h-[44px] sm:min-h-0"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>Simulate</span>

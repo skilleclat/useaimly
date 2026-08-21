@@ -222,7 +222,7 @@ export default function MoneyPage() {
       </div>
 
       {/* SUB-NAVIGATION TABS */}
-      <div className="flex items-center gap-2 overflow-x-auto border-b border-border/70 pb-4">
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar border-b border-border/70 pb-4 max-w-full">
         {(
           [
             { key: "OVERVIEW", label: "Overview & Waterfall", icon: <Layers className="w-3.5 h-3.5" /> },
@@ -237,7 +237,7 @@ export default function MoneyPage() {
             key={tab.key}
             type="button"
             onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all shrink-0 ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all shrink-0 ${
               activeTab === tab.key
                 ? "bg-primary text-primary-foreground shadow-xs"
                 : "bg-secondary/70 text-muted-foreground hover:text-foreground"
@@ -252,8 +252,8 @@ export default function MoneyPage() {
       {/* 1. OVERVIEW & CASH FLOW WATERFALL TAB */}
       {activeTab === "OVERVIEW" && (
         <div className="space-y-8 animate-fadeIn">
-          {/* 4 TOP LEVEL CAPACITY METRICS */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* 4 TOP LEVEL CAPACITY METRICS: 2x2 on mobile */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
             <div className="rounded-3xl border border-border bg-card p-5 space-y-1 shadow-elevation-1">
               <span className="text-[11px] font-mono font-bold text-muted-foreground uppercase tracking-wider block">
                 Total Monthly Inflow

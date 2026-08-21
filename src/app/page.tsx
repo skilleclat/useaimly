@@ -121,67 +121,94 @@ export default function LandingPage() {
         {/* HERO SECTION: Know what your money decisions do to your future */}
         {/* ========================================================================= */}
         <section className="text-center space-y-8">
-          <div className="space-y-4 max-w-3xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-semibold">
+          <div className="space-y-5 max-w-3xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-bold tracking-wide">
               <Zap className="w-3.5 h-3.5" />
-              <span>Goal-Aware Decision Intelligence</span>
+              <span>Goal-Aware Financial Decision Intelligence</span>
             </div>
 
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold font-editorial text-foreground tracking-tight leading-[1.05]">
+            <h1 className="text-3xl sm:text-6xl lg:text-7xl font-bold font-editorial text-foreground tracking-tight leading-[1.08] sm:leading-[1.05]">
               Know what your money decisions do to your future.
             </h1>
 
-            <p className="text-lg sm:text-xl text-muted-foreground font-medium">
-              See tomorrow before deciding today.
+            <p className="text-base sm:text-xl text-muted-foreground font-medium max-w-2xl mx-auto px-2">
+              See tomorrow before deciding today. Simulate spending decisions and understand the exact impact on your life goals.
             </p>
 
-            {/* Dual CTA Actions: Try Live Demo vs Get Started */}
-            <div className="pt-2 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
-              <Link
-                href="/app"
-                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white font-bold text-xs sm:text-sm px-6 py-3.5 shadow-lg shadow-orange-500/25 hover:opacity-95 hover:scale-[1.01] transition-all cursor-pointer"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>Try Live Demo (No Account Needed)</span>
-              </Link>
-              <Link
-                href="/signup"
-                className="inline-flex items-center gap-2 rounded-2xl border border-border/80 bg-card hover:bg-secondary/70 text-foreground font-bold text-xs sm:text-sm px-6 py-3.5 shadow-xs transition-all"
-              >
-                <span>Create Free Account</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+            {/* Dual CTA Actions: Logged in vs Guest */}
+            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 max-w-md sm:max-w-none mx-auto px-4 sm:px-0">
+              {user ? (
+                <>
+                  <Link
+                    href="/app"
+                    className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm px-7 py-3.5 sm:py-4 shadow-lg shadow-primary/20 hover:opacity-95 hover:scale-[1.01] transition-all cursor-pointer"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>Go to Dashboard</span>
+                  </Link>
+                  <Link
+                    href="/app/decide"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card hover:bg-secondary/70 text-foreground font-bold text-sm px-6 py-3.5 sm:py-4 shadow-xs transition-all"
+                  >
+                    <span>Simulate Decision</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/app/decide"
+                    className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm px-7 py-3.5 sm:py-4 shadow-lg shadow-primary/20 hover:opacity-95 hover:scale-[1.01] transition-all cursor-pointer"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>Simulate a Real Decision</span>
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card hover:bg-secondary/70 text-foreground font-bold text-sm px-6 py-3.5 sm:py-4 shadow-xs transition-all"
+                  >
+                    <span>Create Free Account</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 
           {/* ========================================================================= */}
-          {/* INTERACTIVE DEMONSTRATION HERO (01 QUESTION → 02 ANSWER → 03 CONSEQUENCE → 04 PATH) */}
+          {/* INTERACTIVE DEMONSTRATION HERO (01 QUESTION → 02 ANSWER → 03 CONSEQUENCE → 04 RECOVERY) */}
           {/* ========================================================================= */}
-          <div className="rounded-3xl border-2 border-border/80 bg-card p-6 sm:p-10 space-y-8 text-left shadow-xs max-w-4xl mx-auto relative overflow-hidden">
-            <div className="space-y-2">
-              <span className="text-xs font-mono uppercase tracking-wider text-primary font-semibold">
-                01 — The Question
-              </span>
-              <h2 className="text-xl sm:text-2xl font-bold text-foreground">
-                What are you considering?
-              </h2>
+          <div className="rounded-3xl border-2 border-border/80 bg-card/90 backdrop-blur-md p-4 sm:p-10 space-y-6 sm:space-y-8 text-left shadow-xl max-w-4xl mx-auto relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <span className="text-xs font-mono uppercase tracking-wider text-primary font-bold">
+                  01 — The Question
+                </span>
+                <h2 className="text-lg sm:text-2xl font-bold text-foreground">
+                  What are you considering right now?
+                </h2>
+              </div>
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/80 text-[11px] font-mono text-muted-foreground border border-border/60">
+                <Compass className="w-3.5 h-3.5 text-primary" />
+                <span>Live Calculator</span>
+              </div>
             </div>
 
             {/* Natural Input Box */}
             <form onSubmit={handleQuerySubmit} className="space-y-3">
-              <div className="relative flex items-center shadow-xs">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-0 sm:relative shadow-xs">
                 <input
                   type="text"
                   value={queryInput}
                   onChange={(e) => setQueryInput(e.target.value)}
                   placeholder="e.g. Can I spend 30,000 KES on a phone?"
-                  className="w-full rounded-2xl border-2 border-border/80 bg-background px-5 py-4 text-sm sm:text-base text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:border-primary transition-all pr-36 font-medium"
+                  className="w-full rounded-2xl border-2 border-border/80 bg-background px-4 sm:px-5 py-3.5 sm:py-4 text-sm sm:text-base text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:border-primary transition-all sm:pr-36 font-medium"
                 />
                 <button
                   type="submit"
-                  className="absolute right-2 top-2 bottom-2 rounded-xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white px-5 text-xs font-bold hover:opacity-95 transition-all flex items-center gap-1.5 shrink-0 shadow-md cursor-pointer"
+                  className="w-full sm:w-auto sm:absolute sm:right-2 sm:top-2 sm:bottom-2 rounded-xl bg-primary text-primary-foreground px-5 py-3 sm:py-0 text-xs font-bold hover:opacity-95 transition-all flex items-center justify-center gap-1.5 shrink-0 shadow-md cursor-pointer min-h-[44px] sm:min-h-0"
                 >
-                  <span>Get Started</span>
+                  <span>Simulate</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -192,47 +219,57 @@ export default function LandingPage() {
                 <button
                   type="button"
                   onClick={() => handlePresetSelect("Can I spend 30,000 KES on a phone?", 30000, "Smartphone Purchase")}
-                  className="rounded-xl border border-border/70 bg-secondary/50 px-3 py-1.5 text-foreground/80 hover:border-primary/40 transition-all"
+                  className="rounded-xl border border-border/70 bg-secondary/50 px-3 py-1.5 text-foreground/80 hover:border-primary/40 transition-all font-medium text-[11px] sm:text-xs"
                 >
-                  Can I spend 30,000 KES on a phone?
+                  30,000 KES Smartphone
                 </button>
                 <button
                   type="button"
-                  onClick={() => handlePresetSelect("Can I take a 150,000 KES loan?", 150000, "Tech Loan")}
-                  className="rounded-xl border border-border/70 bg-secondary/50 px-3 py-1.5 text-foreground/80 hover:border-primary/40 transition-all"
+                  onClick={() => handlePresetSelect("Can I take a 150,000 KES loan?", 150000, "Equipment Loan")}
+                  className="rounded-xl border border-border/70 bg-secondary/50 px-3 py-1.5 text-foreground/80 hover:border-primary/40 transition-all font-medium text-[11px] sm:text-xs"
                 >
-                  Can I take a 150,000 KES loan?
+                  150,000 KES Loan
                 </button>
               </div>
             </form>
 
             {/* LIVE REVELATION GRID */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pt-4 border-t border-border/60">
-              {/* 02 — THE ANSWER */}
-              <div className="md:col-span-5 rounded-2xl border border-border/80 bg-secondary/30 p-6 space-y-4 flex flex-col justify-between">
+              {/* 02 — THE ANSWER & IMMEDIATE CASH IMPACT */}
+              <div className="md:col-span-5 rounded-2xl border border-border/80 bg-secondary/40 p-6 space-y-4 flex flex-col justify-between">
                 <div>
                   <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold">
-                    02 — The Answer
+                    02 — Immediate Cash Impact
                   </span>
                   <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>{simulation.headlineVerdict || "Yes. Fully Affordable."}</span>
+                    <span>{simulation.headlineVerdict || "Fully Covered by Reserves"}</span>
                   </div>
                 </div>
 
-                <div>
+                <div className="space-y-1">
                   <h4 className="text-lg font-bold text-foreground">{evalTitle}</h4>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-sm font-semibold font-mono text-muted-foreground">
                     {formatCurrency(evalAmount, currency)}
                   </p>
+                  <div className="text-xs text-muted-foreground pt-2 border-t border-border/40">
+                    <span>Liquid Cushion: </span>
+                    <strong className="text-foreground">
+                      {formatCurrency(baselineProfile.liquidSavings, currency)}
+                    </strong>{" "}
+                    →{" "}
+                    <strong className="text-primary font-bold">
+                      {formatCurrency(Math.max(0, baselineProfile.liquidSavings - evalAmount), currency)}
+                    </strong>
+                  </div>
                 </div>
               </div>
 
-              {/* 03 — THE CONSEQUENCE IN TIME */}
+              {/* 03 — THE CONSEQUENCE IN TIME & RECOVERY */}
               <div className="md:col-span-7 rounded-2xl border border-primary/30 bg-primary/5 p-6 space-y-4 flex flex-col justify-between">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono uppercase tracking-wider text-primary font-semibold">
-                    03 — The Consequence
+                  <span className="text-xs font-mono uppercase tracking-wider text-primary font-bold">
+                    03 — Future Shift
                   </span>
                   <Clock className="w-4 h-4 text-primary" />
                 </div>
@@ -242,15 +279,15 @@ export default function LandingPage() {
                     +{simulation.delta.delayInDays} days
                   </div>
                   <p className="text-xs sm:text-sm text-foreground/80 mt-1 font-medium">
-                    Your business goal moves 18 days later (from Dec 12 to Dec 30).
+                    Your goal <strong className="text-foreground">"Launch my business"</strong> moves {simulation.delta.delayInDays} days later (from Dec 12 to Dec 30).
                   </p>
                 </div>
 
-                {/* 04 — THE PATH TO STAY ON TRACK */}
+                {/* 04 — RECOVERY PLAN */}
                 <div className="pt-3 border-t border-primary/20 flex flex-wrap items-center justify-between gap-2 text-xs">
                   <div className="flex items-center gap-2">
                     <span className="text-muted-foreground font-semibold">04 — Stay on track:</span>
-                    <span className="font-bold text-foreground bg-background px-3 py-1 rounded-lg border border-border/80 font-mono">
+                    <span className="font-bold text-foreground bg-background px-3 py-1 rounded-lg border border-border/80 font-mono text-xs">
                       +{formatCurrency(simulation.delta.additionalMonthlyAmountRequired || 1667, currency)} / mo
                     </span>
                   </div>
@@ -259,7 +296,7 @@ export default function LandingPage() {
                     href={user ? "/app/decide" : "/signup"}
                     className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-1.5 text-xs font-bold text-primary-foreground hover:opacity-95 transition-all shadow-xs shrink-0"
                   >
-                    <span>Get Started</span>
+                    <span>{user ? "Open Decision Studio" : "Analyze Your Real Decision"}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
@@ -269,49 +306,52 @@ export default function LandingPage() {
         </section>
 
         {/* ========================================================================= */}
-        {/* SECTION 05 — THE PRODUCT: GOALS / MONEY / INSIGHTS */}
+        {/* SECTION 05 — THE PRODUCT ARCHITECTURE */}
         {/* ========================================================================= */}
         <section className="space-y-8">
           <div className="text-center space-y-2 max-w-xl mx-auto">
             <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold">
-              05 — The Product Architecture
+              Product Architecture
             </span>
             <h2 className="text-2xl sm:text-4xl font-bold font-editorial text-foreground tracking-tight">
-              Calm control over your future.
+              Calm, goal-aware control over your money.
             </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              Unlike retroactive budgeting tools, UseAimly focuses entirely on future destinations.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Goals */}
-            <div className="rounded-3xl border border-border/80 bg-card p-6 space-y-4">
+            <div className="rounded-3xl border border-border/80 bg-card p-6 space-y-4 shadow-xs">
               <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 w-fit">
                 <Target className="w-5 h-5" />
               </div>
               <h3 className="text-lg font-bold text-foreground">Goals as Destinations</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Define what you are working toward. UseAimly calculates exact arrival dates based on your cash flow.
+                Define what you are working toward. UseAimly calculates deterministic arrival dates based on your actual net cash flow.
               </p>
             </div>
 
             {/* Money */}
-            <div className="rounded-3xl border border-border/80 bg-card p-6 space-y-4">
+            <div className="rounded-3xl border border-border/80 bg-card p-6 space-y-4 shadow-xs">
               <div className="p-3 rounded-2xl bg-sky-500/10 text-sky-600 dark:text-sky-400 w-fit">
                 <Wallet className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold text-foreground">Your Financial Picture</h3>
+              <h3 className="text-lg font-bold text-foreground">6-Stream Financial Reality</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Track income, fixed living expenses, debt service, and liquid reserves without manual budget policing.
+                Track income, fixed living expenses, debts, and liquid reserves without manual budget policing or guilt trip alerts.
               </p>
             </div>
 
             {/* Insights */}
-            <div className="rounded-3xl border border-border/80 bg-card p-6 space-y-4">
+            <div className="rounded-3xl border border-border/80 bg-card p-6 space-y-4 shadow-xs">
               <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 w-fit">
                 <Sparkles className="w-5 h-5" />
               </div>
               <h3 className="text-lg font-bold text-foreground">Proactive Foresight</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Detect cushion deficits, annual commitment spikes, and goal pace shortfalls 60 days in advance.
+                Detect cushion deficits, annual commitment spikes, and pace shortfalls 60 days before they affect your goals.
               </p>
             </div>
           </div>
@@ -323,13 +363,13 @@ export default function LandingPage() {
         <section id="pricing" className="space-y-8 py-6">
           <div className="text-center space-y-3 max-w-2xl mx-auto">
             <span className="text-xs font-mono uppercase tracking-wider text-primary font-semibold">
-              05.5 — Monetization & Tiers
+              Monetization & Plans
             </span>
             <h2 className="text-3xl sm:text-5xl font-bold font-editorial text-foreground tracking-tight">
-              Simple, transparent pricing for every financial ambition.
+              Transparent plans for every financial ambition.
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium">
-              Start free, test your baseline, and scale as your life goals expand.
+              Start free, test your baseline, and upgrade as your destinations grow.
             </p>
           </div>
 
@@ -341,27 +381,27 @@ export default function LandingPage() {
         </section>
 
         {/* ========================================================================= */}
-        {/* SECTION 06 — CTA */}
+        {/* SECTION 06 — FINAL CTA */}
         {/* ========================================================================= */}
-        <section className="rounded-3xl border border-primary/30 bg-primary/5 p-8 sm:p-14 text-center space-y-6 max-w-4xl mx-auto">
+        <section className="rounded-3xl border border-primary/30 bg-primary/5 p-8 sm:p-14 text-center space-y-6 max-w-4xl mx-auto shadow-lg shadow-primary/5">
           <div className="space-y-2">
-            <span className="text-xs font-mono uppercase tracking-wider text-primary font-semibold">
-              06 — Final Step
+            <span className="text-xs font-mono uppercase tracking-wider text-primary font-bold">
+              Ready to See Tomorrow?
             </span>
             <h2 className="text-3xl sm:text-5xl font-bold font-editorial text-foreground tracking-tight">
-              Make better decisions before they become expensive.
+              Make confident decisions before spending money.
             </h2>
             <p className="text-sm text-muted-foreground max-w-xl mx-auto font-medium">
-              Join thousands who evaluate spending choices before committing.
+              Understand the impact of every financial choice on your destinations.
             </p>
           </div>
 
           <div>
             <Link
-              href="/signup"
-              className="inline-flex items-center gap-2 rounded-2xl bg-primary text-primary-foreground font-bold text-sm px-8 py-4 shadow-xs hover:opacity-90 transition-all"
+              href={user ? "/app" : "/signup"}
+              className="inline-flex items-center gap-2 rounded-2xl bg-primary text-primary-foreground font-bold text-sm px-8 py-4 shadow-md hover:opacity-90 transition-all"
             >
-              <span>Get Started Free</span>
+              <span>{user ? "Go to Your Dashboard" : "Get Started Free"}</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

@@ -142,15 +142,38 @@
   * {
     @apply border-border;
   }
+  html {
+    @apply overflow-x-hidden max-w-full;
+    -webkit-tap-highlight-color: transparent;
+  }
   body {
-    @apply bg-background text-foreground antialiased selection:bg-primary/15 selection:text-foreground;
+    @apply bg-background text-foreground antialiased selection:bg-primary/15 selection:text-foreground overflow-x-hidden max-w-full;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  /* Prevent iOS auto-zoom on form inputs */
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+  @media (min-width: 640px) {
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    input[type="password"],
+    select,
+    textarea {
+      font-size: inherit !important;
+    }
   }
 }
 
 /* Warm Calm Canvas Utility (Quiet Interface) */
 .bg-warm-canvas {
-  background-color: HSL(var(--background));
+  background-color: hsl(var(--background));
 }
 
 /* Subtle Technical Dotted Leader */

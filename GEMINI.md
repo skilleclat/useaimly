@@ -1,4 +1,4 @@
-﻿# 🌌 UseAimly (Useaimly) — SaaS Documentation & Architecture Guide
+# 🌌 UseAimly (Useaimly) — SaaS Documentation & Architecture Guide
 
 > **Tagline**: *"See tomorrow before deciding today"*  
 > **Mission**: Plateforme d'intelligence décisionnelle financière orientée objectifs (*Goal-Aware Decision Intelligence Platform*).  
@@ -15,9 +15,10 @@
 6. [Couche IA & NLP (`src/lib/ai` & `src/lib/nlp`)](#6-couche-ia--nlp-srclibai--srclibnlp)
 7. [Schéma de Base de Données (Supabase & RLS)](#7-schéma-de-base-de-données-supabase--rls)
 8. [Cartographie des Modules & Pages UI](#8-cartographie-des-modules--pages-ui)
-9. [Design System & Composants Reutilisables](#9-design-system--composants-réutilisables)
+9. [Design System & Composants Réutilisables](#9-design-system--composants-réutilisables)
 10. [Guide de Démarrage & Commandes Utiles](#10-guide-de-démarrage--commandes-utiles)
 11. [Guide pour les Développeurs & Règles d'Extension](#11-guide-pour-les-développeurs--règles-dextension)
+12. [Refonte Globale Design System & Mobile Responsive](#12-refonte-globale-design-system--mobile-responsive)
 
 ---
 
@@ -434,4 +435,29 @@ Toute nouvelle table ajoutée à PostgreSQL doit impérativement inclure :
 
 ---
 
-*Documentation générée pour UseAimly — Conservée comme référence d'ingénierie et de conception produit.*
+## 12. Refonte Globale Design System & Mobile Responsive
+
+### 🎨 1. Identité Visuelle & Tokens de Design
+- **Fonds & Surfaces** : Arrière-plan somptueux en charcoal chaud (`#131211`), cartes surélevées (`#1C1A18`), et surfaces secondaires tonales (`#262421`).
+- **Pigment Signature** : Orange UseAimly (`#FF5533` / `hsl(14, 100%, 58%)`) réservé aux actions primaires, entrées de décision et deltas de trajectoire.
+- **Sémantique Trajectoire** : Vert émeraude des sous-bois (`on-track`), ambre chaud (`at-risk`), rouge corail (`off-track`), et bleu cyan (`ahead`).
+
+### 📱 2. Architecture Mobile Responsive Ultra-Premium
+- **Anti-Overflow Global** : Règle stricte `overflow-x-hidden max-w-full` appliquée sur `html` et `body` dans `src/app/globals.css`.
+- **Formulaires & Boutons Tactiles** : Les barres de recherche et formulaires de simulation basculent en disposition verticale empilée (`flex-col sm:flex-row`) avec une hauteur minimale de zone de frappe (`min-h-[44px]`).
+- **Correction iOS** : Neutralisation du zoom automatique Safari iOS via une taille de police minimale de `16px` sur les entrées de formulaire mobiles.
+- **Grille Métriques 2x2** : Affichage des indicateurs financiers et rythmes mensuels en grille 2x2 fluide sur smartphones (`grid-cols-2 lg:grid-cols-4`).
+- **Onglets Tactiles Sans Scrollbars** : Utilisation de la classe utilitaire `.no-scrollbar` pour un défilement horizontal fluide au doigt sur les sous-navigations (`Goals`, `Money Hub`).
+
+### 🔑 3. Logique d'Affichage Dynamique Auth CTAs
+- **Utilisateur Connecté** : Les boutons d'incitation à l'inscription (ex: *"Create Free Account"*, *"Get Started Free"*) sont automatiquement masqués au profit d'actions directes de navigation (*"Go to Dashboard"*, *"Simulate Decision"*, *"Open Decision Studio"*).
+- **Invités / Non Connectés** : Affichage des boutons d'acquisition (*"Try Live Demo"*, *"Create Free Account"*).
+
+### 💬 4. Composant Newsletter Équipé d'un État Inline Pro
+- Suppression intégrale des alertes navigateur natives (`alert(...)`).
+- Intégration d'un badge de succès inline animé (`✓ Subscribed! Check your inbox for monthly strategy teardowns.`) et réinitialisation automatique du champ e-mail après validation.
+
+---
+
+*Documentation mise à jour pour UseAimly — Conservée comme référence d'ingénierie, de design system et de conception produit.*
+
