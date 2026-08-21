@@ -474,6 +474,13 @@ Toute nouvelle table ajoutée à PostgreSQL doit impérativement inclure :
 - **Sélecteur de Fréquence** : Choix par l'utilisateur entre *Tous les dimanches à 19h00*, *Tous les 3 jours (Mode Intensif)*, *Bi-mensuel (Tous les 15 jours)*, et *Décalage de trajectoire uniquement*.
 - **Déclencheurs de Contenu** : Toggles personnalisables pour le rythme d'objectif (*Goal Target Pace*), les avertissements d'échéances 30 jours (*Obligation Warnings*), et les conseils du coach IA (*AI Strategic Tips*).
 
+### 🧠 10. Coach & Mentor Financier IA (30+ Ans d'Expérience)
+- **Persona d'Élite** : L'assistant conversationnel (`/app/ask` et `/api/chat`) s'exprime avec la sagesse, la rigueur et l'empathie d'un mentor hautement expérimenté possédant 30+ ans d'expertise en gestion de patrimoine, résilience de trésorerie et pilotage d'objectifs de vie.
+- **Structure des Réponses** :
+  1. 🧠 **Senior Mentor Assessment** : Diagnostic direct et vision à long terme.
+  2. 📊 **Trajectory Impact / Consequence** : Impact chiffré déterministe sur le coussin liquide et la date d'arrivée.
+  3. 🎯 **3-Step Action Plan** : Recommandation en 3 étapes concrètes à exécuter le jour même.
+
 ---
 
 *Documentation mise à jour pour UseAimly — Conservée comme référence d'ingénierie, de design system et de conception produit.*

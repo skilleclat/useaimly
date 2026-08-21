@@ -89,13 +89,12 @@ const INITIAL_THREADS: ConversationThread[] = [
 ];
 
 const SUGGESTED_QUERIES = [
-  "I want to spend KES 12,000 this weekend.",
-  "How is my business goal looking?",
-  "Should I pay off my KES 120,000 loan or save?",
-  "What happens if my consulting income drops by 20k?",
-  "How many months of living buffer do I have?",
-  "How can I recover 15 days on my business goal?",
-  "What is my net free cash flow status?",
+  "How do I balance aggressive business goals with an emergency cushion?",
+  "Should I pay off debt or invest surplus free cash flow?",
+  "What is the smartest way to recover 30 days lost on my goal arrival?",
+  "How do I protect my liquid reserves against annual commitment spikes?",
+  "Can I spend KES 30,000 on a phone this month?",
+  "What happens if my consulting income drops by 20,000 KES?",
 ];
 
 export default function AskPage() {
@@ -131,7 +130,7 @@ export default function AskPage() {
           id: `m-${Date.now()}`,
           sender: "Useaimly",
           content:
-            "I'm here. Tell me what decision, expenditure, or scenario you are considering, and we'll analyze what it changes for your financial path.",
+            "🧠 **Senior Mentor Welcome**:\nWelcome! I am your Senior Financial Intelligence Mentor. I have 30+ years of wealth management, cash flow resilience, and goal trajectory experience.\n\nTell me what spending decision, debt choice, or financial scenario you are considering today, and I'll give you a structured, 30-year veteran evaluation.",
           timestamp: new Date().toISOString(),
         },
       ],
@@ -195,7 +194,7 @@ export default function AskPage() {
       const fallbackReply: ChatMessage = {
         id: `fb-${Date.now()}`,
         sender: "Useaimly",
-        content: `I've evaluated your question against your monthly free cash flow of ${formatCurrency(69250, currency)}. Your destination trajectory remains protected.`,
+        content: `🧠 **Senior Mentor Assessment (30+ Yrs Experience)**:\nI have evaluated your question against your live account context (${formatCurrency(69250, currency)} Net Free Cash Flow). Your primary destination trajectory remains safely protected.`,
         timestamp: new Date().toISOString(),
       };
       setThreads((prev) =>
@@ -214,34 +213,23 @@ export default function AskPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fadeIn">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/70 pb-5">
-        <div className="space-y-1">
+        <div className="space-y-1 text-left">
           <div className="flex items-center gap-2 text-xs font-mono font-bold text-primary">
-            <Compass className="w-4 h-4" />
-            <span>Conversational Financial Companion</span>
+            <Sparkles className="w-4 h-4" />
+            <span>Senior Financial Mentor • 30+ Years Experience</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-bold font-editorial text-foreground tracking-tight">
-            Ask Useaimly
+            Ask Aimly AI Mentor
           </h1>
           <p className="text-xs text-muted-foreground">
-            Ongoing decision companion grounded in your actual deterministic account reality.
+            Talk directly with an AI mentor with 30+ years of wealth management, cash flow resilience, and goal trajectory experience.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-xs font-mono">
-            <Target className="w-3.5 h-3.5 text-primary" />
-            <span className="text-muted-foreground">Focus:</span>
-            <span className="font-bold text-primary">Start my business</span>
-          </div>
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 text-xs font-mono">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-            <span className="text-muted-foreground">FCF:</span>
-            <span className="font-bold text-emerald-500">{formatCurrency(69250, currency)}/mo</span>
-          </div>
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/20 bg-blue-500/5 text-xs font-mono">
-            <Clock className="w-3.5 h-3.5 text-blue-500" />
-            <span className="text-muted-foreground">Buffer:</span>
-            <span className="font-bold text-blue-500">2.2 Mo</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-xs font-mono">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="font-bold text-emerald-400">30+ Yrs Mentor Active</span>
           </div>
         </div>
       </div>
