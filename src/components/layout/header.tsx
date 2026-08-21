@@ -124,7 +124,7 @@ export function Header() {
               </Link>
               <Link
                 href="/app"
-                className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 sm:px-5 py-1.5 sm:py-2 text-xs font-semibold text-primary-foreground hover:opacity-95 shadow-xs transition-all"
+                className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-primary px-4 sm:px-5 py-1.5 sm:py-2 text-xs font-semibold text-primary-foreground hover:opacity-95 shadow-xs transition-all shrink-0 whitespace-nowrap"
               >
                 <span>Open Application</span>
                 <ArrowRight className="w-3.5 h-3.5" />
