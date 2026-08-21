@@ -134,20 +134,20 @@ export default function SingleDestinationPage() {
   const areaD = `${pathD} L ${getX(totalMonths)} ${svgHeight - paddingY} L ${getX(0)} ${svgHeight - paddingY} Z`;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10 animate-fadeIn">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8 animate-fadeIn">
       {/* Back Link & Breadcrumbs */}
       <div className="flex items-center justify-between">
         <Link
           href="/app/goals"
-          className="inline-flex items-center gap-2 text-xs font-mono font-bold text-muted-foreground hover:text-foreground transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to all destinations</span>
+          <span>Back to All Destinations</span>
         </Link>
 
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-mono text-muted-foreground uppercase">
-            {destination.priority} Priority
+          <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-secondary text-muted-foreground">
+            {destination.priority === "HIGH" ? "High Priority" : destination.priority === "MEDIUM" ? "Medium Priority" : "Low Priority"}
           </span>
           <FinancialStatus status={destination.status} variant="badge" />
         </div>
@@ -155,15 +155,15 @@ export default function SingleDestinationPage() {
 
       {/* Action Notification Banner */}
       {actionNotice && (
-        <div className="p-4 rounded-2xl border border-primary/30 bg-primary/10 text-primary text-xs flex items-center justify-between gap-3 animate-fadeIn">
+        <div className="p-4 rounded-xl border border-primary/30 bg-primary/10 text-primary text-xs flex items-center justify-between gap-3 animate-fadeIn">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
-            <span>{actionNotice}</span>
+            <span className="font-medium">{actionNotice}</span>
           </div>
           <button
             type="button"
             onClick={() => setActionNotice(null)}
-            className="text-[11px] font-bold underline"
+            className="text-xs font-bold underline"
           >
             Dismiss
           </button>
@@ -171,17 +171,17 @@ export default function SingleDestinationPage() {
       )}
 
       {/* Main Header & Destination Title */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-primary">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-border/60 pb-5">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2 text-xs font-semibold text-primary">
             <Compass className="w-4 h-4" />
             <span>Destination Hub</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold font-editorial text-foreground tracking-tight">
+          <h1 className="text-2xl sm:text-4xl font-bold text-foreground tracking-tight">
             {destination.name}
           </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl leading-relaxed">
-            {destination.notes || "Financial horizon managed by Useaimly."}
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl leading-relaxed font-medium">
+            {destination.notes || "Financial horizon managed by UseAimly."}
           </p>
         </div>
 
@@ -190,7 +190,7 @@ export default function SingleDestinationPage() {
           <button
             type="button"
             onClick={() => setShowEditModal(true)}
-            className="inline-flex items-center gap-1.5 rounded-2xl border border-border bg-card px-3.5 py-2.5 text-xs font-bold text-foreground hover:border-primary/40 hover:text-primary transition-all"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border/80 bg-card px-3.5 py-2 text-xs font-semibold text-foreground hover:border-primary/40 hover:text-primary transition-all shadow-xs"
           >
             <Edit3 className="w-3.5 h-3.5" />
             <span>Edit</span>
@@ -199,10 +199,10 @@ export default function SingleDestinationPage() {
           <button
             type="button"
             onClick={handleTogglePause}
-            className={`inline-flex items-center gap-1.5 rounded-2xl border px-3.5 py-2.5 text-xs font-bold transition-all ${
+            className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-all shadow-xs ${
               destination.isPaused
                 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                : "border-border bg-card text-muted-foreground hover:text-foreground"
+                : "border-border/80 bg-card text-muted-foreground hover:text-foreground"
             }`}
           >
             {destination.isPaused ? <Play className="w-3.5 h-3.5" /> : <Pause className="w-3.5 h-3.5" />}
@@ -212,7 +212,7 @@ export default function SingleDestinationPage() {
           <button
             type="button"
             onClick={handleMarkCompleted}
-            className="inline-flex items-center gap-1.5 rounded-2xl border border-border bg-card px-3.5 py-2.5 text-xs font-bold text-foreground hover:border-emerald-500/40 hover:text-emerald-600 transition-all"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border/80 bg-card px-3.5 py-2 text-xs font-semibold text-foreground hover:border-emerald-500/40 hover:text-emerald-600 transition-all shadow-xs"
           >
             <Check className="w-3.5 h-3.5" />
             <span>Complete</span>
@@ -221,7 +221,7 @@ export default function SingleDestinationPage() {
           <button
             type="button"
             onClick={handleArchive}
-            className="inline-flex items-center gap-1.5 rounded-2xl border border-border bg-card px-3.5 py-2.5 text-xs font-bold text-muted-foreground hover:border-rose-500/40 hover:text-rose-500 transition-all"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border/80 bg-card px-3.5 py-2 text-xs font-semibold text-muted-foreground hover:border-rose-500/40 hover:text-rose-500 transition-all shadow-xs"
           >
             <Archive className="w-3.5 h-3.5" />
             <span>Archive</span>
@@ -232,81 +232,81 @@ export default function SingleDestinationPage() {
       {/* CORE PROGRESS & TARGET POSITION CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Accumulated Capital */}
-        <div className="rounded-3xl border border-border bg-card p-5 sm:p-6 space-y-2 shadow-elevation-1">
-          <span className="text-[11px] font-mono font-bold text-muted-foreground uppercase tracking-wider block">
+        <div className="rounded-xl border border-border/80 bg-card p-5 space-y-2 shadow-xs">
+          <span className="text-xs font-semibold text-muted-foreground block">
             Accumulated Capital
           </span>
-          <div className="text-2xl sm:text-3xl font-bold font-financial text-foreground">
+          <div className="text-2xl font-bold text-foreground">
             {formatCurrency(destination.currentAmount, currency)}
           </div>
-          <div className="w-full bg-secondary h-1.5 rounded-full overflow-hidden mt-2">
+          <div className="w-full bg-secondary h-2 rounded-full overflow-hidden mt-2">
             <div
               className="bg-primary h-full rounded-full transition-all"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
-          <span className="text-[10px] text-muted-foreground font-mono block">
+          <span className="text-xs text-muted-foreground font-medium block">
             {progressPercent}% of {formatCurrency(destination.targetAmount, currency)}
           </span>
         </div>
 
         {/* Monthly Contribution Pace */}
-        <div className="rounded-3xl border border-primary/30 bg-primary/5 p-5 sm:p-6 space-y-2 shadow-elevation-1">
-          <span className="text-[11px] font-mono font-bold text-primary uppercase tracking-wider block">
+        <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 space-y-2 shadow-xs">
+          <span className="text-xs font-semibold text-primary block">
             Monthly Contribution
           </span>
-          <div className="text-2xl sm:text-3xl font-bold font-financial text-primary">
+          <div className="text-2xl font-bold text-primary">
             {formatCurrency(destination.monthlyContribution, currency)}
           </div>
-          <span className="text-[11px] text-primary/80 font-mono block">
+          <span className="text-xs text-primary/80 font-medium block">
             Active monthly velocity
           </span>
         </div>
 
         {/* Projected Arrival */}
-        <div className="rounded-3xl border border-border bg-card p-5 sm:p-6 space-y-2 shadow-elevation-1">
-          <span className="text-[11px] font-mono font-bold text-muted-foreground uppercase tracking-wider block">
+        <div className="rounded-xl border border-border/80 bg-card p-5 space-y-2 shadow-xs">
+          <span className="text-xs font-semibold text-muted-foreground block">
             Projected Arrival
           </span>
-          <div className="text-xl sm:text-2xl font-bold font-editorial text-foreground">
+          <div className="text-xl sm:text-2xl font-bold text-foreground">
             {formatMonthYear(destination.projectedCompletionDate)}
           </div>
-          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono block font-bold">
+          <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold block">
             1 month ahead of deadline
           </span>
         </div>
 
         {/* Target Deadline */}
-        <div className="rounded-3xl border border-border bg-card p-5 sm:p-6 space-y-2 shadow-elevation-1">
-          <span className="text-[11px] font-mono font-bold text-muted-foreground uppercase tracking-wider block">
+        <div className="rounded-xl border border-border/80 bg-card p-5 space-y-2 shadow-xs">
+          <span className="text-xs font-semibold text-muted-foreground block">
             Target Deadline
           </span>
-          <div className="text-xl sm:text-2xl font-bold font-editorial text-foreground">
+          <div className="text-xl sm:text-2xl font-bold text-foreground">
             {formatMonthYear(destination.targetDate)}
           </div>
-          <span className="text-[10px] text-muted-foreground font-mono block">
+          <span className="text-xs text-muted-foreground font-medium block">
             Planned milestone horizon
           </span>
         </div>
       </div>
 
       {/* TRAJECTORY ACCUMULATION VISUALIZER */}
-      <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 space-y-4 shadow-elevation-1">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 pb-4">
+      <div className="rounded-xl border border-border/80 bg-card p-5 sm:p-6 space-y-4 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-3">
           <div className="space-y-0.5">
-            <span className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">
-              Deterministic Trajectory Projection
+            <span className="text-xs font-semibold text-muted-foreground block">
+              Trajectory Projection
             </span>
-            <div className="text-sm font-bold font-editorial text-foreground">
+            <div className="text-sm font-bold text-foreground">
               Month-by-month accumulation curve toward {formatCurrency(destination.targetAmount, currency)}
             </div>
           </div>
-          <span className="text-xs font-mono text-primary font-bold">
+          <span className="text-xs text-primary font-bold">
             +{formatCurrency(destination.monthlyContribution, currency)} / month
           </span>
         </div>
 
-        <div className="w-full h-48 sm:h-56 relative bg-background/50 rounded-2xl border border-border/80 p-2 overflow-hidden">
+        <div className="w-full h-48 sm:h-56 relative bg-background/50 rounded-xl border border-border/80 p-2 overflow-hidden">
           <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-full" preserveAspectRatio="none">
             <defs>
               <linearGradient id="destGrad" x1="0" y1="0" x2="0" y2="1">
@@ -331,7 +331,7 @@ export default function SingleDestinationPage() {
               y={getY(destination.targetAmount) - 6}
               fill="hsl(var(--muted-foreground))"
               fontSize="10"
-              fontFamily="monospace"
+              fontFamily="sans-serif"
             >
               Cap Target: {formatCurrency(destination.targetAmount, currency)}
             </text>
@@ -368,7 +368,7 @@ export default function SingleDestinationPage() {
               textAnchor="middle"
               fill="hsl(var(--primary))"
               fontSize="11"
-              fontFamily="serif"
+              fontFamily="sans-serif"
               fontWeight="bold"
             >
               Arrival ({formatMonthYear(destination.projectedCompletionDate)})
@@ -380,13 +380,13 @@ export default function SingleDestinationPage() {
       {/* TWO COLUMN LOWER SECTION: DECISIONS AFFECTING DESTINATION & UPCOMING RISKS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* DECISIONS AFFECTING THE DESTINATION */}
-        <div className="rounded-3xl border border-border bg-card p-6 space-y-4 shadow-elevation-1">
-          <div className="flex items-center justify-between border-b border-border/70 pb-3">
+        <div className="rounded-xl border border-border/80 bg-card p-5 sm:p-6 space-y-4 shadow-xs">
+          <div className="flex items-center justify-between border-b border-border/60 pb-3">
             <div className="space-y-0.5">
-              <span className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">
+              <span className="text-xs font-semibold text-muted-foreground block">
                 Historical Decision Impacts
               </span>
-              <h3 className="text-base font-bold font-editorial text-foreground">
+              <h3 className="text-base font-bold text-foreground">
                 Decisions affecting this destination
               </h3>
             </div>
@@ -397,12 +397,12 @@ export default function SingleDestinationPage() {
               destination.decisionsAffecting.map((dec) => (
                 <div
                   key={dec.id}
-                  className="p-4 rounded-2xl border border-border bg-background space-y-1.5 text-xs"
+                  className="p-4 rounded-xl border border-border/80 bg-background space-y-1.5 text-xs"
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-foreground">{dec.title}</span>
                     <span
-                      className={`font-mono text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                      className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                         dec.impactType === "POSITIVE"
                           ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                           : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
@@ -411,16 +411,16 @@ export default function SingleDestinationPage() {
                       {dec.shiftDays > 0 ? `+${dec.shiftDays} Days Shift` : `${dec.shiftDays} Days Faster`}
                     </span>
                   </div>
-                  <div className="text-muted-foreground leading-relaxed">
+                  <div className="text-muted-foreground leading-relaxed font-medium">
                     {dec.description}
                   </div>
-                  <div className="text-[10px] text-muted-foreground font-mono pt-1">
+                  <div className="text-xs text-muted-foreground font-medium pt-1">
                     {dec.date} • {formatCurrency(dec.amount, currency)}
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground font-medium">
                 No past decision has affected this destination yet.
               </p>
             )}
@@ -428,13 +428,13 @@ export default function SingleDestinationPage() {
         </div>
 
         {/* UPCOMING RISKS & STRESS FACTORS */}
-        <div className="rounded-3xl border border-border bg-card p-6 space-y-4 shadow-elevation-1">
-          <div className="flex items-center justify-between border-b border-border/70 pb-3">
+        <div className="rounded-xl border border-border/80 bg-card p-5 sm:p-6 space-y-4 shadow-xs">
+          <div className="flex items-center justify-between border-b border-border/60 pb-3">
             <div className="space-y-0.5">
-              <span className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">
+              <span className="text-xs font-semibold text-muted-foreground block">
                 Risk Monitoring
               </span>
-              <h3 className="text-base font-bold font-editorial text-foreground">
+              <h3 className="text-base font-bold text-foreground">
                 Upcoming risks & stress factors
               </h3>
             </div>
@@ -444,7 +444,7 @@ export default function SingleDestinationPage() {
             {destination.upcomingRisks.map((risk, idx) => (
               <div
                 key={idx}
-                className="p-4 rounded-2xl border border-border bg-background space-y-1.5 text-xs"
+                className="p-4 rounded-xl border border-border/80 bg-background space-y-1.5 text-xs"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 font-bold text-foreground">
@@ -452,16 +452,16 @@ export default function SingleDestinationPage() {
                     <span>{risk.title}</span>
                   </div>
                   <span
-                    className={`font-mono text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                    className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
                       risk.severity === "HIGH"
                         ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
                         : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
                     }`}
                   >
-                    {risk.severity} Severity
+                    {risk.severity === "HIGH" ? "High Severity" : "Medium Severity"}
                   </span>
                 </div>
-                <p className="text-muted-foreground leading-relaxed">{risk.description}</p>
+                <p className="text-muted-foreground leading-relaxed font-medium">{risk.description}</p>
               </div>
             ))}
           </div>
@@ -469,24 +469,24 @@ export default function SingleDestinationPage() {
       </div>
 
       {/* CONTRIBUTION HISTORY LEDGER */}
-      <div className="rounded-3xl border border-border bg-card overflow-hidden shadow-elevation-1">
-        <div className="p-6 border-b border-border/70 flex items-center justify-between">
+      <div className="rounded-xl border border-border/80 bg-card overflow-hidden shadow-xs">
+        <div className="p-5 sm:p-6 border-b border-border/60 flex items-center justify-between">
           <div className="space-y-0.5">
-            <span className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">
+            <span className="text-xs font-semibold text-muted-foreground block">
               Capital Ledger
             </span>
-            <h3 className="text-lg font-bold font-editorial text-foreground">
+            <h3 className="text-lg font-bold text-foreground">
               Contribution history
             </h3>
           </div>
-          <span className="text-xs font-mono text-muted-foreground">
+          <span className="text-xs text-muted-foreground font-medium">
             {destination.contributionHistory.length} deposits recorded
           </span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="border-b border-border/80 bg-secondary/40 font-mono text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+            <thead className="border-b border-border/60 bg-secondary/30 text-xs font-semibold text-muted-foreground">
               <tr>
                 <th className="py-3 px-6">Date</th>
                 <th className="py-3 px-6">Funding Source</th>
@@ -497,12 +497,12 @@ export default function SingleDestinationPage() {
             <tbody className="divide-y divide-border/60 font-medium">
               {destination.contributionHistory.map((item) => (
                 <tr key={item.id} className="hover:bg-secondary/20 transition-colors">
-                  <td className="py-3.5 px-6 font-mono text-muted-foreground">{item.date}</td>
+                  <td className="py-3.5 px-6 text-muted-foreground">{item.date}</td>
                   <td className="py-3.5 px-6 font-bold text-foreground">{item.source}</td>
-                  <td className="py-3.5 px-6 font-financial font-bold text-emerald-600 dark:text-emerald-400">
+                  <td className="py-3.5 px-6 font-bold text-emerald-600 dark:text-emerald-400">
                     +{formatCurrency(item.amount, currency)}
                   </td>
-                  <td className="py-3.5 px-6 text-right font-financial font-bold text-foreground">
+                  <td className="py-3.5 px-6 text-right font-bold text-foreground">
                     {formatCurrency(item.balanceAfter, currency)}
                   </td>
                 </tr>
@@ -514,16 +514,16 @@ export default function SingleDestinationPage() {
 
       {/* EDIT DESTINATION MODAL */}
       {showEditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fadeIn">
-          <div className="max-w-md w-full rounded-3xl border border-border bg-card p-6 sm:p-8 space-y-6 shadow-elevation-2">
-            <div className="flex items-center justify-between border-b border-border/70 pb-4">
-              <h3 className="text-xl font-bold font-editorial text-foreground">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4 pt-6 sm:pt-4 animate-fadeIn overflow-y-auto">
+          <div className="max-w-md w-full rounded-2xl border border-border/80 bg-card p-5 sm:p-6 space-y-5 shadow-2xl my-auto">
+            <div className="flex items-center justify-between border-b border-border/60 pb-3.5">
+              <h3 className="text-xl font-bold text-foreground">
                 Edit Destination Parameters
               </h3>
               <button
                 type="button"
                 onClick={() => setShowEditModal(false)}
-                className="p-1 rounded-xl text-muted-foreground hover:text-foreground"
+                className="p-1.5 rounded-lg border border-border/80 bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -539,7 +539,7 @@ export default function SingleDestinationPage() {
                   required
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs font-medium text-foreground focus:outline-none focus:border-primary"
+                  className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-xs sm:text-sm font-medium text-foreground focus:outline-hidden focus:border-primary"
                 />
               </div>
 
@@ -566,21 +566,21 @@ export default function SingleDestinationPage() {
                   required
                   value={editTargetDate}
                   onChange={(e) => setEditTargetDate(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs font-medium text-foreground focus:outline-none focus:border-primary"
+                  className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-xs font-medium text-foreground focus:outline-hidden focus:border-primary"
                 />
               </div>
 
-              <div className="flex items-center gap-3 pt-4 border-t border-border/70">
+              <div className="flex items-center gap-3 pt-4 border-t border-border/60">
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="flex-1 rounded-2xl border border-border bg-secondary py-3 text-xs font-bold text-foreground"
+                  className="flex-1 rounded-xl border border-border/80 bg-secondary/50 py-2.5 text-xs font-semibold text-foreground hover:bg-secondary transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-2xl bg-primary py-3 text-xs font-bold text-primary-foreground hover:opacity-95 shadow-sm"
+                  className="flex-1 rounded-xl bg-primary py-2.5 text-xs font-semibold text-primary-foreground hover:opacity-95 shadow-xs transition-opacity"
                 >
                   Save Changes
                 </button>
@@ -588,7 +588,6 @@ export default function SingleDestinationPage() {
             </form>
           </div>
         </div>
-      )}
     </div>
   );
 }
