@@ -2,7 +2,6 @@
 
 import React, { useState, useTransition, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { UseaimlyLogo } from "@/components/design-system/UseaimlyLogo";
 import { StepIndicator } from "./components/StepIndicator";
 import { Step1Destination } from "./components/Step1Destination";
 import { Step2Income } from "./components/Step2Income";
@@ -107,15 +106,8 @@ export default function OnboardingWizardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col justify-between py-8 px-4 sm:px-6 lg:px-8">
-      {/* Top Header */}
+    <div className="min-h-screen bg-background text-foreground flex flex-col justify-between py-6 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl w-full mx-auto space-y-6">
-        <div className="flex items-center justify-between border-b border-border/70 pb-4">
-          <UseaimlyLogo size="md" />
-          <span className="text-xs font-mono text-muted-foreground font-semibold">
-            Goal-Aware Financial Calibration
-          </span>
-        </div>
 
         {/* Step Indicator */}
         <StepIndicator

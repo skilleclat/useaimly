@@ -38,10 +38,7 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md space-y-6 animate-fadeIn">
         {/* Brand & Heading */}
         <div className="text-center space-y-2">
-          <div className="inline-block">
-            <UseaimlyLogo size="md" showTagline={false} />
-          </div>
-          <h1 className="text-3xl font-black tracking-tight text-foreground">
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground font-editorial">
             Recover password
           </h1>
           <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
