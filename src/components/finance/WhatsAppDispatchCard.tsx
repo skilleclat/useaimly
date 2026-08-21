@@ -38,7 +38,10 @@ export function WhatsAppDispatchCard({
   const [countryCode, setCountryCode] = useState("+254");
   const [phoneNumber, setPhoneNumber] = useState(initialPhone.replace(/^\+\d+\s*/, ""));
   const [isEnabled, setIsEnabled] = useState(true);
-  const [frequency, setFrequency] = useState<"SUNDAY" | "BIWEEKLY">("SUNDAY");
+  const [frequency, setFrequency] = useState<"SUNDAY" | "EVERY_3_DAYS" | "BIWEEKLY" | "DEVIATION_ONLY">("SUNDAY");
+  const [notifyGoalPace, setNotifyGoalPace] = useState(true);
+  const [notifyExpenses, setNotifyExpenses] = useState(true);
+  const [notifyAICoaching, setNotifyAICoaching] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
   const [testSent, setTestSent] = useState(false);
 
@@ -69,14 +72,14 @@ export function WhatsAppDispatchCard({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-bold text-foreground tracking-tight">
-                WhatsApp Pro Weekly Intelligence
+                WhatsApp Goal Guidance & Automated Dispatch
               </h3>
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">
                 PRO ACTIVE
               </span>
             </div>
             <p className="text-xs text-muted-foreground font-medium">
-              Autonomous weekly financial coaching & trajectory alerts straight to your phone.
+              Regular automated WhatsApp guidance to keep you strictly oriented toward hitting your goal.
             </p>
           </div>
         </div>
@@ -129,30 +132,58 @@ export function WhatsAppDispatchCard({
             </div>
           </div>
 
-          {/* Delivery Frequency & Content Options */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            <div>
-              <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
-                Dispatch Schedule
-              </label>
-              <select
-                value={frequency}
-                onChange={(e) => setFrequency(e.target.value as any)}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs font-medium text-foreground focus:border-emerald-500 focus:outline-hidden"
-              >
-                <option value="SUNDAY">Every Sunday Evening (7:00 PM)</option>
-                <option value="BIWEEKLY">Bi-Weekly (1st & 15th)</option>
-              </select>
-            </div>
+          {/* Delivery Frequency Selection */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground block">
+              Reminder & Guidance Frequency
+            </label>
+            <select
+              value={frequency}
+              onChange={(e) => setFrequency(e.target.value as any)}
+              className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs font-semibold text-foreground focus:border-emerald-500 focus:outline-hidden"
+            >
+              <option value="SUNDAY">Every Sunday Evening (Tous les dimanches à 19h00)</option>
+              <option value="EVERY_3_DAYS">Every 3 Days (Tous les 3 jours - Mode Intensif)</option>
+              <option value="BIWEEKLY">Bi-Weekly (Tous les 15 jours)</option>
+              <option value="DEVIATION_ONLY">On Trajectory Shift Only (En cas de décalage d'objectif)</option>
+            </select>
+          </div>
 
-            <div>
-              <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
-                AI Coach Tone
+          {/* Content Triggers */}
+          <div className="space-y-2 pt-1 text-xs">
+            <label className="font-semibold text-muted-foreground block text-[11px] uppercase tracking-wider font-mono">
+              Included Guidance Triggers
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <label className="flex items-center gap-2 p-2.5 rounded-xl bg-secondary/40 border border-border/60 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notifyGoalPace}
+                  onChange={(e) => setNotifyGoalPace(e.target.checked)}
+                  className="rounded text-emerald-500 accent-emerald-500"
+                />
+                <span className="font-medium text-foreground text-[11px]">Goal Target Pace</span>
               </label>
-              <div className="rounded-xl border border-border bg-secondary/30 px-3 py-2 text-xs font-medium text-foreground flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span className="truncate">Disciplined & Empowering</span>
-              </div>
+
+              <label className="flex items-center gap-2 p-2.5 rounded-xl bg-secondary/40 border border-border/60 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notifyExpenses}
+                  onChange={(e) => setNotifyExpenses(e.target.checked)}
+                  className="rounded text-emerald-500 accent-emerald-500"
+                />
+                <span className="font-medium text-foreground text-[11px]">Obligation Warnings</span>
+              </label>
+
+              <label className="flex items-center gap-2 p-2.5 rounded-xl bg-secondary/40 border border-border/60 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notifyAICoaching}
+                  onChange={(e) => setNotifyAICoaching(e.target.checked)}
+                  className="rounded text-emerald-500 accent-emerald-500"
+                />
+                <span className="font-medium text-foreground text-[11px]">AI Strategic Tips</span>
+              </label>
             </div>
           </div>
 
