@@ -110,7 +110,7 @@ export function Header() {
           ) : (
             <div className="flex items-center gap-2 sm:gap-3">
               <Link
-                href="/app"
+                href="/onboarding"
                 className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3.5 py-1.5 text-xs font-bold text-primary hover:bg-primary/20 transition-all shadow-xs shrink-0 whitespace-nowrap"
               >
                 <Sparkles className="w-3.5 h-3.5" />

@@ -138,7 +138,7 @@ export default function LandingPage() {
             {/* Dual CTA Actions: Try Live Demo vs Create Free Account */}
             <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 max-w-md sm:max-w-none mx-auto px-4 sm:px-0">
               <Link
-                href="/app/decide"
+                href="/onboarding"
                 className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm px-7 py-3.5 sm:py-4 shadow-lg shadow-primary/20 hover:opacity-95 hover:scale-[1.01] transition-all cursor-pointer"
               >
                 <Sparkles className="w-4 h-4" />
@@ -380,10 +380,10 @@ export default function LandingPage() {
 
           <div>
             <Link
-              href={user ? "/app" : "/signup"}
+              href={user ? "/app" : "/onboarding"}
               className="inline-flex items-center gap-2 rounded-2xl bg-primary text-primary-foreground font-bold text-sm px-8 py-4 shadow-md hover:opacity-90 transition-all"
             >
-              <span>{user ? "Go to Your Dashboard" : "Get Started Free"}</span>
+              <span>{user ? "Go to Your Dashboard" : "Start Live Interactive Demo"}</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
