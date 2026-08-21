@@ -75,18 +75,18 @@ export default function SettingsPage() {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-lg font-black text-foreground uppercase tracking-tight">
-                  Plan {profile?.plan_tier ? profile.plan_tier.toUpperCase() : "FREE"}
+                  {profile?.plan_tier ? profile.plan_tier.toUpperCase() : "FREE"} PLAN
                 </span>
                 <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-md bg-primary/20 text-primary">
-                  {profile?.plan_tier === "premium" ? "Élite" : profile?.plan_tier === "pro" ? "Pro Strategist" : "Starter"}
+                  {profile?.plan_tier === "premium" ? "Elite" : profile?.plan_tier === "pro" ? "Pro Strategist" : "Starter"}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">
                 {profile?.plan_tier === "premium"
-                  ? "Accès illimité au moteur déterministe, Assistant IA Gemini/GPT-4 et Laboratoire What-If."
+                  ? "Unlimited deterministic engine access, AI Financial Advisor (Gemini/GPT-4), and What-If Laboratory."
                   : profile?.plan_tier === "pro"
-                  ? "Studio d'impact 3 Stratégies, Multi-Destinations et 6 Règles d'Insights Proactifs."
-                  : "Découverte de l'intelligence décisionnelle et 1 Destination principale."}
+                  ? "3-Strategy Impact Studio, Multi-Destinations, and 6 Proactive Insight Rules."
+                  : "Explore decision intelligence with 1 Primary Destination."}
               </p>
             </div>
 
@@ -94,7 +94,7 @@ export default function SettingsPage() {
               href="/pricing"
               className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground font-bold text-xs px-5 py-2.5 shadow-xs hover:opacity-95 transition-all shrink-0"
             >
-              <span>{profile?.plan_tier === "free" ? "Changer de Plan / Surclasser" : "Gérer l'Abonnement"}</span>
+              <span>{profile?.plan_tier === "free" ? "Upgrade Plan" : "Manage Subscription"}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </a>
           </div>

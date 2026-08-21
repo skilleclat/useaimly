@@ -4,9 +4,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { PRICING_PLANS, PRICING_FAQS } from "@/lib/types/pricing";
 import { PricingCard } from "@/components/finance/PricingCard";
-import { UseaimlyLogo } from "@/components/design-system/UseaimlyLogo";
 import { Container } from "@/components/layout/container";
-import { Check, HelpCircle, ArrowRight, ShieldCheck, Sparkles, Zap } from "lucide-react";
+import { HelpCircle, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
 
 export default function PricingPage() {
   const [isYearly, setIsYearly] = useState(true);
@@ -19,15 +18,15 @@ export default function PricingPage() {
         <div className="text-center space-y-4 max-w-3xl mx-auto animate-fadeIn">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-mono font-bold text-primary">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Tarification Transparente & Sans Engagements</span>
+            <span>Transparent Pricing & Zero Commitments</span>
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-black font-editorial tracking-tight text-foreground">
-            Voyez demain avant de décider aujourd'hui.
+            See tomorrow before deciding today.
           </h1>
 
           <p className="text-sm sm:text-base text-muted-foreground font-medium leading-relaxed">
-            Choisissez le plan idéal pour sécuriser vos réserves, accélérer vos projets et simuler l'impact de chaque dépense.
+            Choose the right plan to protect your liquidity, accelerate your destinations, and simulate spending impact.
           </p>
 
           {/* Toggles Bar (Billing Cycle + Currency) */}
@@ -42,7 +41,7 @@ export default function PricingPage() {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Facturation Mensuelle
+                Monthly Billing
               </button>
               <button
                 onClick={() => setIsYearly(true)}
@@ -52,7 +51,7 @@ export default function PricingPage() {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <span>Facturation Annuelle</span>
+                <span>Annual Billing</span>
                 <span className="rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 font-extrabold uppercase">
                   -20%
                 </span>
@@ -95,9 +94,9 @@ export default function PricingPage() {
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-foreground">Garantie 14 Jours Satisfait ou Remboursé</h4>
+              <h4 className="text-sm font-bold text-foreground">14-Day Money-Back Guarantee</h4>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Testez les fonctionnalités Pro et Premium sans aucun risque. Annulez en un clic à tout moment.
+                Test Pro and Premium features with total peace of mind. Cancel anytime with a single click.
               </p>
             </div>
           </div>
@@ -105,7 +104,7 @@ export default function PricingPage() {
             href="/signup?plan=pro"
             className="inline-flex items-center gap-2 rounded-2xl bg-primary text-primary-foreground font-bold text-xs px-6 py-3 shrink-0 shadow-md hover:opacity-90 transition-all"
           >
-            <span>Démarrer l'Essai Pro</span>
+            <span>Start Pro Trial</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -114,10 +113,10 @@ export default function PricingPage() {
         <div className="space-y-8 pt-8">
           <div className="text-center space-y-2">
             <h2 className="text-2xl sm:text-3xl font-extrabold font-editorial text-foreground">
-              Foire Aux Questions (FAQ)
+              Frequently Asked Questions (FAQ)
             </h2>
             <p className="text-xs text-muted-foreground">
-              Des réponses claires à vos questions sur les abonnements et la sécurité de vos données.
+              Clear answers to common questions about subscriptions and data security.
             </p>
           </div>
 

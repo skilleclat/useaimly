@@ -137,13 +137,10 @@ function SignupFormContent() {
       <div className="w-full max-w-md space-y-6 animate-fadeIn">
         {/* Brand & Heading */}
         <div className="text-center space-y-2">
-          <div className="inline-block">
-            <UseaimlyLogo size="md" showTagline={false} />
-          </div>
-          <h1 className="text-3xl font-black tracking-tight text-foreground">
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground font-editorial">
             Start with your destination
           </h1>
-          <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
             Create your account to simulate financial decisions and see tomorrow before deciding today.
           </p>
 
@@ -152,7 +149,7 @@ function SignupFormContent() {
             <div className="pt-2">
               <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-mono font-bold text-primary">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Selected Plan: Plan {selectedPlan.toUpperCase()}</span>
+                <span>Selected Plan: {selectedPlan.toUpperCase()}</span>
                 <Link href="/pricing" className="underline hover:text-foreground ml-1">
                   Change
                 </Link>
@@ -162,7 +159,7 @@ function SignupFormContent() {
         </div>
 
         {/* Main Card Container */}
-        <div className="rounded-[2.5rem] border border-border/80 bg-card p-8 sm:p-10 shadow-2xl space-y-6">
+        <div className="rounded-[2.5rem] border border-border/80 bg-card/90 backdrop-blur-xl p-8 sm:p-10 shadow-2xl shadow-primary/5 space-y-6">
           {serverError && (
             <div className="flex items-center gap-2 rounded-2xl bg-destructive/10 border border-destructive/20 p-3.5 text-xs text-destructive">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -182,21 +179,21 @@ function SignupFormContent() {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={isGooglePending || isPending}
-            className="w-full inline-flex items-center justify-center gap-3 rounded-full border border-border bg-background hover:bg-secondary/70 px-4 py-3.5 text-xs sm:text-sm font-bold text-foreground transition-all hover:border-primary/40 shadow-xs active:scale-[0.99] disabled:opacity-50"
+            className="w-full inline-flex items-center justify-center gap-3 rounded-full border border-border/80 bg-background hover:bg-secondary/70 px-4 py-3.5 text-xs sm:text-sm font-bold text-foreground transition-all hover:border-primary/40 shadow-xs active:scale-[0.99] disabled:opacity-50 cursor-pointer"
           >
             {isGooglePending ? (
               <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />
             ) : (
               <GoogleIcon className="w-4 h-4" />
             )}
-            <span>{isGooglePending ? "Connexion Google..." : "Continuer avec Google / Gmail"}</span>
+            <span>{isGooglePending ? "Connecting with Google..." : "Continue with Google"}</span>
           </button>
 
           {/* Divider */}
           <div className="relative flex items-center justify-center">
             <div className="w-full border-t border-border/70" />
             <span className="absolute bg-card px-3 text-[11px] font-mono text-muted-foreground">
-              ou par email
+              or with email
             </span>
           </div>
 

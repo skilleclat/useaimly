@@ -28,7 +28,7 @@ export function PricingCard({
 
   const displayPrice = isYearly ? priceYearly : priceMonthly;
   const currencySymbol = isKES ? "KES " : "$";
-  const periodLabel = isYearly ? "/mois (facturé annuellement)" : "/mois";
+  const periodLabel = isYearly ? "/mo (billed annually)" : "/mo";
 
   return (
     <div
@@ -61,7 +61,7 @@ export function PricingCard({
         <div className="pt-2 pb-4 border-b border-border/60">
           <div className="flex items-baseline gap-1">
             <span className="text-3xl sm:text-4xl font-black text-foreground font-editorial">
-              {displayPrice === 0 ? "Gratuit" : `${currencySymbol}${displayPrice.toLocaleString()}`}
+              {displayPrice === 0 ? "Free" : `${currencySymbol}${displayPrice.toLocaleString()}`}
             </span>
             {displayPrice > 0 && (
               <span className="text-xs font-mono text-muted-foreground">{periodLabel}</span>
@@ -69,7 +69,7 @@ export function PricingCard({
           </div>
           {isYearly && displayPrice > 0 && (
             <p className="text-[11px] text-emerald-500 font-semibold mt-1">
-              Économisez 20% en paiement annuel
+              Save 20% with annual billing
             </p>
           )}
         </div>
@@ -77,7 +77,7 @@ export function PricingCard({
         {/* Feature List */}
         <div className="space-y-3 pt-2">
           <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
-            Fonctionnalités incluses :
+            Included features:
           </span>
           <ul className="space-y-2.5">
             {plan.features.map((feat, idx) => (
@@ -114,7 +114,7 @@ export function PricingCard({
       <div className="pt-8">
         {isCurrentPlan ? (
           <div className="w-full rounded-2xl bg-secondary py-3 text-center text-xs font-bold text-muted-foreground border border-border">
-            Plan Actuel
+            Current Plan
           </div>
         ) : onSelectPlan ? (
           <button

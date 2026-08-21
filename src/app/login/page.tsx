@@ -103,19 +103,16 @@ function LoginForm() {
     <div className="w-full max-w-md space-y-6 animate-fadeIn">
       {/* Brand & Heading */}
       <div className="text-center space-y-2">
-        <div className="inline-block">
-          <UseaimlyLogo size="md" showTagline={false} />
-        </div>
-        <h1 className="text-3xl font-black tracking-tight text-foreground">
+        <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground font-editorial">
           Welcome back
         </h1>
-        <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
+        <p className="text-xs sm:text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
           Log in to evaluate your financial trajectories and protect your future destinations.
         </p>
       </div>
 
-      {/* Main Form Card Container (Payoneer / Jump Style) */}
-      <div className="rounded-[2.5rem] border border-border/80 bg-card p-8 sm:p-10 shadow-2xl space-y-6">
+      {/* Main Form Card Container */}
+      <div className="rounded-[2.5rem] border border-border/80 bg-card/90 backdrop-blur-xl p-8 sm:p-10 shadow-2xl shadow-primary/5 space-y-6">
         {/* URL Error or Message Banners */}
         {messageParam && (
           <div className="flex items-center gap-2 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-3.5 text-xs text-emerald-600 dark:text-emerald-400">
@@ -136,21 +133,21 @@ function LoginForm() {
           type="button"
           onClick={handleGoogleSignIn}
           disabled={isGooglePending || isPending}
-          className="w-full inline-flex items-center justify-center gap-3 rounded-full border border-border bg-background hover:bg-secondary/70 px-4 py-3.5 text-xs sm:text-sm font-bold text-foreground transition-all hover:border-primary/40 shadow-xs active:scale-[0.99] disabled:opacity-50"
+          className="w-full inline-flex items-center justify-center gap-3 rounded-full border border-border/80 bg-background hover:bg-secondary/70 px-4 py-3.5 text-xs sm:text-sm font-bold text-foreground transition-all hover:border-primary/40 shadow-xs active:scale-[0.99] disabled:opacity-50 cursor-pointer"
         >
           {isGooglePending ? (
             <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />
           ) : (
             <GoogleIcon className="w-4 h-4" />
           )}
-          <span>{isGooglePending ? "Connexion Google..." : "Continuer avec Google / Gmail"}</span>
+          <span>{isGooglePending ? "Connecting with Google..." : "Continue with Google"}</span>
         </button>
 
         {/* Divider */}
         <div className="relative flex items-center justify-center">
           <div className="w-full border-t border-border/70" />
           <span className="absolute bg-card px-3 text-[11px] font-mono text-muted-foreground">
-            ou par email
+            or with email
           </span>
         </div>
 
