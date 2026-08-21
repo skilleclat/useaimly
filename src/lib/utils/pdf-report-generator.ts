@@ -44,27 +44,65 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   const lightBg = [247, 246, 243]; // #F7F6F3
   const cardBorder = [228, 226, 220]; // #E4E2DC
 
-  // 1. BRAND HEADER BAR
-  doc.setFillColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.rect(0, 0, pageWidth, 28, "F");
+  // 1. BRAND HEADER BAR (Deep Warm Obsidian #131211)
+  doc.setFillColor(19, 18, 17);
+  doc.rect(0, 0, pageWidth, 32, "F");
 
-  // Logo & Title
-  doc.setTextColor(255, 255, 255);
+  // Logo Icon Mark (Compass Target + Trajectory Arrow)
+  const logoX = margin;
+  const logoY = 16;
+  
+  // Outer Orange Compass Ring
+  doc.setDrawColor(255, 85, 51);
+  doc.setLineWidth(1.1);
+  doc.circle(logoX + 5, logoY - 1, 6.5, "S");
+  
+  // Inner Trajectory Arrow
+  doc.setFillColor(255, 85, 51);
+  doc.triangle(
+    logoX + 3, logoY + 1.5,
+    logoX + 7, logoY + 1.5,
+    logoX + 5, logoY - 4,
+    "F"
+  );
+
+  // Logo Text Lockup: "Use" in White, "Aimly" in Orange
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("USEAIMLY", margin, 14);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
+  doc.setTextColor(255, 255, 255);
+  doc.text("Use", logoX + 14, logoY + 1);
+  
+  const useWidth = doc.getTextWidth("Use");
   doc.setTextColor(255, 85, 51);
-  doc.text("EXECUTIVE FINANCIAL TRAJECTORY REPORT", margin + 34, 14);
+  doc.text("Aimly", logoX + 14 + useWidth, logoY + 1);
 
-  doc.setFontSize(8);
+  // Brand Tagline below logo
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(160, 160, 160);
+  doc.text("See tomorrow before deciding today", logoX + 14, logoY + 5.5);
+
+  // Vertical Separator Line
+  const sepX = logoX + 14 + useWidth + doc.getTextWidth("Aimly") + 6;
+  doc.setDrawColor(60, 60, 60);
+  doc.setLineWidth(0.4);
+  doc.line(sepX, logoY - 6, sepX, logoY + 6);
+
+  // Report Title Badge
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  doc.setTextColor(255, 85, 51);
+  doc.text("EXECUTIVE FINANCIAL TRAJECTORY REPORT", sepX + 6, logoY + 0.5);
+
+  // Date & Reference ID on right
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
   doc.setTextColor(180, 180, 180);
   const nowStr = new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-  doc.text(`DATE: ${nowStr}  |  REF: UAM-${Math.floor(100000 + Math.random() * 900000)}`, pageWidth - margin, 14, { align: "right" });
+  doc.text(`DATE: ${nowStr}`, pageWidth - margin, logoY - 2, { align: "right" });
+  doc.text(`REF: UAM-${Math.floor(100000 + Math.random() * 900000)}`, pageWidth - margin, logoY + 3.5, { align: "right" });
 
-  y = 36;
+  y = 42;
 
   // 2. DOCUMENT SUBTITLE & USER METADATA
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
