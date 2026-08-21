@@ -135,42 +135,24 @@ export default function LandingPage() {
               See tomorrow before deciding today. Simulate spending decisions and understand the exact impact on your life goals.
             </p>
 
-            {/* Dual CTA Actions: Logged in vs Guest */}
+            {/* Dual CTA Actions: Try Live Demo vs Create Free Account */}
             <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 max-w-md sm:max-w-none mx-auto px-4 sm:px-0">
-              {user ? (
-                <>
-                  <Link
-                    href="/app"
-                    className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm px-7 py-3.5 sm:py-4 shadow-lg shadow-primary/20 hover:opacity-95 hover:scale-[1.01] transition-all cursor-pointer"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    <span>Go to Dashboard</span>
-                  </Link>
-                  <Link
-                    href="/app/decide"
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card hover:bg-secondary/70 text-foreground font-bold text-sm px-6 py-3.5 sm:py-4 shadow-xs transition-all"
-                  >
-                    <span>Simulate Decision</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link
-                    href="/app/decide"
-                    className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm px-7 py-3.5 sm:py-4 shadow-lg shadow-primary/20 hover:opacity-95 hover:scale-[1.01] transition-all cursor-pointer"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    <span>Simulate a Real Decision</span>
-                  </Link>
-                  <Link
-                    href="/signup"
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card hover:bg-secondary/70 text-foreground font-bold text-sm px-6 py-3.5 sm:py-4 shadow-xs transition-all"
-                  >
-                    <span>Create Free Account</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </>
+              <Link
+                href="/app/decide"
+                className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm px-7 py-3.5 sm:py-4 shadow-lg shadow-primary/20 hover:opacity-95 hover:scale-[1.01] transition-all cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Try Live Demo (No Account Needed)</span>
+              </Link>
+
+              {!user && (
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card hover:bg-secondary/70 text-foreground font-bold text-sm px-6 py-3.5 sm:py-4 shadow-xs transition-all"
+                >
+                  <span>Create Free Account</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
               )}
             </div>
           </div>
