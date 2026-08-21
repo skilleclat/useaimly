@@ -16,6 +16,8 @@ const DEFAULT_DEMO_PROFILE: Profile = {
   timezone: "Africa/Nairobi",
   locale: "en",
   onboarding_completed: true,
+  plan_tier: "free",
+  plan_status: "active",
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 };

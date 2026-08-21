@@ -58,6 +58,48 @@ export default function SettingsPage() {
       )}
 
       <form onSubmit={handleSaveSettings} className="space-y-8">
+        {/* 0. SUBSCRIPTION & PLAN TIER */}
+        <div className="rounded-[2.5rem] border border-primary/30 bg-gradient-to-r from-primary/10 via-card to-card p-6 sm:p-9 space-y-6 shadow-elevation-1">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-bold text-foreground">
+              <Shield className="w-4 h-4 text-primary" />
+              <span>Subscription & Monetization Tier</span>
+            </div>
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-mono font-bold text-emerald-500 border border-emerald-500/20">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>ACTIVE</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl bg-card border border-border/80">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-black text-foreground uppercase tracking-tight">
+                  Plan {profile?.plan_tier ? profile.plan_tier.toUpperCase() : "FREE"}
+                </span>
+                <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-md bg-primary/20 text-primary">
+                  {profile?.plan_tier === "premium" ? "Élite" : profile?.plan_tier === "pro" ? "Pro Strategist" : "Starter"}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {profile?.plan_tier === "premium"
+                  ? "Accès illimité au moteur déterministe, Assistant IA Gemini/GPT-4 et Laboratoire What-If."
+                  : profile?.plan_tier === "pro"
+                  ? "Studio d'impact 3 Stratégies, Multi-Destinations et 6 Règles d'Insights Proactifs."
+                  : "Découverte de l'intelligence décisionnelle et 1 Destination principale."}
+              </p>
+            </div>
+
+            <a
+              href="/pricing"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground font-bold text-xs px-5 py-2.5 shadow-xs hover:opacity-95 transition-all shrink-0"
+            >
+              <span>{profile?.plan_tier === "free" ? "Changer de Plan / Surclasser" : "Gérer l'Abonnement"}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </a>
+          </div>
+        </div>
+
         {/* 1. PROFILE & IDENTITY */}
         <div className="rounded-[2.5rem] border border-border/80 bg-card p-6 sm:p-9 space-y-6 shadow-elevation-1">
           <div className="flex items-center gap-2 text-sm font-bold text-foreground">

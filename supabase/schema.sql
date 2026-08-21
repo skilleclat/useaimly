@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   timezone TEXT NOT NULL DEFAULT 'Africa/Nairobi',
   locale TEXT NOT NULL DEFAULT 'en',
   onboarding_completed BOOLEAN NOT NULL DEFAULT FALSE,
+  plan_tier TEXT NOT NULL DEFAULT 'free' CHECK (plan_tier IN ('free', 'pro', 'premium')),
+  plan_status TEXT NOT NULL DEFAULT 'active' CHECK (plan_status IN ('active', 'trial', 'canceled')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

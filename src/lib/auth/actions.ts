@@ -114,7 +114,7 @@ export async function signupAction(data: SignupInput): Promise<AuthActionResult>
       };
     }
 
-    const { email, password, fullName, preferredCurrency } = parsed.data;
+    const { email, password, fullName, preferredCurrency, planTier } = parsed.data;
     const supabase = await createClient();
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -126,6 +126,7 @@ export async function signupAction(data: SignupInput): Promise<AuthActionResult>
         data: {
           full_name: fullName,
           preferred_currency: preferredCurrency,
+          plan_tier: planTier || "free",
         },
         emailRedirectTo: `${appUrl}/auth/callback`,
       },
@@ -149,6 +150,8 @@ export async function signupAction(data: SignupInput): Promise<AuthActionResult>
           id: authData.user.id,
           full_name: fullName,
           preferred_currency: preferredCurrency,
+          plan_tier: planTier || "free",
+          plan_status: "active",
           onboarding_completed: false,
         } as any);
       } catch (profileErr) {

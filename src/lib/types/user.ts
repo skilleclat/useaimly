@@ -18,5 +18,7 @@ export interface UserProfile {
   fullName?: string;
   avatarUrl?: string;
   preferences: UserPreferences;
+  planTier?: "free" | "pro" | "premium";
+  planStatus?: "active" | "trial" | "canceled";
   createdAt: string;
 }

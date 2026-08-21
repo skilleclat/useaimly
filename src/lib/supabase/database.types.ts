@@ -31,6 +31,8 @@ export type Database = {
           timezone: string;
           locale: string;
           onboarding_completed: boolean;
+          plan_tier: "free" | "pro" | "premium";
+          plan_status: "active" | "trial" | "canceled";
           created_at: string;
           updated_at: string;
         };
@@ -42,6 +44,8 @@ export type Database = {
           timezone?: string;
           locale?: string;
           onboarding_completed?: boolean;
+          plan_tier?: "free" | "pro" | "premium";
+          plan_status?: "active" | "trial" | "canceled";
           created_at?: string;
           updated_at?: string;
         };
@@ -53,6 +57,8 @@ export type Database = {
           timezone?: string;
           locale?: string;
           onboarding_completed?: boolean;
+          plan_tier?: "free" | "pro" | "premium";
+          plan_status?: "active" | "trial" | "canceled";
           created_at?: string;
           updated_at?: string;
         };

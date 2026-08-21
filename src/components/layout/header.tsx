@@ -35,6 +35,12 @@ export function Header() {
 
   const NAV_LINKS = [
     {
+      label: "Pricing",
+      href: "/pricing",
+      icon: <Sparkles className="w-4 h-4" />,
+      desc: "Plans & monetization options",
+    },
+    {
       label: "Destinations",
       href: "/app/goals",
       icon: <Target className="w-4 h-4" />,
@@ -67,6 +73,15 @@ export function Header() {
         <div className="flex items-center gap-3">
           <Link href="/">
             <UseaimlyLogo size="md" showTagline={false} />
+          </Link>
+
+          {/* Desktop Nav Link for Pricing */}
+          <Link
+            href="/pricing"
+            className="hidden md:inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-full hover:bg-secondary/60 ml-4"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
+            <span>Pricing</span>
           </Link>
         </div>
 
@@ -102,7 +117,7 @@ export function Header() {
                 <span>Sign In</span>
               </Link>
               <Link
-                href="/app"
+                href="/signup"
                 className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-primary px-4 sm:px-5 py-1.5 sm:py-2 text-xs font-semibold text-primary-foreground hover:opacity-95 shadow-xs transition-all shrink-0 whitespace-nowrap"
               >
                 <span>Get Started</span>
@@ -162,7 +177,7 @@ export function Header() {
 
           <div className="pt-3 border-t border-border/60 flex flex-col gap-2">
             <Link
-              href="/app"
+              href={user ? "/app" : "/signup"}
               onClick={() => setMobileMenuOpen(false)}
               className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-xs font-semibold text-primary-foreground hover:opacity-95 shadow-xs transition-opacity"
             >

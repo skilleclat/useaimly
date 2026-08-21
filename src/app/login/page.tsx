@@ -73,15 +73,28 @@ function LoginForm() {
     setServerError(null);
     setIsGooglePending(true);
     try {
-      const result = await signInWithGoogleAction();
-      if (result.success && result.redirectTo) {
-        window.location.href = result.redirectTo;
-      } else {
-        setServerError(result.message || "Failed to connect with Google.");
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        console.warn("Google OAuth error:", error);
+        setServerError(
+          "Google OAuth isn't enabled in your Supabase project settings yet. Please sign in with Email or enter Demo mode directly."
+        );
         setIsGooglePending(false);
+      } else if (data?.url) {
+        window.location.href = data.url;
       }
-    } catch {
-      setServerError("An unexpected error occurred with Google login.");
+    } catch (err: any) {
+      setServerError("Unable to initiate Google sign-in. Please use email sign-in or Demo mode.");
       setIsGooglePending(false);
     }
   };

@@ -31,7 +31,15 @@ function GoogleIcon({ className = "w-5 h-5" }: { className?: string }) {
   );
 }
 
-export default function SignupPage() {
+import { useSearchParams } from "next/navigation";
+import { Sparkles } from "lucide-react";
+import { PlanTier } from "@/lib/types/pricing";
+
+function SignupFormContent() {
+  const searchParams = useSearchParams();
+  const rawPlan = searchParams.get("plan");
+  const selectedPlan: PlanTier = (rawPlan === "pro" || rawPlan === "premium" || rawPlan === "free") ? rawPlan : "free";
+
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -78,6 +86,7 @@ export default function SignupPage() {
           email: emailVal,
           preferredCurrency: formCurrency || preferredCurrency,
           password: passVal,
+          planTier: selectedPlan,
         });
 
         if (!result.success) {
@@ -96,15 +105,29 @@ export default function SignupPage() {
     setSuccessMessage(null);
     setIsGooglePending(true);
     try {
-      const result = await signInWithGoogleAction();
-      if (result.success && result.redirectTo) {
-        window.location.href = result.redirectTo;
-      } else {
-        setServerError(result.message || "Failed to connect with Google.");
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        // Fallback if Google OAuth is not enabled in Supabase console
+        console.warn("Google OAuth error:", error);
+        setServerError(
+          "Google OAuth isn't enabled in your Supabase project settings yet. Please sign up with Email or enter Demo mode directly."
+        );
         setIsGooglePending(false);
+      } else if (data?.url) {
+        window.location.href = data.url;
       }
-    } catch {
-      setServerError("An unexpected error occurred with Google signup.");
+    } catch (err: any) {
+      setServerError("Unable to initiate Google sign-in. Please use email signup or Demo mode.");
       setIsGooglePending(false);
     }
   };
@@ -123,6 +146,19 @@ export default function SignupPage() {
           <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
             Create your account to simulate financial decisions and see tomorrow before deciding today.
           </p>
+
+          {/* Selected Plan Badge */}
+          {selectedPlan !== "free" && (
+            <div className="pt-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-mono font-bold text-primary">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Selected Plan: Plan {selectedPlan.toUpperCase()}</span>
+                <Link href="/pricing" className="underline hover:text-foreground ml-1">
+                  Change
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Main Card Container */}
@@ -285,5 +321,13 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <React.Suspense fallback={<div className="min-h-[85vh] flex items-center justify-center text-xs font-mono text-muted-foreground">Loading signup...</div>}>
+      <SignupFormContent />
+    </React.Suspense>
   );
 }

@@ -6,6 +6,10 @@ import { formatCurrency } from "@/lib/utils/currency";
 import { CurrencyCode } from "@/lib/types/finance";
 import { parseDecisionQuery } from "@/lib/nlp/decision-query-parser";
 import { simulateDecision, BaselineFinancialProfile } from "@/lib/finance";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth/auth-context";
+import { PRICING_PLANS } from "@/lib/types/pricing";
+import { PricingCard } from "@/components/finance/PricingCard";
 import {
   ArrowRight,
   Sparkles,
@@ -23,6 +27,8 @@ import {
 } from "lucide-react";
 
 export default function LandingPage() {
+  const router = useRouter();
+  const { user } = useAuth();
   const currency: CurrencyCode = "KES";
 
   // Interactive Live Hero State
@@ -91,6 +97,13 @@ export default function LandingPage() {
       setActiveTitle(parsedIntent.extractedTitle);
       setIsRecurring(parsedIntent.isRecurring);
     }
+    // Route user to sign up or app studio
+    if (user) {
+      router.push("/app/decide");
+    } else {
+      const queryParam = queryInput ? `?query=${encodeURIComponent(queryInput)}` : "";
+      router.push(`/signup${queryParam}`);
+    }
   };
 
   const handlePresetSelect = (text: string, amt: number, ttl: string) => {
@@ -144,14 +157,14 @@ export default function LandingPage() {
                   value={queryInput}
                   onChange={(e) => setQueryInput(e.target.value)}
                   placeholder="e.g. Can I spend 30,000 KES on a phone?"
-                  className="w-full rounded-2xl border-2 border-border/80 bg-background px-5 py-4 text-sm sm:text-base text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:border-primary transition-all pr-32 font-medium"
+                  className="w-full rounded-2xl border-2 border-border/80 bg-background px-5 py-4 text-sm sm:text-base text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden focus:border-primary transition-all pr-36 font-medium"
                 />
                 <button
                   type="submit"
-                  className="absolute right-2 top-2 bottom-2 rounded-xl bg-primary text-primary-foreground px-5 text-xs font-bold hover:opacity-90 transition-all flex items-center gap-1.5 shrink-0 shadow-xs"
+                  className="absolute right-2 top-2 bottom-2 rounded-xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white px-5 text-xs font-bold hover:opacity-95 transition-all flex items-center gap-1.5 shrink-0 shadow-md cursor-pointer"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Evaluate</span>
+                  <span>Get Started</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
 
@@ -216,11 +229,21 @@ export default function LandingPage() {
                 </div>
 
                 {/* 04 — THE PATH TO STAY ON TRACK */}
-                <div className="pt-3 border-t border-primary/20 flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground font-semibold">04 — Stay on track:</span>
-                  <span className="font-bold text-foreground bg-background px-3 py-1 rounded-lg border border-border/80 font-mono">
-                    +{formatCurrency(simulation.delta.additionalMonthlyAmountRequired || 1667, currency)} / mo
-                  </span>
+                <div className="pt-3 border-t border-primary/20 flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground font-semibold">04 — Stay on track:</span>
+                    <span className="font-bold text-foreground bg-background px-3 py-1 rounded-lg border border-border/80 font-mono">
+                      +{formatCurrency(simulation.delta.additionalMonthlyAmountRequired || 1667, currency)} / mo
+                    </span>
+                  </div>
+
+                  <Link
+                    href={user ? "/app/decide" : "/signup"}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-1.5 text-xs font-bold text-primary-foreground hover:opacity-95 transition-all shadow-xs shrink-0"
+                  >
+                    <span>Get Started</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
               </div>
             </div>
@@ -273,6 +296,29 @@ export default function LandingPage() {
                 Detect cushion deficits, annual commitment spikes, and goal pace shortfalls 60 days in advance.
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* SECTION 05.5 — PRICING & PLANS */}
+        {/* ========================================================================= */}
+        <section id="pricing" className="space-y-8 py-6">
+          <div className="text-center space-y-3 max-w-2xl mx-auto">
+            <span className="text-xs font-mono uppercase tracking-wider text-primary font-semibold">
+              05.5 — Monetization & Tiers
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-bold font-editorial text-foreground tracking-tight">
+              Simple, transparent pricing for every financial ambition.
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+              Start free, test your baseline, and scale as your life goals expand.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch pt-4">
+            {PRICING_PLANS.map((plan) => (
+              <PricingCard key={plan.id} plan={plan} isYearly={true} currency="USD" />
+            ))}
           </div>
         </section>
 
