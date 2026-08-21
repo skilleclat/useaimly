@@ -458,10 +458,21 @@ Toute nouvelle table ajoutée à PostgreSQL doit impérativement inclure :
 - **Contenu du Rapport** : En-tête officiel UseAimly, verdict de trajectoire, décomposition complète des capacités financières (Revenus, Dépenses, Dettes, Épargne liquide), métriques d'accélération et le plan d'action stratégique IA en 4 piliers.
 - **Intégration** : Accessible directement à l'Étape 7 du Live Demo (`/onboarding`) et dans le Studio de Décision (`/app/decide`).
 
-### 💬 6. Système d'Intelligence Hebdomadaire WhatsApp Pro (`WhatsAppDispatchCard`)
-- **Coaching Financier Autonome** : Permet aux utilisateurs Pro d'enregistrer leur numéro WhatsApp (avec sélecteur d'indicatif pays e.g. `+254`, `+33`, `+1`, `+221`, etc.).
-- **Simulation d'Écran WhatsApp Live** : Carte de prévisualisation simulant la réception du message WhatsApp hebdomadaire du dimanche soir avec les métriques en temps réel et les conseils du coach IA.
-- **Intégration** : Disponible sur l'Étape 7 de la Trajectoire (`/onboarding`) et dans les Paramètres système (`/app/settings`).
+### 🚀 7. Alignment 1:1 de la Landing Page sur les Maquettes Visuelles
+- **Hero & Widget Flottant** : Disposition 2 colonnes avec titre principal **"See tomorrow before deciding today."**, boutons d'action (*Try a Real Decision* → `/onboarding`), rangée d'avatars de preuve sociale (`5.0 ★★★★★ Trusted by 1,000+ smart decision makers`), et widget interactif flottant avec analyse en direct (*Immediate Impact*, *Future Consequence*, *Stay on Track*).
+- **Section "Why UseAimly?"** : 4 piliers visuels d'orientation (*Look Forward*, *Understand Impact*, *Make Better Choices*, *Stay on Track*).
+- **Section "How UseAimly Works"** : 4 étapes numérotées explicatives (*01 Add Your Picture*, *02 Set Your Destinations*, *03 Ask About a Decision*, *04 See the Impact*).
+- **Partenaires & Témoignages** : Bandeau de logos d'institutions financières (`Safaricom`, `M-PESA`, `EQUITY`, `KCB`, `NCBA`, `ABSA`) et carte de témoignage interactive (Citation de Grace W., Business Owner).
+- **Grille des 4 Scénarios d'Achat Réels** : Cartes d'impacts pour les achats fréquents (*Acheter un téléphone pour 30k KES*, *Prendre un crédit de 150k KES*, *Déménager dans un meilleur appartement*, *Prendre des vacances pour 80k KES*).
+- **Grille de Tarification Transparente** : Offres Free (0 KES), Pro (1 499 KES), et Premium (2 499 KES).
+- **Bandeau de Conversion Final** : Apporteur d'action *"Stop guessing. See what your decisions really do."*.
+
+### 🎨 8. Rendu Vectoriel du Logo Officiel UseAimly sur l'En-tête PDF
+- **En-tête Officiel 300+ DPI** : Rendu vectoriel natif de l'icône anneau/cible avec sa flèche de trajectoire Orange (`#FF5533`), du nom de marque **Use** (Blanc) **Aimly** (Orange), du slogan *"See tomorrow before deciding today"*, de la date du jour et du numéro de référence unique (`REF: UAM-...`).
+
+### ⚙️ 9. Gestion de la Fréquence & Conseils WhatsApp Autonomes
+- **Sélecteur de Fréquence** : Choix par l'utilisateur entre *Tous les dimanches à 19h00*, *Tous les 3 jours (Mode Intensif)*, *Bi-mensuel (Tous les 15 jours)*, et *Décalage de trajectoire uniquement*.
+- **Déclencheurs de Contenu** : Toggles personnalisables pour le rythme d'objectif (*Goal Target Pace*), les avertissements d'échéances 30 jours (*Obligation Warnings*), et les conseils du coach IA (*AI Strategic Tips*).
 
 ---
 
