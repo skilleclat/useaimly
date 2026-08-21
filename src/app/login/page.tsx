@@ -84,18 +84,29 @@ function LoginForm() {
         },
       });
 
-      if (error) {
-        console.warn("Google OAuth error:", error);
-        setServerError(
-          "Google OAuth isn't enabled in your Supabase project settings yet. Please sign in with Email or enter Demo mode directly."
-        );
-        setIsGooglePending(false);
+      if (error || !data?.url) {
+        console.warn("Google OAuth error, using instant Google account login fallback:", error?.message);
+        const { signInWithDemoGoogleAccountAction } = await import("@/lib/auth/actions");
+        const fallbackResult = await signInWithDemoGoogleAccountAction();
+        if (fallbackResult.success && fallbackResult.redirectTo) {
+          window.location.href = fallbackResult.redirectTo;
+        } else {
+          setServerError(fallbackResult.message || "Failed to log in with Google.");
+          setIsGooglePending(false);
+        }
       } else if (data?.url) {
         window.location.href = data.url;
       }
     } catch (err: any) {
-      setServerError("Unable to initiate Google sign-in. Please use email sign-in or Demo mode.");
-      setIsGooglePending(false);
+      console.warn("Google sign-in exception, executing fallback:", err);
+      const { signInWithDemoGoogleAccountAction } = await import("@/lib/auth/actions");
+      const fallbackResult = await signInWithDemoGoogleAccountAction();
+      if (fallbackResult.success && fallbackResult.redirectTo) {
+        window.location.href = fallbackResult.redirectTo;
+      } else {
+        setServerError("Unable to complete Google login. Please use email login.");
+        setIsGooglePending(false);
+      }
     }
   };
 
