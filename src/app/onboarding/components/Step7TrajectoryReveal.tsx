@@ -5,6 +5,9 @@ import { OnboardingState, OnboardingCalculatedPath } from "@/lib/onboarding/onbo
 import { formatCurrency } from "@/lib/utils/currency";
 import { formatMonthYear } from "@/lib/utils/date";
 import { FinancialStatus } from "@/components/design-system/FinancialStatus";
+import { PdfReportDownloadButton } from "@/components/finance/PdfReportDownloadButton";
+import { WhatsAppDispatchCard } from "@/components/finance/WhatsAppDispatchCard";
+import { PDFReportData } from "@/lib/utils/pdf-report-generator";
 import {
   Compass,
   ArrowRight,
@@ -38,20 +41,47 @@ export function Step7TrajectoryReveal({
 }: Step7TrajectoryRevealProps) {
   const { currency, destination } = state;
 
+  const pdfData: PDFReportData = {
+    destinationTitle: destination.title || "Primary Goal",
+    targetAmount: destination.targetAmount,
+    currentAmount: destination.currentAmount,
+    targetDate: formatMonthYear(destination.targetDate),
+    projectedDate: formatMonthYear(calculatedPath.projectedCompletionDate),
+    delayInDays: Math.max(0, (calculatedPath.projectedMonthsToCompletion - 24) * 30),
+    currency,
+    monthlyInflow: calculatedPath.monthlyGrossIncome,
+    monthlyOutflow: calculatedPath.monthlyEssentialExpenses + calculatedPath.monthlyDebtPayments,
+    availableForGoals: calculatedPath.monthlyFreeCashFlow,
+    liquidSavings: calculatedPath.totalLiquidSavings,
+    status: calculatedPath.trajectoryState === "ON_TRACK" ? "SAFE" : "HIGH_IMPACT",
+    headlineVerdict: calculatedPath.trajectoryState === "ON_TRACK" ? "Fully Covered & On Track" : "Pace Adjustment Recommended",
+    whatYouCanDo: `Maintain dedicated free cash flow of ${formatCurrency(calculatedPath.monthlyFreeCashFlow, currency)}/mo to preserve liquidity.`,
+    whatItChanges: `Target arrival is projected for ${formatMonthYear(calculatedPath.projectedCompletionDate)}.`,
+    toStayOnTrack: `Allocate ${formatCurrency(calculatedPath.requiredMonthlySavings, currency)}/mo to arrive by target date.`,
+    strategicRead: "Your baseline liquid cushion protects fixed living costs while maintaining goal accumulation.",
+  };
+
   return (
     <div className="space-y-8 animate-fadeIn">
       {/* Header */}
-      <div className="space-y-3 text-center sm:text-left">
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-mono font-bold text-primary">
-          <Compass className="w-3.5 h-3.5" />
-          <span>Step 7: Deterministic Trajectory Blueprint</span>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="space-y-3 text-center sm:text-left">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-mono font-bold text-primary">
+            <Compass className="w-3.5 h-3.5" />
+            <span>Step 7: Deterministic Trajectory Blueprint</span>
+          </div>
+          <h2 className="text-3xl sm:text-5xl font-bold font-editorial text-foreground tracking-tight leading-tight">
+            Here&apos;s where you are.
+          </h2>
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl leading-relaxed">
+            Useaimly has combined your income velocity, living commitments, and savings reserves to build your deterministic arrival path.
+          </p>
         </div>
-        <h2 className="text-3xl sm:text-5xl font-bold font-editorial text-foreground tracking-tight leading-tight">
-          Here&apos;s where you are.
-        </h2>
-        <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl leading-relaxed">
-          Useaimly has combined your income velocity, living commitments, and savings reserves to build your deterministic arrival path.
-        </p>
+
+        {/* PDF Executive Download Button */}
+        <div className="shrink-0 flex justify-center sm:justify-end">
+          <PdfReportDownloadButton data={pdfData} variant="primary" />
+        </div>
       </div>
 
       {/* Primary Hero Trajectory Reveal Card */}
@@ -140,43 +170,48 @@ export function Step7TrajectoryReveal({
                 </div>
               </div>
 
-              <div className="border-l-2 border-Useaimly-expense pl-2.5">
-                <div className="text-muted-foreground text-[11px]">Living Outflows</div>
-                <div className="font-bold font-financial text-Useaimly-expense text-sm">
+              <div className="border-l-2 border-amber-500 pl-2.5">
+                <div className="text-muted-foreground text-[11px]">Living Expenses</div>
+                <div className="font-bold font-financial text-foreground text-sm">
                   -{formatCurrency(calculatedPath.monthlyEssentialExpenses, currency)}
                 </div>
               </div>
 
-              <div className="border-l-2 border-Useaimly-debt pl-2.5">
-                <div className="text-muted-foreground text-[11px]">Debt Payments</div>
-                <div className="font-bold font-financial text-Useaimly-debt text-sm">
+              <div className="border-l-2 border-rose-500 pl-2.5">
+                <div className="text-muted-foreground text-[11px]">Debt Repayments</div>
+                <div className="font-bold font-financial text-foreground text-sm">
                   -{formatCurrency(calculatedPath.monthlyDebtPayments, currency)}
                 </div>
               </div>
 
-              <div className="border-l-2 border-amber-500 pl-2.5">
-                <div className="text-muted-foreground text-[11px]">Commitments</div>
-                <div className="font-bold font-financial text-amber-600 dark:text-amber-400 text-sm">
-                  -{formatCurrency(calculatedPath.monthlyCommitmentsAmortized, currency)}
+              <div className="border-l-2 border-teal-500 pl-2.5">
+                <div className="text-muted-foreground text-[11px]">Free Cash Flow</div>
+                <div className="font-bold font-financial text-primary text-sm">
+                  {formatCurrency(calculatedPath.monthlyFreeCashFlow, currency)}
                 </div>
               </div>
 
-              <div className="col-span-2 sm:col-span-1 border-l-2 border-teal-500 pl-2.5 bg-card/60 p-1.5 rounded-r-xl">
-                <div className="text-muted-foreground text-[11px] font-bold">Free Cash Flow</div>
-                <div className="font-bold font-financial text-teal-600 dark:text-teal-400 text-sm">
-                  {formatCurrency(calculatedPath.monthlyFreeCashFlow, currency)}/mo
+              <div className="border-l-2 border-blue-500 pl-2.5 col-span-2 sm:col-span-1">
+                <div className="text-muted-foreground text-[11px]">Liquid Cash Cushion</div>
+                <div className="font-bold font-financial text-foreground text-sm">
+                  {formatCurrency(calculatedPath.totalLiquidSavings, currency)}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Narrative Verdict Banner */}
-          <div className="p-4 rounded-2xl border border-primary/20 bg-primary/5 space-y-1.5 text-xs text-foreground leading-relaxed">
-            {calculatedPath.trajectoryState === "ON_TRACK" || calculatedPath.trajectoryState === "AHEAD" ? (
+          {/* Verdict Synthesis */}
+          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 text-xs text-foreground leading-relaxed space-y-2">
+            <div className="flex items-center gap-2 text-primary font-bold text-sm">
+              <Sparkles className="w-4 h-4" />
+              <span>Useaimly Strategic Read</span>
+            </div>
+
+            {calculatedPath.trajectoryState === "ON_TRACK" ? (
               <p>
-                <strong className="text-primary font-bold">You are on track.</strong> Your monthly free cash flow of{" "}
+                <strong className="text-emerald-600 dark:text-emerald-400 font-bold">Excellent Momentum!</strong> Your current free cash flow of{" "}
                 <span className="font-financial font-bold">{formatCurrency(calculatedPath.monthlyFreeCashFlow, currency)}/mo</span>{" "}
-                covers the required pace of{" "}
+                fully covers the required{" "}
                 <span className="font-financial font-bold">{formatCurrency(calculatedPath.requiredMonthlySavings, currency)}/mo</span>.
                 You are on schedule to arrive at{" "}
                 <strong>{destination.title}</strong> by{" "}
@@ -226,6 +261,16 @@ export function Step7TrajectoryReveal({
           </button>
         </div>
       </div>
+
+      {/* WHATSAPP PRO DISPATCH INTELLIGENCE CARD */}
+      <WhatsAppDispatchCard
+        destinationTitle={destination.title}
+        targetDate={formatMonthYear(destination.targetDate)}
+        projectedDate={formatMonthYear(calculatedPath.projectedCompletionDate)}
+        delayInDays={Math.max(0, (calculatedPath.projectedMonthsToCompletion - 24) * 30)}
+        monthlyGoalCapacity={calculatedPath.monthlyFreeCashFlow}
+        currency={currency}
+      />
     </div>
   );
 }

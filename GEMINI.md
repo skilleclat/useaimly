@@ -453,9 +453,15 @@ Toute nouvelle table ajoutée à PostgreSQL doit impérativement inclure :
 - **Utilisateur Connecté** : Les boutons d'incitation à l'inscription (ex: *"Create Free Account"*, *"Get Started Free"*) sont automatiquement masqués au profit d'actions directes de navigation (*"Go to Dashboard"*, *"Simulate Decision"*, *"Open Decision Studio"*).
 - **Invités / Non Connectés** : Affichage des boutons d'acquisition (*"Try Live Demo"*, *"Create Free Account"*).
 
-### 💬 4. Composant Newsletter Équipé d'un État Inline Pro
-- Suppression intégrale des alertes navigateur natives (`alert(...)`).
-- Intégration d'un badge de succès inline animé (`✓ Subscribed! Check your inbox for monthly strategy teardowns.`) et réinitialisation automatique du champ e-mail après validation.
+### 📄 5. Générateur de Rapport PDF Exécutif de Trajectoire (`jspdf`)
+- **Export PDF Officiel** : Permet de télécharger à tout moment un dossier financier exécutif haute-fidélité (`UseAimly_Report_...pdf`).
+- **Contenu du Rapport** : En-tête officiel UseAimly, verdict de trajectoire, décomposition complète des capacités financières (Revenus, Dépenses, Dettes, Épargne liquide), métriques d'accélération et le plan d'action stratégique IA en 4 piliers.
+- **Intégration** : Accessible directement à l'Étape 7 du Live Demo (`/onboarding`) et dans le Studio de Décision (`/app/decide`).
+
+### 💬 6. Système d'Intelligence Hebdomadaire WhatsApp Pro (`WhatsAppDispatchCard`)
+- **Coaching Financier Autonome** : Permet aux utilisateurs Pro d'enregistrer leur numéro WhatsApp (avec sélecteur d'indicatif pays e.g. `+254`, `+33`, `+1`, `+221`, etc.).
+- **Simulation d'Écran WhatsApp Live** : Carte de prévisualisation simulant la réception du message WhatsApp hebdomadaire du dimanche soir avec les métriques en temps réel et les conseils du coach IA.
+- **Intégration** : Disponible sur l'Étape 7 de la Trajectoire (`/onboarding`) et dans les Paramètres système (`/app/settings`).
 
 ---
 

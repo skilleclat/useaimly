@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { CurrencyCode } from "@/lib/types/finance";
+import { WhatsAppDispatchCard } from "@/components/finance/WhatsAppDispatchCard";
 import {
   Settings as SettingsIcon,
   User,
@@ -206,6 +207,17 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* 4. WHATSAPP PRO DISPATCH INTELLIGENCE */}
+        <WhatsAppDispatchCard
+          initialPhone="+254 712 345 678"
+          destinationTitle="Launch my business"
+          targetDate="Dec 2027"
+          projectedDate="Dec 2027"
+          delayInDays={0}
+          monthlyGoalCapacity={68000}
+          currency={preferredCurrency}
+        />
 
         {/* Save Button */}
         <div className="flex justify-end pt-2">

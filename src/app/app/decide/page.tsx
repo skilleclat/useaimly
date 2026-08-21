@@ -8,6 +8,8 @@ import { parseDecisionQuery } from "@/lib/nlp/decision-query-parser";
 import { simulateDecision, BaselineFinancialProfile } from "@/lib/finance";
 import { formatCurrency } from "@/lib/utils/currency";
 import { CurrencyCode } from "@/lib/types/finance";
+import { PdfReportDownloadButton } from "@/components/finance/PdfReportDownloadButton";
+import { PDFReportData } from "@/lib/utils/pdf-report-generator";
 import {
   Sparkles,
   ArrowRight,
@@ -300,6 +302,40 @@ export default function DecideStudioPage() {
 
       {/* RESULT HERO: THE ANSWER + TIME CONSEQUENCE */}
       <section className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold font-editorial text-foreground">
+              Simulation Trajectory Results
+            </h2>
+            <p className="text-xs text-muted-foreground font-medium">
+              Evaluated against baseline liquid reserves &amp; primary destination.
+            </p>
+          </div>
+          <PdfReportDownloadButton
+            data={{
+              destinationTitle: title || "Decision Analysis",
+              targetAmount: primaryGoal?.targetAmount || 500000,
+              currentAmount: primaryGoal?.currentAmount || 180000,
+              targetDate: primaryGoal?.targetDate || "2027-12-31",
+              projectedDate: simulation.delta.newCompletionDate,
+              delayInDays: simulation.delta.delayInDays,
+              currency,
+              monthlyInflow: baselineProfile.incomes.reduce((acc, i) => acc + i.amount, 0),
+              monthlyOutflow: baselineProfile.expenses.reduce((acc, e) => acc + e.amount, 0),
+              availableForGoals: 68000,
+              liquidSavings: baselineProfile.liquidSavings,
+              status: simulation.status,
+              headlineVerdict: simulation.headlineVerdict,
+              whatYouCanDo: simulation.headlineVerdict || "Maintain free cash flow buffer.",
+              whatItChanges: simulation.detailedAnalysis || "Arrival timeline shift.",
+              toStayOnTrack: simulation.recommendation || "Adjust monthly goal allocation.",
+              strategicRead: simulation.detailedAnalysis || "Liquid cushion protects fixed costs.",
+            }}
+            variant="secondary"
+            label="Export Decision PDF Dossier"
+          />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
           {/* Verdict Card */}
           <div className="md:col-span-5 rounded-3xl border border-border/80 bg-card p-6 flex flex-col justify-between space-y-4">
