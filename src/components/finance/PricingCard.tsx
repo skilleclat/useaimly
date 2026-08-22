@@ -185,24 +185,12 @@ export function PricingCard({
         </div>
       </div>
 
-      {/* CTA Button */}
-      <div className="pt-8">
+      {/* CTA Button & Supported Methods */}
+      <div className="pt-8 space-y-2.5">
         {isCurrentPlan ? (
           <div className="w-full rounded-2xl bg-secondary py-3 text-center text-xs font-bold text-muted-foreground border border-border">
             {t("currentPlanLabel")}
           </div>
-        ) : !isLoggedIn ? (
-          <Link
-            href={`/signup?plan=${plan.id}&billing=${isYearly ? "annual" : "monthly"}`}
-            className={`w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 text-xs font-extrabold shadow-md transition-all cursor-pointer ${
-              plan.isPopular
-                ? "bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white hover:opacity-95 shadow-orange-500/20 hover:scale-[1.02]"
-                : "bg-primary text-primary-foreground hover:opacity-95"
-            }`}
-          >
-            <span>{ctaText}</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
         ) : plan.id !== "free" ? (
           <button
             type="button"
@@ -230,6 +218,12 @@ export function PricingCard({
             <span>{ctaText}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
+        )}
+
+        {plan.id !== "free" && (
+          <div className="text-center text-[10px] font-mono text-muted-foreground">
+            <span>📱 Lipa na M-Pesa &bull; 💳 PayPal / Card</span>
+          </div>
         )}
       </div>
 

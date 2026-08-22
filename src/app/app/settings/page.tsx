@@ -6,6 +6,8 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { useCurrency } from "@/lib/currency/currency-context";
 import { CurrencyCode } from "@/lib/types/finance";
 import { WhatsAppDispatchCard } from "@/components/finance/WhatsAppDispatchCard";
+import { PayPalCheckoutModal } from "@/components/finance/PayPalCheckoutModal";
+import { PRICING_PLANS, PricingPlan } from "@/lib/types/pricing";
 import {
   Settings as SettingsIcon,
   User,
@@ -18,12 +20,15 @@ import {
   Lock,
   Compass,
   ArrowRight,
+  Sparkles,
+  Smartphone,
 } from "lucide-react";
 
 export default function SettingsPage() {
   const { user, profile, displayName, refreshProfile } = useAuth();
   const { currency, setCurrency } = useCurrency();
   const [preferredCurrency, setPreferredCurrency] = useState<CurrencyCode>(currency);
+  const [upgradePlanModal, setUpgradePlanModal] = useState<PricingPlan | null>(null);
 
   const initialName = displayName !== "Strategist" ? displayName : (profile?.full_name || user?.email?.split("@")[0] || "");
   const [fullName, setFullName] = useState(initialName);
@@ -278,7 +283,58 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* 4. WHATSAPP PRO DISPATCH INTELLIGENCE */}
+        {/* 4. SUBSCRIPTION & PAYMENT PLAN (M-PESA / PAYPAL) */}
+        <div className="rounded-[2.5rem] border border-border/80 bg-card p-6 sm:p-9 space-y-6 shadow-elevation-1">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-bold text-foreground">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span>Subscription & Membership Tier</span>
+            </div>
+            <span className="text-[10px] font-mono font-bold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/30 uppercase">
+              Current Plan: {profile?.plan_tier?.toUpperCase() || "FREE"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-sm text-foreground">Aimly Pro</span>
+                <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">650 KES / mo</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Moteur déterministe complet, Studio 3-Stratégies et Alertes IA proactives.
+              </p>
+              <button
+                type="button"
+                onClick={() => setUpgradePlanModal(PRICING_PLANS.find((p) => p.id === "pro") || null)}
+                className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-4 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span>Souscrire via M-Pesa ou PayPal</span>
+              </button>
+            </div>
+
+            <div className="p-4 rounded-2xl border border-primary/30 bg-primary/5 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-sm text-foreground">Aimly Premium</span>
+                <span className="text-xs font-mono font-bold text-primary">1 950 KES / mo</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Destinations illimitées, Bloc-Notes IA et accompagnement prioritaire.
+              </p>
+              <button
+                type="button"
+                onClick={() => setUpgradePlanModal(PRICING_PLANS.find((p) => p.id === "premium") || null)}
+                className="w-full rounded-xl bg-primary hover:opacity-95 text-primary-foreground text-xs font-bold py-2.5 px-4 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Souscrire via M-Pesa ou PayPal</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* 5. WHATSAPP PRO DISPATCH INTELLIGENCE */}
         <WhatsAppDispatchCard
           initialPhone="+254 712 345 678"
           destinationTitle="Launch my business"
@@ -293,13 +349,21 @@ export default function SettingsPage() {
         <div className="flex justify-end pt-2">
           <button
             type="submit"
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white font-bold text-xs sm:text-sm px-8 py-3.5 shadow-lg shadow-orange-500/25 hover:opacity-95 hover:scale-[1.01] transition-all"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white font-bold text-xs sm:text-sm px-8 py-3.5 shadow-lg shadow-orange-500/25 hover:opacity-95 hover:scale-[1.01] transition-all cursor-pointer"
           >
             <Check className="w-4 h-4" />
             <span>Save Preferences</span>
           </button>
         </div>
       </form>
+
+      {/* Upgrade Checkout Modal */}
+      <PayPalCheckoutModal
+        isOpen={Boolean(upgradePlanModal)}
+        onClose={() => setUpgradePlanModal(null)}
+        plan={upgradePlanModal}
+        isYearly={false}
+      />
     </div>
   );
 }

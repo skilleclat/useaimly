@@ -42,11 +42,7 @@ function PricingContent() {
       return;
     }
 
-    if (!isLoggedIn) {
-      router.push(`/signup?plan=${targetPlan.id}&billing=${isYearly ? "annual" : "monthly"}`);
-      return;
-    }
-
+    // Open checkout modal directly with Lipa na M-Pesa & PayPal tabs
     setSelectedPlanForCheckout(targetPlan);
   };
 
@@ -68,13 +64,24 @@ function PricingContent() {
             Choose the right plan to protect your liquidity, accelerate your destinations, and simulate spending impact.
           </p>
 
+          {/* Payment Badges Banner (M-Pesa & PayPal) */}
+          <div className="inline-flex flex-wrap items-center justify-center gap-3 p-2 px-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 text-xs font-mono">
+            <div className="flex items-center gap-1.5 font-bold text-emerald-600 dark:text-emerald-400">
+              <span>📱 Lipa na M-Pesa (Paybill: <strong>247247</strong> &bull; Acc: <strong>0743898803</strong>)</span>
+            </div>
+            <span className="text-muted-foreground hidden sm:inline">&bull;</span>
+            <div className="flex items-center gap-1.5 font-bold text-[#003087] dark:text-sky-400">
+              <span>💳 PayPal &amp; International Cards</span>
+            </div>
+          </div>
+
           {/* Toggles Bar (Billing Cycle + Currency) */}
-          <div className="pt-6 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+          <div className="pt-4 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
             {/* Billing Cycle Toggle */}
             <div className="flex items-center gap-3 rounded-full border border-border/80 bg-card p-1.5 shadow-sm">
               <button
                 onClick={() => setIsYearly(false)}
-                className={`rounded-full px-4 py-2 text-xs font-bold transition-all ${
+                className={`rounded-full px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
                   !isYearly
                     ? "bg-primary text-primary-foreground shadow-xs"
                     : "text-muted-foreground hover:text-foreground"
