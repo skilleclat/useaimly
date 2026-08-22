@@ -49,6 +49,7 @@ export default function LandingPage() {
 
   // Testimonials state
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const [landingYearly, setLandingYearly] = useState(true);
 
   const testimonials = [
     {
@@ -558,13 +559,44 @@ export default function LandingPage() {
               Simple, transparent pricing
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium">
-              Start free. Upgrade when you&apos;re ready.
+              Start free. Upgrade when you&apos;re ready to protect your trajectory.
             </p>
+
+            {/* Monthly vs Annual Billing Toggle */}
+            <div className="pt-3 flex items-center justify-center">
+              <div className="flex items-center gap-3 rounded-full border border-border/80 bg-card p-1.5 shadow-sm">
+                <button
+                  type="button"
+                  onClick={() => setLandingYearly(false)}
+                  className={`rounded-full px-4 py-2 text-xs font-bold transition-all ${
+                    !landingYearly
+                      ? "bg-primary text-primary-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Monthly Billing
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLandingYearly(true)}
+                  className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition-all ${
+                    landingYearly
+                      ? "bg-primary text-primary-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span>Annual Billing</span>
+                  <span className="rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] px-2 py-0.5 font-extrabold uppercase">
+                    -20%
+                  </span>
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch pt-4 max-w-5xl mx-auto">
             {PRICING_PLANS.map((plan) => (
-              <PricingCard key={plan.id} plan={plan} isYearly={true} currency="USD" />
+              <PricingCard key={plan.id} plan={plan} isYearly={landingYearly} currency="USD" />
             ))}
           </div>
         </section>

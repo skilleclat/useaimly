@@ -35,12 +35,6 @@ export function Header() {
 
   const NAV_LINKS = [
     {
-      label: "Pricing",
-      href: "/pricing",
-      icon: <Sparkles className="w-4 h-4" />,
-      desc: "Plans & monetization options",
-    },
-    {
       label: "Destinations",
       href: "/app/goals",
       icon: <Target className="w-4 h-4" />,
@@ -73,15 +67,6 @@ export function Header() {
         <div className="flex items-center gap-3">
           <Link href="/">
             <UseaimlyLogo size="md" showTagline={false} />
-          </Link>
-
-          {/* Desktop Nav Link for Pricing */}
-          <Link
-            href="/pricing"
-            className="hidden md:inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-full hover:bg-secondary/60 ml-4"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-primary" />
-            <span>Pricing</span>
           </Link>
         </div>
 
