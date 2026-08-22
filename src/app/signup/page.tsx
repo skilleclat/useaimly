@@ -311,7 +311,7 @@ function SignupFormContent() {
 
           {/* Selected Plan Badge */}
           {!showOtpView && selectedPlan !== "free" && (
-            <div className="pt-2">
+            <div className="pt-2 flex flex-col items-center gap-2">
               <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-mono font-bold text-primary">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Selected Plan: {selectedPlan.toUpperCase()}</span>
@@ -319,6 +319,17 @@ function SignupFormContent() {
                   Change
                 </Link>
               </div>
+
+              <button
+                type="button"
+                onClick={() => setCheckoutModalPlan(PRICING_PLANS.find((p) => p.id === selectedPlan) || null)}
+                className="inline-flex items-center gap-2 rounded-2xl bg-[#FFC439] hover:bg-[#F2BA36] text-[#003087] font-black text-xs px-5 py-2.5 shadow-md transition-all cursor-pointer"
+              >
+                <span className="italic font-serif font-black text-sm text-[#003087]">PayPal</span>
+                <span className="font-extrabold text-[#003087]">
+                  Finaliser l'abonnement {selectedPlan.toUpperCase()} via PayPal →
+                </span>
+              </button>
             </div>
           )}
         </div>
@@ -604,6 +615,14 @@ function SignupFormContent() {
           )}
         </div>
       </div>
+
+      {/* Built-in PayPal Checkout Modal for direct payments */}
+      <PayPalCheckoutModal
+        isOpen={Boolean(checkoutModalPlan)}
+        onClose={() => setCheckoutModalPlan(null)}
+        plan={checkoutModalPlan}
+        isYearly={true}
+      />
     </div>
   );
 }

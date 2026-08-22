@@ -8,6 +8,8 @@ import { useI18n } from "@/lib/i18n/i18n-context";
 import { CurrencyCode } from "@/lib/types/finance";
 import { Check, Sparkles, Zap, Shield, ArrowRight } from "lucide-react";
 
+import { useState } from "react";
+import { PayPalCheckoutModal } from "./PayPalCheckoutModal";
 import { useAuth } from "@/lib/auth/auth-context";
 
 interface PricingCardProps {
@@ -25,6 +27,7 @@ export function PricingCard({
   currentPlanId,
   onSelectPlan,
 }: PricingCardProps) {
+  const [isPayPalOpen, setIsPayPalOpen] = useState(false);
   const { user, profile } = useAuth();
   const { currency: globalCurrency, format, convert } = useCurrency();
   const { t, language } = useI18n();
@@ -188,10 +191,17 @@ export function PricingCard({
           <div className="w-full rounded-2xl bg-secondary py-3 text-center text-xs font-bold text-muted-foreground border border-border">
             {t("currentPlanLabel")}
           </div>
-        ) : onSelectPlan ? (
+        ) : plan.id !== "free" ? (
           <button
-            onClick={() => onSelectPlan(plan.id)}
-            className={`w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 text-xs font-extrabold shadow-md transition-all ${
+            type="button"
+            onClick={() => {
+              if (onSelectPlan) {
+                onSelectPlan(plan.id);
+              } else {
+                setIsPayPalOpen(true);
+              }
+            }}
+            className={`w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 text-xs font-extrabold shadow-md transition-all cursor-pointer ${
               plan.isPopular
                 ? "bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white hover:opacity-95 shadow-orange-500/20 hover:scale-[1.02]"
                 : "bg-primary text-primary-foreground hover:opacity-95"
@@ -202,18 +212,24 @@ export function PricingCard({
           </button>
         ) : (
           <Link
-            href={targetHref}
-            className={`w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 text-xs font-extrabold shadow-md transition-all ${
-              plan.isPopular
-                ? "bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white hover:opacity-95 shadow-orange-500/20 hover:scale-[1.02]"
-                : "bg-primary text-primary-foreground hover:opacity-95"
-            }`}
+            href="/onboarding"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 text-xs font-extrabold shadow-md transition-all bg-primary text-primary-foreground hover:opacity-95"
           >
             <span>{ctaText}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         )}
       </div>
+
+      {/* Built-in PayPal Checkout Modal */}
+      {plan.id !== "free" && (
+        <PayPalCheckoutModal
+          isOpen={isPayPalOpen}
+          onClose={() => setIsPayPalOpen(false)}
+          plan={plan}
+          isYearly={isYearly}
+        />
+      )}
     </div>
   );
 }
