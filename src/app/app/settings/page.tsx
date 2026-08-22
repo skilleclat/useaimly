@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useCurrency } from "@/lib/currency/currency-context";
 import { CurrencyCode } from "@/lib/types/finance";
@@ -101,13 +102,13 @@ export default function SettingsPage() {
               </p>
             </div>
 
-            <a
+            <Link
               href="/pricing"
               className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground font-bold text-xs px-5 py-2.5 shadow-xs hover:opacity-95 transition-all shrink-0"
             >
               <span>{profile?.plan_tier === "free" ? "Upgrade Plan" : "Manage Subscription"}</span>
               <ArrowRight className="w-3.5 h-3.5" />
-            </a>
+            </Link>
           </div>
         </div>
 

@@ -16,5 +16,5 @@ export function createClient() {
   const key = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "").trim();
   const supabaseAnonKey = key.length > 0 ? key : DEFAULT_SUPABASE_ANON_KEY;
 
-  return createBrowserClient<Database>(supabaseUrl, supabaseAnonKey);
+  return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }

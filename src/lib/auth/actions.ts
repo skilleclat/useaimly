@@ -37,6 +37,8 @@ function extractErrorMessage(err: any, fallback: string = "An unexpected error o
     return err.msg.trim();
   }
   return fallback;
+}
+
 function getAppUrl(): string {
   if (process.env.NEXT_PUBLIC_APP_URL) {
     return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");

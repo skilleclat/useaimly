@@ -52,6 +52,18 @@ const NAV_ITEMS: NavItem[] = [
     icon: <Target className="w-4 h-4" />,
   },
   {
+    label: "What-If",
+    href: "/app/what-if",
+    description: "Sandbox to simulate life events & income changes.",
+    icon: <TrendingUp className="w-4 h-4" />,
+  },
+  {
+    label: "Ask AI",
+    href: "/app/ask",
+    description: "Your deterministic AI financial co-pilot.",
+    icon: <MessageSquare className="w-4 h-4" />,
+  },
+  {
     label: "Notes",
     href: "/app/notes",
     description: "Your handwritten rules & financial journal (AI Synced).",
@@ -62,12 +74,6 @@ const NAV_ITEMS: NavItem[] = [
     href: "/app/money",
     description: "Your liquid cash, fixed costs & reserves.",
     icon: <Wallet className="w-4 h-4" />,
-  },
-  {
-    label: "Investments",
-    href: "/app/money?tab=INVESTMENTS",
-    description: "Your stocks, MMF, crypto, Sacco & bond assets.",
-    icon: <TrendingUp className="w-4 h-4" />,
   },
 ];
 

@@ -41,6 +41,12 @@ export function Header() {
 
   const NAV_LINKS = [
     {
+      label: t("navPricing"),
+      href: "/pricing",
+      icon: <Sparkles className="w-4 h-4 text-primary" />,
+      desc: "Plans & 14-day free trial",
+    },
+    {
       label: t("navDestinations"),
       href: "/app/goals",
       icon: <Target className="w-4 h-4" />,

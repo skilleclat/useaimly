@@ -22,6 +22,12 @@ export type GenericRelationship = {
 export type Database = {
   public: {
     Tables: {
+      [key: string]: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships: GenericRelationship[];
+      };
       profiles: {
         Row: {
           id: string;
@@ -571,6 +577,195 @@ export type Database = {
           result?: Json;
           created_at?: string;
           updated_at?: string;
+        };
+        Relationships: GenericRelationship[];
+      };
+      budget_targets: {
+        Row: {
+          id: string;
+          user_id: string;
+          category_name: string;
+          monthly_target: number;
+          current_actual: number;
+          period: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          category_name: string;
+          monthly_target: number;
+          current_actual?: number;
+          period?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          category_name?: string;
+          monthly_target?: number;
+          current_actual?: number;
+          period?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: GenericRelationship[];
+      };
+      goal_notification_settings: {
+        Row: {
+          id: string;
+          user_id: string;
+          goal_id: string;
+          goal_title: string;
+          target_date: string;
+          lead_time_days: number;
+          frequency: string;
+          notify_via_app: boolean;
+          notify_via_whatsapp: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          goal_id: string;
+          goal_title: string;
+          target_date: string;
+          lead_time_days?: number;
+          frequency?: string;
+          notify_via_app?: boolean;
+          notify_via_whatsapp?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          goal_id?: string;
+          goal_title?: string;
+          target_date?: string;
+          lead_time_days?: number;
+          frequency?: string;
+          notify_via_app?: boolean;
+          notify_via_whatsapp?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: GenericRelationship[];
+      };
+      investment_assets: {
+        Row: {
+          id: string;
+          user_id: string;
+          asset_name: string;
+          asset_class: string;
+          initial_invested: number;
+          current_market_value: number;
+          annual_yield_percent: number;
+          monthly_income_generated: number;
+          institution_name?: string;
+          notes?: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          asset_name: string;
+          asset_class: string;
+          initial_invested: number;
+          current_market_value: number;
+          annual_yield_percent?: number;
+          monthly_income_generated?: number;
+          institution_name?: string;
+          notes?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          asset_name?: string;
+          asset_class?: string;
+          initial_invested?: number;
+          current_market_value?: number;
+          annual_yield_percent?: number;
+          monthly_income_generated?: number;
+          institution_name?: string;
+          notes?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: GenericRelationship[];
+      };
+      financial_notes: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          content: string;
+          category: string;
+          is_pinned: boolean;
+          tags: string[];
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          title: string;
+          content: string;
+          category?: string;
+          is_pinned?: boolean;
+          tags?: string[];
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          title?: string;
+          content?: string;
+          category?: string;
+          is_pinned?: boolean;
+          tags?: string[];
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: GenericRelationship[];
+      };
+      whatsapp_dispatches: {
+        Row: {
+          id: string;
+          user_id: string;
+          phone_number: string;
+          goal_title: string;
+          digest_message: string;
+          status: string;
+          provider: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          phone_number: string;
+          goal_title: string;
+          digest_message: string;
+          status?: string;
+          provider?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          phone_number?: string;
+          goal_title?: string;
+          digest_message?: string;
+          status?: string;
+          provider?: string;
+          created_at?: string;
         };
         Relationships: GenericRelationship[];
       };
