@@ -6,6 +6,7 @@ import { formatCurrency } from "@/lib/utils/currency";
 import { formatMonthYear, addMonths } from "@/lib/utils/date";
 import { CurrencyCode } from "@/lib/types/finance";
 import { MoneyInput } from "@/components/design-system/MoneyInput";
+import { SilentLeakCard } from "@/components/dashboard/SilentLeakCard";
 import {
   Wallet,
   TrendingUp,
@@ -302,6 +303,9 @@ export default function MoneyPage() {
               </span>
             </div>
           </div>
+
+          {/* GAME CHANGER #3: SILENT LEAK & RECURRING DRAG EXPOSER */}
+          <SilentLeakCard currency={currency} />
 
           {/* THE FINANCIAL TIMELINE WATERFALL */}
           <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 space-y-6 shadow-elevation-1">

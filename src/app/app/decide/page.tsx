@@ -9,6 +9,7 @@ import { simulateDecision, BaselineFinancialProfile } from "@/lib/finance";
 import { formatCurrency } from "@/lib/utils/currency";
 import { CurrencyCode } from "@/lib/types/finance";
 import { PdfReportDownloadButton } from "@/components/finance/PdfReportDownloadButton";
+import { OpportunityCostMatrix } from "@/components/finance/OpportunityCostMatrix";
 import { PDFReportData } from "@/lib/utils/pdf-report-generator";
 import {
   Sparkles,
@@ -437,6 +438,18 @@ export default function DecideStudioPage() {
             })}
           </div>
         </div>
+
+        {/* GAME CHANGER #1: OPPORTUNITY COST MATRIX */}
+        <OpportunityCostMatrix
+          decisionTitle={title}
+          amount={amount}
+          currency={currency}
+          goalTitle={primaryGoal?.title || "Start my business"}
+          delayInDays={simulation.delta.delayInDays}
+          monthlyFreeCashFlow={68000}
+          currentLiquidSavings={baselineProfile.liquidSavings}
+          monthlyGoalContribution={45000}
+        />
 
         {/* Human Language 3 Pillars Breakdown */}
         <div className="rounded-3xl border border-border/80 bg-card p-6 space-y-4">

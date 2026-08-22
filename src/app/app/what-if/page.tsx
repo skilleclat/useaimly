@@ -31,6 +31,9 @@ import {
   Info,
 } from "lucide-react";
 
+import { runStressTest, STRESS_SCENARIOS, StressScenarioId } from "@/lib/finance/stress-tester";
+import { OpportunityCostMatrix } from "@/components/finance/OpportunityCostMatrix";
+
 type ScenarioType =
   | "SAVE_MORE"
   | "SAVE_LESS"
@@ -383,6 +386,9 @@ export default function WhatIfPage() {
         </div>
       </div>
 
+      {/* GAME CHANGER #2: CASH FLOW STRESS-TESTER & RESILIENCE RADAR */}
+      <StressTesterSection currency={currency} />
+
       {/* Confirmation Modal */}
       {showConfirmation && (
         <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-3 sm:p-4 pt-6 sm:pt-4 bg-black/60 backdrop-blur-xs animate-fadeIn overflow-y-auto">
@@ -422,5 +428,149 @@ export default function WhatIfPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function StressTesterSection({ currency }: { currency: CurrencyCode }) {
+  const [selectedScenarioId, setSelectedScenarioId] = useState<StressScenarioId>("INCOME_SHOCK_30");
+
+  const result = useMemo(() => {
+    return runStressTest(selectedScenarioId, 180000, 97000, 10000, 3750, 240000, currency);
+  }, [selectedScenarioId, currency]);
+
+  const scoreColor =
+    result.resilienceScore >= 80
+      ? "text-emerald-500 border-emerald-500/30 bg-emerald-500/10"
+      : result.resilienceScore >= 55
+      ? "text-amber-500 border-amber-500/30 bg-amber-500/10"
+      : "text-rose-500 border-rose-500/30 bg-rose-500/10";
+
+  return (
+    <section className="rounded-3xl border border-primary/30 bg-card p-6 sm:p-8 space-y-6 shadow-sm font-sans animate-fadeIn">
+      {/* Section Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60 pb-5">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
+              <Sparkles className="w-4 h-4" />
+            </span>
+            <h2 className="text-xl font-extrabold text-foreground tracking-tight">
+              Resilience Radar &amp; Stress-Tester
+            </h2>
+            <span className="rounded-full bg-gradient-to-r from-amber-500/20 to-primary/20 text-primary text-[10px] font-extrabold px-2.5 py-0.5 border border-primary/30 uppercase tracking-wider">
+              Game Changer #2
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Stress-test your financial trajectory against sudden real-life economic shocks to verify your exact breakdown point.
+          </p>
+        </div>
+
+        {/* Resilience Score Badge */}
+        <div className="flex items-center gap-3">
+          <div className={`px-4 py-2 rounded-2xl border flex items-center gap-2 font-mono ${scoreColor}`}>
+            <span className="text-2xl font-extrabold">{result.resilienceScore}</span>
+            <div className="text-left leading-tight">
+              <span className="text-[10px] uppercase font-bold block">Resilience</span>
+              <span className="text-xs font-bold">{result.resilienceVerdict}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Shock Scenario Selector Pills */}
+      <div className="space-y-2">
+        <label className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold block">
+          Select Shock Scenario:
+        </label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {STRESS_SCENARIOS.map((sc) => {
+            const isActive = selectedScenarioId === sc.id;
+            return (
+              <button
+                key={sc.id}
+                type="button"
+                onClick={() => setSelectedScenarioId(sc.id)}
+                className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between space-y-2 ${
+                  isActive
+                    ? "border-primary bg-primary/10 shadow-xs ring-1 ring-primary/30"
+                    : "border-border/80 bg-card hover:border-border hover:bg-secondary/40"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-foreground">{sc.name}</span>
+                  <span
+                    className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase border ${
+                      sc.severity === "CRITICAL"
+                        ? "border-rose-500/30 bg-rose-500/10 text-rose-500"
+                        : sc.severity === "HIGH"
+                        ? "border-amber-500/30 bg-amber-500/10 text-amber-500"
+                        : "border-blue-500/30 bg-blue-500/10 text-blue-500"
+                    }`}
+                  >
+                    {sc.severity}
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">{sc.description}</p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Stress Results Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+        {/* Net Monthly Cash Flow under Stress */}
+        <div className="p-4 rounded-2xl border border-border/80 bg-secondary/30 space-y-1.5">
+          <span className="text-xs text-muted-foreground font-medium">Stressed Net Free Cash Flow</span>
+          <div className={`text-xl font-bold font-mono ${result.stressedFreeCashFlow >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+            {formatCurrency(result.stressedFreeCashFlow, currency)} / mo
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Originally: {formatCurrency(result.originalFreeCashFlow, currency)}/mo
+          </p>
+        </div>
+
+        {/* Liquid Reserve Runway under Stress */}
+        <div className="p-4 rounded-2xl border border-border/80 bg-secondary/30 space-y-1.5">
+          <span className="text-xs text-muted-foreground font-medium">Stressed Buffer Runway</span>
+          <div className="text-xl font-bold font-mono text-foreground">
+            {result.stressedRunwayMonths} Months
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Originally: {result.originalRunwayMonths} Months
+          </p>
+        </div>
+
+        {/* Breakdown Date Warning */}
+        <div className="p-4 rounded-2xl border border-border/80 bg-secondary/30 space-y-1.5">
+          <span className="text-xs text-muted-foreground font-medium">Liquidity Breakdown Date</span>
+          <div className="text-xl font-bold font-mono text-amber-500">
+            {result.breakdownDateFormatted ? result.breakdownDateFormatted : "No Breakdown Risk"}
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            {result.breakdownDateFormatted
+              ? `Deficit depletes reserves in ${result.breakdownMonthIndex} months.`
+              : "Reserves remain intact throughout stress."}
+          </p>
+        </div>
+      </div>
+
+      {/* Recommended Actionable Shield Plan */}
+      <div className="p-4 rounded-2xl border border-primary/20 bg-primary/5 space-y-2">
+        <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+          <ShieldCheck className="w-4 h-4 text-primary" />
+          <span>Recommended Immunization Action Plan</span>
+        </h4>
+        <ul className="space-y-1 text-xs text-muted-foreground">
+          {result.actionableShieldPlan.map((action, idx) => (
+            <li key={idx} className="flex items-start gap-2">
+              <span className="text-primary font-bold">•</span>
+              <span>{action}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
   );
 }

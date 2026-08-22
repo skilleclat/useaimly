@@ -9,6 +9,7 @@ import { formatMonthYear } from "@/lib/utils/date";
 import { CurrencyCode } from "@/lib/types/finance";
 import { FinancialStatus } from "@/components/design-system/FinancialStatus";
 import { MoneyInput } from "@/components/design-system/MoneyInput";
+import { GoalVelocityBooster } from "@/components/dashboard/GoalVelocityBooster";
 import {
   Target,
   Plus,
@@ -140,6 +141,9 @@ export default function GoalsPage() {
           </span>
         </div>
       )}
+
+      {/* GAME CHANGER #4: GOAL VELOCITY ACCELERATOR */}
+      <GoalVelocityBooster goalTitle={destinations[0]?.name || "Start my business"} currency={currency} />
 
       {/* Filter Segmented Pills */}
       <div className="flex items-center gap-1 p-1 rounded-xl bg-secondary/50 border border-border/60 w-fit max-w-full overflow-x-auto no-scrollbar">

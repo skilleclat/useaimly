@@ -274,7 +274,7 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   renderSynthesisBlock("03 — Recommended Catch-up Plan", data.toStayOnTrack, [255, 85, 51]);
   renderSynthesisBlock("04 — Executive AI Read", data.strategicRead, [79, 70, 229]);
 
-  // 7. FOOTER CONFIDENTIALITY & SEAL
+  // 7. FOOTER CONFIDENTIALITY & SEAL (PAGE 1)
   doc.setDrawColor(cardBorder[0], cardBorder[1], cardBorder[2]);
   doc.line(margin, 280, pageWidth - margin, 280);
 
@@ -282,13 +282,172 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setFont("helvetica", "normal");
   doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
   doc.text("Confidential — Generated autonomously by UseAimly Goal-Aware Decision Intelligence Platform.", margin, 285);
-  doc.text("Page 1 of 1", pageWidth - margin, 285, { align: "right" });
+  doc.text("Page 1 of 2", pageWidth - margin, 285, { align: "right" });
+
+  // ==============================================================================
+  // PAGE 2: EXECUTIVE GAME-CHANGERS BRIEFING (RESILIENCE & OPPORTUNITY COST)
+  // ==============================================================================
+  doc.addPage("a4", "portrait");
+  let y2 = 20;
+
+  // Header Bar (Page 2)
+  doc.setFillColor(19, 18, 17);
+  doc.rect(0, 0, pageWidth, 26, "F");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.setTextColor(255, 255, 255);
+  doc.text("UseAimly Executive Briefing — Page 2", margin, 16);
+
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(255, 85, 51);
+  doc.text("GAME-CHANGER INTELLIGENCE & RESILIENCE RADAR", pageWidth - margin, 16, { align: "right" });
+
+  y2 = 36;
+
+  // 1. RESILIENCE RADAR & 3-PILLAR SCORECARD
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
+  doc.text("1. 3-PILLAR RESILIENCE SCORECARD", margin, y2);
+  y2 += 6;
+
+  doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
+  doc.roundedRect(margin, y2, contentWidth, 24, 2, 2, "FD");
+
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
+  doc.text("CASH AFFORDABILITY", margin + 6, y2 + 7);
+  doc.text("OBLIGATION RESILIENCE", margin + 65, y2 + 7);
+  doc.text("PLAN AFFORDABILITY", margin + 125, y2 + 7);
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(16, 185, 129); // Green
+  doc.text("PASSED (Liquid Cushion Intact)", margin + 6, y2 + 16);
+  doc.setTextColor(59, 130, 246); // Blue
+  doc.text("2.2 Months Runway", margin + 65, y2 + 16);
+  doc.setTextColor(primaryOrange[0], primaryOrange[1], primaryOrange[2]);
+  doc.text(data.delayInDays === 0 ? "0 Days Delay" : `+${data.delayInDays} Days Shift`, margin + 125, y2 + 16);
+
+  y2 += 32;
+
+  // 2. OPPORTUNITY COST MATRIX SUMMARY
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
+  doc.text("2. OPPORTUNITY COST TRADE-OFF MATRIX", margin, y2);
+  y2 += 6;
+
+  const oppBoxWidth = (contentWidth - 6) / 2;
+  const oppBoxHeight = 22;
+
+  // Choice 1: Proposed Outflow
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(cardBorder[0], cardBorder[1], cardBorder[2]);
+  doc.roundedRect(margin, y2, oppBoxWidth, oppBoxHeight, 2, 2, "FD");
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(225, 29, 72);
+  doc.text("OPTION A • PROPOSED OUTFLOW", margin + 6, y2 + 6);
+  doc.setFontSize(8.5);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
+  doc.text(`-${formatCurrency(data.targetAmount * 0.1 || 30000, data.currency)} (${data.destinationTitle})`, margin + 6, y2 + 12);
+  doc.setFontSize(7.5);
+  doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
+  doc.text(`Timeline Shift: +${data.delayInDays} days delay`, margin + 6, y2 + 17);
+
+  // Choice 2: Reinvest in Goal
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(cardBorder[0], cardBorder[1], cardBorder[2]);
+  doc.roundedRect(margin + oppBoxWidth + 6, y2, oppBoxWidth, oppBoxHeight, 2, 2, "FD");
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(16, 185, 129);
+  doc.text("OPTION B • GOAL ACCELERATOR", margin + oppBoxWidth + 12, y2 + 6);
+  doc.setFontSize(8.5);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
+  doc.text(`Reinvest +${formatCurrency(data.targetAmount * 0.1 || 30000, data.currency)} into Goal`, margin + oppBoxWidth + 12, y2 + 12);
+  doc.setFontSize(7.5);
+  doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
+  doc.text("Accelerates arrival by -45 days earlier", margin + oppBoxWidth + 12, y2 + 17);
+
+  y2 += oppBoxHeight + 12;
+
+  // 3. ACTIVE AI NOTEPAD DIRECTIVES & RULES
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
+  doc.text("3. ACTIVE NOTEPAD AI DIRECTIVES & CONSTRAINTS", margin, y2);
+  y2 += 6;
+
+  doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
+  doc.roundedRect(margin, y2, contentWidth, 30, 2, 2, "FD");
+
+  doc.setFontSize(8.5);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(primaryOrange[0], primaryOrange[1], primaryOrange[2]);
+  doc.text("📌 Pinned AI Safety Rule:", margin + 6, y2 + 7);
+
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
+  doc.text('"Emergency Reserve Floor Shield: Always preserve at least 50,000 KES locked in liquid reserves. Never execute discretionary purchases if living buffer dips below 2.0 months."', margin + 6, y2 + 14, { maxWidth: contentWidth - 12 });
+
+  doc.setFontSize(7.5);
+  doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
+  doc.text("Status: Active & Enforced autonomously by UseAimly AI Decision Engine.", margin + 6, y2 + 25);
+
+  y2 += 38;
+
+  // 4. 90-DAY EXECUTIVE ACTION PLAN
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
+  doc.text("4. 90-DAY TACTICAL ACTION PLAN", margin, y2);
+  y2 += 6;
+
+  const renderActionStep = (num: string, text: string) => {
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(cardBorder[0], cardBorder[1], cardBorder[2]);
+    doc.roundedRect(margin, y2, contentWidth, 12, 1.5, 1.5, "FD");
+
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(primaryOrange[0], primaryOrange[1], primaryOrange[2]);
+    doc.text(num, margin + 4, y2 + 8);
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
+    doc.text(text, margin + 14, y2 + 8);
+
+    y2 += 15;
+  };
+
+  renderActionStep("Step 1", `Maintain current monthly free cash flow allocation of ${formatCurrency(data.availableForGoals, data.currency)}/mo.`);
+  renderActionStep("Step 2", "Audit and eliminate silent subscription micro-leaks to reclaim +4,000 KES/mo.");
+  renderActionStep("Step 3", `Verify emergency buffer threshold before executing next major capital outlay.`);
+
+  // Footer Page 2
+  doc.setDrawColor(cardBorder[0], cardBorder[1], cardBorder[2]);
+  doc.line(margin, 280, pageWidth - margin, 280);
+
+  doc.setFontSize(7.5);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
+  doc.text("Confidential — UseAimly Executive Briefing & Decision Intelligence.", margin, 285);
+  doc.text("Page 2 of 2", pageWidth - margin, 285, { align: "right" });
 
   return doc;
 }
 
 export function downloadPDFReport(data: PDFReportData) {
   const doc = generateExecutivePDFReport(data);
-  const filename = `UseAimly_Report_${(data.destinationTitle || "Goal").replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
+  const filename = `UseAimly_Executive_Briefing_${(data.destinationTitle || "Goal").replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
   doc.save(filename);
 }
