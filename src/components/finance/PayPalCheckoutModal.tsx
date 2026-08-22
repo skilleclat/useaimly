@@ -153,7 +153,7 @@ export function PayPalCheckoutModal({
                 </div>
                 <div className="flex items-center justify-between pt-1 font-mono text-[11px] text-foreground font-bold">
                   <span>{language === "fr" ? "Compte Bénéficiaire PayPal :" : "PayPal Merchant Payee:"}</span>
-                  <span className="text-primary">hetier.djuma@gmail.com</span>
+                  <span className="text-primary">herimaliyabwana@gmail.com</span>
                 </div>
               </div>
             </div>

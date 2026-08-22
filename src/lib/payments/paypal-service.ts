@@ -25,7 +25,7 @@ export interface PayPalCheckoutResult {
 export const PAYPAL_CONFIG = {
   clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "sb-test-client-id-useaimly",
   clientSecret: process.env.PAYPAL_CLIENT_SECRET || "",
-  merchantEmail: process.env.PAYPAL_MERCHANT_EMAIL || "hetier.djuma@gmail.com",
+  merchantEmail: process.env.PAYPAL_MERCHANT_EMAIL || "herimaliyabwana@gmail.com",
   mode: (process.env.PAYPAL_MODE || "sandbox") as "sandbox" | "live",
 };
 
