@@ -11,6 +11,8 @@ import { FinancialStatus } from "@/components/design-system/FinancialStatus";
 import { MoneyInput } from "@/components/design-system/MoneyInput";
 import { GoalVelocityBooster } from "@/components/dashboard/GoalVelocityBooster";
 import { InteractiveGoalCreationWizard } from "@/components/dashboard/InteractiveGoalCreationWizard";
+import { GoalCountdownAlertCard } from "@/components/dashboard/GoalCountdownAlertCard";
+import { GoalNotificationSettingsModal } from "@/components/goals/GoalNotificationSettingsModal";
 import {
   Target,
   Plus,
@@ -32,6 +34,7 @@ export default function GoalsPage() {
   const [filterTab, setFilterTab] = useState<"ALL" | "ACTIVE" | "PAUSED" | "COMPLETED">("ALL");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showWizardModal, setShowWizardModal] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
 
   // New Destination Form State
   const [newTitle, setNewTitle] = useState("");
@@ -183,6 +186,25 @@ export default function GoalsPage() {
 
       {/* GAME CHANGER #4: GOAL VELOCITY ACCELERATOR */}
       <GoalVelocityBooster goalTitle={destinations[0]?.name || "Start my business"} currency={currency} />
+
+      {/* GOAL DEADLINE PROACTIVE COUNTDOWN ALERT ENGINE */}
+      <GoalCountdownAlertCard
+        goalTitle={destinations[0]?.name || "Start my business"}
+        targetDateStr={destinations[0]?.targetDate || "2027-12-31"}
+        currentAmount={destinations[0]?.currentAmount || 260000}
+        targetAmount={destinations[0]?.targetAmount || 500000}
+        currency={currency}
+        onOpenSettings={() => setShowNotificationModal(true)}
+      />
+
+      {showNotificationModal && (
+        <GoalNotificationSettingsModal
+          goalId={destinations[0]?.id || "dest-1"}
+          goalTitle={destinations[0]?.name || "Start my business"}
+          targetDate={destinations[0]?.targetDate || "2027-12-31"}
+          onClose={() => setShowNotificationModal(false)}
+        />
+      )}
 
       {/* Filter Segmented Pills */}
       <div className="flex items-center gap-1 p-1 rounded-xl bg-secondary/50 border border-border/60 w-fit max-w-full overflow-x-auto no-scrollbar">

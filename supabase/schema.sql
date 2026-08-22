@@ -416,6 +416,30 @@ CREATE TRIGGER set_investment_assets_updated_at
   EXECUTE FUNCTION public.update_updated_at_column();
 
 -- ------------------------------------------------------------------------------
+-- 17.7 Goal Notification Settings Table (Lead-Time Countdown Alerts & Digests)
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.goal_notification_settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  goal_id TEXT NOT NULL,
+  goal_title TEXT NOT NULL,
+  target_date DATE NOT NULL,
+  lead_time_days INT NOT NULL DEFAULT 30,
+  frequency TEXT NOT NULL DEFAULT 'WEEKLY' CHECK (frequency IN ('WEEKLY', 'DAILY', 'ON_TRIGGER')),
+  notify_via_app BOOLEAN NOT NULL DEFAULT TRUE,
+  notify_via_whatsapp BOOLEAN NOT NULL DEFAULT TRUE,
+  last_notified_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+DROP TRIGGER IF EXISTS set_goal_notification_settings_updated_at ON public.goal_notification_settings;
+CREATE TRIGGER set_goal_notification_settings_updated_at
+  BEFORE UPDATE ON public.goal_notification_settings
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_updated_at_column();
+
+-- ------------------------------------------------------------------------------
 -- 18. Row Level Security Policies on ALL Tables
 -- ------------------------------------------------------------------------------
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -436,6 +460,7 @@ ALTER TABLE public.saved_scenarios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.financial_notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budget_targets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.investment_assets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.goal_notification_settings ENABLE ROW LEVEL SECURITY;
 
 -- Profiles Policies
 DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
@@ -616,6 +641,16 @@ CREATE POLICY "Users can insert own investment assets" ON public.investment_asse
 CREATE POLICY "Users can update own investment assets" ON public.investment_assets FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own investment assets" ON public.investment_assets FOR DELETE USING (auth.uid() = user_id);
 
+-- Goal Notification Settings Policies
+DROP POLICY IF EXISTS "Users can view own goal notification settings" ON public.goal_notification_settings;
+DROP POLICY IF EXISTS "Users can insert own goal notification settings" ON public.goal_notification_settings;
+DROP POLICY IF EXISTS "Users can update own goal notification settings" ON public.goal_notification_settings;
+DROP POLICY IF EXISTS "Users can delete own goal notification settings" ON public.goal_notification_settings;
+CREATE POLICY "Users can view own goal notification settings" ON public.goal_notification_settings FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own goal notification settings" ON public.goal_notification_settings FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own goal notification settings" ON public.goal_notification_settings FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete own goal notification settings" ON public.goal_notification_settings FOR DELETE USING (auth.uid() = user_id);
+
 -- ------------------------------------------------------------------------------
 -- 18. Indexes
 -- ------------------------------------------------------------------------------
@@ -631,6 +666,7 @@ CREATE INDEX IF NOT EXISTS idx_savings_accounts_user_id ON public.savings_accoun
 CREATE INDEX IF NOT EXISTS idx_debts_user_id ON public.debts(user_id);
 CREATE INDEX IF NOT EXISTS idx_budget_targets_user_id ON public.budget_targets(user_id, period);
 CREATE INDEX IF NOT EXISTS idx_investment_assets_user_id ON public.investment_assets(user_id, asset_class);
+CREATE INDEX IF NOT EXISTS idx_goal_notification_settings_user_id ON public.goal_notification_settings(user_id, goal_id);
 CREATE INDEX IF NOT EXISTS idx_financial_commitments_user_id ON public.financial_commitments(user_id);
 CREATE INDEX IF NOT EXISTS idx_financial_decisions_user_id ON public.financial_decisions(user_id);
 CREATE INDEX IF NOT EXISTS idx_financial_notes_user_id ON public.financial_notes(user_id);

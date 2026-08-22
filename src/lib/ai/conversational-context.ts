@@ -273,6 +273,11 @@ INVESTMENT PORTFOLIO & WEALTH COMMAND CENTER:
 - Monthly Passive Yield Generated: ${formatCurrency(14188, p.currency)}/month (from MMF @ 11.5%, Sacco @ 13.0%, Treasury Bonds @ 14.2%)
 - Goal Velocity Acceleration: Shaves -38 days off "${dest.title}" arrival deadline!
 
+PROACTIVE GOAL COUNTDOWN NOTIFICATIONS:
+- Active Alert Triggers: 30-Day Lead Time (1 Month Before Deadline) Active
+- Goal: "${dest.title}" (Target Date: ${dest.targetDate})
+- Countdown Status: 30 Days Remaining (Weekly Digest & WhatsApp Dispatches Active)
+
 USER HANDWRITTEN FINANCIAL NOTES & CUSTOM CONSTRAINTS:
 ${notesText}
 
