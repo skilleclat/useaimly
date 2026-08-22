@@ -7,7 +7,9 @@ import { UseaimlyLogo } from "@/components/design-system/UseaimlyLogo";
 import { useRouter, useSearchParams } from "next/navigation";
 import { User, Mail, Globe, ArrowRight, Eye, EyeOff, AlertCircle, ShieldCheck, RefreshCw, Sparkles, KeyRound, CheckCircle2 } from "lucide-react";
 import { CurrencyCode } from "@/lib/types/finance";
-import { PlanTier } from "@/lib/types/pricing";
+import { PlanTier, PRICING_PLANS, PricingPlan } from "@/lib/types/pricing";
+import { PayPalCheckoutModal } from "@/components/finance/PayPalCheckoutModal";
+import { useAuth } from "@/lib/auth/auth-context";
 
 function GoogleIcon({ className = "w-5 h-5" }: { className?: string }) {
   return (
@@ -32,8 +34,6 @@ function GoogleIcon({ className = "w-5 h-5" }: { className?: string }) {
   );
 }
 
-import { useAuth } from "@/lib/auth/auth-context";
-
 function SignupFormContent() {
   const { user, profile } = useAuth();
   const router = useRouter();
@@ -41,12 +41,17 @@ function SignupFormContent() {
   const rawPlan = searchParams.get("plan");
   const selectedPlan: PlanTier = (rawPlan === "pro" || rawPlan === "premium" || rawPlan === "free") ? rawPlan : "free";
 
+  const [checkoutModalPlan, setCheckoutModalPlan] = useState<PricingPlan | null>(null);
+
   useEffect(() => {
-    // If user is already logged in, redirect them to payment checkout on pricing page
-    if (user || (profile && profile.id !== "demo-user-id")) {
-      router.replace(`/pricing?plan=${selectedPlan}`);
+    // If user is already logged in, redirect immediately to payment checkout on pricing page
+    const isLoggedIn = Boolean(user || (profile && profile.id !== "demo-user-id"));
+    if (isLoggedIn) {
+      if (typeof window !== "undefined") {
+        window.location.replace(`/pricing?plan=${selectedPlan}`);
+      }
     }
-  }, [user, profile, selectedPlan, router]);
+  }, [user, profile, selectedPlan]);
 
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);

@@ -61,7 +61,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     priceMonthlyKES: 650,
     priceYearlyKES: 5200,
     ctaText: "Try Aimly Pro",
-    ctaHref: "/signup?plan=pro",
+    ctaHref: "/pricing?plan=pro",
     features: [
       { text: "Unlimited Financial Destinations", included: true, highlight: true },
       { text: "Monthly Cashflow & Free Balance Calculator", included: true },
@@ -86,7 +86,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     priceMonthlyKES: 1300,
     priceYearlyKES: 10400,
     ctaText: "Unlock Aimly Premium",
-    ctaHref: "/signup?plan=premium",
+    ctaHref: "/pricing?plan=premium",
     features: [
       { text: "Everything included in Aimly Pro", included: true },
       { text: "Interactive AI Financial Advisor (Gemini / GPT-4)", included: true, highlight: true },
