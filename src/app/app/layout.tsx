@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UseaimlyLogo } from "@/components/design-system/UseaimlyLogo";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { LanguageCurrencySelector } from "@/components/layout/LanguageCurrencySelector";
 import { useAuth } from "@/lib/auth/auth-context";
 import {
   Compass,
@@ -164,6 +165,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               <Settings className="w-4 h-4" />
             </Link>
 
+            <LanguageCurrencySelector />
             <ThemeToggle />
 
             {/* Mobile Hamburger Toggle Button */}

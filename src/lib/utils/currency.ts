@@ -1,10 +1,14 @@
 import { CurrencyCode } from "../types/finance";
 
 const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
-  KES: "KES",
   USD: "$",
   EUR: "€",
   GBP: "£",
+  KES: "KES",
+  CAD: "C$",
+  NGN: "₦",
+  ZAR: "R",
+  XOF: "CFA",
   UGX: "UGX",
   TZS: "TZS",
   RWF: "RWF",
@@ -12,7 +16,7 @@ const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
 
 export function formatCurrency(
   amount: number,
-  currency: CurrencyCode = "KES",
+  currency: CurrencyCode = "USD",
   options?: {
     showDecimals?: boolean;
     compact?: boolean;
@@ -20,13 +24,14 @@ export function formatCurrency(
 ): string {
   const showDecimals = options?.showDecimals ?? false;
   const isCompact = options?.compact ?? false;
+  const symbol = CURRENCY_SYMBOLS[currency] || currency;
 
   if (isCompact) {
     if (Math.abs(amount) >= 1_000_000) {
-      return `${CURRENCY_SYMBOLS[currency]} ${(amount / 1_000_000).toFixed(1)}M`;
+      return `${symbol} ${(amount / 1_000_000).toFixed(1)}M`;
     }
     if (Math.abs(amount) >= 1_000) {
-      return `${CURRENCY_SYMBOLS[currency]} ${(amount / 1_000).toFixed(0)}k`;
+      return `${symbol} ${(amount / 1_000).toFixed(0)}k`;
     }
   }
 
@@ -35,11 +40,40 @@ export function formatCurrency(
     maximumFractionDigits: showDecimals ? 2 : 0,
   }).format(amount);
 
-  return `${CURRENCY_SYMBOLS[currency]} ${formattedNumber}`;
+  return `${symbol} ${formattedNumber}`;
 }
 
 export function parseCurrency(value: string): number {
   const cleaned = value.replace(/[^0-9.-]+/g, "");
   const parsed = parseFloat(cleaned);
   return isNaN(parsed) ? 0 : parsed;
+}
+
+export function detectBrowserDefaultCurrency(): CurrencyCode {
+  if (typeof window === "undefined" || !navigator) return "USD";
+  const lang = (navigator.language || "").toLowerCase();
+
+  if (lang.includes("fr") || lang.includes("fr-fr") || lang.includes("de") || lang.includes("es") || lang.includes("it")) {
+    return "EUR";
+  }
+  if (lang.includes("en-gb")) {
+    return "GBP";
+  }
+  if (lang.includes("en-ca") || lang.includes("fr-ca")) {
+    return "CAD";
+  }
+  if (lang.includes("ke") || lang.includes("sw")) {
+    return "KES";
+  }
+  if (lang.includes("ng")) {
+    return "NGN";
+  }
+  if (lang.includes("za")) {
+    return "ZAR";
+  }
+  if (lang.includes("ci") || lang.includes("sn") || lang.includes("cm") || lang.includes("ga")) {
+    return "XOF";
+  }
+
+  return "USD";
 }

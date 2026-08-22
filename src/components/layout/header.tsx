@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Container } from "./container";
 import { UseaimlyLogo } from "../design-system/UseaimlyLogo";
 import { ThemeToggle } from "./theme-toggle";
+import { LanguageCurrencySelector } from "./LanguageCurrencySelector";
 import { useAuth } from "@/lib/auth/auth-context";
 import {
   Compass,
@@ -118,6 +119,7 @@ export function Header() {
             </div>
           )}
 
+          <LanguageCurrencySelector />
           <ThemeToggle />
 
           {/* Mobile Hamburger Button */}

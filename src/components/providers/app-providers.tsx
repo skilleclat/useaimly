@@ -4,6 +4,7 @@ import React, { type ReactNode } from "react";
 import { QueryProvider } from "./query-provider";
 import { ThemeProvider } from "./theme-provider";
 import { AuthProvider } from "@/lib/auth/auth-context";
+import { I18nProvider } from "@/lib/i18n/i18n-context";
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
@@ -13,9 +14,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
       enableSystem
       disableTransitionOnChange={false}
     >
-      <AuthProvider>
-        <QueryProvider>{children}</QueryProvider>
-      </AuthProvider>
+      <I18nProvider>
+        <AuthProvider>
+          <QueryProvider>{children}</QueryProvider>
+        </AuthProvider>
+      </I18nProvider>
     </ThemeProvider>
   );
 }
