@@ -440,6 +440,44 @@ CREATE TRIGGER set_goal_notification_settings_updated_at
   EXECUTE FUNCTION public.update_updated_at_column();
 
 -- ------------------------------------------------------------------------------
+-- 17.8 Subscriptions Table (Stripe & M-Pesa Checkout)
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  plan_id TEXT NOT NULL CHECK (plan_id IN ('free', 'pro', 'premium')),
+  billing_cycle TEXT NOT NULL CHECK (billing_cycle IN ('MONTHLY', 'ANNUAL')),
+  payment_provider TEXT NOT NULL CHECK (payment_provider IN ('STRIPE', 'MPESA', 'MANUAL')),
+  external_subscription_id TEXT,
+  status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'PAST_DUE', 'CANCELLED', 'TRIAL')),
+  amount_paid NUMERIC(14,2) NOT NULL DEFAULT 0.00,
+  currency TEXT NOT NULL DEFAULT 'USD',
+  current_period_end DATE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ------------------------------------------------------------------------------
+-- 17.9 WhatsApp Dispatches Table (Automated Digest Dispatch Logs)
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.whatsapp_dispatches (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  phone_number TEXT NOT NULL,
+  goal_title TEXT NOT NULL,
+  digest_message TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'SENT' CHECK (status IN ('SENT', 'FAILED', 'PENDING')),
+  provider TEXT NOT NULL DEFAULT 'TWILIO',
+  sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+DROP TRIGGER IF EXISTS set_subscriptions_updated_at ON public.subscriptions;
+CREATE TRIGGER set_subscriptions_updated_at
+  BEFORE UPDATE ON public.subscriptions
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_updated_at_column();
+
+-- ------------------------------------------------------------------------------
 -- 18. Row Level Security Policies on ALL Tables
 -- ------------------------------------------------------------------------------
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -461,6 +499,8 @@ ALTER TABLE public.financial_notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budget_targets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.investment_assets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.goal_notification_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.whatsapp_dispatches ENABLE ROW LEVEL SECURITY;
 
 -- Profiles Policies
 DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
@@ -651,6 +691,20 @@ CREATE POLICY "Users can insert own goal notification settings" ON public.goal_n
 CREATE POLICY "Users can update own goal notification settings" ON public.goal_notification_settings FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own goal notification settings" ON public.goal_notification_settings FOR DELETE USING (auth.uid() = user_id);
 
+-- Subscriptions Policies
+DROP POLICY IF EXISTS "Users can view own subscriptions" ON public.subscriptions;
+DROP POLICY IF EXISTS "Users can insert own subscriptions" ON public.subscriptions;
+DROP POLICY IF EXISTS "Users can update own subscriptions" ON public.subscriptions;
+CREATE POLICY "Users can view own subscriptions" ON public.subscriptions FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own subscriptions" ON public.subscriptions FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own subscriptions" ON public.subscriptions FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- WhatsApp Dispatches Policies
+DROP POLICY IF EXISTS "Users can view own whatsapp dispatches" ON public.whatsapp_dispatches;
+DROP POLICY IF EXISTS "Users can insert own whatsapp dispatches" ON public.whatsapp_dispatches;
+CREATE POLICY "Users can view own whatsapp dispatches" ON public.whatsapp_dispatches FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own whatsapp dispatches" ON public.whatsapp_dispatches FOR INSERT WITH CHECK (auth.uid() = user_id);
+
 -- ------------------------------------------------------------------------------
 -- 18. Indexes
 -- ------------------------------------------------------------------------------
@@ -667,6 +721,8 @@ CREATE INDEX IF NOT EXISTS idx_debts_user_id ON public.debts(user_id);
 CREATE INDEX IF NOT EXISTS idx_budget_targets_user_id ON public.budget_targets(user_id, period);
 CREATE INDEX IF NOT EXISTS idx_investment_assets_user_id ON public.investment_assets(user_id, asset_class);
 CREATE INDEX IF NOT EXISTS idx_goal_notification_settings_user_id ON public.goal_notification_settings(user_id, goal_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON public.subscriptions(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_whatsapp_dispatches_user_id ON public.whatsapp_dispatches(user_id, sent_at DESC);
 CREATE INDEX IF NOT EXISTS idx_financial_commitments_user_id ON public.financial_commitments(user_id);
 CREATE INDEX IF NOT EXISTS idx_financial_decisions_user_id ON public.financial_decisions(user_id);
 CREATE INDEX IF NOT EXISTS idx_financial_notes_user_id ON public.financial_notes(user_id);

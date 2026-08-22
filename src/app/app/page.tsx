@@ -13,6 +13,7 @@ import { CurrencyCode } from "@/lib/types/finance";
 import { formatCurrency } from "@/lib/utils/currency";
 import { GoalProgressHeroWidget } from "@/components/dashboard/GoalProgressHeroWidget";
 import { InteractiveGoalCreationWizard } from "@/components/dashboard/InteractiveGoalCreationWizard";
+import { ExportTrajectoryCard } from "@/components/finance/ExportTrajectoryCard";
 import {
   HelpCircle,
   Target,
@@ -288,6 +289,12 @@ export default function AuthenticatedDashboard() {
               monthlyFreeCashFlow={68000}
               currency={currency}
             />
+
+            {/* 6. RECENT DECISIONS AUDIT LOG */}
+            <RecentDecisionsSection currency={currency} />
+
+            {/* 7. MULTI-FORMAT EXPORTER (CSV / EXCEL / PDF HD) */}
+            <ExportTrajectoryCard currency={currency} />
           </div>
         )}
       </section>
