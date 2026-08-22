@@ -135,15 +135,26 @@ function CheckoutContent() {
             </div>
           </div>
 
-          {/* PayPal Payment Buttons */}
+          {/* Payment Actions */}
           <div className="space-y-4 pt-2">
             <label className="text-xs font-mono font-bold uppercase text-muted-foreground block text-center">
-              Paiement Sécurisé via PayPal
+              Options de Souscription Sécurisée
             </label>
 
+            {/* Official PayPal Checkout */}
             <button
               type="button"
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                const origin = typeof window !== "undefined" ? window.location.origin : "https://useaimly.com";
+                const itemName = encodeURIComponent(`UseAimly ${plan.name} (${isYearly ? "Annual" : "Monthly"})`);
+                const returnUrl = encodeURIComponent(`${origin}/app/settings?payment_success=true&plan=${plan.id}`);
+                const cancelUrl = encodeURIComponent(`${origin}/pricing`);
+                const payPalUrl = `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=${encodeURIComponent(
+                  "herimaliyabwana@gmail.com"
+                )}&item_name=${itemName}&amount=${baseUSD.toFixed(2)}&currency_code=USD&return=${returnUrl}&cancel_return=${cancelUrl}`;
+                window.open(payPalUrl, "_blank", "noopener,noreferrer");
+                setIsModalOpen(true);
+              }}
               className="w-full rounded-2xl bg-[#FFC439] hover:bg-[#F2BA36] text-[#003087] font-black text-sm py-4 px-6 shadow-lg shadow-yellow-500/20 transition-all cursor-pointer flex items-center justify-center gap-3 group min-h-[52px]"
             >
               <span className="italic font-serif font-black text-2xl text-[#003087]">PayPal</span>
@@ -153,13 +164,14 @@ function CheckoutContent() {
               <ArrowRight className="w-4 h-4 text-[#003087] group-hover:translate-x-1 transition-transform" />
             </button>
 
+            {/* Free Trial Button */}
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className="w-full rounded-2xl bg-[#2C2E2F] hover:bg-[#202223] text-white font-bold text-xs py-4 px-6 shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 border border-zinc-700 min-h-[48px]"
+              className="w-full rounded-2xl bg-primary hover:opacity-95 text-primary-foreground font-bold text-xs py-4 px-6 shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 min-h-[48px]"
             >
-              <CreditCard className="w-4 h-4 text-emerald-400" />
-              <span>Payer par Carte de Débit ou Crédit via PayPal</span>
+              <Sparkles className="w-4 h-4" />
+              <span>Démarrer l'Essai Gratuit de 14 Jours (Sans prélèvement immédiat)</span>
             </button>
           </div>
 
@@ -171,7 +183,7 @@ function CheckoutContent() {
         </div>
       </div>
 
-      {/* Embedded PayPal Modal */}
+      {/* Embedded PayPal / Subscription Modal */}
       <PayPalCheckoutModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

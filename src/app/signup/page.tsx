@@ -309,105 +309,68 @@ function SignupFormContent() {
               : "Create your account to simulate financial decisions and see tomorrow before deciding today."}
           </p>
 
-          {/* Selected Plan Badge */}
-          {!showOtpView && selectedPlan !== "free" && (
-            <div className="pt-2 flex flex-col items-center gap-2">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-mono font-bold text-primary">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Selected Plan: {selectedPlan.toUpperCase()}</span>
-                <Link href="/pricing" className="underline hover:text-foreground ml-1">
-                  Change
-                </Link>
+          {/* Plan Selector Pills */}
+          {!showOtpView && (
+            <div className="pt-3 flex flex-col items-center gap-2">
+              <div className="flex items-center p-1 rounded-full border border-border/80 bg-secondary/50 text-xs font-mono font-bold shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => router.replace("/signup?plan=free")}
+                  className={`px-3 py-1.5 rounded-full transition-all ${
+                    selectedPlan === "free"
+                      ? "bg-primary text-primary-foreground shadow-xs font-extrabold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Free
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.replace("/signup?plan=pro")}
+                  className={`px-3 py-1.5 rounded-full transition-all flex items-center gap-1 ${
+                    selectedPlan === "pro"
+                      ? "bg-primary text-primary-foreground shadow-xs font-extrabold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span>Aimly Pro</span>
+                  <span className="text-[9px] bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.2 rounded-full">
+                    14d Trial
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.replace("/signup?plan=premium")}
+                  className={`px-3 py-1.5 rounded-full transition-all flex items-center gap-1 ${
+                    selectedPlan === "premium"
+                      ? "bg-primary text-primary-foreground shadow-xs font-extrabold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span>Aimly Premium</span>
+                  <span className="text-[9px] bg-amber-500/20 text-amber-600 dark:text-amber-400 px-1.5 py-0.2 rounded-full">
+                    VIP
+                  </span>
+                </button>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setCheckoutModalPlan(PRICING_PLANS.find((p) => p.id === selectedPlan) || null)}
-                className="inline-flex items-center gap-2 rounded-2xl bg-[#FFC439] hover:bg-[#F2BA36] text-[#003087] font-black text-xs px-5 py-2.5 shadow-md transition-all cursor-pointer"
-              >
-                <span className="italic font-serif font-black text-sm text-[#003087]">PayPal</span>
-                <span className="font-extrabold text-[#003087]">
-                  Finaliser l'abonnement {selectedPlan.toUpperCase()} via PayPal →
-                </span>
-              </button>
+              {selectedPlan !== "free" && (
+                <div className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>
+                    {selectedPlan === "pro"
+                      ? "Pro Plan: 14-Day Free Trial Included • Cancel anytime"
+                      : "Premium Plan: 14-Day Full Access Trial • VIP Features"}
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>
 
         {/* Main Card Container */}
         <div className="rounded-[2.5rem] border border-border/80 bg-card/90 backdrop-blur-xl p-8 sm:p-10 shadow-2xl shadow-primary/5 space-y-6">
-          {/* PAID PLAN DIRECT PAYPAL CHECKOUT VIEW */}
-          {selectedPlan !== "free" && !showOtpView ? (
-            <div className="space-y-6 animate-fadeIn">
-              <div className="rounded-2xl border border-border/80 bg-secondary/40 p-5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-base font-extrabold text-foreground">
-                      {selectedPlan === "pro" ? "Aimly Pro Plan" : "Aimly Premium Plan"}
-                    </h3>
-                    <p className="text-[11px] font-mono text-muted-foreground">
-                      {selectedPlan === "pro" ? "$4.99 / mois ($39.99 / an -20%)" : "$9.99 / mois ($79.99 / an -20%)"}
-                    </p>
-                  </div>
-                  <span className="rounded-full bg-emerald-500/20 text-emerald-500 text-xs font-mono font-bold px-2.5 py-1">
-                    Essai 14 Jours
-                  </span>
-                </div>
-
-                <div className="pt-3 border-t border-border/60 space-y-1.5 text-xs text-muted-foreground">
-                  <div className="flex items-center justify-between">
-                    <span>Moteur Déterministe 10 Ans</span>
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Studio 3-Stratégies & Alertes IA</span>
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                  </div>
-                  <div className="flex items-center justify-between pt-1 font-mono text-[11px] text-foreground font-bold">
-                    <span>Bénéficiaire PayPal :</span>
-                    <span className="text-primary">herimaliyabwana@gmail.com</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* PayPal Direct Payment Buttons */}
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={() => setCheckoutModalPlan(PRICING_PLANS.find((p) => p.id === selectedPlan) || null)}
-                  className="w-full rounded-2xl bg-[#FFC439] hover:bg-[#F2BA36] text-[#003087] font-black text-sm py-4 px-6 shadow-lg shadow-yellow-500/15 transition-all cursor-pointer flex items-center justify-center gap-2 group min-h-[48px]"
-                >
-                  <span className="italic font-serif font-black text-lg text-[#003087]">PayPal</span>
-                  <span className="font-extrabold text-xs text-[#003087]">
-                    Payer {selectedPlan.toUpperCase()} avec PayPal
-                  </span>
-                  <ArrowRight className="w-4 h-4 text-[#003087] group-hover:translate-x-1 transition-transform" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setCheckoutModalPlan(PRICING_PLANS.find((p) => p.id === selectedPlan) || null)}
-                  className="w-full rounded-2xl bg-[#2C2E2F] hover:bg-[#202223] text-white font-bold text-xs py-3.5 px-6 shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 border border-zinc-700 min-h-[48px]"
-                >
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  <span>Payer par Carte via PayPal</span>
-                </button>
-              </div>
-
-              <div className="pt-2 border-t border-border/70 flex flex-col items-center gap-2 text-xs text-muted-foreground text-center">
-                <Link
-                  href="/pricing"
-                  className="text-primary font-bold hover:underline"
-                >
-                  ← Voir toutes les formules et tarifs
-                </Link>
-                <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground/80">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Garantie de remboursement 14 jours • Zéro engagement</span>
-                </div>
-              </div>
-            </div>
-          ) : showOtpView ? (
+          {showOtpView ? (
             <div className="space-y-6 animate-fadeIn">
               {/* Header Branding Badge */}
               <div className="flex items-center justify-between p-3.5 rounded-2xl bg-secondary/40 border border-border/60">
@@ -615,6 +578,7 @@ function SignupFormContent() {
                       <option value="USD">USD — US Dollar ($)</option>
                       <option value="EUR">EUR — Euro (€)</option>
                       <option value="GBP">GBP — British Pound (£)</option>
+                      <option value="CAD">CAD — Canadian Dollar (C$)</option>
                     </select>
                     <Globe className="absolute right-3.5 top-3.5 w-4 h-4 text-muted-foreground pointer-events-none" />
                   </div>
@@ -659,7 +623,13 @@ function SignupFormContent() {
                       </>
                     ) : (
                       <>
-                        <span>Create Account</span>
+                        <span>
+                          {selectedPlan === "premium"
+                            ? "Create Account & Unlock Aimly Premium"
+                            : selectedPlan === "pro"
+                            ? "Create Account & Start 14-Day Pro Trial"
+                            : "Create Free Account"}
+                        </span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}
@@ -678,12 +648,13 @@ function SignupFormContent() {
 
                 <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground/80">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Zero Banking Logins Required</span>
+                  <span>14-Day Money-Back Guarantee • Zero Risk</span>
                 </div>
               </div>
             </>
           )}
         </div>
+
       </div>
 
       {/* Built-in PayPal Checkout Modal for direct payments */}

@@ -8,27 +8,47 @@ import { PayPalCheckoutModal } from "@/components/finance/PayPalCheckoutModal";
 import { Container } from "@/components/layout/container";
 import { HelpCircle, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
 
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth/auth-context";
 
 function PricingContent() {
+  const router = useRouter();
+  const { user, profile } = useAuth();
+  const isLoggedIn = Boolean(user || (profile && profile.id !== "demo-user-id"));
+
   const searchParams = useSearchParams();
   const rawPlan = searchParams.get("plan");
 
   const [isYearly, setIsYearly] = useState(true);
   const [currency, setCurrency] = useState<"USD" | "KES">("USD");
   const [selectedPlanForCheckout, setSelectedPlanForCheckout] = useState<PricingPlan | null>(() => {
-    if (rawPlan === "pro" || rawPlan === "premium") {
+    if (isLoggedIn && (rawPlan === "pro" || rawPlan === "premium")) {
       return PRICING_PLANS.find((p) => p.id === rawPlan) || null;
     }
     return null;
   });
 
   React.useEffect(() => {
-    if (rawPlan === "pro" || rawPlan === "premium") {
+    if (isLoggedIn && (rawPlan === "pro" || rawPlan === "premium")) {
       const target = PRICING_PLANS.find((p) => p.id === rawPlan);
       if (target) setSelectedPlanForCheckout(target);
     }
-  }, [rawPlan]);
+  }, [rawPlan, isLoggedIn]);
+
+  const handleSelectPlan = (planId: string) => {
+    const targetPlan = PRICING_PLANS.find((p) => p.id === planId);
+    if (!targetPlan || targetPlan.id === "free") {
+      router.push("/signup?plan=free");
+      return;
+    }
+
+    if (!isLoggedIn) {
+      router.push(`/signup?plan=${targetPlan.id}&billing=${isYearly ? "annual" : "monthly"}`);
+      return;
+    }
+
+    setSelectedPlanForCheckout(targetPlan);
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground py-12 px-4 sm:px-6 lg:px-8 space-y-16">
@@ -107,12 +127,7 @@ function PricingContent() {
               plan={plan}
               isYearly={isYearly}
               currency={currency}
-              onSelectPlan={(planId) => {
-                const targetPlan = PRICING_PLANS.find((p) => p.id === planId) || plan;
-                if (targetPlan.id !== "free") {
-                  setSelectedPlanForCheckout(targetPlan);
-                }
-              }}
+              onSelectPlan={handleSelectPlan}
             />
           ))}
         </div>
@@ -132,10 +147,10 @@ function PricingContent() {
           </div>
           <button
             type="button"
-            onClick={() => setSelectedPlanForCheckout(PRICING_PLANS.find((p) => p.id === "pro") || null)}
+            onClick={() => handleSelectPlan("pro")}
             className="inline-flex items-center gap-2 rounded-2xl bg-primary text-primary-foreground font-bold text-xs px-6 py-3 shrink-0 shadow-md hover:opacity-90 transition-all cursor-pointer"
           >
-            <span>Start Pro Trial via PayPal</span>
+            <span>Start 14-Day Free Trial</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
@@ -177,6 +192,7 @@ function PricingContent() {
     </div>
   );
 }
+
 
 export default function PricingPage() {
   return (

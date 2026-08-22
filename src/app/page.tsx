@@ -619,6 +619,10 @@ export default function LandingPage() {
                 isYearly={landingYearly}
                 onSelectPlan={(planId) => {
                   const targetPlan = PRICING_PLANS.find((p) => p.id === planId) || plan;
+                  if (!user) {
+                    router.push(`/signup?plan=${targetPlan.id}&billing=${landingYearly ? "annual" : "monthly"}`);
+                    return;
+                  }
                   if (targetPlan.id !== "free") {
                     setSelectedPlanForCheckout(targetPlan);
                   }

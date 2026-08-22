@@ -651,3 +651,45 @@ export async function resendOtpAction(email: string): Promise<AuthActionResult> 
   }
 }
 
+export async function upgradePlanAction(planTier: "free" | "pro" | "premium"): Promise<AuthActionResult> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return {
+        success: false,
+        message: "You must be logged in to upgrade your subscription plan.",
+      };
+    }
+
+    // Update user metadata in auth
+    await supabase.auth.updateUser({
+      data: { plan_tier: planTier },
+    });
+
+    // Update profiles table in Supabase
+    const { error: profileError } = await (supabase.from("profiles") as any)
+      .update({
+        plan_tier: planTier,
+        plan_status: "active",
+      })
+      .eq("id", user.id);
+
+    if (profileError) {
+      console.warn("Error updating profile plan_tier:", profileError);
+    }
+
+    return {
+      success: true,
+      message: `Your account has been upgraded to ${planTier.toUpperCase()} successfully!`,
+      redirectTo: "/app",
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      message: err?.message || "Failed to update subscription tier.",
+    };
+  }
+}
+
