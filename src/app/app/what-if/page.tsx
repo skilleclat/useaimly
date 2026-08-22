@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useCurrency } from "@/lib/currency/currency-context";
 import { formatCurrency } from "@/lib/utils/currency";
 import { formatMonthYear, addMonths, formatDateToISO } from "@/lib/utils/date";
 import { CurrencyCode } from "@/lib/types/finance";
@@ -86,7 +87,7 @@ const PRESET_SCENARIOS: PresetScenario[] = [
 
 export default function WhatIfPage() {
   const { profile } = useAuth();
-  const currency = (profile?.preferred_currency || "KES") as CurrencyCode;
+  const { currency } = useCurrency();
 
   // Baseline Financial Reality
   const baseline = {

@@ -14,12 +14,14 @@ import { OnboardingState } from "@/lib/onboarding/onboarding-types";
 import { calculateOnboardingPath } from "@/lib/onboarding/onboarding-calculator";
 import { saveFullOnboardingAction } from "@/lib/auth/actions";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useCurrency } from "@/lib/currency/currency-context";
 import { CurrencyCode } from "@/lib/types/finance";
 import { addMonths, formatDateToISO } from "@/lib/utils/date";
 import { AlertCircle } from "lucide-react";
 
 export default function OnboardingWizardPage() {
   const { profile, refreshProfile } = useAuth();
+  const { currency } = useCurrency();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isPending, startTransition] = useTransition();
@@ -32,7 +34,10 @@ export default function OnboardingWizardPage() {
     }
   }, [currentStep]);
 
-  const currency = (profile?.preferred_currency || "KES") as CurrencyCode;
+  // Keep onboarding currency synced with active global currency context
+  useEffect(() => {
+    setOnboardingState((prev) => ({ ...prev, currency }));
+  }, [currency]);
 
   // Comprehensive initial state with realistic defaults
   const [onboardingState, setOnboardingState] = useState<OnboardingState>({

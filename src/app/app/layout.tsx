@@ -7,6 +7,7 @@ import { UseaimlyLogo } from "@/components/design-system/UseaimlyLogo";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { LanguageCurrencySelector } from "@/components/layout/LanguageCurrencySelector";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useCurrency } from "@/lib/currency/currency-context";
 import {
   Compass,
   Target,
@@ -72,10 +73,10 @@ const NAV_ITEMS: NavItem[] = [
 export default function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { user, profile, signOut } = useAuth();
+  const { currency } = useCurrency();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "Strategist";
-  const currency = profile?.preferred_currency || "KES";
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary/15">

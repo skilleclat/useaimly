@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useCurrency } from "@/lib/currency/currency-context";
 import { formatCurrency } from "@/lib/utils/currency";
 import { CurrencyCode } from "@/lib/types/finance";
 import { FinancialStatus } from "@/components/design-system/FinancialStatus";
@@ -101,7 +102,7 @@ const SUGGESTED_QUERIES = [
 
 export default function AskPage() {
   const { profile } = useAuth();
-  const currency = (profile?.preferred_currency || "KES") as CurrencyCode;
+  const { currency } = useCurrency();
 
   const [threads, setThreads] = useState<ConversationThread[]>(INITIAL_THREADS);
   const [activeThreadId, setActiveThreadId] = useState<string>("thread-1");

@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useCurrency } from "@/lib/currency/currency-context";
 import { INITIAL_DESTINATIONS, DestinationItem } from "@/lib/destinations/destinations-data";
 import { formatCurrency } from "@/lib/utils/currency";
 import { formatMonthYear, formatDateToISO } from "@/lib/utils/date";
@@ -35,7 +36,7 @@ export default function SingleDestinationPage() {
   const params = useParams();
   const router = useRouter();
   const { profile } = useAuth();
-  const currency = (profile?.preferred_currency || "KES") as CurrencyCode;
+  const { currency } = useCurrency();
 
   const destinationId = params?.id as string;
 

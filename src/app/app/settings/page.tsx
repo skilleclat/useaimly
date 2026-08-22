@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useCurrency } from "@/lib/currency/currency-context";
 import { CurrencyCode } from "@/lib/types/finance";
 import { WhatsAppDispatchCard } from "@/components/finance/WhatsAppDispatchCard";
 import {
@@ -20,17 +21,21 @@ import {
 
 export default function SettingsPage() {
   const { user, profile } = useAuth();
-  const [preferredCurrency, setPreferredCurrency] = useState<CurrencyCode>(
-    (profile?.preferred_currency || "KES") as CurrencyCode
-  );
+  const { currency, setCurrency } = useCurrency();
+  const [preferredCurrency, setPreferredCurrency] = useState<CurrencyCode>(currency);
   const [fullName, setFullName] = useState(profile?.full_name || "Finance Strategist");
   const [thresholdAmount, setThresholdAmount] = useState<number>(15000);
   const [notifyShortfall, setNotifyShortfall] = useState(true);
   const [notifyCommitments, setNotifyCommitments] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
 
+  React.useEffect(() => {
+    setPreferredCurrency(currency);
+  }, [currency]);
+
   const handleSaveSettings = (e: React.FormEvent) => {
     e.preventDefault();
+    setCurrency(preferredCurrency);
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3500);
   };
