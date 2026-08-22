@@ -33,14 +33,16 @@ export function PricingCard({
     ? (plan.totalYearlyUSD || plan.priceYearlyUSD * 12)
     : plan.priceMonthlyUSD;
 
+  const shouldShowDecimals = activeCurrency === "USD" || activeCurrency === "EUR" || activeCurrency === "GBP" || activeCurrency === "CAD";
+
   // Format main display price
   const formattedPrice = basePriceUSD === 0
     ? t("freePriceLabel")
-    : format(basePriceUSD, { fromCurrency: "USD" });
+    : format(basePriceUSD, { fromCurrency: "USD", showDecimals: shouldShowDecimals });
 
   // Monthly equivalent for annual billing
   const monthlyEquivUSD = isYearly ? (plan.priceYearlyUSD) : plan.priceMonthlyUSD;
-  const formattedMonthlyEquiv = format(monthlyEquivUSD, { fromCurrency: "USD" });
+  const formattedMonthlyEquiv = format(monthlyEquivUSD, { fromCurrency: "USD", showDecimals: shouldShowDecimals });
 
   const isCurrentPlan = currentPlanId === plan.id;
   const periodLabel = isYearly ? t("perYear") : t("perMonth");
