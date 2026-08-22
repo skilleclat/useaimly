@@ -7,6 +7,8 @@ import { useCurrency } from "@/lib/currency/currency-context";
 import { CurrencyCode } from "@/lib/types/finance";
 import { Globe, ChevronDown, Check } from "lucide-react";
 
+import { detectBrowserDefaultCurrency } from "@/lib/utils/currency";
+
 const SUPPORTED_CURRENCIES: { code: CurrencyCode; label: string; symbol: string }[] = [
   { code: "USD", label: "USD - Dollar", symbol: "$" },
   { code: "EUR", label: "EUR - Euro", symbol: "€" },
@@ -25,6 +27,29 @@ export function LanguageCurrencySelector() {
 
   function handleLanguageSelect(lang: LanguageCode) {
     setLanguage(lang);
+
+    // Automatically set currency based on language & regional detection
+    const detectedRegional = detectBrowserDefaultCurrency();
+    if (lang === "fr") {
+      if (detectedRegional === "KES" || detectedRegional === "UGX" || detectedRegional === "TZS" || detectedRegional === "RWF") {
+        setCurrency("KES");
+      } else if (detectedRegional === "XOF") {
+        setCurrency("XOF");
+      } else {
+        setCurrency("EUR");
+      }
+    } else if (lang === "en") {
+      if (detectedRegional === "KES") {
+        setCurrency("KES");
+      } else if (detectedRegional === "GBP") {
+        setCurrency("GBP");
+      } else if (detectedRegional === "CAD") {
+        setCurrency("CAD");
+      } else {
+        setCurrency("USD");
+      }
+    }
+
     setIsOpen(false);
   }
 

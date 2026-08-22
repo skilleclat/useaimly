@@ -50,6 +50,16 @@ export default function LandingPage() {
       ? `Puis-je dépenser ${formattedDefaultAmt} pour un téléphone ?`
       : `Can I spend ${formattedDefaultAmt} on a phone?`
   );
+
+  // Automatically update hero query when language or currency changes
+  React.useEffect(() => {
+    const formatted = format(230, { fromCurrency: "USD" });
+    setQueryInput(
+      language === "fr"
+        ? `Puis-je dépenser ${formatted} pour un téléphone ?`
+        : `Can I spend ${formatted} on a phone?`
+    );
+  }, [language, currency, format]);
   const [activeAmount, setActiveAmount] = useState<number>(30000);
   const [activeTitle, setActiveTitle] = useState("Smartphone Purchase");
   const [isRecurring, setIsRecurring] = useState(false);

@@ -84,29 +84,35 @@ export function parseCurrency(value: string): number {
 }
 
 export function detectBrowserDefaultCurrency(): CurrencyCode {
-  if (typeof window === "undefined" || !navigator) return "USD";
-  const lang = (navigator.language || "").toLowerCase();
+  if (typeof window === "undefined") return "USD";
 
-  if (lang.includes("fr") || lang.includes("fr-fr") || lang.includes("de") || lang.includes("es") || lang.includes("it")) {
-    return "EUR";
+  // 1. Timezone detection (Most accurate for physical geographic region)
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+    if (tz.includes("Nairobi") || tz.includes("Mombasa")) return "KES";
+    if (tz.includes("Kampala")) return "UGX";
+    if (tz.includes("Dar_es_Salaam")) return "TZS";
+    if (tz.includes("Kigali")) return "RWF";
+    if (tz.includes("Lagos")) return "NGN";
+    if (tz.includes("Johannesburg")) return "ZAR";
+    if (tz.includes("London")) return "GBP";
+    if (tz.includes("Toronto") || tz.includes("Vancouver") || tz.includes("Montreal")) return "CAD";
+    if (tz.includes("Abidjan") || tz.includes("Dakar") || tz.includes("Douala") || tz.includes("Bamako")) return "XOF";
+    if (tz.includes("Paris") || tz.includes("Brussels") || tz.includes("Berlin") || tz.includes("Rome") || tz.includes("Madrid")) return "EUR";
+  } catch (e) {
+    // Fallback to navigator language
   }
-  if (lang.includes("en-gb")) {
-    return "GBP";
-  }
-  if (lang.includes("en-ca") || lang.includes("fr-ca")) {
-    return "CAD";
-  }
-  if (lang.includes("ke") || lang.includes("sw")) {
-    return "KES";
-  }
-  if (lang.includes("ng")) {
-    return "NGN";
-  }
-  if (lang.includes("za")) {
-    return "ZAR";
-  }
-  if (lang.includes("ci") || lang.includes("sn") || lang.includes("cm") || lang.includes("ga")) {
-    return "XOF";
+
+  // 2. Navigator language fallback
+  if (typeof navigator !== "undefined" && navigator) {
+    const lang = (navigator.language || "").toLowerCase();
+    if (lang.includes("ke") || lang.includes("sw")) return "KES";
+    if (lang.includes("fr-ci") || lang.includes("fr-sn") || lang.includes("fr-cm") || lang.includes("fr-ga")) return "XOF";
+    if (lang.includes("fr")) return "EUR";
+    if (lang.includes("en-gb")) return "GBP";
+    if (lang.includes("en-ca") || lang.includes("fr-ca")) return "CAD";
+    if (lang.includes("ng")) return "NGN";
+    if (lang.includes("za")) return "ZAR";
   }
 
   return "USD";
