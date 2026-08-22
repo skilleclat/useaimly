@@ -87,7 +87,7 @@ export function GoalVelocityBooster({
               Goal Velocity Accelerator &amp; Micro-Action Engine
             </h3>
             <span className="rounded-full bg-gradient-to-r from-emerald-500/20 to-primary/20 text-emerald-500 text-[10px] font-extrabold px-2.5 py-0.5 border border-emerald-500/30 uppercase tracking-wider">
-              Game Changer #4
+              Timeline Fast-Track
             </span>
           </div>
           <p className="text-xs text-muted-foreground">
@@ -96,17 +96,27 @@ export function GoalVelocityBooster({
         </div>
 
         {/* Days Saved Counter Badge */}
-        <div className="text-right shrink-0">
-          <span className="text-[11px] font-mono text-emerald-500 font-bold block uppercase tracking-wider">
+        <div className="text-right shrink-0 bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20">
+          <span className="text-[10px] font-mono text-emerald-500 font-bold block uppercase tracking-wider">
             Total Timeline Accelerated
           </span>
           <span className="text-xl font-extrabold text-emerald-500 font-mono">
             -{totalDaysSaved} Days
           </span>
-          <span className="text-[10px] text-muted-foreground font-mono block">
+          <span className="text-[10px] text-muted-foreground font-mono block font-bold">
             {Math.round(totalDaysSaved / 30 * 10) / 10} Months Earlier Target Arrival
           </span>
         </div>
+      </div>
+
+      {/* User Guidance Banner */}
+      <div className="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs text-foreground flex items-center gap-2.5">
+        <div className="p-1 rounded-full bg-emerald-500/10 text-emerald-500 shrink-0">
+          <Sparkles className="w-3.5 h-3.5" />
+        </div>
+        <p className="leading-relaxed">
+          <strong>At a Glance</strong>: Click &ldquo;<strong>Execute Micro-Boost</strong>&rdquo; on any challenge below to instantly reallocate small monthly savings and watch your goal deadline pull forward!
+        </p>
       </div>
 
       {/* Boosters Grid */}

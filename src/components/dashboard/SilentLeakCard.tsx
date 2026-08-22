@@ -85,26 +85,36 @@ export function SilentLeakCard({ currency = "KES" }: { currency?: CurrencyCode }
               Silent Leak &amp; Recurring Drag Exposer
             </h3>
             <span className="rounded-full bg-gradient-to-r from-rose-500/20 to-amber-500/20 text-rose-500 text-[10px] font-extrabold px-2.5 py-0.5 border border-rose-500/30 uppercase tracking-wider">
-              Game Changer #3
+              Micro-Leak Drag Exposer
             </span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Uncover small recurring outlays and micro-leaks translated into actual lifetime days lost on your life destinations.
+            Uncover small recurring outlays translated directly into actual lifetime days lost on your life destinations.
           </p>
         </div>
 
         {/* Total Annual Leak Metric */}
-        <div className="text-right shrink-0">
-          <span className="text-[11px] font-mono text-rose-500 font-bold block uppercase tracking-wider">
+        <div className="text-right shrink-0 bg-rose-500/10 p-2.5 rounded-xl border border-rose-500/20">
+          <span className="text-[10px] font-mono text-rose-500 font-bold block uppercase tracking-wider">
             Total Annual Leak Drag
           </span>
           <span className="text-xl font-extrabold text-rose-500 font-mono">
             {formatCurrency(totalAnnualLeak, currency)} / yr
           </span>
-          <span className="text-[10px] text-muted-foreground font-mono block">
+          <span className="text-[10px] text-muted-foreground font-mono block font-bold">
             -{totalGoalDaysLost} Days Destination Shift
           </span>
         </div>
+      </div>
+
+      {/* User Guidance Banner */}
+      <div className="p-3.5 rounded-xl bg-rose-500/5 border border-rose-500/20 text-xs text-foreground flex items-center gap-2.5">
+        <div className="p-1 rounded-full bg-rose-500/10 text-rose-500 shrink-0">
+          <Flame className="w-3.5 h-3.5" />
+        </div>
+        <p className="leading-relaxed">
+          <strong>At a Glance</strong>: Small monthly leaks add up over 3 years. Reclaiming these 3 items buys back <strong>+{totalGoalDaysLost} days of freedom</strong> on your primary goal!
+        </p>
       </div>
 
       {/* Leaks List */}

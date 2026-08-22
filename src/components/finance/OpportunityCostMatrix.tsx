@@ -53,21 +53,31 @@ export function OpportunityCostMatrix({
               <Sparkles className="w-4 h-4" />
             </span>
             <h3 className="text-lg font-extrabold text-foreground tracking-tight">
-              The Opportunity Cost Matrix
+              Opportunity Cost Matrix
             </h3>
             <span className="rounded-full bg-gradient-to-r from-amber-500/20 to-primary/20 text-primary text-[10px] font-extrabold px-2.5 py-0.5 border border-primary/30 uppercase tracking-wider">
-              Game Changer #1
+              Intuitive Trade-Off Analysis
             </span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Compare executing <strong className="text-foreground">{decisionTitle} ({formattedAmount})</strong> against 3 high-impact wealth-building choices.
+            What else could your <strong className="text-foreground">{formattedAmount}</strong> do for you? Compare executing <strong className="text-foreground">{decisionTitle}</strong> against 3 higher-value financial choices.
           </p>
         </div>
 
-        <div className="text-right shrink-0">
-          <span className="text-[11px] font-mono text-muted-foreground block">Evaluated Capital</span>
-          <span className="text-sm font-extrabold text-foreground font-mono">{formattedAmount}</span>
+        <div className="text-right shrink-0 bg-secondary/50 p-2.5 rounded-xl border border-border/60">
+          <span className="text-[10px] font-mono text-muted-foreground block uppercase font-bold">Evaluated Outflow</span>
+          <span className="text-sm font-extrabold text-primary font-mono">{formattedAmount}</span>
         </div>
+      </div>
+
+      {/* User-Friendly Quick-Start Guidance Banner */}
+      <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/20 text-xs text-foreground flex items-center gap-2.5">
+        <div className="p-1 rounded-full bg-primary/10 text-primary shrink-0">
+          <Sparkles className="w-3.5 h-3.5" />
+        </div>
+        <p className="leading-relaxed">
+          <strong>At a Glance</strong>: Spending {formattedAmount} now gives you <em>Option A</em> (immediate purchase). Choosing <em>Option B</em> instead brings your destination &ldquo;<strong>{goalTitle}</strong>&rdquo; forward by <strong>{goalAccelerationDays} full days</strong>!
+        </p>
       </div>
 
       {/* 4-Option Matrix Grid */}

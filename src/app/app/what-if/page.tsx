@@ -458,7 +458,7 @@ function StressTesterSection({ currency }: { currency: CurrencyCode }) {
               Resilience Radar &amp; Stress-Tester
             </h2>
             <span className="rounded-full bg-gradient-to-r from-amber-500/20 to-primary/20 text-primary text-[10px] font-extrabold px-2.5 py-0.5 border border-primary/30 uppercase tracking-wider">
-              Game Changer #2
+              Financial Shock Simulator
             </span>
           </div>
           <p className="text-xs text-muted-foreground">
@@ -469,13 +469,39 @@ function StressTesterSection({ currency }: { currency: CurrencyCode }) {
         {/* Resilience Score Badge */}
         <div className="flex items-center gap-3">
           <div className={`px-4 py-2 rounded-2xl border flex items-center gap-2 font-mono ${scoreColor}`}>
-            <span className="text-2xl font-extrabold">{result.resilienceScore}</span>
+            <span className="text-2xl font-extrabold">{result.resilienceScore}/100</span>
             <div className="text-left leading-tight">
-              <span className="text-[10px] uppercase font-bold block">Resilience</span>
+              <span className="text-[10px] uppercase font-bold block">Resilience Score</span>
               <span className="text-xs font-bold">{result.resilienceVerdict}</span>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* User Guidance Banner + Visual Score Bar */}
+      <div className="p-4 rounded-2xl bg-secondary/40 border border-border/80 space-y-3">
+        <div className="flex items-center justify-between text-xs font-semibold">
+          <span className="text-foreground">Financial Shock Immunity Radar</span>
+          <span className="text-primary font-mono font-bold">Score: {result.resilienceScore} / 100</span>
+        </div>
+
+        {/* Segmented Progress Bar */}
+        <div className="w-full h-3 rounded-full bg-secondary overflow-hidden border border-border/60 p-0.5">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${
+              result.resilienceScore >= 80
+                ? "bg-emerald-500"
+                : result.resilienceScore >= 55
+                ? "bg-amber-500"
+                : "bg-rose-500"
+            }`}
+            style={{ width: `${result.resilienceScore}%` }}
+          />
+        </div>
+
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          <strong>At a Glance</strong>: Select a shock scenario below (like an income drop or inflation surge). Your score of <strong>{result.resilienceScore}/100</strong> shows how well your liquid reserves absorb the shock without forcing debt.
+        </p>
       </div>
 
       {/* Shock Scenario Selector Pills */}
