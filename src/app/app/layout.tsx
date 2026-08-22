@@ -60,6 +60,12 @@ const NAV_ITEMS: NavItem[] = [
     description: "Your liquid cash, fixed costs & reserves.",
     icon: <Wallet className="w-4 h-4" />,
   },
+  {
+    label: "Investments",
+    href: "/app/money?tab=INVESTMENTS",
+    description: "Your stocks, MMF, crypto, Sacco & bond assets.",
+    icon: <TrendingUp className="w-4 h-4" />,
+  },
 ];
 
 export default function AppLayout({ children }: { children: ReactNode }) {

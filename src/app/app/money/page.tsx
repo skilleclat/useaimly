@@ -8,6 +8,7 @@ import { CurrencyCode } from "@/lib/types/finance";
 import { MoneyInput } from "@/components/design-system/MoneyInput";
 import { SilentLeakCard } from "@/components/dashboard/SilentLeakCard";
 import { SmartBudgetCard } from "@/components/finance/SmartBudgetCard";
+import { InvestmentPortfolioCard } from "@/components/finance/InvestmentPortfolioCard";
 import {
   Wallet,
   TrendingUp,
@@ -27,9 +28,10 @@ import {
   CheckCircle2,
   Sparkles,
   PieChart,
+  Coins,
 } from "lucide-react";
 
-type TabType = "OVERVIEW" | "BUDGET" | "INCOME" | "EXPENSES" | "SAVINGS" | "DEBT" | "COMMITMENTS";
+type TabType = "OVERVIEW" | "BUDGET" | "INVESTMENTS" | "INCOME" | "EXPENSES" | "SAVINGS" | "DEBT" | "COMMITMENTS";
 
 interface IncomeItem {
   id: string;
@@ -76,11 +78,15 @@ interface CommitmentItem {
   category: "INSURANCE" | "EDUCATION" | "TAXES" | "FAMILY_OBLIGATION";
 }
 
+import { useSearchParams } from "next/navigation";
+
 export default function MoneyPage() {
   const { profile } = useAuth();
   const currency = (profile?.preferred_currency || "KES") as CurrencyCode;
+  const searchParams = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState<TabType>("OVERVIEW");
+  const initialTab = (searchParams.get("tab") as TabType) || "OVERVIEW";
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
 
   // Incomes State
   const [incomes, setIncomes] = useState<IncomeItem[]>([
@@ -230,6 +236,7 @@ export default function MoneyPage() {
           [
             { key: "OVERVIEW", label: "Overview & Waterfall", icon: <Layers className="w-3.5 h-3.5" /> },
             { key: "BUDGET", label: "Smart Budget", icon: <PieChart className="w-3.5 h-3.5" /> },
+            { key: "INVESTMENTS", label: "Investments Portfolio", icon: <TrendingUp className="w-3.5 h-3.5" /> },
             { key: "INCOME", label: `Income (${incomes.length})`, icon: <TrendingUp className="w-3.5 h-3.5" /> },
             { key: "EXPENSES", label: `Expenses (${expenses.length})`, icon: <ShoppingBag className="w-3.5 h-3.5" /> },
             { key: "SAVINGS", label: `Savings (${savingsAccounts.length})`, icon: <Wallet className="w-3.5 h-3.5" /> },
@@ -257,6 +264,13 @@ export default function MoneyPage() {
       {activeTab === "BUDGET" && (
         <div className="space-y-8 animate-fadeIn">
           <SmartBudgetCard currency={currency} />
+        </div>
+      )}
+
+      {/* INVESTMENTS PORTFOLIO TAB */}
+      {activeTab === "INVESTMENTS" && (
+        <div className="space-y-8 animate-fadeIn">
+          <InvestmentPortfolioCard currency={currency} />
         </div>
       )}
 

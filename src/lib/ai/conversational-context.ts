@@ -267,6 +267,12 @@ CATEGORY BUDGET GUARDRAILS:
 - Monthly Target Cap: 107,000 ${p.currency} (Across Housing, Groceries, Transport, Dining Out, Subscriptions, Utilities)
 - Budget Protection Status: ALIGNED (Category outflows 100% preserve goal trajectory)
 
+INVESTMENT PORTFOLIO & WEALTH COMMAND CENTER:
+- Total Portfolio Market Value: ${formatCurrency(1504000, p.currency)}
+- Total Invested Capital: ${formatCurrency(1280000, p.currency)} (+17.5% Net Unrealized Return)
+- Monthly Passive Yield Generated: ${formatCurrency(14188, p.currency)}/month (from MMF @ 11.5%, Sacco @ 13.0%, Treasury Bonds @ 14.2%)
+- Goal Velocity Acceleration: Shaves -38 days off "${dest.title}" arrival deadline!
+
 USER HANDWRITTEN FINANCIAL NOTES & CUSTOM CONSTRAINTS:
 ${notesText}
 

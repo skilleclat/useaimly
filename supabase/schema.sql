@@ -390,6 +390,32 @@ CREATE TRIGGER set_budget_targets_updated_at
   EXECUTE FUNCTION public.update_updated_at_column();
 
 -- ------------------------------------------------------------------------------
+-- 17.6 Investment Assets Table (Stocks, MMF, Crypto, Sacco, Real Estate, Bonds)
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.investment_assets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  asset_name TEXT NOT NULL,
+  asset_class TEXT NOT NULL CHECK (
+    asset_class IN ('STOCKS', 'CRYPTO', 'MMF', 'SACCO', 'REAL_ESTATE', 'BONDS')
+  ),
+  initial_invested NUMERIC(14,2) NOT NULL CHECK (initial_invested >= 0),
+  current_market_value NUMERIC(14,2) NOT NULL CHECK (current_market_value >= 0),
+  annual_yield_percent NUMERIC(5,2) NOT NULL DEFAULT 0.00,
+  monthly_income_generated NUMERIC(14,2) NOT NULL DEFAULT 0.00,
+  institution_name TEXT,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+DROP TRIGGER IF EXISTS set_investment_assets_updated_at ON public.investment_assets;
+CREATE TRIGGER set_investment_assets_updated_at
+  BEFORE UPDATE ON public.investment_assets
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_updated_at_column();
+
+-- ------------------------------------------------------------------------------
 -- 18. Row Level Security Policies on ALL Tables
 -- ------------------------------------------------------------------------------
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -409,6 +435,7 @@ ALTER TABLE public.insights ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.saved_scenarios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.financial_notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budget_targets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.investment_assets ENABLE ROW LEVEL SECURITY;
 
 -- Profiles Policies
 DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
@@ -579,6 +606,16 @@ CREATE POLICY "Users can insert own budget targets" ON public.budget_targets FOR
 CREATE POLICY "Users can update own budget targets" ON public.budget_targets FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own budget targets" ON public.budget_targets FOR DELETE USING (auth.uid() = user_id);
 
+-- Investment Assets Policies
+DROP POLICY IF EXISTS "Users can view own investment assets" ON public.investment_assets;
+DROP POLICY IF EXISTS "Users can insert own investment assets" ON public.investment_assets;
+DROP POLICY IF EXISTS "Users can update own investment assets" ON public.investment_assets;
+DROP POLICY IF EXISTS "Users can delete own investment assets" ON public.investment_assets;
+CREATE POLICY "Users can view own investment assets" ON public.investment_assets FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own investment assets" ON public.investment_assets FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own investment assets" ON public.investment_assets FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete own investment assets" ON public.investment_assets FOR DELETE USING (auth.uid() = user_id);
+
 -- ------------------------------------------------------------------------------
 -- 18. Indexes
 -- ------------------------------------------------------------------------------
@@ -593,6 +630,7 @@ CREATE INDEX IF NOT EXISTS idx_expenses_date ON public.expenses(user_id, expense
 CREATE INDEX IF NOT EXISTS idx_savings_accounts_user_id ON public.savings_accounts(user_id);
 CREATE INDEX IF NOT EXISTS idx_debts_user_id ON public.debts(user_id);
 CREATE INDEX IF NOT EXISTS idx_budget_targets_user_id ON public.budget_targets(user_id, period);
+CREATE INDEX IF NOT EXISTS idx_investment_assets_user_id ON public.investment_assets(user_id, asset_class);
 CREATE INDEX IF NOT EXISTS idx_financial_commitments_user_id ON public.financial_commitments(user_id);
 CREATE INDEX IF NOT EXISTS idx_financial_decisions_user_id ON public.financial_decisions(user_id);
 CREATE INDEX IF NOT EXISTS idx_financial_notes_user_id ON public.financial_notes(user_id);
