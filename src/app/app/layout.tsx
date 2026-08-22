@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { UseaimlyLogo } from "@/components/design-system/UseaimlyLogo";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { LanguageCurrencySelector } from "@/components/layout/LanguageCurrencySelector";
+import { UserProfileModal } from "@/components/layout/UserProfileModal";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useCurrency } from "@/lib/currency/currency-context";
 import {
@@ -75,6 +76,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, profile, signOut } = useAuth();
   const { currency } = useCurrency();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "Strategist";
 
@@ -142,8 +144,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 <span>Demo Mode • Save Data</span>
               </Link>
             ) : (
-              <div className="hidden sm:flex items-center gap-2 rounded-full border border-border/80 bg-card px-3 py-1 text-xs shadow-xs">
-                <div className="w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-[10px]">
+              <button
+                type="button"
+                onClick={() => setIsProfileModalOpen(true)}
+                className="hidden sm:flex items-center gap-2 rounded-full border border-border/80 bg-card hover:border-primary/40 px-3 py-1 text-xs shadow-xs transition-colors cursor-pointer"
+                title="View Profile & Simulation History"
+              >
+                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary via-orange-500 to-amber-500 text-white flex items-center justify-center font-bold text-[10px]">
                   {displayName.charAt(0).toUpperCase()}
                 </div>
                 <span className="font-semibold text-foreground max-w-[90px] truncate text-xs">
@@ -152,7 +159,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 <span className="text-[10px] text-muted-foreground font-mono font-medium border-l border-border/60 pl-1.5">
                   {currency}
                 </span>
-              </div>
+              </button>
             )}
 
             {/* Settings Icon Button */}
@@ -314,6 +321,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <span>Settings</span>
         </Link>
       </nav>
+
+      {/* User Profile & Activity History Modal */}
+      <UserProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
     </div>
   );
 }

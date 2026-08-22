@@ -7,6 +7,7 @@ import { Container } from "./container";
 import { UseaimlyLogo } from "../design-system/UseaimlyLogo";
 import { ThemeToggle } from "./theme-toggle";
 import { LanguageCurrencySelector } from "./LanguageCurrencySelector";
+import { UserProfileModal } from "./UserProfileModal";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useI18n } from "@/lib/i18n/i18n-context";
 import {
@@ -21,6 +22,7 @@ import {
   Menu,
   X,
   Sparkles,
+  User,
 } from "lucide-react";
 
 export function Header() {
@@ -28,6 +30,7 @@ export function Header() {
   const { user, profile, signOut } = useAuth();
   const { t } = useI18n();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // If inside the authenticated app shell, the AppLayout renders the top navigation
   if (pathname.startsWith("/app")) {
@@ -77,15 +80,17 @@ export function Header() {
         <div className="flex items-center gap-2 sm:gap-3">
           {user ? (
             <div className="flex items-center gap-2">
-              <Link
-                href="/app"
-                className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:border-primary/40 transition-colors"
+              <button
+                type="button"
+                onClick={() => setIsProfileModalOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:border-primary/40 transition-colors cursor-pointer"
+                title="View Profile & History"
               >
-                <div className="w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center text-[10px] font-bold">
+                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary via-orange-500 to-amber-500 text-white flex items-center justify-center text-[10px] font-bold">
                   {displayName.charAt(0).toUpperCase()}
                 </div>
                 <span className="hidden sm:inline">{displayName}</span>
-              </Link>
+              </button>
               <button
                 onClick={() => signOut()}
                 className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-destructive hover:border-destructive/30 transition-colors"
@@ -192,6 +197,12 @@ export function Header() {
           </div>
         </div>
       )}
+
+      {/* User Profile & Activity History Modal */}
+      <UserProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
     </header>
   );
 }
