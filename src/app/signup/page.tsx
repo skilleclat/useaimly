@@ -161,7 +161,7 @@ function SignupFormContent() {
     try {
       const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
-      const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+      const origin = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://useaimly.com");
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",

@@ -37,11 +37,19 @@ function extractErrorMessage(err: any, fallback: string = "An unexpected error o
     return err.msg.trim();
   }
   return fallback;
+function getAppUrl(): string {
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return process.env.NODE_ENV === "production" ? "https://useaimly.com" : "http://localhost:3000";
 }
 
 export async function signInWithGoogleAction(): Promise<AuthActionResult> {
   const supabase = await createClient();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const appUrl = getAppUrl();
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -188,7 +196,7 @@ export async function signupAction(data: SignupInput): Promise<AuthActionResult>
     const { email, password, fullName, preferredCurrency, planTier } = parsed.data;
     const supabase = await createClient();
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = getAppUrl();
 
     const { data: authData, error } = await supabase.auth.signUp({
       email,
@@ -328,7 +336,7 @@ export async function forgotPasswordAction(data: ForgotPasswordInput): Promise<A
 
   const { email } = parsed.data;
   const supabase = await createClient();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const appUrl = getAppUrl();
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${appUrl}/auth/callback?type=recovery`,

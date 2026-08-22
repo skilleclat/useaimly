@@ -25,9 +25,57 @@ const monoFont = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Useaimly | See Tomorrow Before Deciding Today",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://useaimly.com"),
+  title: {
+    default: "UseAimly — See Tomorrow Before Deciding Today",
+    template: "%s | UseAimly",
+  },
   description:
-    "Goal-aware personal finance decision intelligence. Understand the deterministic consequences of today's financial decisions on the destinations you are working to achieve.",
+    "Goal-aware personal finance decision intelligence platform. Simulate spending impacts deterministically on your future life destinations.",
+  applicationName: "UseAimly",
+  authors: [{ name: "UseAimly Team", url: "https://useaimly.com" }],
+  keywords: [
+    "personal finance",
+    "decision intelligence",
+    "financial forecasting",
+    "goal planning",
+    "cash flow simulation",
+    "budgeting alternative",
+    "deterministic finance",
+    "UseAimly",
+  ],
+  creator: "UseAimly",
+  publisher: "UseAimly",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    alternateLocale: ["fr_FR"],
+    url: "https://useaimly.com",
+    siteName: "UseAimly",
+    title: "UseAimly — See Tomorrow Before Deciding Today",
+    description:
+      "Goal-aware decision intelligence platform. Protect your liquidity and simulate spending impact before purchasing.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "UseAimly — See Tomorrow Before Deciding Today",
+    description: "Goal-aware financial decision intelligence. Simulate spending impacts on your destinations.",
+    creator: "@useaimly",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: "https://useaimly.com",
+  },
 };
 
 export default function RootLayout({
