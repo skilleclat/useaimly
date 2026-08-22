@@ -211,6 +211,33 @@ export default function AuthenticatedDashboard() {
         </div>
       </section>
 
+      {/* 4.5 FINANCIAL NOTEPAD AI CONTEXT WIDGET */}
+      <section className="rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-card to-amber-500/10 p-5 space-y-3 font-sans">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-primary text-primary-foreground">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                Strategic Financial Notepad AI Sync
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Your handwritten rules & personal constraints are active in the AI Decision Engine.
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href="/app/notes"
+            className="flex items-center gap-1 text-xs font-bold text-primary hover:underline shrink-0"
+          >
+            <span>Open Notepad</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      </section>
+
       {/* 5. OPTIONAL EXTENDED TRAJECTORY DETAILS */}
       <section className="space-y-6 pt-4 border-t border-border/50">
         <div className="flex items-center justify-between">

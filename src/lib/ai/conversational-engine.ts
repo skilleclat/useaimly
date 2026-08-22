@@ -74,16 +74,24 @@ export class ConversationalIntelligenceEngine {
       const projectedArrival = formatMonthYear(context.primaryDestination.projectedArrivalDate);
       const monthlyPace = formatCurrency(context.primaryDestination.monthlyContribution, currency);
 
+      // Check if any pinned notes/rules apply
+      const pinnedRules = (context.userNotes || []).filter((n) => n.isPinned || n.category === "RULES_CONSTRAINTS");
+      let noteContextText = "";
+      if (pinnedRules.length > 0) {
+        const topRule = pinnedRules[0];
+        noteContextText = `\n\n📌 **Notepad Rule Alignment**: Cross-referenced with your pinned note *"_${topRule.title}_"*: ${topRule.content}`;
+      }
+
       let responseText = "";
       if (sim.affordability.canPhysicallyPay) {
         if (delayDays === 0) {
-          responseText = `🧠 **Senior Mentor Assessment (30+ Yrs Experience)**:\nBased on your live financial picture (${formatCurrency(context.profile.totalLiquidSavings, currency)} liquid reserves and ${formatCurrency(context.profile.monthlyFreeCashFlow, currency)} FCF), you can comfortably execute this ${decisionAmountFormatted} purchase.\n\n📊 **Trajectory Impact**:\n• Remaining Liquid Cushion: ${remainingLiquid} (${sim.affordability.obligationsPreservedMonths} months of fixed living buffer)\n• Goal Status: "${primaryTitle}" remains 100% on schedule for ${projectedArrival}.\n\n🎯 **Mentor Recommendation**:\nEnjoy this purchase with total peace of mind — your financial foundation remains rock solid.`;
+          responseText = `🧠 **Senior Mentor Assessment (30+ Yrs Experience)**:\nBased on your live financial picture (${formatCurrency(context.profile.totalLiquidSavings, currency)} liquid reserves and ${formatCurrency(context.profile.monthlyFreeCashFlow, currency)} FCF), you can comfortably execute this ${decisionAmountFormatted} purchase.\n\n📊 **Trajectory Impact**:\n• Remaining Liquid Cushion: ${remainingLiquid} (${sim.affordability.obligationsPreservedMonths} months of fixed living buffer)\n• Goal Status: "${primaryTitle}" remains 100% on schedule for ${projectedArrival}.${noteContextText}\n\n🎯 **Mentor Recommendation**:\nEnjoy this purchase with total peace of mind — your financial foundation remains rock solid.`;
         } else {
           const extraRequired = formatCurrency(sim.delta.additionalMonthlyAmountRequired || 1875, currency);
-          responseText = `🧠 **Senior Mentor Assessment (30+ Yrs Experience)**:\nHere is how I view this ${decisionAmountFormatted} expenditure: You have the cash in hand today (leaving ${remainingLiquid} in reserves), but as a rule of thumb, cash availability does not equal plan availability.\n\n📊 **Trajectory Consequence**:\n• Capital Diverted: ${decisionAmountFormatted} from your "${primaryTitle}" goal (${formatCurrency(context.primaryDestination.currentAmount, currency)} of ${formatCurrency(context.primaryDestination.targetAmount, currency)} saved).\n• Timeline Shift: Delays your target arrival by +${delayDays} days.\n\n🎯 **3-Step Recovery Action Plan**:\n1. Keep your monthly living buffer at 3+ months.\n2. Boost your monthly goal allocation from ${monthlyPace} to +${extraRequired}/month for the next 12 months.\n3. This completely neutralizes the ${delayDays}-day delay and keeps you on target.`;
+          responseText = `🧠 **Senior Mentor Assessment (30+ Yrs Experience)**:\nHere is how I view this ${decisionAmountFormatted} expenditure: You have the cash in hand today (leaving ${remainingLiquid} in reserves), but as a rule of thumb, cash availability does not equal plan availability.\n\n📊 **Trajectory Consequence**:\n• Capital Diverted: ${decisionAmountFormatted} from your "${primaryTitle}" goal (${formatCurrency(context.primaryDestination.currentAmount, currency)} of ${formatCurrency(context.primaryDestination.targetAmount, currency)} saved).\n• Timeline Shift: Delays your target arrival by +${delayDays} days.${noteContextText}\n\n🎯 **3-Step Recovery Action Plan**:\n1. Keep your monthly living buffer at 3+ months.\n2. Boost your monthly goal allocation from ${monthlyPace} to +${extraRequired}/month for the next 12 months.\n3. This completely neutralizes the ${delayDays}-day delay and keeps you on target.`;
         }
       } else {
-        responseText = `⚠️ **Senior Mentor Warning (30+ Yrs Experience)**:\nExecuting this ${decisionAmountFormatted} purchase right now is unadvisable.\n\n📊 **Risk Breakdown**:\n• Deficit: Exceeds your available liquid reserves (${formatCurrency(context.profile.totalLiquidSavings, currency)}) by ${formatCurrency(parsedQuery.extractedAmount - context.profile.totalLiquidSavings, currency)}.\n• Buffer Hazard: Reduces your living cushion below 1.0 month (${context.profile.liquidRunwayMonths} months).\n\n🎯 **Mentor Recommendation**:\nPostpone this expense for 60 to 90 days until your Net Free Cash Flow replenishes your liquid cushion.`;
+        responseText = `⚠️ **Senior Mentor Warning (30+ Yrs Experience)**:\nExecuting this ${decisionAmountFormatted} purchase right now is unadvisable.\n\n📊 **Risk Breakdown**:\n• Deficit: Exceeds your available liquid reserves (${formatCurrency(context.profile.totalLiquidSavings, currency)}) by ${formatCurrency(parsedQuery.extractedAmount - context.profile.totalLiquidSavings, currency)}.\n• Buffer Hazard: Reduces your living cushion below 1.0 month (${context.profile.liquidRunwayMonths} months).${noteContextText}\n\n🎯 **Mentor Recommendation**:\nPostpone this expense for 60 to 90 days until your Net Free Cash Flow replenishes your liquid cushion.`;
       }
 
       return {
@@ -100,6 +108,40 @@ export class ConversationalIntelligenceEngine {
             { label: "Cash Remaining", value: remainingLiquid },
             { label: "Buffer Cushion", value: `${sim.affordability.obligationsPreservedMonths} Months` },
             { label: "Destination Shift", value: delayDays === 0 ? "0 Days (On Schedule)" : `+${delayDays} Days` },
+          ],
+        },
+      };
+    }
+
+    // 1.5 INTENT: NOTEPAD / HANDWRITTEN RULES & STRATEGIC CONSTRAINTS
+    if (/note|notepad|journal|rule|handwritten|constraint|bloc-notes|mes notes/i.test(lower)) {
+      const notes = context.userNotes || [];
+      const pinned = notes.filter((n) => n.isPinned);
+      const categories = Array.from(new Set(notes.map((n) => n.category)));
+
+      const content = `📝 **Your AI Strategic Financial Notepad Breakdown**:
+You currently have **${notes.length} strategic note${notes.length > 1 ? "s" : ""}** synced into the AI Decision Intelligence Engine across categories: ${categories.join(", ")}.
+
+${pinned.length > 0 ? `📌 **Active Pinned Rules Enforced by AI**:\n` + pinned.map((p) => `• **${p.title}** (${p.category}): "${p.content}"`).join("\n") : "No pinned rules."}
+
+${notes.length > 0 ? `\n📋 **All Active Notes**:\n` + notes.map((n) => `• [${n.category}] **${n.title}**: ${n.content.substring(0, 90)}${n.content.length > 90 ? "..." : ""}`).join("\n") : ""}
+
+💡 **AI Sync Integration**: Every purchase simulation and scenario model automatically cross-references these notes to protect your custom safety thresholds and planned investments.`;
+
+      return {
+        id: `msg-${Date.now()}`,
+        sender: "Useaimly",
+        content,
+        timestamp: new Date().toISOString(),
+        structuredCard: {
+          type: "DESTINATION_STATUS",
+          title: "Notepad AI Context Sync",
+          amount: notes.length,
+          verdict: "SAFE",
+          metrics: [
+            { label: "Total Notes", value: `${notes.length}` },
+            { label: "Pinned Rules", value: `${pinned.length}` },
+            { label: "AI Sync", value: "Active" },
           ],
         },
       };

@@ -64,6 +64,7 @@ export const PRICING_PLANS: PricingPlan[] = [
       { text: "Monthly Cashflow & Free Balance Calculator", included: true },
       { text: "3-Strategy Impact Studio (Cash, Spread, Postpone)", included: true, highlight: true },
       { text: "6 Proactive Insight Rules (60-Day Foresight)", included: true, highlight: true },
+      { text: "AI Financial Notepad & Strategic Context Sync", included: true, highlight: true },
       { text: "Full 6 Financial Cash Flow Management", included: true },
       { text: "Data Export (CSV & Custom Reports)", included: true },
       { text: "Priority Email Support", included: true },
@@ -85,6 +86,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     features: [
       { text: "Everything included in Pro Strategist", included: true },
       { text: "Interactive AI Financial Advisor (Gemini / GPT-4)", included: true, highlight: true },
+      { text: "AI Financial Notepad & Unlimited Rules Engine", included: true, highlight: true },
       { text: "Unlimited 'What-If' Scenario Laboratory", included: true, highlight: true },
       { text: "Custom Debt Elimination Strategies", included: true, highlight: true },
       { text: "Multi-Account & Currency Aggregation", included: true },

@@ -338,6 +338,11 @@ erDiagram
 - Interface de discussion connectée au moteur de calcul déterministe.
 - Génération de cartes de synthèse riches (`DECISION_SIMULATION`, `DESTINATION_STATUS`).
 
+### 9. Bloc-Notes Financier IA ("Notes") (`src/app/app/notes/page.tsx`)
+- Journal financier stratégique et règles personnalisées alimentant le moteur décisionnel d'IA.
+- Catégorisation intelligente (`RULES_CONSTRAINTS`, `UPCOMING_EXPENSES`, `GOAL_STRATEGY`, `INCOME_NOTES`, `GENERAL`).
+- Épinglage de règles prioritaires immédiatement croisées lors des simulations d'achats.
+
 ---
 
 ## 9. Design System & Composants Réutilisables

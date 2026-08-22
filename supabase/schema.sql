@@ -347,7 +347,30 @@ CREATE TRIGGER set_saved_scenarios_updated_at
   EXECUTE FUNCTION public.update_updated_at_column();
 
 -- ------------------------------------------------------------------------------
--- 17. Row Level Security Policies on ALL Tables
+-- 17. Financial Notes Table (Personal Notepad / Strategic Rules)
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.financial_notes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  category TEXT NOT NULL DEFAULT 'GENERAL' CHECK (
+    category IN ('GENERAL', 'RULES_CONSTRAINTS', 'UPCOMING_EXPENSES', 'INCOME_NOTES', 'GOAL_STRATEGY')
+  ),
+  is_pinned BOOLEAN NOT NULL DEFAULT FALSE,
+  tags TEXT[] DEFAULT '{}',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+DROP TRIGGER IF EXISTS set_financial_notes_updated_at ON public.financial_notes;
+CREATE TRIGGER set_financial_notes_updated_at
+  BEFORE UPDATE ON public.financial_notes
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_updated_at_column();
+
+-- ------------------------------------------------------------------------------
+-- 18. Row Level Security Policies on ALL Tables
 -- ------------------------------------------------------------------------------
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.financial_goals ENABLE ROW LEVEL SECURITY;
@@ -364,6 +387,7 @@ ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.insights ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.saved_scenarios ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.financial_notes ENABLE ROW LEVEL SECURITY;
 
 -- Profiles Policies
 DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
@@ -514,6 +538,16 @@ CREATE POLICY "Users can insert own saved scenarios" ON public.saved_scenarios F
 CREATE POLICY "Users can update own saved scenarios" ON public.saved_scenarios FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own saved scenarios" ON public.saved_scenarios FOR DELETE USING (auth.uid() = user_id);
 
+-- Financial Notes Policies
+DROP POLICY IF EXISTS "Users can view own financial notes" ON public.financial_notes;
+DROP POLICY IF EXISTS "Users can insert own financial notes" ON public.financial_notes;
+DROP POLICY IF EXISTS "Users can update own financial notes" ON public.financial_notes;
+DROP POLICY IF EXISTS "Users can delete own financial notes" ON public.financial_notes;
+CREATE POLICY "Users can view own financial notes" ON public.financial_notes FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own financial notes" ON public.financial_notes FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own financial notes" ON public.financial_notes FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete own financial notes" ON public.financial_notes FOR DELETE USING (auth.uid() = user_id);
+
 -- ------------------------------------------------------------------------------
 -- 18. Indexes
 -- ------------------------------------------------------------------------------
@@ -529,6 +563,8 @@ CREATE INDEX IF NOT EXISTS idx_savings_accounts_user_id ON public.savings_accoun
 CREATE INDEX IF NOT EXISTS idx_debts_user_id ON public.debts(user_id);
 CREATE INDEX IF NOT EXISTS idx_financial_commitments_user_id ON public.financial_commitments(user_id);
 CREATE INDEX IF NOT EXISTS idx_financial_decisions_user_id ON public.financial_decisions(user_id);
+CREATE INDEX IF NOT EXISTS idx_financial_notes_user_id ON public.financial_notes(user_id);
+CREATE INDEX IF NOT EXISTS idx_financial_notes_category ON public.financial_notes(user_id, category);
 CREATE INDEX IF NOT EXISTS idx_financial_decisions_date ON public.financial_decisions(user_id, proposed_date DESC);
 CREATE INDEX IF NOT EXISTS idx_decision_simulations_user_id ON public.decision_simulations(user_id);
 CREATE INDEX IF NOT EXISTS idx_decision_simulations_decision_id ON public.decision_simulations(decision_id);

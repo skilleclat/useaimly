@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatCurrency } from "@/lib/utils/currency";
 import { CurrencyCode } from "@/lib/types/finance";
@@ -19,6 +20,7 @@ import {
   ArrowRight,
   HelpCircle,
   TrendingUp,
+  FileText,
 } from "lucide-react";
 
 const INITIAL_THREADS: ConversationThread[] = [
@@ -227,6 +229,15 @@ export default function AskPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <Link
+            href="/app/notes"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold hover:bg-amber-500/20 transition-all"
+            title="View Notepad Rules synced with AI"
+          >
+            <FileText className="w-3.5 h-3.5 text-amber-500" />
+            <span>Notepad AI Synced</span>
+          </Link>
+
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-xs font-mono">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="font-bold text-emerald-400">30+ Yrs Mentor Active</span>

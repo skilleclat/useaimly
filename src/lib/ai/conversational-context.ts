@@ -2,6 +2,8 @@ import { formatCurrency } from "@/lib/utils/currency";
 import { formatMonthYear } from "@/lib/utils/date";
 import { simulateDecision as runDeterministicSimulation, BaselineFinancialProfile } from "@/lib/finance";
 import { INITIAL_DESTINATIONS } from "@/lib/destinations/destinations-data";
+import { INITIAL_DEMO_NOTES } from "@/lib/notes/notes-data";
+import { FinancialNote } from "@/lib/types/notes";
 import { CurrencyCode } from "@/lib/types/finance";
 import { TrajectoryState } from "@/components/design-system/FinancialStatus";
 
@@ -56,6 +58,13 @@ export interface ConversationalContextSummary {
     hasConflict: boolean;
     shortfall: number;
   };
+  userNotes: {
+    id: string;
+    title: string;
+    category: string;
+    content: string;
+    isPinned: boolean;
+  }[];
 }
 
 export function getFinancialSummary(currency: CurrencyCode = "KES") {
@@ -133,6 +142,16 @@ export function getGoalConflicts() {
   };
 }
 
+export function getUserNotesSummary(): ConversationalContextSummary["userNotes"] {
+  return INITIAL_DEMO_NOTES.map((n) => ({
+    id: n.id,
+    title: n.title,
+    category: n.category,
+    content: n.content,
+    isPinned: n.isPinned,
+  }));
+}
+
 export function simulateDecision(
   amount: number,
   title: string = "Proposed Spending",
@@ -171,7 +190,8 @@ export function simulateDecision(
 export function buildConversationalContext(
   currency: CurrencyCode = "KES",
   overrideProfile?: Partial<ConversationalContextSummary["profile"]>,
-  overridePrimaryDest?: Partial<ConversationalContextSummary["primaryDestination"]>
+  overridePrimaryDest?: Partial<ConversationalContextSummary["primaryDestination"]>,
+  overrideNotes?: ConversationalContextSummary["userNotes"]
 ): ConversationalContextSummary {
   const finSummary = {
     ...getFinancialSummary(currency),
@@ -189,6 +209,7 @@ export function buildConversationalContext(
   const commitments = getUpcomingCommitments();
   const recentDecisions = getRecentDecisions();
   const conflicts = getGoalConflicts();
+  const notes = overrideNotes || getUserNotesSummary();
 
   return {
     profile: finSummary,
@@ -198,6 +219,7 @@ export function buildConversationalContext(
     upcomingCommitments: commitments,
     recentDecisions,
     goalCapacity: conflicts,
+    userNotes: notes,
   };
 }
 
@@ -239,6 +261,9 @@ ACTIVE DEBT FACILITIES:
 
 UPCOMING COMMITMENTS:
 ${context.upcomingCommitments.map(c => `- ${c.title}: ${formatCurrency(c.amount, p.currency)} (${c.timing})`).join('\n')}
+
+USER HANDWRITTEN FINANCIAL NOTES & CUSTOM CONSTRAINTS (From Notepad):
+${(context.userNotes || []).length === 0 ? "No custom notes recorded." : context.userNotes.map(n => `- [${n.category}] "${n.title}": ${n.content}${n.isPinned ? " (PINNED RULE)" : ""}`).join('\n')}
 
 RECENT SIMULATED DECISIONS:
 ${context.recentDecisions.map(r => `- "${r.title}" (${formatCurrency(r.amount, p.currency)}): ${r.impact} [Verdict: ${r.result}]`).join('\n')}

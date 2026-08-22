@@ -12,6 +12,7 @@ import {
   HelpCircle,
   TrendingUp,
   Wallet,
+  FileText,
   Sparkles,
   MessageSquare,
   Settings,
@@ -46,6 +47,12 @@ const NAV_ITEMS: NavItem[] = [
     href: "/app/goals",
     description: "Your life destinations & arrival timelines.",
     icon: <Target className="w-4 h-4" />,
+  },
+  {
+    label: "Notes",
+    href: "/app/notes",
+    description: "Your handwritten rules & financial journal (AI Synced).",
+    icon: <FileText className="w-4 h-4" />,
   },
   {
     label: "Money",
@@ -266,6 +273,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <HelpCircle className="w-6 h-6" />
           </div>
           <span className="text-[10px] font-extrabold text-primary mt-1">Decide</span>
+        </Link>
+
+        <Link
+          href="/app/notes"
+          className={`flex flex-col items-center justify-center gap-1 text-[10px] font-semibold transition-all ${
+            pathname.startsWith("/app/notes") ? "text-primary font-bold" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+          <span>Notes</span>
         </Link>
 
         <Link

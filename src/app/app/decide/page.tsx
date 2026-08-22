@@ -184,18 +184,29 @@ export default function DecideStudioPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsSaved(!isSaved)}
-          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
-            isSaved
-              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-              : "bg-card border-border/80 text-foreground hover:border-primary/40"
-          }`}
-        >
-          <Heart className={`w-3.5 h-3.5 ${isSaved ? "fill-emerald-500 text-emerald-500" : ""}`} />
-          <span>{isSaved ? "Decision Saved" : "Save Decision"}</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Link
+            href="/app/notes"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold hover:bg-amber-500/20 transition-all"
+            title="View Notepad Rules synced with AI"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <span>Notepad AI Rules Synced</span>
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => setIsSaved(!isSaved)}
+            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+              isSaved
+                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                : "bg-card border-border/80 text-foreground hover:border-primary/40"
+            }`}
+          >
+            <Heart className={`w-3.5 h-3.5 ${isSaved ? "fill-emerald-500 text-emerald-500" : ""}`} />
+            <span>{isSaved ? "Decision Saved" : "Save Decision"}</span>
+          </button>
+        </div>
       </div>
 
       {/* Universal Scenario Input Card */}
