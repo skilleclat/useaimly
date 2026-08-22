@@ -24,6 +24,11 @@ export default function SettingsPage() {
   const { currency, setCurrency } = useCurrency();
   const [preferredCurrency, setPreferredCurrency] = useState<CurrencyCode>(currency);
   const [fullName, setFullName] = useState(profile?.full_name || "Finance Strategist");
+  const [username, setUsername] = useState(
+    profile?.full_name ? `@${profile.full_name.toLowerCase().replace(/\s+/g, "_")}` : "@strategist"
+  );
+  const [emailInput, setEmailInput] = useState(user?.email || "user@useaimly.com");
+  const [whatsappPhone, setWhatsappPhone] = useState("+254 700 123 456");
   const [thresholdAmount, setThresholdAmount] = useState<number>(15000);
   const [notifyShortfall, setNotifyShortfall] = useState(true);
   const [notifyCommitments, setNotifyCommitments] = useState(true);
@@ -46,20 +51,20 @@ export default function SettingsPage() {
       <div className="space-y-1.5 border-b border-border/70 pb-6">
         <div className="flex items-center gap-2 text-xs font-mono font-bold text-primary">
           <Compass className="w-4 h-4" />
-          <span>System Preferences</span>
+          <span>System Preferences & CRUD Profile</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
           Settings
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-          Manage your account profile, preferred currency, proactive notification rules, and security preferences.
+          Manage your account profile, username, email, WhatsApp phone, preferred currency, and proactive notification rules.
         </p>
       </div>
 
       {isSaved && (
         <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-2 animate-fadeIn">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
-          <span>Your settings and preferences have been updated.</span>
+          <span>Your profile, credentials, and system settings have been updated successfully.</span>
         </div>
       )}
 
@@ -106,11 +111,11 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* 1. PROFILE & IDENTITY */}
+        {/* 1. PROFILE & IDENTITY CRUD */}
         <div className="rounded-[2.5rem] border border-border/80 bg-card p-6 sm:p-9 space-y-6 shadow-elevation-1">
           <div className="flex items-center gap-2 text-sm font-bold text-foreground">
             <User className="w-4 h-4 text-primary" />
-            <span>Profile & Account</span>
+            <span>Profile & Contact Identity (CRUD)</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs">
@@ -120,7 +125,20 @@ export default function SettingsPage() {
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-xs text-foreground focus:border-primary focus:outline-none transition-colors"
+                required
+                className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-xs text-foreground focus:border-primary focus:outline-none transition-colors min-h-[42px]"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-mono font-bold text-foreground">Username</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                placeholder="@username"
+                className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-xs font-mono font-bold text-foreground focus:border-primary focus:outline-none transition-colors min-h-[42px]"
               />
             </div>
 
@@ -128,9 +146,21 @@ export default function SettingsPage() {
               <label className="font-mono font-bold text-foreground">Email Address</label>
               <input
                 type="email"
-                disabled
-                value={user?.email || "user@example.com"}
-                className="w-full rounded-2xl border border-border bg-muted/60 px-4 py-3 text-xs text-muted-foreground cursor-not-allowed"
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                required
+                className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-xs text-foreground focus:border-primary focus:outline-none transition-colors min-h-[42px]"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-mono font-bold text-foreground">WhatsApp Phone Number</label>
+              <input
+                type="tel"
+                value={whatsappPhone}
+                onChange={(e) => setWhatsappPhone(e.target.value)}
+                placeholder="+254 700 000 000 / +33 6 00 00 00 00"
+                className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-xs font-mono font-bold text-foreground focus:border-emerald-500 focus:outline-none transition-colors min-h-[42px]"
               />
             </div>
           </div>
@@ -146,25 +176,29 @@ export default function SettingsPage() {
           <div className="space-y-3">
             <label className="text-xs font-mono font-bold text-foreground">Active Currency</label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {(["KES", "USD", "EUR", "GBP"] as CurrencyCode[]).map((curr) => {
+              {(["USD", "EUR", "GBP", "KES", "CAD", "NGN", "ZAR", "XOF"] as CurrencyCode[]).map((curr) => {
                 const isSelected = preferredCurrency === curr;
                 return (
                   <button
                     key={curr}
                     type="button"
                     onClick={() => setPreferredCurrency(curr)}
-                    className={`p-4 rounded-2xl border text-center transition-all ${
+                    className={`p-4 rounded-2xl border text-center transition-all cursor-pointer ${
                       isSelected
-                        ? "border-primary bg-primary/5 text-primary ring-2 ring-primary/20 font-bold"
+                        ? "border-primary bg-primary/5 text-primary ring-2 ring-primary/20 font-bold shadow-xs"
                         : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
                     }`}
                   >
-                    <div className="text-base font-mono">{curr}</div>
-                    <div className="text-[10px] text-muted-foreground mt-0.5">
-                      {curr === "KES" && "Kenyan Shilling"}
-                      {curr === "USD" && "US Dollar"}
-                      {curr === "EUR" && "Euro"}
-                      {curr === "GBP" && "British Pound"}
+                    <div className="text-base font-mono font-bold">{curr}</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                      {curr === "USD" && "US Dollar ($)"}
+                      {curr === "EUR" && "Euro (€)"}
+                      {curr === "GBP" && "Pound (£)"}
+                      {curr === "KES" && "Shilling (KSh)"}
+                      {curr === "CAD" && "CAD Dollar (C$)"}
+                      {curr === "NGN" && "Naira (₦)"}
+                      {curr === "ZAR" && "Rand (R)"}
+                      {curr === "XOF" && "Franc CFA"}
                     </div>
                   </button>
                 );

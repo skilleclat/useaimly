@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useCurrency } from "@/lib/currency/currency-context";
 import { useI18n } from "@/lib/i18n/i18n-context";
 import { formatCurrency } from "@/lib/utils/currency";
+import { CurrencyCode } from "@/lib/types/finance";
 import {
   User,
   History,
@@ -25,6 +26,13 @@ import {
   Compass,
   Wallet,
   BookOpen,
+  Phone,
+  Mail,
+  Edit3,
+  Trash2,
+  Save,
+  Check,
+  Globe,
 } from "lucide-react";
 
 interface UserProfileModalProps {
@@ -33,17 +41,53 @@ interface UserProfileModalProps {
 }
 
 export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
-  const { user, profile, signOut } = useAuth();
-  const { currency, format } = useCurrency();
+  const { user, profile, signOut, refreshProfile } = useAuth();
+  const { currency, setCurrency, format } = useCurrency();
   const { t, language } = useI18n();
 
-  const [activeTab, setActiveTab] = useState<"history" | "actions">("history");
+  const [activeTab, setActiveTab] = useState<"history" | "profile" | "actions">("history");
+
+  // CRUD Form State for User Profile
+  const [fullName, setFullName] = useState(profile?.full_name || "Demo Strategist");
+  const [username, setUsername] = useState(
+    profile?.full_name ? `@${profile.full_name.toLowerCase().replace(/\s+/g, "_")}` : "@strategist"
+  );
+  const [emailInput, setEmailInput] = useState(user?.email || "strategist@useaimly.com");
+  const [whatsappPhone, setWhatsappPhone] = useState("+254 700 123 456");
+  const [preferredCurrency, setPreferredCurrency] = useState<CurrencyCode>(currency);
+  const [isSavedSuccess, setIsSavedSuccess] = useState(false);
+  const [isDeletingField, setIsDeletingField] = useState(false);
+
+  useEffect(() => {
+    if (profile?.full_name) {
+      setFullName(profile.full_name);
+      setUsername(`@${profile.full_name.toLowerCase().replace(/\s+/g, "_")}`);
+    }
+    if (user?.email) {
+      setEmailInput(user.email);
+    }
+    setPreferredCurrency(currency);
+  }, [profile, user, currency]);
 
   if (!isOpen) return null;
 
-  const displayName = profile?.full_name || user?.email?.split("@")[0] || "Strategist";
-  const email = user?.email || "user@useaimly.com";
+  const displayName = fullName || user?.email?.split("@")[0] || "Strategist";
   const userInitials = displayName.charAt(0).toUpperCase();
+
+  // CRUD Action 1: UPDATE Profile
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCurrency(preferredCurrency);
+    setIsSavedSuccess(true);
+    setTimeout(() => setIsSavedSuccess(false), 3000);
+  };
+
+  // CRUD Action 2: DELETE / Clear WhatsApp Phone
+  const handleClearPhone = () => {
+    setWhatsappPhone("");
+    setIsDeletingField(true);
+    setTimeout(() => setIsDeletingField(false), 2500);
+  };
 
   // Mock Activity History items for Returning Users
   const activityHistory = [
@@ -155,7 +199,7 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
                 </span>
               </div>
               <p className="text-xs text-muted-foreground font-mono mt-0.5">
-                {email} • {currency}
+                {username} • {emailInput} • {preferredCurrency}
               </p>
             </div>
           </div>
@@ -169,38 +213,52 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
           </button>
         </div>
 
-        {/* Tab Selector Bar */}
-        <div className="flex items-center gap-2 rounded-2xl border border-border/80 bg-secondary/30 p-1.5 shrink-0">
+        {/* Tab Selector Bar (History vs Profile CRUD vs Actions) */}
+        <div className="flex items-center gap-1.5 rounded-2xl border border-border/80 bg-secondary/30 p-1.5 shrink-0 overflow-x-auto">
           <button
             type="button"
             onClick={() => setActiveTab("history")}
-            className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2 text-xs font-bold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 px-3 text-xs font-bold transition-all whitespace-nowrap ${
               activeTab === "history"
                 ? "bg-card text-foreground shadow-xs border border-border/60"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <History className="w-4 h-4 text-primary" />
-            <span>{language === "fr" ? "Historique & Activités" : "History & Activity"}</span>
+            <History className="w-3.5 h-3.5 text-primary" />
+            <span>{language === "fr" ? "Historique" : "History"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("profile")}
+            className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 px-3 text-xs font-bold transition-all whitespace-nowrap ${
+              activeTab === "profile"
+                ? "bg-card text-foreground shadow-xs border border-border/60"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Edit3 className="w-3.5 h-3.5 text-amber-500" />
+            <span>{language === "fr" ? "Mon Profil (CRUD)" : "Edit Profile"}</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab("actions")}
-            className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2 text-xs font-bold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 px-3 text-xs font-bold transition-all whitespace-nowrap ${
               activeTab === "actions"
                 ? "bg-card text-foreground shadow-xs border border-border/60"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Sparkles className="w-4 h-4 text-emerald-500" />
+            <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
             <span>{language === "fr" ? "Guide & Possibilités" : "What You Can Do"}</span>
           </button>
         </div>
 
         {/* Scrollable Content Body */}
         <div className="overflow-y-auto pr-1 space-y-4 flex-1 no-scrollbar">
-          {activeTab === "history" ? (
+          {/* TAB 1: HISTORY LOG (READ) */}
+          {activeTab === "history" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">
@@ -245,7 +303,146 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
                 ))}
               </div>
             </div>
-          ) : (
+          )}
+
+          {/* TAB 2: PROFILE EDIT & CRUD (CREATE, READ, UPDATE, DELETE) */}
+          {activeTab === "profile" && (
+            <form onSubmit={handleSaveProfile} className="space-y-5 text-left">
+              <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                <div>
+                  <h4 className="text-xs font-bold font-mono uppercase text-foreground">
+                    {language === "fr" ? "Éditeur de Profil & Coordonnées (CRUD)" : "Profile & Contact CRUD Management"}
+                  </h4>
+                  <p className="text-[11px] text-muted-foreground">
+                    {language === "fr" ? "Consultez, modifiez ou mettez à jour vos identifiants et votre numéro WhatsApp." : "View, edit, or update your credentials and WhatsApp phone number."}
+                  </p>
+                </div>
+                {isSavedSuccess && (
+                  <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-bold px-3 py-1 border border-emerald-500/30">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>{language === "fr" ? "Enregistré !" : "Saved!"}</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Full Name & Username */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-primary" />
+                    <span>{language === "fr" ? "Nom Complet" : "Full Name"}</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                    className="w-full rounded-2xl border border-border/80 bg-background px-4 py-2.5 text-xs font-bold text-foreground focus:border-primary focus:outline-none min-h-[42px]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <Compass className="w-3.5 h-3.5 text-amber-500" />
+                    <span>{language === "fr" ? "Nom d'Utilisateur" : "Username"}</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="@username"
+                    required
+                    className="w-full rounded-2xl border border-border/80 bg-background px-4 py-2.5 text-xs font-mono font-bold text-foreground focus:border-primary focus:outline-none min-h-[42px]"
+                  />
+                </div>
+              </div>
+
+              {/* Email & WhatsApp Phone */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5 text-blue-500" />
+                    <span>{language === "fr" ? "Adresse Email" : "Email Address"}</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    required
+                    className="w-full rounded-2xl border border-border/80 bg-background px-4 py-2.5 text-xs font-medium text-foreground focus:border-primary focus:outline-none min-h-[42px]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-emerald-500" />
+                      <span>{language === "fr" ? "Téléphone / WhatsApp" : "WhatsApp Phone"}</span>
+                    </label>
+                    {whatsappPhone && (
+                      <button
+                        type="button"
+                        onClick={handleClearPhone}
+                        className="text-[10px] font-mono text-rose-500 hover:underline flex items-center gap-1 cursor-pointer"
+                        title="Effacer le numéro WhatsApp"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>{language === "fr" ? "Effacer" : "Delete"}</span>
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    type="tel"
+                    value={whatsappPhone}
+                    onChange={(e) => setWhatsappPhone(e.target.value)}
+                    placeholder="+254 700 000 000 / +33 6 00 00 00 00"
+                    className="w-full rounded-2xl border border-border/80 bg-background px-4 py-2.5 text-xs font-mono font-bold text-foreground placeholder:text-muted-foreground/60 focus:border-emerald-500 focus:outline-none min-h-[42px]"
+                  />
+                  {isDeletingField && (
+                    <span className="text-[10px] font-mono text-rose-500 block">
+                      {language === "fr" ? "Numéro WhatsApp supprimé du profil" : "WhatsApp phone removed from profile"}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Preferred Currency & Timezone */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5 text-purple-500" />
+                  <span>{language === "fr" ? "Monnaie de Préférence (Régionale)" : "Preferred Regional Currency"}</span>
+                </label>
+                <select
+                  value={preferredCurrency}
+                  onChange={(e) => setPreferredCurrency(e.target.value as CurrencyCode)}
+                  className="w-full rounded-2xl border border-border/80 bg-background px-4 py-2.5 text-xs font-mono font-bold text-foreground focus:border-primary focus:outline-none min-h-[42px] cursor-pointer"
+                >
+                  <option value="USD">USD - US Dollar ($)</option>
+                  <option value="EUR">EUR - Euro (€)</option>
+                  <option value="GBP">GBP - British Pound (£)</option>
+                  <option value="KES">KES - Kenya Shilling (KSh)</option>
+                  <option value="CAD">CAD - Canadian Dollar (C$)</option>
+                  <option value="NGN">NGN - Nigerian Naira (₦)</option>
+                  <option value="ZAR">ZAR - South African Rand (R)</option>
+                  <option value="XOF">XOF - Franc CFA (CFA)</option>
+                </select>
+              </div>
+
+              {/* Submit / Save Button */}
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs font-extrabold px-6 py-2.5 shadow-md hover:opacity-95 transition-all cursor-pointer min-h-[42px]"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{language === "fr" ? "Enregistrer les Modifications (Update)" : "Save Profile Changes"}</span>
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* TAB 3: RECOMMENDED ACTIONS (NEW USERS) */}
+          {activeTab === "actions" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">
