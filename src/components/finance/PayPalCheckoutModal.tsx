@@ -151,6 +151,10 @@ export function PayPalCheckoutModal({
                   <span>{language === "fr" ? "Studio de Décision 3-Stratégies & Alertes IA" : "3-Strategy Impact Studio & AI Insights"}</span>
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                 </div>
+                <div className="flex items-center justify-between pt-1 font-mono text-[11px] text-foreground font-bold">
+                  <span>{language === "fr" ? "Compte Bénéficiaire PayPal :" : "PayPal Merchant Payee:"}</span>
+                  <span className="text-primary">hetier.djuma@gmail.com</span>
+                </div>
               </div>
             </div>
 

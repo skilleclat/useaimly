@@ -1,36 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createStripeCheckoutSession } from "@/lib/payments/stripe-service";
 import { initiateMpesaStkPush } from "@/lib/payments/mpesa-service";
+import { createPayPalOrder } from "@/lib/payments/paypal-service";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { planId = "pro", billingCycle = "MONTHLY", provider = "STRIPE", phoneNumber = "" } = body;
+    const { planId = "pro", billingCycle = "MONTHLY", provider = "STRIPE", phoneNumber = "", customerEmail = "" } = body;
 
     if (provider === "PAYPAL") {
-      const amountUSD =
-        planId === "pro"
-          ? billingCycle === "ANNUAL"
-            ? 39.99
-            : 4.99
-          : planId === "premium"
-          ? billingCycle === "ANNUAL"
-            ? 79.99
-            : 9.99
-          : 0;
-
-      const orderId = `PAYID-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-
-      return NextResponse.json({
-        success: true,
-        provider: "PAYPAL",
-        orderId,
-        amountUSD,
-        currency: "USD",
-        status: "APPROVED",
-        message: "PayPal checkout order generated successfully.",
-        checkoutUrl: `https://www.paypal.com/checkoutnow?token=${orderId}`,
+      const paypalResult = await createPayPalOrder({
+        planId,
+        billingCycle,
+        customerEmail,
       });
+      return NextResponse.json(paypalResult);
     }
 
     if (provider === "MPESA") {
