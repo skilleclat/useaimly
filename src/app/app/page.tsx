@@ -35,10 +35,9 @@ function getTimeGreeting(): string {
 }
 
 export default function AuthenticatedDashboard() {
-  const { user, profile } = useAuth();
+  const { user, profile, firstName, displayName } = useAuth();
   const { currency } = useCurrency();
   const { t } = useI18n();
-  const firstName = profile?.full_name?.split(" ")[0] || user?.email?.split("@")[0] || "Strategist";
   const greeting = `${getTimeGreeting()}.`;
 
   const [showDetailedCharts, setShowDetailedCharts] = useState(false);

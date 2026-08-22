@@ -41,25 +41,29 @@ interface UserProfileModalProps {
 }
 
 export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
-  const { user, profile, signOut, refreshProfile } = useAuth();
+  const { user, profile, displayName, signOut, refreshProfile } = useAuth();
   const { currency, setCurrency, format } = useCurrency();
   const { t, language } = useI18n();
 
   const [activeTab, setActiveTab] = useState<"history" | "profile" | "actions">("history");
 
   // CRUD Form State for User Profile
-  const [fullName, setFullName] = useState(profile?.full_name || "Demo Strategist");
+  const initialName = displayName !== "Strategist" ? displayName : (profile?.full_name || user?.email?.split("@")[0] || "");
+  const [fullName, setFullName] = useState(initialName);
   const [username, setUsername] = useState(
-    profile?.full_name ? `@${profile.full_name.toLowerCase().replace(/\s+/g, "_")}` : "@strategist"
+    initialName ? `@${initialName.toLowerCase().replace(/\s+/g, "_")}` : "@user"
   );
-  const [emailInput, setEmailInput] = useState(user?.email || "strategist@useaimly.com");
+  const [emailInput, setEmailInput] = useState(user?.email || "");
   const [whatsappPhone, setWhatsappPhone] = useState("+254 700 123 456");
   const [preferredCurrency, setPreferredCurrency] = useState<CurrencyCode>(currency);
   const [isSavedSuccess, setIsSavedSuccess] = useState(false);
   const [isDeletingField, setIsDeletingField] = useState(false);
 
   useEffect(() => {
-    if (profile?.full_name) {
+    if (displayName && displayName !== "Strategist") {
+      setFullName(displayName);
+      setUsername(`@${displayName.toLowerCase().replace(/\s+/g, "_")}`);
+    } else if (profile?.full_name && !profile.full_name.toLowerCase().includes("demo")) {
       setFullName(profile.full_name);
       setUsername(`@${profile.full_name.toLowerCase().replace(/\s+/g, "_")}`);
     }
@@ -67,17 +71,35 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
       setEmailInput(user.email);
     }
     setPreferredCurrency(currency);
-  }, [profile, user, currency]);
+  }, [profile, user, displayName, currency]);
 
   if (!isOpen) return null;
 
-  const displayName = fullName || user?.email?.split("@")[0] || "Strategist";
-  const userInitials = displayName.charAt(0).toUpperCase();
+  const currentDisplayName = fullName || displayName;
+  const userInitials = currentDisplayName ? currentDisplayName.charAt(0).toUpperCase() : "U";
 
   // CRUD Action 1: UPDATE Profile
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setCurrency(preferredCurrency);
+    if (user) {
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        await supabase.auth.updateUser({
+          data: { full_name: fullName },
+        });
+        await (supabase.from("profiles") as any).upsert({
+          id: user.id,
+          full_name: fullName,
+          preferred_currency: preferredCurrency,
+          updated_at: new Date().toISOString(),
+        });
+        await refreshProfile();
+      } catch (err) {
+        console.warn("Error saving profile to Supabase:", err);
+      }
+    }
     setIsSavedSuccess(true);
     setTimeout(() => setIsSavedSuccess(false), 3000);
   };

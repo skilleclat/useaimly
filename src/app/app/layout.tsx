@@ -79,21 +79,19 @@ const NAV_ITEMS: NavItem[] = [
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, displayName, isLoading, signOut } = useAuth();
   const { currency } = useCurrency();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
-  const displayName = profile?.full_name || user?.email?.split("@")[0] || "Strategist";
-
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary/15">
-      {/* Live Demo Conversion Banner (Visible when unauthenticated) */}
-      {!user && (
+      {/* Live Demo Conversion Banner (Visible only when confirmed unauthenticated) */}
+      {!isLoading && !user && (
         <div className="w-full bg-gradient-to-r from-primary via-orange-500 to-amber-500 px-4 py-2 text-white text-xs font-bold flex flex-wrap items-center justify-between gap-2 shadow-sm z-50">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 shrink-0 animate-pulse" />
-            <span>You are exploring UseAimly in Live Demo Mode with sample data.</span>
+            <span>You are exploring UseAimly in Guest Mode.</span>
           </div>
           <Link
             href="/signup"
@@ -140,14 +138,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* User Profile Pill / Demo Badge */}
-            {!user ? (
+            {/* User Profile Pill */}
+            {!isLoading && !user ? (
               <Link
-                href="/signup"
+                href="/login"
                 className="hidden sm:flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3.5 py-1 text-xs font-bold text-primary hover:bg-primary/20 transition-all shadow-xs"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Demo Mode • Save Data</span>
+                <span>Sign In / Create Account</span>
               </Link>
             ) : (
               <button
@@ -159,7 +157,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary via-orange-500 to-amber-500 text-white flex items-center justify-center font-bold text-[10px]">
                   {displayName.charAt(0).toUpperCase()}
                 </div>
-                <span className="font-semibold text-foreground max-w-[90px] truncate text-xs">
+                <span className="font-semibold text-foreground max-w-[120px] truncate text-xs">
                   {displayName}
                 </span>
                 <span className="text-[10px] text-muted-foreground font-mono font-medium border-l border-border/60 pl-1.5">

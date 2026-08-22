@@ -64,7 +64,7 @@ const DEFAULT_HERO_GOALS: GoalItemSummary[] = [
 ];
 
 export function GoalProgressHeroWidget({
-  userName = "Kimberley",
+  userName = "Strategist",
   currency: propCurrency,
   goals = DEFAULT_HERO_GOALS,
   onOpenCreateWizard,

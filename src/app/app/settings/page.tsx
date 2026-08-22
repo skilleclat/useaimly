@@ -21,14 +21,16 @@ import {
 } from "lucide-react";
 
 export default function SettingsPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, displayName, refreshProfile } = useAuth();
   const { currency, setCurrency } = useCurrency();
   const [preferredCurrency, setPreferredCurrency] = useState<CurrencyCode>(currency);
-  const [fullName, setFullName] = useState(profile?.full_name || "Finance Strategist");
+
+  const initialName = displayName !== "Strategist" ? displayName : (profile?.full_name || user?.email?.split("@")[0] || "");
+  const [fullName, setFullName] = useState(initialName);
   const [username, setUsername] = useState(
-    profile?.full_name ? `@${profile.full_name.toLowerCase().replace(/\s+/g, "_")}` : "@strategist"
+    initialName ? `@${initialName.toLowerCase().replace(/\s+/g, "_")}` : "@user"
   );
-  const [emailInput, setEmailInput] = useState(user?.email || "user@useaimly.com");
+  const [emailInput, setEmailInput] = useState(user?.email || "");
   const [whatsappPhone, setWhatsappPhone] = useState("+254 700 123 456");
   const [thresholdAmount, setThresholdAmount] = useState<number>(15000);
   const [notifyShortfall, setNotifyShortfall] = useState(true);
@@ -36,12 +38,40 @@ export default function SettingsPage() {
   const [isSaved, setIsSaved] = useState(false);
 
   React.useEffect(() => {
+    if (displayName && displayName !== "Strategist") {
+      setFullName(displayName);
+      setUsername(`@${displayName.toLowerCase().replace(/\s+/g, "_")}`);
+    } else if (profile?.full_name && !profile.full_name.toLowerCase().includes("demo")) {
+      setFullName(profile.full_name);
+      setUsername(`@${profile.full_name.toLowerCase().replace(/\s+/g, "_")}`);
+    }
+    if (user?.email) {
+      setEmailInput(user.email);
+    }
     setPreferredCurrency(currency);
-  }, [currency]);
+  }, [profile, user, displayName, currency]);
 
-  const handleSaveSettings = (e: React.FormEvent) => {
+  const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     setCurrency(preferredCurrency);
+    if (user) {
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        await supabase.auth.updateUser({
+          data: { full_name: fullName },
+        });
+        await (supabase.from("profiles") as any).upsert({
+          id: user.id,
+          full_name: fullName,
+          preferred_currency: preferredCurrency,
+          updated_at: new Date().toISOString(),
+        });
+        await refreshProfile();
+      } catch (err) {
+        console.warn("Error saving settings profile:", err);
+      }
+    }
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3500);
   };

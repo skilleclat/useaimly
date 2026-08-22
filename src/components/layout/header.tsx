@@ -27,7 +27,7 @@ import {
 
 export function Header() {
   const pathname = usePathname();
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, displayName, signOut } = useAuth();
   const { t } = useI18n();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -36,8 +36,6 @@ export function Header() {
   if (pathname.startsWith("/app")) {
     return null;
   }
-
-  const displayName = profile?.full_name || user?.email?.split("@")[0] || "Strategist";
 
   const NAV_LINKS = [
     {
