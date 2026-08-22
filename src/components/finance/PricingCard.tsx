@@ -24,11 +24,12 @@ export function PricingCard({
   const isKES = currency === "KES";
 
   const priceMonthly = isKES ? plan.priceMonthlyKES : plan.priceMonthlyUSD;
-  const priceYearly = isKES ? plan.priceYearlyKES : plan.priceYearlyUSD;
+  const totalYearly = isKES ? plan.priceYearlyKES : (plan.totalYearlyUSD || plan.priceYearlyUSD * 12);
+  const monthlyEquivalent = isKES ? Math.round(plan.priceYearlyKES / 12) : plan.priceYearlyUSD;
 
-  const displayPrice = isYearly ? priceYearly : priceMonthly;
+  const displayPrice = isYearly ? totalYearly : priceMonthly;
   const currencySymbol = isKES ? "KES " : "$";
-  const periodLabel = isYearly ? "/mo (billed annually)" : "/mo";
+  const periodLabel = isYearly ? "/year" : "/month";
 
   return (
     <div
@@ -61,15 +62,15 @@ export function PricingCard({
         <div className="pt-2 pb-4 border-b border-border/60">
           <div className="flex items-baseline gap-1">
             <span className="text-3xl sm:text-4xl font-black text-foreground font-editorial">
-              {displayPrice === 0 ? "Free" : `${currencySymbol}${displayPrice.toLocaleString()}`}
+              {displayPrice === 0 ? "Free" : `${currencySymbol}${displayPrice}`}
             </span>
             {displayPrice > 0 && (
-              <span className="text-xs font-mono text-muted-foreground">{periodLabel}</span>
+              <span className="text-xs font-mono font-bold text-muted-foreground">{periodLabel}</span>
             )}
           </div>
           {isYearly && displayPrice > 0 && (
-            <p className="text-[11px] text-emerald-500 font-semibold mt-1">
-              Save 20% with annual billing
+            <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
+              Just {currencySymbol}{monthlyEquivalent}/month equivalent (Billed annually)
             </p>
           )}
         </div>

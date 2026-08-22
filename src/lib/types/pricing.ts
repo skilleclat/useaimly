@@ -13,6 +13,7 @@ export interface PricingPlan {
   isPopular?: boolean;
   priceMonthlyUSD: number;
   priceYearlyUSD: number; // monthly equivalent when billed annually
+  totalYearlyUSD: number; // full annual bill amount
   priceMonthlyKES: number;
   priceYearlyKES: number;
   ctaText: string;
@@ -27,10 +28,11 @@ export interface PricingPlan {
 export const PRICING_PLANS: PricingPlan[] = [
   {
     id: "free",
-    name: "Starter",
+    name: "Free",
     tagline: "Explore decision intelligence and test your baseline trajectory.",
     priceMonthlyUSD: 0,
     priceYearlyUSD: 0,
+    totalYearlyUSD: 0,
     priceMonthlyKES: 0,
     priceYearlyKES: 0,
     ctaText: "Get Started Free",
@@ -49,15 +51,16 @@ export const PRICING_PLANS: PricingPlan[] = [
   },
   {
     id: "pro",
-    name: "Pro Strategist",
+    name: "Aimly Pro",
     tagline: "For active decision makers looking to optimize every spend and stay ahead.",
     badge: "Most Popular",
     isPopular: true,
-    priceMonthlyUSD: 19,
-    priceYearlyUSD: 15,
-    priceMonthlyKES: 2500,
-    priceYearlyKES: 2000,
-    ctaText: "Try Pro Free",
+    priceMonthlyUSD: 4.99,
+    priceYearlyUSD: 3.33,
+    totalYearlyUSD: 39.99,
+    priceMonthlyKES: 650,
+    priceYearlyKES: 5200,
+    ctaText: "Try Aimly Pro",
     ctaHref: "/signup?plan=pro",
     features: [
       { text: "Unlimited Financial Destinations", included: true, highlight: true },
@@ -74,17 +77,18 @@ export const PRICING_PLANS: PricingPlan[] = [
   },
   {
     id: "premium",
-    name: "Premium Elite",
+    name: "Aimly Premium",
     tagline: "For entrepreneurs, business owners, and high net-worth decision makers.",
     badge: "Complete Experience",
-    priceMonthlyUSD: 49,
-    priceYearlyUSD: 39,
-    priceMonthlyKES: 6500,
-    priceYearlyKES: 5200,
-    ctaText: "Unlock Elite",
+    priceMonthlyUSD: 9.99,
+    priceYearlyUSD: 6.67,
+    totalYearlyUSD: 79.99,
+    priceMonthlyKES: 1300,
+    priceYearlyKES: 10400,
+    ctaText: "Unlock Aimly Premium",
     ctaHref: "/signup?plan=premium",
     features: [
-      { text: "Everything included in Pro Strategist", included: true },
+      { text: "Everything included in Aimly Pro", included: true },
       { text: "Interactive AI Financial Advisor (Gemini / GPT-4)", included: true, highlight: true },
       { text: "AI Financial Notepad & Unlimited Rules Engine", included: true, highlight: true },
       { text: "Unlimited 'What-If' Scenario Laboratory", included: true, highlight: true },
