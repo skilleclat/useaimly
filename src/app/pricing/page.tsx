@@ -8,10 +8,27 @@ import { PayPalCheckoutModal } from "@/components/finance/PayPalCheckoutModal";
 import { Container } from "@/components/layout/container";
 import { HelpCircle, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
 
-export default function PricingPage() {
+import { useSearchParams } from "next/navigation";
+
+function PricingContent() {
+  const searchParams = useSearchParams();
+  const rawPlan = searchParams.get("plan");
+
   const [isYearly, setIsYearly] = useState(true);
   const [currency, setCurrency] = useState<"USD" | "KES">("USD");
-  const [selectedPlanForCheckout, setSelectedPlanForCheckout] = useState<PricingPlan | null>(null);
+  const [selectedPlanForCheckout, setSelectedPlanForCheckout] = useState<PricingPlan | null>(() => {
+    if (rawPlan === "pro" || rawPlan === "premium") {
+      return PRICING_PLANS.find((p) => p.id === rawPlan) || null;
+    }
+    return null;
+  });
+
+  React.useEffect(() => {
+    if (rawPlan === "pro" || rawPlan === "premium") {
+      const target = PRICING_PLANS.find((p) => p.id === rawPlan);
+      if (target) setSelectedPlanForCheckout(target);
+    }
+  }, [rawPlan]);
 
   return (
     <div className="min-h-screen bg-background text-foreground py-12 px-4 sm:px-6 lg:px-8 space-y-16">
@@ -158,5 +175,13 @@ export default function PricingPage() {
         isYearly={isYearly}
       />
     </div>
+  );
+}
+
+export default function PricingPage() {
+  return (
+    <React.Suspense fallback={<div className="min-h-[85vh] flex items-center justify-center text-xs font-mono text-muted-foreground">Loading pricing...</div>}>
+      <PricingContent />
+    </React.Suspense>
   );
 }

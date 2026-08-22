@@ -8,6 +8,8 @@ import { useI18n } from "@/lib/i18n/i18n-context";
 import { CurrencyCode } from "@/lib/types/finance";
 import { Check, Sparkles, Zap, Shield, ArrowRight } from "lucide-react";
 
+import { useAuth } from "@/lib/auth/auth-context";
+
 interface PricingCardProps {
   plan: PricingPlan;
   isYearly: boolean;
@@ -23,10 +25,13 @@ export function PricingCard({
   currentPlanId,
   onSelectPlan,
 }: PricingCardProps) {
+  const { user, profile } = useAuth();
   const { currency: globalCurrency, format, convert } = useCurrency();
   const { t, language } = useI18n();
 
   const activeCurrency = propCurrency || globalCurrency;
+  const isLoggedIn = Boolean(user || (profile && profile.id !== "demo-user-id"));
+  const targetHref = isLoggedIn ? `/pricing?plan=${plan.id}` : plan.ctaHref;
 
   // Determine base USD amount for monthly vs yearly
   const basePriceUSD = isYearly
@@ -197,7 +202,7 @@ export function PricingCard({
           </button>
         ) : (
           <Link
-            href={plan.ctaHref}
+            href={targetHref}
             className={`w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 text-xs font-extrabold shadow-md transition-all ${
               plan.isPopular
                 ? "bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white hover:opacity-95 shadow-orange-500/20 hover:scale-[1.02]"

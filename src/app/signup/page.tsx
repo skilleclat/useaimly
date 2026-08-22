@@ -32,10 +32,21 @@ function GoogleIcon({ className = "w-5 h-5" }: { className?: string }) {
   );
 }
 
+import { useAuth } from "@/lib/auth/auth-context";
+
 function SignupFormContent() {
+  const { user, profile } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const rawPlan = searchParams.get("plan");
   const selectedPlan: PlanTier = (rawPlan === "pro" || rawPlan === "premium" || rawPlan === "free") ? rawPlan : "free";
+
+  useEffect(() => {
+    // If user is already logged in, redirect them to payment checkout on pricing page
+    if (user || (profile && profile.id !== "demo-user-id")) {
+      router.replace(`/pricing?plan=${selectedPlan}`);
+    }
+  }, [user, profile, selectedPlan, router]);
 
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
