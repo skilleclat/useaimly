@@ -31,11 +31,15 @@ import {
   Plus,
 } from "lucide-react";
 
+import { useCurrency } from "@/lib/currency/currency-context";
+import { useI18n } from "@/lib/i18n/i18n-context";
+
 export default function DecideStudioPage() {
   const { profile } = useAuth();
+  const { currency } = useCurrency();
+  const { t } = useI18n();
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get("q") || "Can I spend 30,000 KES on a new phone?";
-  const currency = (profile?.preferred_currency || "KES") as CurrencyCode;
 
   // Decision Input States
   const [queryInput, setQueryInput] = useState(initialQuery);

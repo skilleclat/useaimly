@@ -80,9 +80,13 @@ interface CommitmentItem {
 
 import { useSearchParams } from "next/navigation";
 
+import { useCurrency } from "@/lib/currency/currency-context";
+import { useI18n } from "@/lib/i18n/i18n-context";
+
 export default function MoneyPage() {
   const { profile } = useAuth();
-  const currency = (profile?.preferred_currency || "KES") as CurrencyCode;
+  const { currency } = useCurrency();
+  const { t } = useI18n();
   const searchParams = useSearchParams();
 
   const initialTab = (searchParams.get("tab") as TabType) || "OVERVIEW";

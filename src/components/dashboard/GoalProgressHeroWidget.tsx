@@ -3,19 +3,8 @@
 import React from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils/currency";
-import { CurrencyCode } from "@/lib/types/finance";
-import {
-  Home,
-  Briefcase,
-  ShieldAlert,
-  Plane,
-  GraduationCap,
-  Car,
-  Flag,
-  ChevronRight,
-  Plus,
-  Sparkles,
-} from "lucide-react";
+import { useCurrency } from "@/lib/currency/currency-context";
+import { useI18n } from "@/lib/i18n/i18n-context";
 
 interface GoalItemSummary {
   id: string;
@@ -74,10 +63,14 @@ const DEFAULT_HERO_GOALS: GoalItemSummary[] = [
 
 export function GoalProgressHeroWidget({
   userName = "Kimberley",
-  currency = "KES",
+  currency: propCurrency,
   goals = DEFAULT_HERO_GOALS,
   onOpenCreateWizard,
 }: GoalProgressHeroWidgetProps) {
+  const { currency: globalCurrency, format } = useCurrency();
+  const { t } = useI18n();
+  const activeCurrency = propCurrency || globalCurrency;
+
   const totalSaved = goals.reduce((acc, g) => acc + g.currentAmount, 0);
   const totalTarget = goals.reduce((acc, g) => acc + g.targetAmount, 0);
   const overallPercent = totalTarget > 0 ? Math.min(100, Math.round((totalSaved / totalTarget) * 100)) : 0;
@@ -93,20 +86,20 @@ export function GoalProgressHeroWidget({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="space-y-1">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2">
-            Hello {userName} 👋
+            {t("greetingPrefix")} {userName} 👋
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground font-medium">
-            Every dollar saved is one step closer to your dreams.
+            {t("heroSubtitle")}
           </p>
         </div>
 
         {onOpenCreateWizard && (
           <button
             onClick={onOpenCreateWizard}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2.5 text-xs font-bold transition-all shadow-xs shrink-0 self-start sm:self-auto"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2.5 text-xs font-bold transition-all shadow-xs shrink-0 self-start sm:self-auto cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>Create Goal</span>
+            <span>{t("createGoal")}</span>
           </button>
         )}
       </div>
@@ -139,26 +132,26 @@ export function GoalProgressHeroWidget({
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-2xl font-extrabold font-mono text-foreground">{overallPercent}%</span>
-              <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider">Progress</span>
+              <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider">{t("progress")}</span>
             </div>
           </div>
 
           <div className="space-y-2 text-left">
             <div>
               <span className="text-[11px] font-mono text-muted-foreground font-bold uppercase tracking-wider block">
-                Total Saved
+                {t("totalSaved")}
               </span>
               <div className="text-2xl sm:text-3xl font-extrabold font-mono text-foreground">
-                {formatCurrency(totalSaved, currency)}
+                {format(totalSaved)}
               </div>
             </div>
 
             <div>
               <span className="text-[11px] font-mono text-muted-foreground font-bold uppercase tracking-wider block">
-                Total Target Goals
+                {t("totalTargetGoals")}
               </span>
               <div className="text-sm font-bold font-mono text-muted-foreground">
-                {formatCurrency(totalTarget, currency)}
+                {format(totalTarget)}
               </div>
             </div>
           </div>
@@ -204,14 +197,14 @@ export function GoalProgressHeroWidget({
                     <div>
                       <h4 className="text-sm font-bold text-foreground">{g.name}</h4>
                       <span className="text-xs text-muted-foreground font-mono">
-                        {formatCurrency(g.currentAmount, currency)} of {formatCurrency(g.targetAmount, currency)}
+                        {format(g.currentAmount)} of {format(g.targetAmount)}
                       </span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${statusBadge}`}>
-                      {g.statusLabel || (g.status === "ON_TRACK" ? "On track" : "Needs attention")}
+                      {g.statusLabel || (g.status === "ON_TRACK" ? t("onTrack") : t("needsAttention"))}
                     </span>
                     <span className="text-xs font-extrabold font-mono text-foreground">{pct}%</span>
                   </div>

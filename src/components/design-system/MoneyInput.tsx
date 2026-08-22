@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { CurrencyCode } from "@/lib/types/finance";
+import { useCurrency } from "@/lib/currency/currency-context";
 import { cn } from "@/lib/utils/cn";
 
 export interface MoneyInputProps {
@@ -19,7 +20,7 @@ export interface MoneyInputProps {
 export function MoneyInput({
   value,
   onChange,
-  currency = "KES",
+  currency: propCurrency,
   label,
   stepPresets = [5000, 10000, 25000, 50000],
   min = 0,
@@ -27,6 +28,8 @@ export function MoneyInput({
   disabled = false,
   className,
 }: MoneyInputProps) {
+  const { currency: globalCurrency } = useCurrency();
+  const activeCurrency = propCurrency || globalCurrency;
   const [isFocused, setIsFocused] = useState(false);
 
   const formattedDisplay = isFocused
@@ -58,7 +61,7 @@ export function MoneyInput({
         )}
       >
         <span className="pr-2 text-xs font-mono font-bold text-primary select-none shrink-0">
-          {currency}
+          {activeCurrency}
         </span>
         <input
           type="text"
@@ -98,7 +101,7 @@ export function MoneyInput({
                     : "border-border/80 bg-secondary/40 text-muted-foreground hover:text-foreground hover:bg-secondary"
                 )}
               >
-                +{currency} {stepLabel}
+                +{activeCurrency} {stepLabel}
               </button>
             );
           })}

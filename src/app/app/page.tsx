@@ -24,6 +24,9 @@ import {
   ChevronUp,
 } from "lucide-react";
 
+import { useCurrency } from "@/lib/currency/currency-context";
+import { useI18n } from "@/lib/i18n/i18n-context";
+
 function getTimeGreeting(): string {
   const hour = new Date().getHours();
   if (hour < 12) return "Good morning";
@@ -33,7 +36,8 @@ function getTimeGreeting(): string {
 
 export default function AuthenticatedDashboard() {
   const { user, profile } = useAuth();
-  const currency = (profile?.preferred_currency || "KES") as CurrencyCode;
+  const { currency } = useCurrency();
+  const { t } = useI18n();
   const firstName = profile?.full_name?.split(" ")[0] || user?.email?.split("@")[0] || "Strategist";
   const greeting = `${getTimeGreeting()}.`;
 

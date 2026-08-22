@@ -26,9 +26,13 @@ import {
   Clock,
 } from "lucide-react";
 
+import { useCurrency } from "@/lib/currency/currency-context";
+import { useI18n } from "@/lib/i18n/i18n-context";
+
 export default function GoalsPage() {
   const { profile } = useAuth();
-  const currency = (profile?.preferred_currency || "KES") as CurrencyCode;
+  const { currency } = useCurrency();
+  const { t } = useI18n();
 
   const [destinations, setDestinations] = useState<DestinationItem[]>(INITIAL_DESTINATIONS);
   const [filterTab, setFilterTab] = useState<"ALL" | "ACTIVE" | "PAUSED" | "COMPLETED">("ALL");
