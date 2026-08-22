@@ -11,6 +11,8 @@ import { PrimeInsightSection } from "@/components/dashboard/PrimeInsightSection"
 import { BaselineFinancialProfile } from "@/lib/finance";
 import { CurrencyCode } from "@/lib/types/finance";
 import { formatCurrency } from "@/lib/utils/currency";
+import { GoalProgressHeroWidget } from "@/components/dashboard/GoalProgressHeroWidget";
+import { InteractiveGoalCreationWizard } from "@/components/dashboard/InteractiveGoalCreationWizard";
 import {
   HelpCircle,
   Target,
@@ -35,6 +37,7 @@ export default function AuthenticatedDashboard() {
   const greeting = `${getTimeGreeting()}.`;
 
   const [showDetailedCharts, setShowDetailedCharts] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
 
   // Baseline Financial Profile for Deterministic Simulations
   const baselineProfile: BaselineFinancialProfile = useMemo(
@@ -87,21 +90,24 @@ export default function AuthenticatedDashboard() {
   const goalProgressPercent = Math.min(100, Math.round((mainGoal.currentAmount / mainGoal.targetAmount) * 100));
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-12 animate-fadeIn font-mono">
-      {/* 1. GREETING & HIGH-LEVEL TRAJECTORY STATUS */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-foreground">
-            {greeting} {firstName} 👋
-          </h1>
-          <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-bold font-mono border border-emerald-500/30 shrink-0">
-            ✓ ON TRACK
-          </span>
-        </div>
-        <p className="text-xs sm:text-sm text-muted-foreground">
-          Your goals are on track. Liquid cushion protects <strong className="text-foreground font-bold">3.5 months</strong> of fixed living costs.
-        </p>
-      </div>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-12 animate-fadeIn font-sans">
+      {/* 1. HERO GOAL PROGRESS WIDGET (MATCHING UI REFERENCE IMAGE) */}
+      <GoalProgressHeroWidget
+        userName={firstName}
+        currency={currency}
+        onOpenCreateWizard={() => setShowWizard(true)}
+      />
+
+      {showWizard && (
+        <InteractiveGoalCreationWizard
+          currency={currency}
+          monthlyGrossIncome={180000}
+          onClose={() => setShowWizard(false)}
+          onGoalCreated={(newG) => {
+            console.log("Goal created via wizard:", newG);
+          }}
+        />
+      )}
 
       {/* 2. 2x2 GRID OF PRIMARY DESTINATION CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">

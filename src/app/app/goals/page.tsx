@@ -10,6 +10,7 @@ import { CurrencyCode } from "@/lib/types/finance";
 import { FinancialStatus } from "@/components/design-system/FinancialStatus";
 import { MoneyInput } from "@/components/design-system/MoneyInput";
 import { GoalVelocityBooster } from "@/components/dashboard/GoalVelocityBooster";
+import { InteractiveGoalCreationWizard } from "@/components/dashboard/InteractiveGoalCreationWizard";
 import {
   Target,
   Plus,
@@ -30,6 +31,7 @@ export default function GoalsPage() {
   const [destinations, setDestinations] = useState<DestinationItem[]>(INITIAL_DESTINATIONS);
   const [filterTab, setFilterTab] = useState<"ALL" | "ACTIVE" | "PAUSED" | "COMPLETED">("ALL");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showWizardModal, setShowWizardModal] = useState(false);
 
   // New Destination Form State
   const [newTitle, setNewTitle] = useState("");
@@ -107,15 +109,52 @@ export default function GoalsPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-semibold text-primary-foreground hover:opacity-95 shadow-xs transition-all shrink-0 self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>New Goal</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setShowWizardModal(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2.5 text-xs font-bold transition-all shadow-xs shrink-0"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Interactive Goal Wizard</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowAddModal(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-secondary hover:bg-secondary/80 border border-border/80 px-4 py-2.5 text-xs font-semibold text-foreground transition-all shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Quick Goal</span>
+          </button>
+        </div>
       </div>
+
+      {showWizardModal && (
+        <InteractiveGoalCreationWizard
+          currency={currency}
+          monthlyGrossIncome={180000}
+          onClose={() => setShowWizardModal(false)}
+          onGoalCreated={(newG) => {
+            const created: DestinationItem = {
+              id: `dest-${Date.now()}`,
+              name: newG.title,
+              category: newG.category.toUpperCase(),
+              targetAmount: newG.targetAmount,
+              currentAmount: newG.currentAmount,
+              targetDate: "2028-06-30",
+              priority: "HIGH",
+              monthlyContribution: newG.monthlyContribution,
+              projectedCompletionDate: "2028-04-15",
+              status: "ON_TRACK",
+              notes: "Created via step wizard.",
+              decisionsAffecting: [],
+              upcomingRisks: [],
+              contributionHistory: [],
+            };
+            setDestinations((prev) => [...prev, created]);
+          }}
+        />
+      )}
 
       {/* Capacity Monitor Bar */}
       {hasCapacityConflict ? (
