@@ -84,22 +84,22 @@ export function Footer() {
 
   // Full Executive Landing & Public Footer
   return (
-    <footer className="relative mt-20 border-t border-zinc-800/80 bg-[#0B0C10] text-zinc-300 rounded-t-[3rem] shadow-2xl overflow-hidden font-sans">
+    <footer className="relative mt-8 sm:mt-16 border-t border-zinc-800/80 bg-[#0B0C10] text-zinc-300 rounded-t-[2.5rem] sm:rounded-t-[3rem] shadow-2xl overflow-hidden font-sans">
       {/* Top Emerald Gradient Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[120px] bg-gradient-to-b from-emerald-500/15 via-emerald-500/5 to-transparent blur-2xl pointer-events-none" />
 
-      <Container className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 space-y-12 relative z-10">
+      <Container className="py-8 sm:py-14 px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-12 relative z-10">
         {/* BRAND STATEMENT & NEWSLETTER CARD */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-10 border-b border-zinc-800/80 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 pb-8 sm:pb-10 border-b border-zinc-800/80 items-center">
           <div className="lg:col-span-7 space-y-3 text-left">
             <UseaimlyLogo size="md" showTagline={true} />
-            <p className="text-sm text-zinc-400 max-w-xl font-medium leading-relaxed">
+            <p className="text-xs sm:text-sm text-zinc-400 max-w-xl font-medium leading-relaxed">
               UseAimly is a goal-aware decision intelligence platform. We calculate the exact future arrival impact of every purchase decision before you spend, protecting your cashflow resilience.
             </p>
           </div>
 
           {/* Strategic Insights Newsletter Card */}
-          <div className="lg:col-span-5 rounded-3xl border border-zinc-800 bg-zinc-900/80 p-5 space-y-3 shadow-lg backdrop-blur-md">
+          <div className="lg:col-span-5 rounded-3xl border border-zinc-800 bg-zinc-900/80 p-4 sm:p-5 space-y-3 shadow-lg backdrop-blur-md">
             <div className="flex items-center justify-between">
               <span className="text-xs font-mono font-bold uppercase text-zinc-100 tracking-wider flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
@@ -125,7 +125,7 @@ export function Footer() {
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleNewsletterSubmit} className="flex items-center gap-2">
+              <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 <input
                   type="email"
                   value={newsletterEmail}
@@ -136,7 +136,7 @@ export function Footer() {
                 />
                 <button
                   type="submit"
-                  className="rounded-2xl bg-emerald-700 hover:bg-emerald-600 text-white px-5 py-2.5 text-xs font-extrabold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 min-h-[42px] shadow-sm"
+                  className="rounded-2xl bg-emerald-700 hover:bg-emerald-600 text-white px-5 py-2.5 text-xs font-extrabold transition-all shrink-0 cursor-pointer flex items-center justify-center gap-1.5 min-h-[42px] shadow-sm"
                 >
                   <span>{t("footerSubscribeBtn")}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -147,7 +147,7 @@ export function Footer() {
         </div>
 
         {/* STRUCTURED HIGH-CONTRAST NAVIGATION GRID */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-xs text-left">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 text-xs text-left">
           {/* Column 1: Engine Status */}
           <div className="space-y-3">
             <h4 className="font-mono font-bold uppercase tracking-wider text-zinc-100 text-xs">
@@ -247,20 +247,20 @@ export function Footer() {
         </div>
 
         {/* EXECUTIVE COPYRIGHT & BACK TO TOP BAR */}
-        <div className="pt-8 border-t border-zinc-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono">
-          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 text-zinc-400">
+        <div className="pt-6 sm:pt-8 border-t border-zinc-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3 text-zinc-400 text-center sm:text-left">
             <span>© {new Date().getFullYear()} UseAimly Inc. {t("rightsReserved")}</span>
-            <span>•</span>
-            <span className="text-zinc-200 font-bold">
+            <span className="hidden sm:inline">•</span>
+            <span className="text-zinc-200 font-bold block sm:inline">
               Cash Affordability ≠ Plan Affordability
             </span>
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="text-zinc-500">Currency: {currency}</span>
+            <span className="text-zinc-500 text-[11px]">Currency: {currency}</span>
             <button
               onClick={scrollToTop}
-              className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-1.5 text-xs font-bold text-zinc-100 hover:border-emerald-500 transition-colors cursor-pointer shadow-sm"
+              className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-900 px-3.5 py-1.5 text-xs font-bold text-zinc-100 hover:border-emerald-500 transition-colors cursor-pointer shadow-sm"
             >
               <span>{t("footerBackToTop")}</span>
               <ArrowUp className="w-3.5 h-3.5 text-emerald-400" />

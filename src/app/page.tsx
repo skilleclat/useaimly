@@ -137,7 +137,7 @@ export default function LandingPage() {
   return (
     <div className="bg-background text-foreground min-h-screen font-sans selection:bg-primary/15">
       {/* Main Landing Canvas */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16 space-y-24 sm:space-y-32">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12 pb-4 sm:pb-12 space-y-16 sm:space-y-28">
         
         {/* ========================================================================= */}
         {/* HERO SECTION (2-COLUMN MATCHING WIREFRAME 1) */}
