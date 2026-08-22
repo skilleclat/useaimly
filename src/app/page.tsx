@@ -579,13 +579,24 @@ export default function LandingPage() {
               {t("pricingSectionSubtitle")}
             </p>
 
+            {/* Payment Trust Badge (M-Pesa + PayPal) */}
+            <div className="inline-flex flex-wrap items-center justify-center gap-3 p-2 px-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 text-xs font-mono">
+              <div className="flex items-center gap-1.5 font-bold text-emerald-600 dark:text-emerald-400">
+                <span>📱 Lipa na M-Pesa (Paybill: <strong>247247</strong> &bull; Acc: <strong>0743898803</strong>)</span>
+              </div>
+              <span className="text-muted-foreground hidden sm:inline">&bull;</span>
+              <div className="flex items-center gap-1.5 font-bold text-[#003087] dark:text-sky-400">
+                <span>💳 PayPal &amp; International Cards</span>
+              </div>
+            </div>
+
             {/* Monthly vs Annual Billing Toggle */}
             <div className="pt-3 flex items-center justify-center">
               <div className="flex items-center gap-3 rounded-full border border-border/80 bg-card p-1.5 shadow-sm">
                 <button
                   type="button"
                   onClick={() => setLandingYearly(false)}
-                  className={`rounded-full px-4 py-2 text-xs font-bold transition-all ${
+                  className={`rounded-full px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
                     !landingYearly
                       ? "bg-primary text-primary-foreground shadow-xs"
                       : "text-muted-foreground hover:text-foreground"
@@ -596,7 +607,7 @@ export default function LandingPage() {
                 <button
                   type="button"
                   onClick={() => setLandingYearly(true)}
-                  className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition-all ${
+                  className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
                     landingYearly
                       ? "bg-primary text-primary-foreground shadow-xs"
                       : "text-muted-foreground hover:text-foreground"
@@ -619,13 +630,11 @@ export default function LandingPage() {
                 isYearly={landingYearly}
                 onSelectPlan={(planId) => {
                   const targetPlan = PRICING_PLANS.find((p) => p.id === planId) || plan;
-                  if (!user) {
-                    router.push(`/signup?plan=${targetPlan.id}&billing=${landingYearly ? "annual" : "monthly"}`);
+                  if (targetPlan.id === "free") {
+                    router.push("/onboarding");
                     return;
                   }
-                  if (targetPlan.id !== "free") {
-                    setSelectedPlanForCheckout(targetPlan);
-                  }
+                  setSelectedPlanForCheckout(targetPlan);
                 }}
               />
             ))}
