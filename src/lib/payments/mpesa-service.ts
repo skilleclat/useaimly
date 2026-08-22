@@ -1,7 +1,27 @@
+export interface MpesaPaybillDetails {
+  businessNumber: string;
+  accountNumber: string;
+  accountName: string;
+  proMonthlyKES: number;
+  proYearlyKES: number;
+  premiumMonthlyKES: number;
+  premiumYearlyKES: number;
+}
+
+export const MPESA_CONFIG: MpesaPaybillDetails = {
+  businessNumber: process.env.NEXT_PUBLIC_MPESA_PAYBILL || "247247",
+  accountNumber: process.env.NEXT_PUBLIC_MPESA_ACCOUNT || "0743898803",
+  accountName: "UseAimly / Equity M-Pesa",
+  proMonthlyKES: 650,
+  proYearlyKES: 5200,
+  premiumMonthlyKES: 1950,
+  premiumYearlyKES: 15600,
+};
+
 export interface MpesaStkPushRequest {
   phoneNumber: string; // e.g. 254712345678
   amount: number; // e.g. 650 KES or 5200 KES
-  accountReference: string; // e.g. "UseAimly Pro"
+  accountReference: string; // e.g. "0743898803"
   transactionDesc: string;
 }
 
@@ -27,4 +47,11 @@ export async function initiateMpesaStkPush(
     responseDescription: "Success. Request accepted for processing",
     customerMessage: `STK Push sent to ${cleanPhone}. Please enter your M-Pesa PIN on your phone to complete payment of KES ${req.amount.toLocaleString()}.`,
   };
+}
+
+export function validateMpesaCodeFormat(code: string): boolean {
+  if (!code) return false;
+  const clean = code.trim().toUpperCase();
+  // Standard Safaricom M-Pesa transaction reference format (e.g. QJH789LK02, SDF892JH10)
+  return /^[A-Z0-9]{8,15}$/.test(clean);
 }

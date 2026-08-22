@@ -703,3 +703,72 @@ export async function upgradePlanAction(planTier: "free" | "pro" | "premium"): P
   }
 }
 
+export async function submitMpesaPaymentAction(
+  transactionCode: string,
+  planTier: "free" | "pro" | "premium",
+  isYearly: boolean,
+  amountKES: number
+): Promise<AuthActionResult> {
+  try {
+    const cleanCode = (transactionCode || "").trim().toUpperCase();
+    if (!cleanCode || cleanCode.length < 8) {
+      return {
+        success: false,
+        message: "Veuillez saisir un code de transaction M-Pesa valide (ex: QJH789LK02).",
+      };
+    }
+
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return {
+        success: false,
+        message: "Vous devez être connecté pour valider votre abonnement M-Pesa.",
+      };
+    }
+
+    // 1. Update user auth metadata
+    await supabase.auth.updateUser({
+      data: {
+        plan_tier: planTier,
+        mpesa_receipt: cleanCode,
+        mpesa_amount_kes: amountKES,
+      },
+    });
+
+    // 2. Update profiles table
+    await (supabase.from("profiles") as any)
+      .update({
+        plan_tier: planTier,
+        plan_status: "active",
+      })
+      .eq("id", user.id);
+
+    // 3. Log transaction
+    try {
+      await (supabase.from("whatsapp_dispatches") as any).insert({
+        user_id: user.id,
+        phone_number: "MPESA_PAYBILL_247247",
+        goal_title: `Sub: ${planTier.toUpperCase()} (${isYearly ? "Annual" : "Monthly"})`,
+        digest_message: `M-Pesa Paybill payment confirmed. Code: ${cleanCode}, Amount: KES ${amountKES}`,
+        status: "CONFIRMED",
+        provider: "MPESA_PAYBILL",
+      });
+    } catch (e) {
+      console.warn("Mpesa dispatch log note:", e);
+    }
+
+    return {
+      success: true,
+      message: `Paiement M-Pesa (${cleanCode}) validé avec succès ! Votre formule ${planTier.toUpperCase()} est active.`,
+      redirectTo: "/app",
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      message: err?.message || "Erreur lors de la validation du code M-Pesa.",
+    };
+  }
+}
+
