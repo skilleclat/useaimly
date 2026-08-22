@@ -7,6 +7,7 @@ import { formatMonthYear, addMonths } from "@/lib/utils/date";
 import { CurrencyCode } from "@/lib/types/finance";
 import { MoneyInput } from "@/components/design-system/MoneyInput";
 import { SilentLeakCard } from "@/components/dashboard/SilentLeakCard";
+import { SmartBudgetCard } from "@/components/finance/SmartBudgetCard";
 import {
   Wallet,
   TrendingUp,
@@ -25,9 +26,10 @@ import {
   ArrowUpRight,
   CheckCircle2,
   Sparkles,
+  PieChart,
 } from "lucide-react";
 
-type TabType = "OVERVIEW" | "INCOME" | "EXPENSES" | "SAVINGS" | "DEBT" | "COMMITMENTS";
+type TabType = "OVERVIEW" | "BUDGET" | "INCOME" | "EXPENSES" | "SAVINGS" | "DEBT" | "COMMITMENTS";
 
 interface IncomeItem {
   id: string;
@@ -227,6 +229,7 @@ export default function MoneyPage() {
         {(
           [
             { key: "OVERVIEW", label: "Overview & Waterfall", icon: <Layers className="w-3.5 h-3.5" /> },
+            { key: "BUDGET", label: "Smart Budget", icon: <PieChart className="w-3.5 h-3.5" /> },
             { key: "INCOME", label: `Income (${incomes.length})`, icon: <TrendingUp className="w-3.5 h-3.5" /> },
             { key: "EXPENSES", label: `Expenses (${expenses.length})`, icon: <ShoppingBag className="w-3.5 h-3.5" /> },
             { key: "SAVINGS", label: `Savings (${savingsAccounts.length})`, icon: <Wallet className="w-3.5 h-3.5" /> },
@@ -249,6 +252,13 @@ export default function MoneyPage() {
           </button>
         ))}
       </div>
+
+      {/* SMART BUDGET TAB */}
+      {activeTab === "BUDGET" && (
+        <div className="space-y-8 animate-fadeIn">
+          <SmartBudgetCard currency={currency} />
+        </div>
+      )}
 
       {/* 1. OVERVIEW & CASH FLOW WATERFALL TAB */}
       {activeTab === "OVERVIEW" && (

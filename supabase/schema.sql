@@ -370,6 +370,26 @@ CREATE TRIGGER set_financial_notes_updated_at
   EXECUTE FUNCTION public.update_updated_at_column();
 
 -- ------------------------------------------------------------------------------
+-- 17.5 Budget Targets Table (Goal-Aware Category Caps & Outflow Guardrails)
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.budget_targets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  category_name TEXT NOT NULL,
+  monthly_target NUMERIC(14,2) NOT NULL CHECK (monthly_target >= 0),
+  current_actual NUMERIC(14,2) NOT NULL DEFAULT 0 CHECK (current_actual >= 0),
+  period TEXT NOT NULL DEFAULT '2026-08',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+DROP TRIGGER IF EXISTS set_budget_targets_updated_at ON public.budget_targets;
+CREATE TRIGGER set_budget_targets_updated_at
+  BEFORE UPDATE ON public.budget_targets
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_updated_at_column();
+
+-- ------------------------------------------------------------------------------
 -- 18. Row Level Security Policies on ALL Tables
 -- ------------------------------------------------------------------------------
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -388,6 +408,7 @@ ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.insights ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.saved_scenarios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.financial_notes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.budget_targets ENABLE ROW LEVEL SECURITY;
 
 -- Profiles Policies
 DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
@@ -548,6 +569,16 @@ CREATE POLICY "Users can insert own financial notes" ON public.financial_notes F
 CREATE POLICY "Users can update own financial notes" ON public.financial_notes FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own financial notes" ON public.financial_notes FOR DELETE USING (auth.uid() = user_id);
 
+-- Budget Targets Policies
+DROP POLICY IF EXISTS "Users can view own budget targets" ON public.budget_targets;
+DROP POLICY IF EXISTS "Users can insert own budget targets" ON public.budget_targets;
+DROP POLICY IF EXISTS "Users can update own budget targets" ON public.budget_targets;
+DROP POLICY IF EXISTS "Users can delete own budget targets" ON public.budget_targets;
+CREATE POLICY "Users can view own budget targets" ON public.budget_targets FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own budget targets" ON public.budget_targets FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own budget targets" ON public.budget_targets FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete own budget targets" ON public.budget_targets FOR DELETE USING (auth.uid() = user_id);
+
 -- ------------------------------------------------------------------------------
 -- 18. Indexes
 -- ------------------------------------------------------------------------------
@@ -561,6 +592,7 @@ CREATE INDEX IF NOT EXISTS idx_expenses_user_id ON public.expenses(user_id);
 CREATE INDEX IF NOT EXISTS idx_expenses_date ON public.expenses(user_id, expense_date DESC);
 CREATE INDEX IF NOT EXISTS idx_savings_accounts_user_id ON public.savings_accounts(user_id);
 CREATE INDEX IF NOT EXISTS idx_debts_user_id ON public.debts(user_id);
+CREATE INDEX IF NOT EXISTS idx_budget_targets_user_id ON public.budget_targets(user_id, period);
 CREATE INDEX IF NOT EXISTS idx_financial_commitments_user_id ON public.financial_commitments(user_id);
 CREATE INDEX IF NOT EXISTS idx_financial_decisions_user_id ON public.financial_decisions(user_id);
 CREATE INDEX IF NOT EXISTS idx_financial_notes_user_id ON public.financial_notes(user_id);

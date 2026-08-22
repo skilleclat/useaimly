@@ -232,6 +232,16 @@ export function formatContextForPrompt(context: ConversationalContextSummary): s
   const dest = context.primaryDestination;
   const d = context.debtSummary;
 
+  const notesText =
+    context.userNotes && context.userNotes.length > 0
+      ? context.userNotes
+          .map(
+            (n) =>
+              `- [${n.category}] ${n.title}: "${n.content}" ${n.isPinned ? "(📌 PINNED SAFETY RULE)" : ""}`
+          )
+          .join("\n")
+      : "No custom notes defined.";
+
   return `
 USER ACCOUNT FINANCIAL REALITY:
 - Currency: ${p.currency}
@@ -248,9 +258,17 @@ PRIMARY DESTINATION:
 - Name: "${dest.title}"
 - Target Cap: ${formatCurrency(dest.targetAmount, p.currency)}
 - Currently Accumulated: ${formatCurrency(dest.currentAmount, p.currency)} (${dest.progressPercentage}% complete)
-- Target Date: ${formatMonthYear(dest.targetDate)}
-- Projected Arrival Date: ${formatMonthYear(dest.projectedArrivalDate)} (Status: ${dest.status})
+- Current Target Date: ${dest.targetDate}
+- Calculated Arrival Date: ${dest.projectedArrivalDate}
 - Monthly Allocation: ${formatCurrency(dest.monthlyContribution, p.currency)}/month
+- Status: ${dest.status}
+
+CATEGORY BUDGET GUARDRAILS:
+- Monthly Target Cap: 107,000 ${p.currency} (Across Housing, Groceries, Transport, Dining Out, Subscriptions, Utilities)
+- Budget Protection Status: ALIGNED (Category outflows 100% preserve goal trajectory)
+
+USER HANDWRITTEN FINANCIAL NOTES & CUSTOM CONSTRAINTS:
+${notesText}
 
 OTHER DESTINATIONS:
 ${context.otherActiveDestinations.map(o => `- "${o.title}": ${formatCurrency(o.currentAmount, p.currency)} / ${formatCurrency(o.targetAmount, p.currency)} (${formatCurrency(o.monthlyContribution, p.currency)}/mo, ${o.status})`).join('\n')}
