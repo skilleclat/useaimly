@@ -1,6 +1,6 @@
 import { CurrencyCode } from "../types/finance";
 
-const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
+export const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
   USD: "$",
   EUR: "€",
   GBP: "£",
@@ -14,31 +14,65 @@ const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
   RWF: "RWF",
 };
 
+export const CURRENCY_RATES: Record<CurrencyCode, number> = {
+  USD: 1,
+  EUR: 0.92,
+  GBP: 0.79,
+  KES: 130,
+  CAD: 1.36,
+  NGN: 1500,
+  ZAR: 18.5,
+  XOF: 600,
+  UGX: 3700,
+  TZS: 2600,
+  RWF: 1300,
+};
+
+export function convertCurrency(
+  amount: number,
+  fromCurrency: CurrencyCode = "USD",
+  toCurrency: CurrencyCode = "USD"
+): number {
+  if (fromCurrency === toCurrency) return amount;
+  const fromRate = CURRENCY_RATES[fromCurrency] || 1;
+  const toRate = CURRENCY_RATES[toCurrency] || 1;
+  const usdAmount = amount / fromRate;
+  const converted = usdAmount * toRate;
+  return Math.round(converted * 100) / 100;
+}
+
 export function formatCurrency(
   amount: number,
   currency: CurrencyCode = "USD",
   options?: {
     showDecimals?: boolean;
     compact?: boolean;
+    fromCurrency?: CurrencyCode;
   }
 ): string {
   const showDecimals = options?.showDecimals ?? false;
   const isCompact = options?.compact ?? false;
+  const fromCurrency = options?.fromCurrency;
+
+  const evalAmount = fromCurrency && fromCurrency !== currency
+    ? convertCurrency(amount, fromCurrency, currency)
+    : amount;
+
   const symbol = CURRENCY_SYMBOLS[currency] || currency;
 
   if (isCompact) {
-    if (Math.abs(amount) >= 1_000_000) {
-      return `${symbol} ${(amount / 1_000_000).toFixed(1)}M`;
+    if (Math.abs(evalAmount) >= 1_000_000) {
+      return `${symbol} ${(evalAmount / 1_000_000).toFixed(1)}M`;
     }
-    if (Math.abs(amount) >= 1_000) {
-      return `${symbol} ${(amount / 1_000).toFixed(0)}k`;
+    if (Math.abs(evalAmount) >= 1_000) {
+      return `${symbol} ${(evalAmount / 1_000).toFixed(0)}k`;
     }
   }
 
   const formattedNumber = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: showDecimals ? 2 : 0,
     maximumFractionDigits: showDecimals ? 2 : 0,
-  }).format(amount);
+  }).format(evalAmount);
 
   return `${symbol} ${formattedNumber}`;
 }

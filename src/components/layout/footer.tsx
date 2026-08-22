@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Container } from "./container";
 import { UseaimlyLogo } from "../design-system/UseaimlyLogo";
+import { useI18n } from "@/lib/i18n/i18n-context";
+import { useCurrency } from "@/lib/currency/currency-context";
 import {
   ArrowUp,
   ShieldCheck,
@@ -20,6 +22,8 @@ import {
 export function Footer() {
   const pathname = usePathname();
   const isAppView = pathname.startsWith("/app");
+  const { t } = useI18n();
+  const { currency } = useCurrency();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [isSubscribed, setIsSubscribed] = useState(false);
 
@@ -45,7 +49,7 @@ export function Footer() {
             <UseaimlyLogo size="sm" showTagline={false} />
             <span className="text-zinc-600 dark:text-zinc-400">•</span>
             <span className="text-foreground/90 font-medium">
-              See tomorrow before deciding today
+              {t("footerTagline")}
             </span>
           </div>
 
@@ -53,22 +57,22 @@ export function Footer() {
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-                System Operational
+                {t("systemOperational")}
               </span>
             </div>
             <Link href="/app/goals" className="hover:text-foreground transition-colors font-medium">
-              Destinations
+              {t("navDestinations")}
             </Link>
             <Link href="/app/decide" className="hover:text-foreground transition-colors font-medium">
-              Decide
+              {t("navDecide")}
             </Link>
             <Link href="/app/settings" className="hover:text-foreground transition-colors font-medium">
-              Settings
+              {t("navSettings")}
             </Link>
             <button
               onClick={scrollToTop}
               className="p-1.5 rounded-lg border border-border bg-secondary/50 text-foreground hover:bg-secondary transition-colors cursor-pointer"
-              title="Back to Top"
+              title={t("footerBackToTop")}
             >
               <ArrowUp className="w-3.5 h-3.5" />
             </button>
@@ -99,10 +103,10 @@ export function Footer() {
             <div className="flex items-center justify-between">
               <span className="text-xs font-mono font-bold uppercase text-zinc-100 tracking-wider flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Decision Intelligence Teardowns</span>
+                <span>{t("footerBriefingTitle")}</span>
               </span>
               <span className="text-[10px] font-mono text-emerald-400 font-extrabold bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
-                Monthly Briefing
+                {t("footerBriefingTag")}
               </span>
             </div>
 
@@ -110,14 +114,14 @@ export function Footer() {
               <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-3 text-xs text-emerald-300 font-semibold flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Subscribed! You&apos;ll receive monthly strategic teardowns.</span>
+                  <span>{t("footerSubscribedSuccess")}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsSubscribed(false)}
                   className="text-[10px] font-mono underline opacity-80 shrink-0 hover:opacity-100"
                 >
-                  Add another
+                  Reset
                 </button>
               </div>
             ) : (
@@ -126,7 +130,7 @@ export function Footer() {
                   type="email"
                   value={newsletterEmail}
                   onChange={(e) => setNewsletterEmail(e.target.value)}
-                  placeholder="Enter your executive email"
+                  placeholder={t("footerSubscribePlaceholder")}
                   required
                   className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-xs text-zinc-100 placeholder:text-zinc-500 focus:border-emerald-500 focus:outline-none min-h-[42px] font-medium"
                 />
@@ -134,7 +138,7 @@ export function Footer() {
                   type="submit"
                   className="rounded-2xl bg-emerald-700 hover:bg-emerald-600 text-white px-5 py-2.5 text-xs font-extrabold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 min-h-[42px] shadow-sm"
                 >
-                  <span>Subscribe</span>
+                  <span>{t("footerSubscribeBtn")}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </form>
@@ -147,49 +151,44 @@ export function Footer() {
           {/* Column 1: Engine Status */}
           <div className="space-y-3">
             <h4 className="font-mono font-bold uppercase tracking-wider text-zinc-100 text-xs">
-              System Health
+              {t("footerSystemHealth")}
             </h4>
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs font-mono text-emerald-400 font-bold">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>System Operational</span>
+              <span>{t("systemOperational")}</span>
             </div>
             <p className="text-xs text-zinc-400 font-mono">
               Deterministic Engine v2.5
             </p>
             <p className="text-[11px] text-zinc-500 font-mono">
-              100% Deterministic • 0% LLM Math Hallucination
+              {t("deterministicMath")}
             </p>
           </div>
 
           {/* Column 2: Platform Features */}
           <div className="space-y-3">
             <h4 className="font-mono font-bold uppercase tracking-wider text-zinc-100 text-xs">
-              Core Platform
+              {t("footerCorePlatform")}
             </h4>
             <ul className="space-y-2 text-zinc-400 font-medium">
               <li>
                 <Link href="/app/goals" className="hover:text-emerald-400 transition-colors">
-                  Goal Destinations Hub
+                  {t("navDestinations")}
                 </Link>
               </li>
               <li>
                 <Link href="/app/decide" className="hover:text-emerald-400 transition-colors">
-                  3-Strategy Decision Studio
+                  {t("navDecide")}
                 </Link>
               </li>
               <li>
                 <Link href="/app/what-if" className="hover:text-emerald-400 transition-colors">
-                  Resilience Radar &amp; Stress-Tester
+                  {t("navWhatIf")}
                 </Link>
               </li>
               <li>
                 <Link href="/app/money?tab=INVESTMENTS" className="hover:text-emerald-400 transition-colors">
-                  Wealth &amp; Investment Portfolio
-                </Link>
-              </li>
-              <li>
-                <Link href="/app/money?tab=BUDGET" className="hover:text-emerald-400 transition-colors">
-                  Goal-Aware Smart Budgeting
+                  {t("navInvestments")}
                 </Link>
               </li>
             </ul>
@@ -198,23 +197,23 @@ export function Footer() {
           {/* Column 3: Monetization & Pricing */}
           <div className="space-y-3">
             <h4 className="font-mono font-bold uppercase tracking-wider text-zinc-100 text-xs">
-              Monetization
+              {t("footerMonetization")}
             </h4>
             <ul className="space-y-2 text-zinc-400 font-medium">
               <li>
                 <Link href="/pricing" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                  <span>Free Starter ($0)</span>
+                  <span>Free Starter</span>
                 </Link>
               </li>
               <li>
                 <Link href="/pricing" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                  <span>Aimly Pro ($4.99/mo)</span>
+                  <span>Aimly Pro</span>
                   <span className="text-[9px] font-mono font-bold bg-amber-500/20 text-amber-400 px-1.5 py-0.2 rounded">Popular</span>
                 </Link>
               </li>
               <li>
                 <Link href="/pricing" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                  <span>Aimly Premium ($9.99/mo)</span>
+                  <span>Aimly Premium</span>
                   <span className="text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded">Complete</span>
                 </Link>
               </li>
@@ -224,7 +223,7 @@ export function Footer() {
           {/* Column 4: Security & Compliance */}
           <div className="space-y-3">
             <h4 className="font-mono font-bold uppercase tracking-wider text-zinc-100 text-xs">
-              Security &amp; Privacy
+              {t("footerSecurity")}
             </h4>
             <ul className="space-y-2 text-zinc-300 font-medium">
               <li className="flex items-center gap-2">
@@ -250,7 +249,7 @@ export function Footer() {
         {/* EXECUTIVE COPYRIGHT & BACK TO TOP BAR */}
         <div className="pt-8 border-t border-zinc-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono">
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 text-zinc-400">
-            <span>© {new Date().getFullYear()} UseAimly Inc. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} UseAimly Inc. {t("rightsReserved")}</span>
             <span>•</span>
             <span className="text-zinc-200 font-bold">
               Cash Affordability ≠ Plan Affordability
@@ -258,12 +257,12 @@ export function Footer() {
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="text-zinc-500">Currencies: USD / KES</span>
+            <span className="text-zinc-500">Currency: {currency}</span>
             <button
               onClick={scrollToTop}
               className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-1.5 text-xs font-bold text-zinc-100 hover:border-emerald-500 transition-colors cursor-pointer shadow-sm"
             >
-              <span>Back to Top</span>
+              <span>{t("footerBackToTop")}</span>
               <ArrowUp className="w-3.5 h-3.5 text-emerald-400" />
             </button>
           </div>

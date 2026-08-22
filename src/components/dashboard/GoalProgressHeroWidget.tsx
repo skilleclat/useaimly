@@ -5,6 +5,7 @@ import Link from "next/link";
 import { formatCurrency } from "@/lib/utils/currency";
 import { useCurrency } from "@/lib/currency/currency-context";
 import { useI18n } from "@/lib/i18n/i18n-context";
+import { ShieldAlert, Briefcase, Home, Plus, Target, ArrowRight, ChevronRight } from "lucide-react";
 
 interface GoalItemSummary {
   id: string;

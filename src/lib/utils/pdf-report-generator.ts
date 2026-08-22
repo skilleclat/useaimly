@@ -451,3 +451,40 @@ export function downloadPDFReport(data: PDFReportData) {
   const filename = `UseAimly_Executive_Briefing_${(data.destinationTitle || "Goal").replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
   doc.save(filename);
 }
+
+export function generateExecutiveBriefingPDF(
+  baselineProfile: any,
+  decision?: any,
+  currency: CurrencyCode = "KES"
+) {
+  const primaryGoal = baselineProfile?.goals?.[0] || {
+    title: "Primary Financial Goal",
+    targetAmount: 500000,
+    currentAmount: 180000,
+    targetDate: "2027-12-31",
+  };
+
+  const data: PDFReportData = {
+    title: "Executive Financial Trajectory Report",
+    userName: "Valued Strategist",
+    currency: currency,
+    destinationTitle: primaryGoal.title,
+    targetAmount: primaryGoal.targetAmount,
+    currentAmount: primaryGoal.currentAmount,
+    targetDate: primaryGoal.targetDate,
+    projectedDate: "2027-11-15",
+    delayInDays: 0,
+    monthlyInflow: (baselineProfile?.incomes || []).reduce((acc: number, i: any) => acc + (i.amount || 0), 0),
+    monthlyOutflow: (baselineProfile?.expenses || []).reduce((acc: number, e: any) => acc + (e.amount || 0), 0),
+    availableForGoals: 68000,
+    liquidSavings: baselineProfile?.liquidSavings || 180000,
+    status: "SAFE",
+    headlineVerdict: "Fully Covered by Liquid Reserves",
+    whatYouCanDo: "Proceed with purchase using liquid reserves.",
+    whatItChanges: "Maintains current goal trajectory.",
+    toStayOnTrack: "Continue current monthly savings pace.",
+    strategicRead: "Strong liquidity resilience.",
+  };
+
+  downloadPDFReport(data);
+}

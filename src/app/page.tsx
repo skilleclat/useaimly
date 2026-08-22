@@ -8,6 +8,8 @@ import { parseDecisionQuery } from "@/lib/nlp/decision-query-parser";
 import { simulateDecision, BaselineFinancialProfile } from "@/lib/finance";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/i18n-context";
+import { useCurrency } from "@/lib/currency/currency-context";
 import { PRICING_PLANS } from "@/lib/types/pricing";
 import { PricingCard } from "@/components/finance/PricingCard";
 import {
@@ -36,10 +38,18 @@ import {
 export default function LandingPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const currency: CurrencyCode = "KES";
+  const { t, language } = useI18n();
+  const { currency, format } = useCurrency();
 
-  // Interactive Live Hero State
-  const [queryInput, setQueryInput] = useState("Can I spend 30,000 KES on a phone?");
+  // Interactive Live Hero State (Default query dynamically formatted to active currency)
+  const defaultAmountBaseUSD = 230; // approx 30,000 KES
+  const formattedDefaultAmt = format(defaultAmountBaseUSD, { fromCurrency: "USD" });
+
+  const [queryInput, setQueryInput] = useState(() =>
+    language === "fr"
+      ? `Puis-je dépenser ${formattedDefaultAmt} pour un téléphone ?`
+      : `Can I spend ${formattedDefaultAmt} on a phone?`
+  );
   const [activeAmount, setActiveAmount] = useState<number>(30000);
   const [activeTitle, setActiveTitle] = useState("Smartphone Purchase");
   const [isRecurring, setIsRecurring] = useState(false);
@@ -54,18 +64,18 @@ export default function LandingPage() {
   const testimonials = [
     {
       name: "Grace W.",
-      role: "Business Owner",
-      quote: "UseAimly changed the way I make decisions. I no longer guess — I see the impact first.",
+      role: t("role1"),
+      quote: t("quote1"),
     },
     {
       name: "David M.",
-      role: "Senior Software Engineer",
-      quote: "Before buying a laptop or booking a trip, I type it into UseAimly. It saved me 6 months of goal delay.",
+      role: t("role2"),
+      quote: t("quote2"),
     },
     {
       name: "Amina K.",
-      role: "Digital Nomad & Consultant",
-      quote: "The 3-pillar breakdown and WhatsApp weekly dispatches give me absolute clarity on my financial future.",
+      role: t("role3"),
+      quote: t("quote3"),
     },
   ];
 
@@ -84,7 +94,7 @@ export default function LandingPage() {
       goals: [
         {
           id: "launch-business",
-          title: "Grow My Business",
+          title: language === "fr" ? "Développer Mon Entreprise" : "Grow My Business",
           targetAmount: 500000,
           currentAmount: 180000,
           targetDate: "2027-12-31",
@@ -93,7 +103,7 @@ export default function LandingPage() {
         },
       ],
     }),
-    []
+    [language]
   );
 
   // Parse natural language input on typing
@@ -122,17 +132,7 @@ export default function LandingPage() {
     });
   }, [baselineProfile, evalTitle, evalAmount, evalRecurring]);
 
-  const handleQuerySubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    router.push("/onboarding");
-  };
-
-  const handlePresetSelect = (text: string, amt: number, ttl: string) => {
-    setQueryInput(text);
-    setActiveAmount(amt);
-    setActiveTitle(ttl);
-    setIsRecurring(false);
-  };
+  const formattedMonthlyRecovers = format(1875, { fromCurrency: "KES" });
 
   return (
     <div className="bg-background text-foreground min-h-screen font-sans selection:bg-primary/15">
@@ -147,15 +147,15 @@ export default function LandingPage() {
           <div className="lg:col-span-7 space-y-6 sm:space-y-8 text-left">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-bold tracking-wide">
               <Zap className="w-3.5 h-3.5" />
-              <span>Goal-Aware Decision Intelligence</span>
+              <span>{t("heroBadge")}</span>
             </div>
 
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold font-editorial text-foreground tracking-tight leading-[1.08]">
-              See <span className="text-primary italic">tomorrow</span> before deciding today.
+              {t("heroTitlePrefix")}<span className="text-primary italic">{t("heroTitleTomorrow")}</span>{t("heroTitleSuffix")}
             </h1>
 
             <p className="text-base sm:text-xl text-muted-foreground font-medium max-w-xl">
-              UseAimly shows you how your financial decisions today impact your future goals.
+              {t("heroMainSubtitle")}
             </p>
 
             {/* Dual CTAs */}
@@ -164,8 +164,8 @@ export default function LandingPage() {
                 href="/onboarding"
                 className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white font-bold text-sm px-8 py-4 shadow-lg shadow-orange-500/25 hover:opacity-95 hover:scale-[1.01] transition-all cursor-pointer"
               >
-                <span>Try a Real Decision</span>
-                <span className="text-xs font-normal opacity-90">(No account needed)</span>
+                <span>{t("btnTryRealDecision")}</span>
+                <span className="text-xs font-normal opacity-90">{t("noAccountNeeded")}</span>
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
 
@@ -174,8 +174,8 @@ export default function LandingPage() {
                   href="/signup"
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card hover:bg-secondary/70 text-foreground font-bold text-sm px-6 py-4 shadow-xs transition-all"
                 >
-                  <span>Create Free Account</span>
-                  <span className="text-xs text-muted-foreground font-normal">(30 seconds)</span>
+                  <span>{t("btnCreateFreeAccount")}</span>
+                  <span className="text-xs text-muted-foreground font-normal">{t("signupTime")}</span>
                 </Link>
               )}
             </div>
@@ -195,10 +195,10 @@ export default function LandingPage() {
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="w-3.5 h-3.5 fill-amber-500" />
                   ))}
-                  <span className="text-foreground ml-1 text-xs">5.0</span>
+                  <span className="text-foreground ml-1 text-xs">{t("socialProofRating")}</span>
                 </div>
                 <p className="text-[11px] text-muted-foreground font-medium">
-                  Trusted by 1,000+ smart decision makers
+                  {t("socialProofCount")}
                 </p>
               </div>
             </div>
@@ -210,17 +210,22 @@ export default function LandingPage() {
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-bold flex items-center gap-1.5">
                   <Compass className="w-4 h-4 text-primary" />
-                  <span>Try a real decision</span>
+                  <span>{t("widgetHeaderTitle")}</span>
                 </span>
                 <span className="text-[10px] font-mono bg-primary/10 text-primary px-2.5 py-0.5 rounded-full font-bold">
-                  LIVE DEMO
+                  {t("widgetLiveDemoTag")}
                 </span>
               </div>
 
               {/* Decision Query Card */}
               <div className="rounded-2xl border border-border/80 bg-secondary/40 p-4 space-y-1">
-                <span className="text-[11px] text-muted-foreground font-semibold block">Decision Query</span>
-                <p className="text-sm font-bold text-foreground">{queryInput}</p>
+                <span className="text-[11px] text-muted-foreground font-semibold block">{t("widgetQueryLabel")}</span>
+                <input
+                  type="text"
+                  value={queryInput}
+                  onChange={(e) => setQueryInput(e.target.value)}
+                  className="w-full bg-transparent text-sm font-bold text-foreground focus:outline-none"
+                />
               </div>
 
               {/* Impact Breakdown */}
@@ -232,10 +237,10 @@ export default function LandingPage() {
                   </div>
                   <div>
                     <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-                      IMMEDIATE IMPACT
+                      {t("widgetImmediateImpact")}
                     </span>
                     <p className="font-semibold text-foreground mt-0.5">
-                      Your emergency cushion decreases by <strong className="text-sky-500 font-bold">8%</strong>
+                      {t("widgetCushionText")} <strong className="text-sky-500 font-bold">8%</strong>
                     </p>
                   </div>
                 </div>
@@ -247,10 +252,10 @@ export default function LandingPage() {
                   </div>
                   <div>
                     <span className="text-[10px] font-mono uppercase text-primary font-bold block">
-                      FUTURE CONSEQUENCE
+                      {t("widgetFutureConsequence")}
                     </span>
                     <p className="font-semibold text-foreground mt-0.5">
-                      Your Business Goal moves <strong className="text-primary font-bold text-sm">+{simulation.delta.delayInDays || 31} days later</strong>
+                      {t("widgetGoalDelayText")} <strong className="text-primary font-bold text-sm">+{simulation.delta.delayInDays || 31} {language === "fr" ? "jours plus tard" : "days later"}</strong>
                     </p>
                   </div>
                 </div>
@@ -262,10 +267,10 @@ export default function LandingPage() {
                   </div>
                   <div>
                     <span className="text-[10px] font-mono uppercase text-emerald-500 font-bold block">
-                      STAY ON TRACK
+                      {t("widgetStayOnTrack")}
                     </span>
                     <p className="font-semibold text-foreground mt-0.5">
-                      Save an additional <strong className="text-emerald-500 font-bold">KES 1,875 / month</strong>
+                      {t("widgetSaveAdditionalText")} <strong className="text-emerald-500 font-bold">{formattedMonthlyRecovers} / {language === "fr" ? "mois" : "month"}</strong>
                     </p>
                   </div>
                 </div>
@@ -276,7 +281,7 @@ export default function LandingPage() {
                 href="/onboarding"
                 className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-primary text-primary-foreground font-bold text-sm py-3.5 shadow-md hover:opacity-95 transition-all cursor-pointer"
               >
-                <span>See Full Analysis</span>
+                <span>{t("widgetSeeFullAnalysis")}</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -284,15 +289,15 @@ export default function LandingPage() {
         </section>
 
         {/* ========================================================================= */}
-        {/* SECTION: WHY USEAIMLY? ("Because life moves forward. Your decisions should too.") */}
+        {/* SECTION: WHY USEAIMLY? */}
         {/* ========================================================================= */}
         <section className="space-y-12 text-center">
           <div className="space-y-3 max-w-2xl mx-auto">
             <span className="text-xs font-mono uppercase tracking-wider text-primary font-bold">
-              Why UseAimly?
+              {t("whyTitleTag")}
             </span>
             <h2 className="text-3xl sm:text-5xl font-bold font-editorial text-foreground tracking-tight leading-tight">
-              Because life moves forward.<br />Your decisions should too.
+              {t("whyMainTitle")}<br />{t("whyMainTitleLine2")}
             </h2>
           </div>
 
@@ -301,28 +306,28 @@ export default function LandingPage() {
               {
                 step: "01",
                 icon: <Compass className="w-5 h-5 text-primary" />,
-                title: "Look Forward",
-                description: "We show future impact, not just past transactions.",
+                title: t("whyCard1Title"),
+                description: t("whyCard1Desc"),
               },
               {
                 step: "02",
                 icon: <Layers className="w-5 h-5 text-primary" />,
-                title: "Understand Impact",
-                description: "See what changes now and what changes later.",
+                title: t("whyCard2Title"),
+                description: t("whyCard2Desc"),
               },
               {
                 step: "03",
                 icon: <Zap className="w-5 h-5 text-primary" />,
-                title: "Make Better Choices",
-                description: "Decide with clarity, not guesswork.",
+                title: t("whyCard3Title"),
+                description: t("whyCard3Desc"),
               },
               {
                 step: "04",
                 icon: <TrendingUp className="w-5 h-5 text-primary" />,
-                title: "Stay on Track",
-                description: "Adjust your path and reach your goals faster.",
+                title: t("whyCard4Title"),
+                description: t("whyCard4Desc"),
               },
-            ].map((item, idx) => (
+            ].map((item) => (
               <div
                 key={item.step}
                 className="rounded-3xl border border-border/80 bg-card p-6 space-y-4 text-left shadow-xs hover:border-primary/40 transition-all group"
@@ -347,15 +352,15 @@ export default function LandingPage() {
         </section>
 
         {/* ========================================================================= */}
-        {/* SECTION: HOW USEAIMLY WORKS (4 SIMPLE STEPS TO FINANCIAL CLARITY) */}
+        {/* SECTION: HOW USEAIMLY WORKS */}
         {/* ========================================================================= */}
         <section className="space-y-12 text-center rounded-3xl border border-border/80 bg-card/40 p-8 sm:p-14">
           <div className="space-y-3 max-w-2xl mx-auto">
             <h2 className="text-3xl sm:text-5xl font-bold font-editorial text-foreground tracking-tight">
-              How UseAimly Works
+              {t("howTitle")}
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium">
-              Four simple steps to financial clarity
+              {t("howSubtitle")}
             </p>
           </div>
 
@@ -363,23 +368,23 @@ export default function LandingPage() {
             {[
               {
                 num: "01",
-                title: "Add Your Picture",
-                text: "Tell us about your income, expenses, goals and commitments.",
+                title: t("howStep1Title"),
+                text: t("howStep1Text"),
               },
               {
                 num: "02",
-                title: "Set Your Destinations",
-                text: "Choose what you're working toward and when you want to achieve them.",
+                title: t("howStep2Title"),
+                text: t("howStep2Text"),
               },
               {
                 num: "03",
-                title: "Ask About a Decision",
-                text: "Type any financial decision you're considering.",
+                title: t("howStep3Title"),
+                text: t("howStep3Text"),
               },
               {
                 num: "04",
-                title: "See the Impact",
-                text: "Understand what changes now, what changes later, and what to do next.",
+                title: t("howStep4Title"),
+                text: t("howStep4Text"),
               },
             ].map((step) => (
               <div
@@ -401,11 +406,11 @@ export default function LandingPage() {
         </section>
 
         {/* ========================================================================= */}
-        {/* SECTION: TRUSTED BY PEOPLE WHO PLAN AHEAD (LOGOS + TESTIMONIAL) */}
+        {/* SECTION: TRUSTED BY PEOPLE WHO PLAN AHEAD */}
         {/* ========================================================================= */}
         <section className="space-y-8 text-center">
           <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-bold">
-            Trusted by people who plan ahead
+            {t("trustedByTag")}
           </span>
 
           {/* Bank / Partner Logos Bar */}
@@ -452,15 +457,15 @@ export default function LandingPage() {
         </section>
 
         {/* ========================================================================= */}
-        {/* SECTION: SEE WHAT YOUR DECISIONS DO TO YOUR FUTURE (4 SCENARIO CARDS GRID) */}
+        {/* SECTION: SEE WHAT YOUR DECISIONS DO TO YOUR FUTURE */}
         {/* ========================================================================= */}
         <section className="space-y-10">
           <div className="text-center space-y-3 max-w-2xl mx-auto">
             <h2 className="text-3xl sm:text-5xl font-bold font-editorial text-foreground tracking-tight">
-              See what your decisions do to your future
+              {t("scenariosSectionTitle")}
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium">
-              Real decisions. Real impact. Real clarity.
+              {t("scenariosSectionSubtitle")}
             </p>
           </div>
 
@@ -468,34 +473,34 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
-                title: "Buy a phone for 30,000 KES",
+                title: t("scenario1Title").replace("{amount}", format(230, { fromCurrency: "USD" })),
                 popular: true,
-                impactNow: "-8% Emergency Cushion",
-                future: "Business goal delayed by 31 days",
-                stayOnTrack: "Save KES 1,875 more per month",
+                impactNow: t("scenario1Impact"),
+                future: t("scenario1Future"),
+                stayOnTrack: t("scenario1Track").replace("{amount}", format(15, { fromCurrency: "USD" })),
               },
               {
-                title: "Take a loan of 150,000 KES",
+                title: t("scenario2Title").replace("{amount}", format(1150, { fromCurrency: "USD" })),
                 popular: false,
-                impactNow: "+22% Debt Pressure",
-                future: "Goal delayed by 2.8 months",
-                stayOnTrack: "Increase income or reduce fixed costs",
+                impactNow: t("scenario2Impact"),
+                future: t("scenario2Future"),
+                stayOnTrack: t("scenario2Track"),
               },
               {
-                title: "Move to a better apartment",
+                title: t("scenario3Title"),
                 popular: false,
-                impactNow: "-18% Free Cash Flow",
-                future: "Goal delayed by 45 days",
-                stayOnTrack: "Review housing budget or increase income",
+                impactNow: t("scenario3Impact"),
+                future: t("scenario3Future"),
+                stayOnTrack: t("scenario3Track"),
               },
               {
-                title: "Take a vacation for 80,000 KES",
+                title: t("scenario4Title").replace("{amount}", format(615, { fromCurrency: "USD" })),
                 popular: false,
-                impactNow: "-12% Emergency Cushion",
-                future: "Goal delayed by 22 days",
-                stayOnTrack: "Delay or save more this month",
+                impactNow: t("scenario4Impact"),
+                future: t("scenario4Future"),
+                stayOnTrack: t("scenario4Track"),
               },
-            ].map((scenario, idx) => (
+            ].map((scenario) => (
               <div
                 key={scenario.title}
                 className={`rounded-3xl border p-6 space-y-6 flex flex-col justify-between transition-all ${
@@ -507,7 +512,7 @@ export default function LandingPage() {
                 <div className="space-y-4">
                   {scenario.popular && (
                     <span className="px-3 py-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider">
-                      Popular
+                      {t("scenarioPopularTag")}
                     </span>
                   )}
                   <h3 className="text-lg font-bold text-foreground tracking-tight">
@@ -517,21 +522,21 @@ export default function LandingPage() {
                   <div className="space-y-3 pt-2 text-xs border-t border-border/60">
                     <div>
                       <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-                        Impact Now
+                        {t("scenarioImpactNowLabel")}
                       </span>
                       <p className="font-semibold text-rose-500 mt-0.5">{scenario.impactNow}</p>
                     </div>
 
                     <div>
                       <span className="text-[10px] font-mono uppercase text-primary font-bold block">
-                        Future Consequence
+                        {t("scenarioFutureConsequenceLabel")}
                       </span>
                       <p className="font-semibold text-foreground mt-0.5">{scenario.future}</p>
                     </div>
 
                     <div>
                       <span className="text-[10px] font-mono uppercase text-emerald-500 font-bold block">
-                        Stay on Track
+                        {t("scenarioStayOnTrackLabel")}
                       </span>
                       <p className="font-semibold text-foreground/80 mt-0.5">{scenario.stayOnTrack}</p>
                     </div>
@@ -542,7 +547,7 @@ export default function LandingPage() {
                   href="/onboarding"
                   className="w-full inline-flex items-center justify-between text-xs font-bold text-primary hover:underline pt-4 border-t border-border/40"
                 >
-                  <span>Try this decision</span>
+                  <span>{t("scenarioTryBtn")}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
@@ -551,15 +556,15 @@ export default function LandingPage() {
         </section>
 
         {/* ========================================================================= */}
-        {/* SECTION: PRICING (MATCHING WIREFRAME 2) */}
+        {/* SECTION: PRICING */}
         {/* ========================================================================= */}
         <section id="pricing" className="space-y-10 py-6">
           <div className="text-center space-y-3 max-w-2xl mx-auto">
             <h2 className="text-3xl sm:text-5xl font-bold font-editorial text-foreground tracking-tight">
-              Simple, transparent pricing
+              {t("pricingSectionTitle")}
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium">
-              Start free. Upgrade when you&apos;re ready to protect your trajectory.
+              {t("pricingSectionSubtitle")}
             </p>
 
             {/* Monthly vs Annual Billing Toggle */}
@@ -574,7 +579,7 @@ export default function LandingPage() {
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  Monthly Billing
+                  {t("monthlyBilling")}
                 </button>
                 <button
                   type="button"
@@ -585,9 +590,9 @@ export default function LandingPage() {
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  <span>Annual Billing</span>
+                  <span>{t("annualBilling")}</span>
                   <span className="rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] px-2 py-0.5 font-extrabold uppercase">
-                    -20%
+                    {t("discountBadge")}
                   </span>
                 </button>
               </div>
@@ -596,21 +601,21 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch pt-4 max-w-5xl mx-auto">
             {PRICING_PLANS.map((plan) => (
-              <PricingCard key={plan.id} plan={plan} isYearly={landingYearly} currency="USD" />
+              <PricingCard key={plan.id} plan={plan} isYearly={landingYearly} />
             ))}
           </div>
         </section>
 
         {/* ========================================================================= */}
-        {/* SECTION: FINAL CONVERSION BANNER (MATCHING WIREFRAME 2 BOTTOM) */}
+        {/* SECTION: FINAL CONVERSION BANNER */}
         {/* ========================================================================= */}
         <section className="rounded-3xl border border-primary/30 bg-primary/5 p-8 sm:p-14 flex flex-col md:flex-row items-center justify-between gap-8 max-w-5xl mx-auto shadow-xl shadow-primary/5">
-          <div className="space-y-2 text-left">
+          <div className="space-y-2 text-left whitespace-pre-line">
             <h2 className="text-2xl sm:text-4xl font-bold font-editorial text-foreground tracking-tight">
-              Stop guessing.<br />See what your decisions really do.
+              {t("bannerTitle")}
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium">
-              Try a real decision now — no account needed.
+              {t("bannerSubtitle")}
             </p>
           </div>
 
@@ -619,11 +624,11 @@ export default function LandingPage() {
               href="/onboarding"
               className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white font-bold text-sm px-8 py-4 shadow-lg shadow-orange-500/25 hover:opacity-95 transition-all"
             >
-              <span>See My Decision&apos;s Impact</span>
+              <span>{t("bannerCta")}</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
             <p className="text-[11px] text-muted-foreground font-mono block">
-              No credit card required
+              {t("bannerNoCard")}
             </p>
           </div>
         </section>
@@ -631,3 +636,4 @@ export default function LandingPage() {
     </div>
   );
 }
+

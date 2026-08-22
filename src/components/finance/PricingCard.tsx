@@ -3,12 +3,15 @@
 import React from "react";
 import Link from "next/link";
 import { PricingPlan } from "@/lib/types/pricing";
+import { useCurrency } from "@/lib/currency/currency-context";
+import { useI18n } from "@/lib/i18n/i18n-context";
+import { CurrencyCode } from "@/lib/types/finance";
 import { Check, Sparkles, Zap, Shield, ArrowRight } from "lucide-react";
 
 interface PricingCardProps {
   plan: PricingPlan;
   isYearly: boolean;
-  currency?: "USD" | "KES";
+  currency?: CurrencyCode;
   currentPlanId?: string;
   onSelectPlan?: (planId: string) => void;
 }
@@ -16,20 +19,81 @@ interface PricingCardProps {
 export function PricingCard({
   plan,
   isYearly,
-  currency = "USD",
+  currency: propCurrency,
   currentPlanId,
   onSelectPlan,
 }: PricingCardProps) {
+  const { currency: globalCurrency, format, convert } = useCurrency();
+  const { t, language } = useI18n();
+
+  const activeCurrency = propCurrency || globalCurrency;
+
+  // Determine base USD amount for monthly vs yearly
+  const basePriceUSD = isYearly
+    ? (plan.totalYearlyUSD || plan.priceYearlyUSD * 12)
+    : plan.priceMonthlyUSD;
+
+  // Format main display price
+  const formattedPrice = basePriceUSD === 0
+    ? t("freePriceLabel")
+    : format(basePriceUSD, { fromCurrency: "USD" });
+
+  // Monthly equivalent for annual billing
+  const monthlyEquivUSD = isYearly ? (plan.priceYearlyUSD) : plan.priceMonthlyUSD;
+  const formattedMonthlyEquiv = format(monthlyEquivUSD, { fromCurrency: "USD" });
+
   const isCurrentPlan = currentPlanId === plan.id;
-  const isKES = currency === "KES";
+  const periodLabel = isYearly ? t("perYear") : t("perMonth");
 
-  const priceMonthly = isKES ? plan.priceMonthlyKES : plan.priceMonthlyUSD;
-  const totalYearly = isKES ? plan.priceYearlyKES : (plan.totalYearlyUSD || plan.priceYearlyUSD * 12);
-  const monthlyEquivalent = isKES ? Math.round(plan.priceYearlyKES / 12) : plan.priceYearlyUSD;
+  // Localized Taglines & Badges
+  const planTagline = language === "fr"
+    ? (plan.id === "free" ? t("planFreeTagline") : plan.id === "pro" ? t("planProTagline") : t("planPremiumTagline"))
+    : plan.tagline;
 
-  const displayPrice = isYearly ? totalYearly : priceMonthly;
-  const currencySymbol = isKES ? "KES " : "$";
-  const periodLabel = isYearly ? "/year" : "/month";
+  const planBadge = plan.badge
+    ? (language === "fr"
+        ? (plan.id === "pro" ? t("planProBadge") : t("planPremiumBadge"))
+        : plan.badge)
+    : undefined;
+
+  const ctaText = language === "fr"
+    ? (plan.id === "free" ? t("planFreeCta") : plan.id === "pro" ? t("planProCta") : t("planPremiumCta"))
+    : plan.ctaText;
+
+  // Localized features in French when language === "fr"
+  const localizedFeatures = plan.features.map((feat, idx) => {
+    if (language !== "fr") return feat;
+    // Map feature text to French
+    const frMap: Record<string, string> = {
+      "1 Primary Financial Destination": "1 Destination Financière Principale",
+      "Monthly Cashflow & Free Balance Calculator": "Calculateur de Cash-Flow & Solde Libre Mensuel",
+      "Basic Purchase Decision Simulation": "Simulation de Décision d'Achat de Base",
+      "Interactive Sandbox & Demo Data Mode": "Mode Bac à Sable Interactif & Données Démo",
+      "3-Strategy Decision Impact Studio (Spread, Postpone)": "Studio Décisionnel 3-Stratégies (Échelonner, Reporter)",
+      "6 Proactive Insight Alert Rules": "6 Règles d'Alerte & Prévisions Proactives",
+      "Dedicated AI Financial Advisor (Gemini / GPT-4)": "Conseiller Financier IA Dédié (Gemini / GPT-4)",
+      "Unlimited 'What-If' Scenario Laboratory": "Laboratoire de Scénarios 'Et si ?' Illimité",
+      "Financial Data Export (CSV & PDF)": "Exportation des Données Financières (CSV & PDF)",
+      "Unlimited Financial Destinations": "Destinations Financières Illimitées",
+      "3-Strategy Impact Studio (Cash, Spread, Postpone)": "Studio Décisionnel 3-Stratégies (Comptant, Échelonner, Reporter)",
+      "6 Proactive Insight Rules (60-Day Foresight)": "6 Règles Proactives (Anticipation à 60 jours)",
+      "AI Financial Notepad & Strategic Context Sync": "Bloc-Notes IA & Synchronisation de Contexte",
+      "Full 6 Financial Cash Flow Management": "Gestion Complète des 6 Flux Financiers",
+      "Data Export (CSV & Custom Reports)": "Exportation des Données (CSV & Rapports Sur Mesure)",
+      "Priority Email Support": "Support Email Prioritaire",
+      "Everything included in Aimly Pro": "Tout ce qui est inclus dans Aimly Pro",
+      "Interactive AI Financial Advisor (Gemini / GPT-4)": "Conseiller IA Financier Interactif (Gemini / GPT-4)",
+      "AI Financial Notepad & Unlimited Rules Engine": "Bloc-Notes IA & Moteur de Règles Illimité",
+      "Custom Debt Elimination Strategies": "Stratégies Sur Mesure d'Élimination des Dettes",
+      "Multi-Account & Currency Aggregation": "Agrégation Multi-Comptes & Multi-Devises",
+      "1-on-1 VIP Strategy Orientation Session": "Session Individuelle de Stratégie VIP 1-sur-1",
+      "24/7 Priority WhatsApp & Email Support": "Support Prioritaire 24/7 WhatsApp & Email",
+    };
+    return {
+      ...feat,
+      text: frMap[feat.text] || feat.text,
+    };
+  });
 
   return (
     <div
@@ -40,10 +104,10 @@ export function PricingCard({
       }`}
     >
       {/* Popular Badge */}
-      {plan.badge && (
+      {planBadge && (
         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-orange-500 px-4 py-1 text-[11px] font-bold tracking-wider text-primary-foreground uppercase shadow-md">
           <Sparkles className="w-3 h-3" />
-          <span>{plan.badge}</span>
+          <span>{planBadge}</span>
         </div>
       )}
 
@@ -55,22 +119,22 @@ export function PricingCard({
           {plan.id === "premium" && <Shield className="w-5 h-5 text-amber-500" />}
         </div>
         <p className="text-xs text-muted-foreground leading-relaxed min-h-[36px]">
-          {plan.tagline}
+          {planTagline}
         </p>
 
         {/* Pricing Display */}
         <div className="pt-2 pb-4 border-b border-border/60">
           <div className="flex items-baseline gap-1">
             <span className="text-3xl sm:text-4xl font-black text-foreground font-editorial">
-              {displayPrice === 0 ? "Free" : `${currencySymbol}${displayPrice}`}
+              {formattedPrice}
             </span>
-            {displayPrice > 0 && (
+            {basePriceUSD > 0 && (
               <span className="text-xs font-mono font-bold text-muted-foreground">{periodLabel}</span>
             )}
           </div>
-          {isYearly && displayPrice > 0 && (
+          {isYearly && basePriceUSD > 0 && (
             <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
-              Just {currencySymbol}{monthlyEquivalent}/month equivalent (Billed annually)
+              {t("billedAnnuallyEquiv").replace("{price}", formattedMonthlyEquiv)}
             </p>
           )}
         </div>
@@ -78,10 +142,10 @@ export function PricingCard({
         {/* Feature List */}
         <div className="space-y-3 pt-2">
           <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
-            Included features:
+            {t("includedFeatures")}
           </span>
           <ul className="space-y-2.5">
-            {plan.features.map((feat, idx) => (
+            {localizedFeatures.map((feat, idx) => (
               <li key={idx} className="flex items-start gap-2.5 text-xs">
                 <div
                   className={`mt-0.5 rounded-full p-0.5 shrink-0 ${
@@ -115,7 +179,7 @@ export function PricingCard({
       <div className="pt-8">
         {isCurrentPlan ? (
           <div className="w-full rounded-2xl bg-secondary py-3 text-center text-xs font-bold text-muted-foreground border border-border">
-            Current Plan
+            {t("currentPlanLabel")}
           </div>
         ) : onSelectPlan ? (
           <button
@@ -126,7 +190,7 @@ export function PricingCard({
                 : "bg-primary text-primary-foreground hover:opacity-95"
             }`}
           >
-            <span>{plan.ctaText}</span>
+            <span>{ctaText}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         ) : (
@@ -138,7 +202,7 @@ export function PricingCard({
                 : "bg-primary text-primary-foreground hover:opacity-95"
             }`}
           >
-            <span>{plan.ctaText}</span>
+            <span>{ctaText}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         )}
@@ -146,3 +210,4 @@ export function PricingCard({
     </div>
   );
 }
+

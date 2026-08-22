@@ -8,6 +8,7 @@ import { UseaimlyLogo } from "../design-system/UseaimlyLogo";
 import { ThemeToggle } from "./theme-toggle";
 import { LanguageCurrencySelector } from "./LanguageCurrencySelector";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/i18n-context";
 import {
   Compass,
   Target,
@@ -25,6 +26,7 @@ import {
 export function Header() {
   const pathname = usePathname();
   const { user, profile, signOut } = useAuth();
+  const { t } = useI18n();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // If inside the authenticated app shell, the AppLayout renders the top navigation
@@ -36,25 +38,25 @@ export function Header() {
 
   const NAV_LINKS = [
     {
-      label: "Destinations",
+      label: t("navDestinations"),
       href: "/app/goals",
       icon: <Target className="w-4 h-4" />,
       desc: "Life goals & target timelines",
     },
     {
-      label: "Simulate Decision",
+      label: t("navDecide"),
       href: "/app/decide",
       icon: <HelpCircle className="w-4 h-4" />,
       desc: "Test purchase impact before spending",
     },
     {
-      label: "What If?",
+      label: t("navWhatIf"),
       href: "/app/what-if",
       icon: <TrendingUp className="w-4 h-4" />,
       desc: "Financial scenario laboratory",
     },
     {
-      label: "Design System",
+      label: t("navDesignSystem"),
       href: "/design-system",
       icon: <Layers className="w-4 h-4" />,
       desc: "UI component foundation",
@@ -90,7 +92,7 @@ export function Header() {
                 title="Sign out"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                <span>Sign out</span>
+                <span>{t("navSignOut")}</span>
               </button>
             </div>
           ) : (
@@ -100,20 +102,20 @@ export function Header() {
                 className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3.5 py-1.5 text-xs font-bold text-primary hover:bg-primary/20 transition-all shadow-xs shrink-0 whitespace-nowrap"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Try Live Demo</span>
+                <span>{t("navLiveDemo")}</span>
               </Link>
               <Link
                 href="/login"
                 className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5"
               >
                 <LogIn className="w-3.5 h-3.5" />
-                <span>Sign In</span>
+                <span>{t("navSignIn")}</span>
               </Link>
               <Link
                 href="/signup"
                 className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-primary px-4 sm:px-5 py-1.5 sm:py-2 text-xs font-semibold text-primary-foreground hover:opacity-95 shadow-xs transition-all shrink-0 whitespace-nowrap"
               >
-                <span>Get Started</span>
+                <span>{t("navGetStarted")}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -137,7 +139,7 @@ export function Header() {
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-border/60 bg-background/98 backdrop-blur-2xl px-4 py-4 space-y-3 animate-fadeIn shadow-xl max-h-[calc(100vh-3.5rem)] overflow-y-auto">
           <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
-            Quick Navigation
+            {t("quickNav")}
           </div>
 
           <div className="grid grid-cols-1 gap-1">
@@ -176,7 +178,7 @@ export function Header() {
               className="w-full flex items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 py-2.5 text-xs font-bold text-primary hover:bg-primary/20 transition-colors"
             >
               <Sparkles className="w-4 h-4" />
-              <span>Try Live Demo (No Login Needed)</span>
+              <span>{t("navLiveDemo")}</span>
             </Link>
 
             <Link
@@ -185,7 +187,7 @@ export function Header() {
               className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-xs font-semibold text-primary-foreground hover:opacity-95 shadow-xs transition-opacity"
             >
               <Compass className="w-4 h-4" />
-              <span>Get Started</span>
+              <span>{t("navGetStarted")}</span>
             </Link>
           </div>
         </div>
