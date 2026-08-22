@@ -45,53 +45,63 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   const lightBg = [247, 246, 243]; // #F7F6F3
   const cardBorder = [228, 226, 220]; // #E4E2DC
 
-  // 1. BRAND HEADER BAR (Deep Warm Obsidian #131211)
-  doc.setFillColor(19, 18, 17);
-  doc.rect(0, 0, pageWidth, 32, "F");
+  // 1. BRAND HEADER BAR (Crisp Executive White with Top Orange Stripe & Divider)
+  // Top Orange Accent Stripe (3.5mm)
+  doc.setFillColor(255, 77, 38); // #FF4D26
+  doc.rect(0, 0, pageWidth, 3.5, "F");
 
-  // Official Logo Image Header
+  // Main Header Background (Crisp White #FFFFFF)
+  doc.setFillColor(255, 255, 255);
+  doc.rect(0, 3.5, pageWidth, 28.5, "F");
+
+  // Bottom Border Line
+  doc.setDrawColor(228, 226, 220); // #E4E2DC
+  doc.setLineWidth(0.5);
+  doc.line(0, 32, pageWidth, 32);
+
+  // Official Logo Image Header (Orange Icon + Black "Use" + Orange "Aimly" 100% visible on white background)
   const logoX = margin;
   try {
-    doc.addImage(USEAIMLY_LOGO_BASE64, "PNG", logoX, 6, 38, 20);
+    doc.addImage(USEAIMLY_LOGO_BASE64, "PNG", logoX, 6.5, 42, 22);
   } catch (e) {
     // Vector fallback
-    doc.setDrawColor(255, 85, 51);
+    doc.setDrawColor(255, 77, 38);
     doc.setLineWidth(1.1);
-    doc.circle(logoX + 5, 15, 6.5, "S");
-    doc.setFillColor(255, 85, 51);
-    doc.triangle(logoX + 3, 17.5, logoX + 7, 17.5, logoX + 5, 12, "F");
+    doc.circle(logoX + 5, 17, 6.5, "S");
+    doc.setFillColor(255, 77, 38);
+    doc.triangle(logoX + 3, 19.5, logoX + 7, 19.5, logoX + 5, 14, "F");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.setTextColor(255, 255, 255);
-    doc.text("Use", logoX + 14, 17);
-    doc.setTextColor(255, 85, 51);
-    doc.text("Aimly", logoX + 14 + doc.getTextWidth("Use"), 17);
+    doc.setTextColor(23, 23, 23); // Black "Use"
+    doc.text("Use", logoX + 14, 19);
+    doc.setTextColor(255, 77, 38); // Orange "Aimly"
+    doc.text("Aimly", logoX + 14 + doc.getTextWidth("Use"), 19);
   }
 
   // Vertical Separator Line
-  const sepX = logoX + 41;
-  doc.setDrawColor(60, 60, 60);
-  doc.setLineWidth(0.4);
-  doc.line(sepX, 8, sepX, 24);
+  const sepX = logoX + 46;
+  doc.setDrawColor(220, 220, 220);
+  doc.setLineWidth(0.5);
+  doc.line(sepX, 8, sepX, 26);
 
   // Report Title Badge
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
-  doc.setTextColor(255, 85, 51);
-  doc.text("EXECUTIVE FINANCIAL TRAJECTORY REPORT", sepX + 5, 14);
+  doc.setTextColor(255, 77, 38); // Primary Orange
+  doc.text("EXECUTIVE FINANCIAL TRAJECTORY REPORT", sepX + 5, 14.5);
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(160, 160, 160);
-  doc.text("Goal-Aware Deterministic Decision Intelligence", sepX + 5, 19);
+  doc.setFontSize(7.5);
+  doc.setTextColor(100, 100, 100);
+  doc.text("Goal-Aware Deterministic Decision Intelligence", sepX + 5, 20);
 
   // Date & Reference ID on right
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
-  doc.setTextColor(180, 180, 180);
+  doc.setTextColor(90, 90, 90);
   const nowStr = new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-  doc.text(`DATE: ${nowStr}`, pageWidth - margin, 13, { align: "right" });
-  doc.text(`REF: UAM-${Math.floor(100000 + Math.random() * 900000)}`, pageWidth - margin, 19, { align: "right" });
+  doc.text(`DATE: ${nowStr}`, pageWidth - margin, 14, { align: "right" });
+  doc.text(`REF: UAM-${Math.floor(100000 + Math.random() * 900000)}`, pageWidth - margin, 20, { align: "right" });
 
   y = 42;
 
@@ -281,34 +291,41 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.addPage("a4", "portrait");
   let y2 = 20;
 
-  // Header Bar (Page 2)
-  doc.setFillColor(19, 18, 17);
-  doc.rect(0, 0, pageWidth, 28, "F");
+  // Header Bar (Page 2 - Crisp Executive White with Top Orange Stripe)
+  doc.setFillColor(255, 77, 38);
+  doc.rect(0, 0, pageWidth, 3, "F");
+
+  doc.setFillColor(255, 255, 255);
+  doc.rect(0, 3, pageWidth, 25, "F");
+
+  doc.setDrawColor(228, 226, 220);
+  doc.setLineWidth(0.5);
+  doc.line(0, 28, pageWidth, 28);
 
   try {
-    doc.addImage(USEAIMLY_LOGO_BASE64, "PNG", margin, 5, 32, 17);
+    doc.addImage(USEAIMLY_LOGO_BASE64, "PNG", margin, 5.5, 36, 19);
   } catch (e) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
-    doc.setTextColor(255, 255, 255);
+    doc.setTextColor(23, 23, 23);
     doc.text("UseAimly Executive Briefing", margin, 16);
   }
 
   // Vertical Separator Line Page 2
-  const sepX2 = margin + 35;
-  doc.setDrawColor(60, 60, 60);
-  doc.setLineWidth(0.4);
-  doc.line(sepX2, 7, sepX2, 21);
+  const sepX2 = margin + 40;
+  doc.setDrawColor(220, 220, 220);
+  doc.setLineWidth(0.5);
+  doc.line(sepX2, 7, sepX2, 23);
 
-  doc.setFontSize(8);
+  doc.setFontSize(8.5);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(255, 85, 51);
-  doc.text("GAME-CHANGER INTELLIGENCE & RESILIENCE RADAR", sepX2 + 5, 13);
+  doc.setTextColor(255, 77, 38);
+  doc.text("GAME-CHANGER INTELLIGENCE & RESILIENCE RADAR", sepX2 + 5, 13.5);
 
-  doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(160, 160, 160);
-  doc.text("Strategic Decision Briefing — Page 2 of 2", sepX2 + 5, 18);
+  doc.setFontSize(7.5);
+  doc.setTextColor(100, 100, 100);
+  doc.text("Strategic Decision Briefing — Page 2 of 2", sepX2 + 5, 19);
 
   y2 = 38;
 
