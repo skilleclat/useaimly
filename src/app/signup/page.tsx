@@ -336,8 +336,78 @@ function SignupFormContent() {
 
         {/* Main Card Container */}
         <div className="rounded-[2.5rem] border border-border/80 bg-card/90 backdrop-blur-xl p-8 sm:p-10 shadow-2xl shadow-primary/5 space-y-6">
-          {/* 6-DIGIT OTP VERIFICATION VIEW */}
-          {showOtpView ? (
+          {/* PAID PLAN DIRECT PAYPAL CHECKOUT VIEW */}
+          {selectedPlan !== "free" && !showOtpView ? (
+            <div className="space-y-6 animate-fadeIn">
+              <div className="rounded-2xl border border-border/80 bg-secondary/40 p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-base font-extrabold text-foreground">
+                      {selectedPlan === "pro" ? "Aimly Pro Plan" : "Aimly Premium Plan"}
+                    </h3>
+                    <p className="text-[11px] font-mono text-muted-foreground">
+                      {selectedPlan === "pro" ? "$4.99 / mois ($39.99 / an -20%)" : "$9.99 / mois ($79.99 / an -20%)"}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-emerald-500/20 text-emerald-500 text-xs font-mono font-bold px-2.5 py-1">
+                    Essai 14 Jours
+                  </span>
+                </div>
+
+                <div className="pt-3 border-t border-border/60 space-y-1.5 text-xs text-muted-foreground">
+                  <div className="flex items-center justify-between">
+                    <span>Moteur Déterministe 10 Ans</span>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Studio 3-Stratégies & Alertes IA</span>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  </div>
+                  <div className="flex items-center justify-between pt-1 font-mono text-[11px] text-foreground font-bold">
+                    <span>Bénéficiaire PayPal :</span>
+                    <span className="text-primary">herimaliyabwana@gmail.com</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* PayPal Direct Payment Buttons */}
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={() => setCheckoutModalPlan(PRICING_PLANS.find((p) => p.id === selectedPlan) || null)}
+                  className="w-full rounded-2xl bg-[#FFC439] hover:bg-[#F2BA36] text-[#003087] font-black text-sm py-4 px-6 shadow-lg shadow-yellow-500/15 transition-all cursor-pointer flex items-center justify-center gap-2 group min-h-[48px]"
+                >
+                  <span className="italic font-serif font-black text-lg text-[#003087]">PayPal</span>
+                  <span className="font-extrabold text-xs text-[#003087]">
+                    Payer {selectedPlan.toUpperCase()} avec PayPal
+                  </span>
+                  <ArrowRight className="w-4 h-4 text-[#003087] group-hover:translate-x-1 transition-transform" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCheckoutModalPlan(PRICING_PLANS.find((p) => p.id === selectedPlan) || null)}
+                  className="w-full rounded-2xl bg-[#2C2E2F] hover:bg-[#202223] text-white font-bold text-xs py-3.5 px-6 shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 border border-zinc-700 min-h-[48px]"
+                >
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <span>Payer par Carte via PayPal</span>
+                </button>
+              </div>
+
+              <div className="pt-2 border-t border-border/70 flex flex-col items-center gap-2 text-xs text-muted-foreground text-center">
+                <Link
+                  href="/pricing"
+                  className="text-primary font-bold hover:underline"
+                >
+                  ← Voir toutes les formules et tarifs
+                </Link>
+                <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground/80">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Garantie de remboursement 14 jours • Zéro engagement</span>
+                </div>
+              </div>
+            </div>
+          ) : showOtpView ? (
             <div className="space-y-6 animate-fadeIn">
               {/* Header Branding Badge */}
               <div className="flex items-center justify-between p-3.5 rounded-2xl bg-secondary/40 border border-border/60">
