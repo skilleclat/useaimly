@@ -2,14 +2,16 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { PRICING_PLANS, PRICING_FAQS } from "@/lib/types/pricing";
+import { PRICING_PLANS, PRICING_FAQS, PricingPlan } from "@/lib/types/pricing";
 import { PricingCard } from "@/components/finance/PricingCard";
+import { PayPalCheckoutModal } from "@/components/finance/PayPalCheckoutModal";
 import { Container } from "@/components/layout/container";
 import { HelpCircle, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
 
 export default function PricingPage() {
   const [isYearly, setIsYearly] = useState(true);
   const [currency, setCurrency] = useState<"USD" | "KES">("USD");
+  const [selectedPlanForCheckout, setSelectedPlanForCheckout] = useState<PricingPlan | null>(null);
 
   return (
     <div className="min-h-screen bg-background text-foreground py-12 px-4 sm:px-6 lg:px-8 space-y-16">
@@ -83,7 +85,18 @@ export default function PricingPage() {
         {/* 3-Column Pricing Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch pt-4">
           {PRICING_PLANS.map((plan) => (
-            <PricingCard key={plan.id} plan={plan} isYearly={isYearly} currency={currency} />
+            <PricingCard
+              key={plan.id}
+              plan={plan}
+              isYearly={isYearly}
+              currency={currency}
+              onSelectPlan={(planId) => {
+                const targetPlan = PRICING_PLANS.find((p) => p.id === planId) || plan;
+                if (targetPlan.id !== "free") {
+                  setSelectedPlanForCheckout(targetPlan);
+                }
+              }}
+            />
           ))}
         </div>
 
@@ -100,13 +113,14 @@ export default function PricingPage() {
               </p>
             </div>
           </div>
-          <Link
-            href="/signup?plan=pro"
-            className="inline-flex items-center gap-2 rounded-2xl bg-primary text-primary-foreground font-bold text-xs px-6 py-3 shrink-0 shadow-md hover:opacity-90 transition-all"
+          <button
+            type="button"
+            onClick={() => setSelectedPlanForCheckout(PRICING_PLANS.find((p) => p.id === "pro") || null)}
+            className="inline-flex items-center gap-2 rounded-2xl bg-primary text-primary-foreground font-bold text-xs px-6 py-3 shrink-0 shadow-md hover:opacity-90 transition-all cursor-pointer"
           >
-            <span>Start Pro Trial</span>
+            <span>Start Pro Trial via PayPal</span>
             <ArrowRight className="w-4 h-4" />
-          </Link>
+          </button>
         </div>
 
         {/* FAQ Section */}
@@ -135,6 +149,14 @@ export default function PricingPage() {
           </div>
         </div>
       </Container>
+
+      {/* PayPal Official Checkout Modal */}
+      <PayPalCheckoutModal
+        isOpen={Boolean(selectedPlanForCheckout)}
+        onClose={() => setSelectedPlanForCheckout(null)}
+        plan={selectedPlanForCheckout}
+        isYearly={isYearly}
+      />
     </div>
   );
 }

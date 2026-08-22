@@ -7,6 +7,32 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { planId = "pro", billingCycle = "MONTHLY", provider = "STRIPE", phoneNumber = "" } = body;
 
+    if (provider === "PAYPAL") {
+      const amountUSD =
+        planId === "pro"
+          ? billingCycle === "ANNUAL"
+            ? 39.99
+            : 4.99
+          : planId === "premium"
+          ? billingCycle === "ANNUAL"
+            ? 79.99
+            : 9.99
+          : 0;
+
+      const orderId = `PAYID-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+
+      return NextResponse.json({
+        success: true,
+        provider: "PAYPAL",
+        orderId,
+        amountUSD,
+        currency: "USD",
+        status: "APPROVED",
+        message: "PayPal checkout order generated successfully.",
+        checkoutUrl: `https://www.paypal.com/checkoutnow?token=${orderId}`,
+      });
+    }
+
     if (provider === "MPESA") {
       const amountKES =
         planId === "pro"

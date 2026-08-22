@@ -10,8 +10,9 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useI18n } from "@/lib/i18n/i18n-context";
 import { useCurrency } from "@/lib/currency/currency-context";
-import { PRICING_PLANS } from "@/lib/types/pricing";
+import { PRICING_PLANS, PricingPlan } from "@/lib/types/pricing";
 import { PricingCard } from "@/components/finance/PricingCard";
+import { PayPalCheckoutModal } from "@/components/finance/PayPalCheckoutModal";
 import {
   ArrowRight,
   Sparkles,
@@ -70,6 +71,7 @@ export default function LandingPage() {
   // Testimonials state
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [landingYearly, setLandingYearly] = useState(true);
+  const [selectedPlanForCheckout, setSelectedPlanForCheckout] = useState<PricingPlan | null>(null);
 
   const testimonials = [
     {
@@ -611,7 +613,17 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch pt-4 max-w-5xl mx-auto">
             {PRICING_PLANS.map((plan) => (
-              <PricingCard key={plan.id} plan={plan} isYearly={landingYearly} />
+              <PricingCard
+                key={plan.id}
+                plan={plan}
+                isYearly={landingYearly}
+                onSelectPlan={(planId) => {
+                  const targetPlan = PRICING_PLANS.find((p) => p.id === planId) || plan;
+                  if (targetPlan.id !== "free") {
+                    setSelectedPlanForCheckout(targetPlan);
+                  }
+                }}
+              />
             ))}
           </div>
         </section>
@@ -643,6 +655,14 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
+
+      {/* PayPal Official Checkout Modal */}
+      <PayPalCheckoutModal
+        isOpen={Boolean(selectedPlanForCheckout)}
+        onClose={() => setSelectedPlanForCheckout(null)}
+        plan={selectedPlanForCheckout}
+        isYearly={landingYearly}
+      />
     </div>
   );
 }
