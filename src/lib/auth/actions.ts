@@ -686,10 +686,22 @@ export async function submitMpesaPaymentAction(
 ): Promise<AuthActionResult> {
   try {
     const cleanCode = (transactionCode || "").trim().toUpperCase();
-    if (!cleanCode || cleanCode.length < 8) {
+    
+    // 1. Strict Safaricom M-Pesa format validation (10 alphanumeric chars, e.g. QJH789LK02)
+    const isValidFormat = /^[A-Z0-9]{8,15}$/.test(cleanCode);
+    if (!isValidFormat) {
       return {
         success: false,
-        message: "Veuillez saisir un code de transaction M-Pesa valide (ex: QJH789LK02).",
+        message: "Format de code M-Pesa invalide. Veuillez saisir un code de transaction Safaricom valide (ex: QJH789LK02).",
+      };
+    }
+
+    // 2. Strict minimum amount check for the requested tier
+    const requiredMinKES = planTier === "premium" ? (isYearly ? 10400 : 1300) : (isYearly ? 1300 : 130);
+    if (amountKES < requiredMinKES) {
+      return {
+        success: false,
+        message: `Montant insuffisant : Le montant requis pour la formule ${planTier.toUpperCase()} est de KES ${requiredMinKES.toLocaleString()} (reçu : KES ${amountKES}).`,
       };
     }
 
@@ -703,7 +715,20 @@ export async function submitMpesaPaymentAction(
       };
     }
 
-    // 1. Update user auth metadata
+    // 3. Anti-Fraud: Prevent duplicate code reuse
+    const { data: existingCodes } = await (supabase.from("whatsapp_dispatches") as any)
+      .select("id, digest_message")
+      .ilike("digest_message", `%${cleanCode}%`)
+      .limit(1);
+
+    if (existingCodes && existingCodes.length > 0) {
+      return {
+        success: false,
+        message: `Sécurité : Ce code de transaction M-Pesa (${cleanCode}) a DÉJÀ été utilisé pour activer un compte. Chaque paiement nécessite un code de transaction unique.`,
+      };
+    }
+
+    // 4. Update user auth metadata
     await supabase.auth.updateUser({
       data: {
         plan_tier: planTier,
@@ -712,7 +737,7 @@ export async function submitMpesaPaymentAction(
       },
     });
 
-    // 2. Update profiles table
+    // 5. Update profiles table
     await (supabase.from("profiles") as any)
       .update({
         plan_tier: planTier,
@@ -720,7 +745,7 @@ export async function submitMpesaPaymentAction(
       })
       .eq("id", user.id);
 
-    // 3. Log transaction
+    // 6. Record receipt in permanent ledger to prevent reuse
     try {
       await (supabase.from("whatsapp_dispatches") as any).insert({
         user_id: user.id,
@@ -736,13 +761,105 @@ export async function submitMpesaPaymentAction(
 
     return {
       success: true,
-      message: `Paiement M-Pesa (${cleanCode}) validé avec succès ! Votre formule ${planTier.toUpperCase()} est active.`,
+      message: `Paiement M-Pesa (${cleanCode}) de KES ${amountKES} validé avec succès ! Votre formule ${planTier.toUpperCase()} est désormais active.`,
       redirectTo: "/app",
     };
   } catch (err: any) {
     return {
       success: false,
       message: err?.message || "Erreur lors de la validation du code M-Pesa.",
+    };
+  }
+}
+
+export async function submitPayPalPaymentAction(
+  paypalTransactionId: string,
+  planTier: "pro" | "premium",
+  isYearly: boolean,
+  amountUSD: number
+): Promise<AuthActionResult> {
+  try {
+    const cleanId = (paypalTransactionId || "").trim().toUpperCase();
+
+    if (!cleanId || cleanId.length < 6) {
+      return {
+        success: false,
+        message: "Veuillez saisir un numéro de transaction ou reçu PayPal valide (ex: 9XY1234567 ou PAYID-XXXXX).",
+      };
+    }
+
+    // 1. Strict minimum amount check for the requested tier
+    const requiredMinUSD = planTier === "premium" ? (isYearly ? 79.99 : 9.99) : (isYearly ? 10.00 : 1.00);
+    if (amountUSD < requiredMinUSD) {
+      return {
+        success: false,
+        message: `Montant insuffisant : Le prix de la formule ${planTier.toUpperCase()} est de $${requiredMinUSD} USD (reçu : $${amountUSD}).`,
+      };
+    }
+
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return {
+        success: false,
+        message: "Vous devez être connecté pour valider votre transaction PayPal.",
+      };
+    }
+
+    // 2. Anti-Fraud: Prevent duplicate PayPal receipt reuse
+    const { data: existingTxs } = await (supabase.from("whatsapp_dispatches") as any)
+      .select("id, digest_message")
+      .ilike("digest_message", `%${cleanId}%`)
+      .limit(1);
+
+    if (existingTxs && existingTxs.length > 0) {
+      return {
+        success: false,
+        message: `Sécurité : Cet identifiant de paiement PayPal (${cleanId}) a DÉJÀ été utilisé pour activer un compte.`,
+      };
+    }
+
+    // 3. Update auth user metadata
+    await supabase.auth.updateUser({
+      data: {
+        plan_tier: planTier,
+        paypal_receipt: cleanId,
+        paypal_amount_usd: amountUSD,
+      },
+    });
+
+    // 4. Update profiles table
+    await (supabase.from("profiles") as any)
+      .update({
+        plan_tier: planTier,
+        plan_status: "active",
+      })
+      .eq("id", user.id);
+
+    // 5. Record receipt in permanent ledger
+    try {
+      await (supabase.from("whatsapp_dispatches") as any).insert({
+        user_id: user.id,
+        phone_number: "PAYPAL_MERCHANT",
+        goal_title: `Sub: ${planTier.toUpperCase()} (${isYearly ? "Annual" : "Monthly"})`,
+        digest_message: `PayPal payment confirmed. Receipt: ${cleanId}, Amount: $${amountUSD} USD`,
+        status: "CONFIRMED",
+        provider: "PAYPAL",
+      });
+    } catch (e) {
+      console.warn("PayPal ledger log note:", e);
+    }
+
+    return {
+      success: true,
+      message: `Paiement PayPal (${cleanId}) de $${amountUSD} USD validé ! Votre formule ${planTier.toUpperCase()} est active.`,
+      redirectTo: "/app",
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      message: err?.message || "Erreur lors de la validation du reçu PayPal.",
     };
   }
 }

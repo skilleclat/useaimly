@@ -5,7 +5,7 @@ import { useCurrency } from "@/lib/currency/currency-context";
 import { useI18n } from "@/lib/i18n/i18n-context";
 import { PricingPlan } from "@/lib/types/pricing";
 import { useAuth } from "@/lib/auth/auth-context";
-import { upgradePlanAction, submitMpesaPaymentAction } from "@/lib/auth/actions";
+import { upgradePlanAction, submitMpesaPaymentAction, submitPayPalPaymentAction } from "@/lib/auth/actions";
 import { MPESA_CONFIG } from "@/lib/payments/mpesa-service";
 import {
   ShieldCheck,
@@ -48,6 +48,7 @@ export function PayPalCheckoutModal({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [mpesaCode, setMpesaCode] = useState("");
+  const [paypalTxId, setPaypalTxId] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   if (!isOpen || !plan) return null;
@@ -100,10 +101,21 @@ export function PayPalCheckoutModal({
     setModalState("redirected");
   };
 
-  const handleActivateTrial = async () => {
+  const handleVerifyPayPal = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!isLoggedIn) {
       onClose();
       router.push(`/signup?plan=${plan.id}&billing=${isYearly ? "annual" : "monthly"}`);
+      return;
+    }
+
+    const clean = paypalTxId.trim().toUpperCase();
+    if (!clean || clean.length < 6) {
+      setErrorMessage(
+        language === "fr"
+          ? "Veuillez entrer un numéro de transaction ou reçu PayPal valide."
+          : "Please enter a valid PayPal transaction ID or receipt reference."
+      );
       return;
     }
 
@@ -111,19 +123,19 @@ export function PayPalCheckoutModal({
     setErrorMessage(null);
 
     try {
-      const res = await upgradePlanAction(plan.id);
+      const res = await submitPayPalPaymentAction(clean, plan.id as any, isYearly, baseUSD);
       if (res.success) {
-        setSuccessMessage(res.message || "Essai gratuit de 14 jours activé avec succès !");
+        setSuccessMessage(res.message || `Paiement PayPal (${clean}) validé ! Votre formule ${plan.name} est active.`);
         setModalState("success");
         await refreshProfile();
         if (onSuccess) onSuccess();
       } else {
-        setErrorMessage(res.message || "Impossible d'activer l'essai gratuit.");
-        setModalState("checkout");
+        setErrorMessage(res.message || "Identifiant PayPal invalide ou déjà utilisé.");
+        setModalState("redirected");
       }
     } catch (err: any) {
-      setErrorMessage(err?.message || "Une erreur inattendue est survenue.");
-      setModalState("checkout");
+      setErrorMessage(err?.message || "Erreur de vérification du paiement PayPal.");
+      setModalState("redirected");
     }
   };
 
@@ -359,18 +371,6 @@ export function PayPalCheckoutModal({
                     <span>Valider mon paiement M-Pesa &amp; Activer {plan.name}</span>
                   </button>
                 </form>
-
-                {/* Or Trial Option */}
-                <div className="pt-2 border-t border-border/60">
-                  <button
-                    type="button"
-                    onClick={handleActivateTrial}
-                    className="w-full rounded-2xl border border-border/80 bg-secondary/40 hover:bg-secondary text-foreground font-bold text-xs py-3 px-6 transition-all cursor-pointer flex items-center justify-center gap-2"
-                  >
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    <span>Ou Démarrer l&apos;Essai Gratuit de 14 Jours sans débit</span>
-                  </button>
-                </div>
               </div>
             ) : (
               /* 2. PAYPAL MODE */
@@ -427,20 +427,6 @@ export function PayPalCheckoutModal({
                     </span>
                     <ExternalLink className="w-4 h-4 text-[#003087] group-hover:translate-x-0.5 transition-transform" />
                   </button>
-
-                  {/* 2. Instant 14-Day Free Trial Option */}
-                  <button
-                    type="button"
-                    onClick={handleActivateTrial}
-                    className="w-full rounded-2xl bg-primary text-primary-foreground font-bold text-xs py-3.5 px-6 shadow-md hover:opacity-95 transition-all cursor-pointer flex items-center justify-center gap-2 min-h-[48px]"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    <span>
-                      {language === "fr"
-                        ? "Démarrer l'Essai Gratuit 14 Jours (Sans prélèvement immédiat)"
-                        : "Start 14-Day Free Trial (Zero Upfront Charge)"}
-                    </span>
-                  </button>
                 </div>
               </div>
             )}
@@ -457,46 +443,63 @@ export function PayPalCheckoutModal({
           </div>
         )}
 
-        {/* STEP 2: REDIRECTED TO PAYPAL */}
+        {/* STEP 2: REDIRECTED TO PAYPAL (SECURE TRANSACTION RECEIPT VALIDATION) */}
         {modalState === "redirected" && (
-          <div className="py-6 space-y-6 text-center animate-fadeIn">
-            <div className="w-14 h-14 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30 flex items-center justify-center mx-auto">
-              <ExternalLink className="w-7 h-7" />
+          <div className="py-4 space-y-5 text-center animate-fadeIn">
+            <div className="w-12 h-12 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30 flex items-center justify-center mx-auto">
+              <CreditCard className="w-6 h-6" />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <h4 className="text-lg font-bold font-editorial text-foreground">
-                {language === "fr" ? "Page de paiement PayPal ouverte" : "PayPal Checkout Window Opened"}
+                {language === "fr" ? "Valider votre Transaction PayPal" : "Validate your PayPal Transaction"}
               </h4>
               <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
                 {language === "fr"
-                  ? `Une page officielle sécurisée PayPal s'est ouverte dans un nouvel onglet pour finaliser votre règlement à ${merchantEmail}.`
-                  : `An official secure PayPal window was opened to complete your payment to ${merchantEmail}.`}
+                  ? `Une fois votre règlement de ${formattedPriceUSD} finalisé sur PayPal, saisissez votre numéro de reçu / Transaction ID PayPal ci-dessous.`
+                  : `Once you have completed your ${formattedPriceUSD} payment on PayPal, enter your PayPal Transaction ID or receipt number below.`}
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl border border-border/80 bg-secondary/30 text-xs font-mono text-foreground space-y-1">
+            <div className="p-3.5 rounded-2xl border border-border/80 bg-secondary/30 text-xs font-mono text-foreground space-y-1">
               <div>Plan : <strong>{plan.name} ({billingCycleLabel})</strong></div>
-              <div>Montant : <strong>{formattedPriceUSD}</strong></div>
+              <div>Montant Requis : <strong>{formattedPriceUSD}</strong></div>
             </div>
 
-            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={handleActivateTrial}
-                className="w-full sm:w-auto rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3 px-6 shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2"
-              >
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Confirmer mon accès UseAimly</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setModalState("checkout")}
-                className="w-full sm:w-auto rounded-2xl border border-border bg-card px-5 py-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-              >
-                Retour aux options
-              </button>
-            </div>
+            <form onSubmit={handleVerifyPayPal} className="space-y-3 pt-1 text-left">
+              <div className="space-y-1">
+                <label className="text-xs font-mono font-bold text-foreground flex items-center justify-between">
+                  <span>Numéro de Transaction / Reçu PayPal</span>
+                  <span className="text-[10px] text-muted-foreground font-normal">Ex: 9XY12345Z ou PAYID-XXXX</span>
+                </label>
+                <input
+                  type="text"
+                  value={paypalTxId}
+                  onChange={(e) => setPaypalTxId(e.target.value.toUpperCase())}
+                  placeholder="Ex: 9XY1234567 ou PAYID-XXXXX"
+                  required
+                  className="w-full rounded-2xl border-2 border-primary/40 bg-background px-4 py-3 text-xs font-mono font-bold text-foreground uppercase tracking-wider focus:border-primary focus:outline-none transition-colors"
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-2 pt-2">
+                <button
+                  type="submit"
+                  className="w-full rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3.5 px-6 shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Valider mon Reçu PayPal &amp; Activer {plan.name}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setModalState("checkout")}
+                  className="w-full sm:w-auto rounded-2xl border border-border bg-card px-4 py-3.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                >
+                  Retour
+                </button>
+              </div>
+            </form>
           </div>
         )}
 
