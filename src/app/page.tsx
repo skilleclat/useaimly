@@ -200,11 +200,12 @@ export default function LandingPage() {
                 <>
                   <Link
                     href="/onboarding"
-                    className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white font-bold text-sm px-8 py-4 shadow-lg shadow-orange-500/25 hover:opacity-95 hover:scale-[1.01] transition-all cursor-pointer"
+                    className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white font-extrabold text-sm sm:text-base px-8 py-4 shadow-lg shadow-orange-500/25 hover:opacity-95 hover:scale-[1.01] transition-all cursor-pointer"
                   >
+                    <Sparkles className="w-4 h-4 shrink-0" />
                     <span>{t("btnTryRealDecision")}</span>
                     <span className="text-xs font-normal opacity-90">{t("noAccountNeeded")}</span>
-                    <ArrowRight className="w-4 h-4 ml-1" />
+                    <ArrowRight className="w-4 h-4 ml-1 shrink-0" />
                   </Link>
 
                   <Link
