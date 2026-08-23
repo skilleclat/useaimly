@@ -12,10 +12,10 @@ export const MPESA_CONFIG: MpesaPaybillDetails = {
   businessNumber: process.env.NEXT_PUBLIC_MPESA_PAYBILL || "247247",
   accountNumber: process.env.NEXT_PUBLIC_MPESA_ACCOUNT || "0743898803",
   accountName: "UseAimly / Equity M-Pesa",
-  proMonthlyKES: 650,
-  proYearlyKES: 5200,
-  premiumMonthlyKES: 1950,
-  premiumYearlyKES: 15600,
+  proMonthlyKES: 130,
+  proYearlyKES: 1300,
+  premiumMonthlyKES: 1300,
+  premiumYearlyKES: 10400,
 };
 
 export interface MpesaStkPushRequest {
