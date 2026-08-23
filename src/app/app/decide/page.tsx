@@ -34,6 +34,8 @@ import {
 import { useCurrency } from "@/lib/currency/currency-context";
 import { useI18n } from "@/lib/i18n/i18n-context";
 
+import { generateSeniorStrategistAssessment } from "@/lib/ai/senior-strategist-engine";
+
 export default function DecideStudioPage() {
   const { profile } = useAuth();
   const { currency } = useCurrency();
@@ -118,6 +120,31 @@ export default function DecideStudioPage() {
       recurringFrequency: isRecurring ? "MONTHLY" : undefined,
     });
   }, [baselineProfile, title, amount, isRecurring]);
+
+  const primaryGoal = baselineProfile.goals[0];
+  const goalTitle = primaryGoal?.title || "Start my business";
+
+  // Senior Wealth Strategist Master Assessment
+  const strategistOutput = useMemo(() => {
+    return generateSeniorStrategistAssessment({
+      currency,
+      monthlyInflow: baselineProfile.incomes.reduce((acc, i) => acc + i.amount, 0),
+      monthlyOutflow: baselineProfile.expenses.reduce((acc, e) => acc + e.amount, 0),
+      monthlyFreeCashFlow: 68000,
+      totalLiquidSavings: baselineProfile.liquidSavings,
+      targetAmount: primaryGoal?.targetAmount || 500000,
+      targetDate: primaryGoal?.targetDate || "2027-12-31",
+      destinationTitle: goalTitle,
+      projectedDate: simulation.delta.newCompletionDate,
+      delayInDays: simulation.delta.delayInDays,
+      requiredMonthlySavings: Math.round((primaryGoal?.targetAmount || 500000) / 24),
+      decisionContext: {
+        title,
+        amount,
+        isRecurring,
+      },
+    });
+  }, [currency, baselineProfile, primaryGoal, goalTitle, simulation, title, amount, isRecurring]);
 
   // 3 Comparison Strategies
   const strategies = useMemo(() => {
@@ -341,11 +368,13 @@ export default function DecideStudioPage() {
               availableForGoals: 68000,
               liquidSavings: baselineProfile.liquidSavings,
               status: simulation.status,
-              headlineVerdict: simulation.headlineVerdict,
-              whatYouCanDo: simulation.headlineVerdict || "Maintain free cash flow buffer.",
-              whatItChanges: simulation.detailedAnalysis || "Arrival timeline shift.",
-              toStayOnTrack: simulation.recommendation || "Adjust monthly goal allocation.",
-              strategicRead: simulation.detailedAnalysis || "Liquid cushion protects fixed costs.",
+              headlineVerdict: strategistOutput.headlineVerdict,
+              whatYouCanDo: strategistOutput.whatYouCanDo,
+              whatItChanges: strategistOutput.whatItChanges,
+              toStayOnTrack: strategistOutput.toStayOnTrack,
+              strategicRead: strategistOutput.strategicRead,
+              masterStrategyParagraph: strategistOutput.masterStrategyParagraph,
+              burnRateRunwayMonths: strategistOutput.burnRateRunwayMonths,
             }}
             variant="secondary"
             label="Export Decision PDF Dossier"
@@ -354,7 +383,7 @@ export default function DecideStudioPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
           {/* Verdict Card */}
-          <div className="md:col-span-5 rounded-3xl border border-border/80 bg-card p-6 flex flex-col justify-between space-y-4">
+          <div className="md:col-span-5 rounded-3xl border border-border/80 bg-card p-6 flex flex-col justify-between space-y-4 shadow-xs">
             <div>
               <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold">
                 1. Decision Verdict
@@ -377,7 +406,7 @@ export default function DecideStudioPage() {
           </div>
 
           {/* Time Impact Hero */}
-          <div className="md:col-span-7 rounded-3xl border border-primary/30 bg-primary/5 p-6 sm:p-8 flex flex-col justify-between space-y-4 relative overflow-hidden">
+          <div className="md:col-span-7 rounded-3xl border border-primary/30 bg-primary/5 p-6 sm:p-8 flex flex-col justify-between space-y-4 relative overflow-hidden shadow-xs">
             <div className="flex items-center justify-between">
               <span className="text-xs font-mono uppercase tracking-wider text-primary font-semibold">
                 2. Future Trajectory Impact
@@ -402,6 +431,39 @@ export default function DecideStudioPage() {
               <span className="font-bold text-foreground bg-background px-3 py-1 rounded-lg border border-border/80 font-mono">
                 +{formatCurrency(simulation.delta.additionalMonthlyAmountRequired || 1667, currency)} / month
               </span>
+            </div>
+          </div>
+        </div>
+
+        {/* SENIOR WEALTH STRATEGIST MASTER ASSESSMENT */}
+        <div className="rounded-3xl border-2 border-primary/30 bg-gradient-to-br from-card via-card to-primary/5 p-6 sm:p-8 space-y-4 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 pb-3">
+            <div className="flex items-center gap-2 text-primary font-bold text-base">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <span>Senior Wealth Strategist Master Assessment</span>
+            </div>
+            <span className="rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-mono font-bold px-3 py-1 uppercase tracking-wider">
+              30-Year Advisory Trajectory Synthesis
+            </span>
+          </div>
+
+          <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed font-sans font-normal text-justify">
+            {strategistOutput.masterStrategyParagraph}
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
+            <div className="p-3.5 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
+              <span className="text-[10px] font-mono uppercase font-bold text-emerald-600 dark:text-emerald-400">
+                Immediate Action
+              </span>
+              <p className="text-muted-foreground">{strategistOutput.whatYouCanDo}</p>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
+              <span className="text-[10px] font-mono uppercase font-bold text-primary">
+                Recovery Directive
+              </span>
+              <p className="text-muted-foreground">{strategistOutput.toStayOnTrack}</p>
             </div>
           </div>
         </div>

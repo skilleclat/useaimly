@@ -8,6 +8,7 @@ import { formatCurrency } from "@/lib/utils/currency";
 import { formatMonthYear } from "@/lib/utils/date";
 import { parseDecisionQuery } from "@/lib/nlp/decision-query-parser";
 import { CurrencyCode } from "@/lib/types/finance";
+import { generateSeniorStrategistAssessment } from "./senior-strategist-engine";
 
 export interface ChatMessage {
   id: string;
@@ -74,6 +75,24 @@ export class ConversationalIntelligenceEngine {
       const projectedArrival = formatMonthYear(context.primaryDestination.projectedArrivalDate);
       const monthlyPace = formatCurrency(context.primaryDestination.monthlyContribution, currency);
 
+      const strategist = generateSeniorStrategistAssessment({
+        currency,
+        monthlyInflow: context.profile.totalGrossIncome || 180000,
+        monthlyOutflow: context.profile.totalMandatoryExpenses || 112000,
+        monthlyFreeCashFlow: context.profile.monthlyFreeCashFlow,
+        totalLiquidSavings: context.profile.totalLiquidSavings,
+        targetAmount: context.primaryDestination.targetAmount,
+        targetDate: context.primaryDestination.targetDate,
+        destinationTitle: primaryTitle,
+        delayInDays: delayDays,
+        requiredMonthlySavings: Math.round(context.primaryDestination.targetAmount / 24),
+        decisionContext: {
+          title: parsedQuery.extractedTitle,
+          amount: parsedQuery.extractedAmount,
+          isRecurring: parsedQuery.isRecurring,
+        },
+      });
+
       // Check if any pinned notes/rules apply
       const pinnedRules = (context.userNotes || []).filter((n) => n.isPinned || n.category === "RULES_CONSTRAINTS");
       let noteContextText = "";
@@ -85,13 +104,13 @@ export class ConversationalIntelligenceEngine {
       let responseText = "";
       if (sim.affordability.canPhysicallyPay) {
         if (delayDays === 0) {
-          responseText = `🧠 **Senior Mentor Assessment (30+ Yrs Experience)**:\nBased on your live financial picture (${formatCurrency(context.profile.totalLiquidSavings, currency)} liquid reserves and ${formatCurrency(context.profile.monthlyFreeCashFlow, currency)} FCF), you can comfortably execute this ${decisionAmountFormatted} purchase.\n\n📊 **Trajectory Impact**:\n• Remaining Liquid Cushion: ${remainingLiquid} (${sim.affordability.obligationsPreservedMonths} months of fixed living buffer)\n• Goal Status: "${primaryTitle}" remains 100% on schedule for ${projectedArrival}.${noteContextText}\n\n🎯 **Mentor Recommendation**:\nEnjoy this purchase with total peace of mind — your financial foundation remains rock solid.`;
+          responseText = `🧠 **Senior Wealth Strategist Assessment (30+ Yrs Advisory Caliber)**:\n${strategist.masterStrategyParagraph}\n\n📊 **Tactical Decision Impact**:\n• **Immediate Action**: ${strategist.whatYouCanDo}\n• **Buffer Defense**: ${remainingLiquid} remaining (${sim.affordability.obligationsPreservedMonths} months of fixed living buffer)\n• **Trajectory Consequence**: "${primaryTitle}" remains 100% on schedule for ${projectedArrival}.${noteContextText}\n\n🎯 **Strategic Directive**: Enjoy this allocation with total peace of mind — your baseline compounding velocity is fully preserved.`;
         } else {
           const extraRequired = formatCurrency(sim.delta.additionalMonthlyAmountRequired || 1875, currency);
-          responseText = `🧠 **Senior Mentor Assessment (30+ Yrs Experience)**:\nHere is how I view this ${decisionAmountFormatted} expenditure: You have the cash in hand today (leaving ${remainingLiquid} in reserves), but as a rule of thumb, cash availability does not equal plan availability.\n\n📊 **Trajectory Consequence**:\n• Capital Diverted: ${decisionAmountFormatted} from your "${primaryTitle}" goal (${formatCurrency(context.primaryDestination.currentAmount, currency)} of ${formatCurrency(context.primaryDestination.targetAmount, currency)} saved).\n• Timeline Shift: Delays your target arrival by +${delayDays} days.${noteContextText}\n\n🎯 **3-Step Recovery Action Plan**:\n1. Keep your monthly living buffer at 3+ months.\n2. Boost your monthly goal allocation from ${monthlyPace} to +${extraRequired}/month for the next 12 months.\n3. This completely neutralizes the ${delayDays}-day delay and keeps you on target.`;
+          responseText = `🧠 **Senior Wealth Strategist Assessment (30+ Yrs Advisory Caliber)**:\n${strategist.masterStrategyParagraph}\n\n📊 **Tactical Decision Impact**:\n• **Immediate Action**: ${strategist.whatYouCanDo}\n• **Trajectory Consequence**: Delays target completion of "${primaryTitle}" by +${delayDays} days.\n• **Buffer Defense**: Leaves ${remainingLiquid} in liquid reserves (${sim.affordability.obligationsPreservedMonths} months of runway).${noteContextText}\n\n🎯 **3-Step Recovery Action Plan**:\n1. Maintain your essential living buffer above 3.0 months.\n2. Increase monthly goal allocation from ${monthlyPace} to +${extraRequired}/month for 12 months to completely neutralize the +${delayDays}-day delay.\n3. Keep automated investment protocols locked.`;
         }
       } else {
-        responseText = `⚠️ **Senior Mentor Warning (30+ Yrs Experience)**:\nExecuting this ${decisionAmountFormatted} purchase right now is unadvisable.\n\n📊 **Risk Breakdown**:\n• Deficit: Exceeds your available liquid reserves (${formatCurrency(context.profile.totalLiquidSavings, currency)}) by ${formatCurrency(parsedQuery.extractedAmount - context.profile.totalLiquidSavings, currency)}.\n• Buffer Hazard: Reduces your living cushion below 1.0 month (${context.profile.liquidRunwayMonths} months).${noteContextText}\n\n🎯 **Mentor Recommendation**:\nPostpone this expense for 60 to 90 days until your Net Free Cash Flow replenishes your liquid cushion.`;
+        responseText = `⚠️ **Senior Wealth Strategist Warning (30+ Yrs Advisory Caliber)**:\n${strategist.masterStrategyParagraph}\n\n📊 **Tactical Risk Breakdown**:\n• **Liquidity Deficit**: Exceeds available reserves (${formatCurrency(context.profile.totalLiquidSavings, currency)}) by ${formatCurrency(parsedQuery.extractedAmount - context.profile.totalLiquidSavings, currency)}.\n• **Buffer Hazard**: Drops living cushion below safety thresholds.${noteContextText}\n\n🎯 **Strategic Directive**: ${strategist.toStayOnTrack}`;
       }
 
       return {

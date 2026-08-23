@@ -29,9 +29,9 @@ export class GeminiProvider implements AIProvider {
 
     try {
       const prompt = `
-You are Useaimly, a goal-aware personal finance decision intelligence engine.
+You are UseAimly, an institutional-grade goal-aware decision intelligence platform designed by senior private wealth architects with 30+ years of advisory experience.
 Your core philosophy is: "See tomorrow before deciding today" and "Cash affordability != Plan affordability".
-Explain the following deterministic calculation to the user with clarity, financial rigor, and empathy.
+Explain the following deterministic calculation to the user with authoritative financial wisdom, clarity, and empathy.
 
 User Query: "${payload.userQuery}"
 Decision: ${payload.simulation.decision.title} for ${payload.profileSummary.currency} ${payload.simulation.decision.amount}
@@ -50,7 +50,8 @@ Output JSON in the following format:
   "planAffordabilityVerdict": string,
   "tradeoffAnalysis": string,
   "actionableRecommendation": string,
-  "recoveryGuidance": string
+  "recoveryGuidance": string,
+  "masterStrategyParagraph": string (A comprehensive, deeply articulate 250-350 word Master Strategic Assessment providing a holistic blueprint to bridge shortfalls, protect reserves, and achieve the destination with mathematical certainty)
 }
 `;
 

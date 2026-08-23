@@ -22,6 +22,8 @@ import {
   Clock,
 } from "lucide-react";
 
+import { generateSeniorStrategistAssessment } from "@/lib/ai/senior-strategist-engine";
+
 interface Step7TrajectoryRevealProps {
   state: OnboardingState;
   calculatedPath: OnboardingCalculatedPath;
@@ -41,24 +43,42 @@ export function Step7TrajectoryReveal({
 }: Step7TrajectoryRevealProps) {
   const { currency, destination } = state;
 
+  const monthlyOutflow = calculatedPath.monthlyEssentialExpenses + calculatedPath.monthlyDebtPayments + calculatedPath.monthlyCommitmentsAmortized;
+
+  const strategistOutput = generateSeniorStrategistAssessment({
+    currency,
+    monthlyInflow: calculatedPath.monthlyGrossIncome,
+    monthlyOutflow,
+    monthlyFreeCashFlow: calculatedPath.monthlyFreeCashFlow,
+    totalLiquidSavings: calculatedPath.totalLiquidSavings,
+    targetAmount: destination.targetAmount,
+    targetDate: destination.targetDate,
+    destinationTitle: destination.title || "Primary Goal",
+    projectedDate: formatMonthYear(calculatedPath.projectedCompletionDate),
+    delayInDays: calculatedPath.monthlyFreeCashFlow <= 0 ? 0 : Math.max(0, (calculatedPath.projectedMonthsToCompletion - 24) * 30),
+    requiredMonthlySavings: calculatedPath.requiredMonthlySavings,
+  });
+
   const pdfData: PDFReportData = {
     destinationTitle: destination.title || "Primary Goal",
     targetAmount: destination.targetAmount,
     currentAmount: destination.currentAmount,
     targetDate: formatMonthYear(destination.targetDate),
     projectedDate: formatMonthYear(calculatedPath.projectedCompletionDate),
-    delayInDays: Math.max(0, (calculatedPath.projectedMonthsToCompletion - 24) * 30),
+    delayInDays: calculatedPath.monthlyFreeCashFlow <= 0 ? 0 : Math.max(0, (calculatedPath.projectedMonthsToCompletion - 24) * 30),
     currency,
     monthlyInflow: calculatedPath.monthlyGrossIncome,
-    monthlyOutflow: calculatedPath.monthlyEssentialExpenses + calculatedPath.monthlyDebtPayments,
+    monthlyOutflow,
     availableForGoals: calculatedPath.monthlyFreeCashFlow,
     liquidSavings: calculatedPath.totalLiquidSavings,
-    status: calculatedPath.trajectoryState === "ON_TRACK" ? "SAFE" : "HIGH_IMPACT",
-    headlineVerdict: calculatedPath.trajectoryState === "ON_TRACK" ? "Fully Covered & On Track" : "Pace Adjustment Recommended",
-    whatYouCanDo: `Maintain dedicated free cash flow of ${formatCurrency(calculatedPath.monthlyFreeCashFlow, currency)}/mo to preserve liquidity.`,
-    whatItChanges: `Target arrival is projected for ${formatMonthYear(calculatedPath.projectedCompletionDate)}.`,
-    toStayOnTrack: `Allocate ${formatCurrency(calculatedPath.requiredMonthlySavings, currency)}/mo to arrive by target date.`,
-    strategicRead: "Your baseline liquid cushion protects fixed living costs while maintaining goal accumulation.",
+    status: strategistOutput.archetype === "DEFICIT_BURN_RATE" ? "OFF_TRACK" : calculatedPath.trajectoryState === "ON_TRACK" || calculatedPath.trajectoryState === "AHEAD" ? "SAFE" : "HIGH_IMPACT",
+    headlineVerdict: strategistOutput.headlineVerdict,
+    whatYouCanDo: strategistOutput.whatYouCanDo,
+    whatItChanges: strategistOutput.whatItChanges,
+    toStayOnTrack: strategistOutput.toStayOnTrack,
+    strategicRead: strategistOutput.strategicRead,
+    masterStrategyParagraph: strategistOutput.masterStrategyParagraph,
+    burnRateRunwayMonths: strategistOutput.burnRateRunwayMonths,
   };
 
   return (
@@ -200,34 +220,64 @@ export function Step7TrajectoryReveal({
             </div>
           </div>
 
-          {/* Verdict Synthesis */}
-          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 text-xs text-foreground leading-relaxed space-y-2">
-            <div className="flex items-center gap-2 text-primary font-bold text-sm">
-              <Sparkles className="w-4 h-4" />
-              <span>Useaimly Strategic Read</span>
+          {/* Senior Wealth Strategist Master Assessment & Tactical Action Plan */}
+          <div className="space-y-4">
+            {/* 4 Tactical Action Pillars Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 space-y-1.5">
+                <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400">
+                  01 • Immediate Liquidity Action
+                </span>
+                <p className="text-foreground/90 font-medium">
+                  {strategistOutput.whatYouCanDo}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 space-y-1.5">
+                <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-amber-600 dark:text-amber-400">
+                  02 • Time &amp; Trajectory Shift
+                </span>
+                <p className="text-foreground/90 font-medium">
+                  {strategistOutput.whatItChanges}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl border border-primary/30 bg-primary/5 space-y-1.5">
+                <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-primary">
+                  03 • Recommended Catch-up Plan
+                </span>
+                <p className="text-foreground/90 font-medium">
+                  {strategistOutput.toStayOnTrack}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl border border-indigo-500/30 bg-indigo-500/5 space-y-1.5">
+                <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-indigo-600 dark:text-indigo-400">
+                  04 • Strategic Resilience Read
+                </span>
+                <p className="text-foreground/90 font-medium">
+                  {strategistOutput.strategicRead}
+                </p>
+              </div>
             </div>
 
-            {calculatedPath.trajectoryState === "ON_TRACK" ? (
-              <p>
-                <strong className="text-emerald-600 dark:text-emerald-400 font-bold">Excellent Momentum!</strong> Your current free cash flow of{" "}
-                <span className="font-financial font-bold">{formatCurrency(calculatedPath.monthlyFreeCashFlow, currency)}/mo</span>{" "}
-                fully covers the required{" "}
-                <span className="font-financial font-bold">{formatCurrency(calculatedPath.requiredMonthlySavings, currency)}/mo</span>.
-                You are on schedule to arrive at{" "}
-                <strong>{destination.title}</strong> by{" "}
-                <strong>{formatMonthYear(calculatedPath.projectedCompletionDate)}</strong>.
+            {/* The Master Wealth Strategist Executive Blueprint */}
+            <div className="rounded-3xl border-2 border-primary/30 bg-gradient-to-br from-card via-card to-primary/5 p-6 sm:p-7 space-y-3 shadow-md">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 pb-3">
+                <div className="flex items-center gap-2 text-primary font-bold text-sm sm:text-base">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <span>Senior Wealth Strategist Master Assessment</span>
+                </div>
+                <span className="rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-mono font-bold px-3 py-1 uppercase tracking-wider">
+                  30-Year Private Wealth Advisory Caliber
+                </span>
+              </div>
+
+              <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed font-sans font-normal text-justify">
+                {strategistOutput.masterStrategyParagraph}
               </p>
-            ) : (
-              <p>
-                <strong className="text-amber-600 dark:text-amber-400 font-bold">Pace Adjustment Required.</strong> Your current free cash flow of{" "}
-                <span className="font-financial font-bold">{formatCurrency(calculatedPath.monthlyFreeCashFlow, currency)}/mo</span>{" "}
-                is below the required{" "}
-                <span className="font-financial font-bold">{formatCurrency(calculatedPath.requiredMonthlySavings, currency)}/mo</span>.
-                Useaimly will help you simulate decisions to recover timeline velocity.
-              </p>
-            )}
+            </div>
           </div>
-        </div>
 
         {/* Action Controls */}
         <div className="mt-8 pt-6 border-t border-border/70 flex flex-col sm:flex-row items-center justify-between gap-4">

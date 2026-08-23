@@ -42,6 +42,8 @@ export interface AIExplanationResult {
   tradeoffAnalysis: string;
   actionableRecommendation: string;
   recoveryGuidance?: string;
+  masterStrategyParagraph?: string;
+  strategicArchetype?: string;
   confidenceScore: number;
   providerUsed: AIProviderType;
   generatedAt: string;
