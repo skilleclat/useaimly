@@ -336,8 +336,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     planProCta: "Try Aimly Pro",
 
     planPremiumTagline: "For entrepreneurs, business owners, and high net-worth decision makers.",
-    planPremiumBadge: "Complete Experience",
-    planPremiumCta: "Unlock Aimly Premium",
+    planPremiumBadge: "Complete Elite Experience",
+    planPremiumCta: "Unlock Aimly Elite",
 
     // Final Conversion Banner
     bannerTitle: "Stop guessing.\nSee what your decisions really do.",
@@ -525,8 +525,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     planProCta: "Essayer Aimly Pro",
 
     planPremiumTagline: "Pour les entrepreneurs, dirigeants et décideurs à haut patrimoine.",
-    planPremiumBadge: "Expérience Complète",
-    planPremiumCta: "Débloquer Aimly Premium",
+    planPremiumBadge: "Expérience Élite Complète",
+    planPremiumCta: "Débloquer Aimly Elite",
 
     // Final Conversion Banner
     bannerTitle: "Arrêtez de deviner.\nVoyez ce que vos décisions changent vraiment.",
