@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
 import { parseDecisionQuery } from "@/lib/nlp/decision-query-parser";
-import { simulateDecision, BaselineFinancialProfile } from "@/lib/finance";
+import { simulateDecision, BaselineFinancialProfile, saveDecisionRecord } from "@/lib/finance";
 import { formatCurrency } from "@/lib/utils/currency";
 import { MinimalistDecisionEngine } from "@/components/design-system/MinimalistDecisionEngine";
 import { PdfReportDownloadButton } from "@/components/finance/PdfReportDownloadButton";
@@ -85,6 +85,12 @@ export default function DecideStudioPage() {
     });
   }, [baselineProfile, title, amount, parsed.isRecurring]);
 
+  const handleSaveDecision = () => {
+    saveDecisionRecord(baselineProfile, title, amount, parsed.isRecurring);
+    setIsSaved(true);
+  };
+
+
   // Strategy comparison (Layer 4)
   const strategies = useMemo(() => {
     const cashRemaining = baselineProfile.liquidSavings - amount;
@@ -144,7 +150,7 @@ export default function DecideStudioPage() {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => setIsSaved(!isSaved)}
+            onClick={handleSaveDecision}
             className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
               isSaved
                 ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
@@ -155,6 +161,7 @@ export default function DecideStudioPage() {
             <span>{isSaved ? "Decision Saved" : "Save Decision"}</span>
           </button>
         </div>
+
       </div>
 
       {/* MINIMALIST 5-SECOND DECISION ENGINE */}

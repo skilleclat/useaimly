@@ -33,6 +33,16 @@ export * from "./simulations/simulation-engine";
 // Financial Health & Runway
 export * from "./health/health-calculator";
 
+// Decision Memory & Re-analysis
+export * from "./decision-memory";
+
+// Max Safe Price & Better Alternatives Engine
+export * from "./max-safe-price";
+export * from "./better-alternatives";
+
+// Decision Stress Testing
+export * from "./stress-test";
+
 // Legacy Specific Helpers & Adapters
 export { calculateNetWorth } from "./calculations/net-worth";
 export { calculateCashFlowSummary } from "./calculations/cash-flow";
@@ -40,3 +50,4 @@ export { evaluateGoal } from "./goal-logic/goal-evaluator";
 export { allocateFreeCashFlowToGoals } from "./goal-logic/goal-prioritizer";
 export { generateTrajectoryPoints } from "./projections/trajectory-engine";
 export { buildDecisionContextPayload } from "./financial-context/context-builder";
+

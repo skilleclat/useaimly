@@ -22,19 +22,22 @@ export default function LandingPage() {
     <div className="bg-background text-foreground min-h-screen font-sans selection:bg-primary/15 flex flex-col">
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-14 space-y-12 sm:space-y-20">
-        {/* 1. HERO SECTION (ROMAIN BOUVET COPYWRITING STYLE) */}
+        {/* 1. HERO SECTION (PRODUCT NORTH STAR) */}
         <section className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center pt-2">
           {/* Left Column: Title & Subtitle */}
           <div className="md:col-span-7 space-y-4 text-left">
-            <h1 className="text-4xl sm:text-6xl font-black text-gray-900 dark:text-foreground tracking-tight leading-[1.1]">
-              {t("heroTitlePrefix")}
-              <br className="hidden sm:inline" />
-              <span className="text-[#00A859]">{t("heroTitleTomorrow")}</span>
-              {t("heroTitleSuffix")}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[#00A859] text-xs font-mono font-bold uppercase tracking-wider">
+              <span>Financial Decision Twin Engine</span>
+            </div>
+
+            <h1 className="text-4xl sm:text-6xl font-black text-gray-900 dark:text-foreground tracking-tight leading-[1.08]">
+              DON'T GUESS.
+              <br />
+              <span className="text-[#00A859]">KNOW BEFORE YOU COMMIT.</span>
             </h1>
 
-            <p className="text-base sm:text-xl text-gray-500 dark:text-muted-foreground font-medium max-w-md leading-relaxed">
-              {t("heroMainSubtitle")}
+            <p className="text-base sm:text-xl text-gray-600 dark:text-muted-foreground font-medium max-w-lg leading-relaxed">
+              Before you spend big, ask UseAimly. See what your next money decision could mean for your finances, cash flow, and life goals.
             </p>
           </div>
 
@@ -43,6 +46,7 @@ export default function LandingPage() {
             <Hero3DGraphic />
           </div>
         </section>
+
 
         {/* 2. MINIMALIST DECISION ENGINE */}
         <section className="w-full">

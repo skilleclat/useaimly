@@ -35,6 +35,15 @@ import { simulateDecision, BaselineFinancialProfile } from "@/lib/finance";
 import { calculateFreedomClock } from "@/lib/finance/health/freedom-clock";
 import { runCashCrashGuard } from "@/lib/finance/simulations/cash-crash-guard";
 import { CashCrashGuardCard } from "@/components/finance/CashCrashGuardCard";
+import { MaxSafePriceCard } from "./MaxSafePriceCard";
+import { BetterAlternativesCard } from "./BetterAlternativesCard";
+import { DecisionStressTestCard } from "./DecisionStressTestCard";
+import { FutureCostConsequenceCard } from "./FutureCostConsequenceCard";
+import { OfferDocumentModal } from "@/components/finance/OfferDocumentModal";
+import { ProUpgradeModal } from "@/components/finance/ProUpgradeModal";
+import { ExtractedOfferDetails } from "@/lib/nlp/document-offer-parser";
+import { FileSearch } from "lucide-react";
+
 
 export interface DecisionCardOption {
   id: string;
@@ -124,6 +133,9 @@ export function MinimalistDecisionEngine({
   const [queryInput, setQueryInput] = useState(initialQuery || defaultDefaultQuery);
   const [activeCardId, setActiveCardId] = useState<string | null>("car");
   const [showFullAnalysis, setShowFullAnalysis] = useState(false);
+  const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
+  const [isProModalOpen, setIsProModalOpen] = useState(false);
+
 
   // Default baseline profile
   const activeBaseline: BaselineFinancialProfile = useMemo(
@@ -478,8 +490,17 @@ export function MinimalistDecisionEngine({
               value={queryInput}
               onChange={(e) => setQueryInput(e.target.value)}
               placeholder={isFr ? "Collez un lien web ou décrivez : \"Acheter une voiture à 500k KES\"" : "Paste a link or describe: \"Buying a car for 500k KES\""}
-              className="w-full rounded-2xl bg-white text-gray-900 placeholder:text-gray-400 pl-11 pr-4 py-4 text-sm sm:text-base font-medium focus:outline-none focus:ring-4 focus:ring-[#00A859]/30 transition-all shadow-sm"
+              className="w-full rounded-2xl bg-white text-gray-900 placeholder:text-gray-400 pl-11 pr-32 py-4 text-sm sm:text-base font-medium focus:outline-none focus:ring-4 focus:ring-[#00A859]/30 transition-all shadow-sm"
             />
+
+            <button
+              type="button"
+              onClick={() => setIsOfferModalOpen(true)}
+              className="absolute right-3 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gray-100 dark:bg-secondary hover:bg-gray-200 text-gray-800 dark:text-foreground font-bold text-xs transition-all cursor-pointer"
+            >
+              <FileSearch className="w-4 h-4 text-[#00A859]" />
+              <span className="hidden sm:inline">{isFr ? "Scanner Offre" : "Scan Quote"}</span>
+            </button>
           </div>
 
           <button
@@ -496,6 +517,7 @@ export function MinimalistDecisionEngine({
             </div>
           </button>
         </div>
+
       </div>
 
       {/* PRE-FLIGHT CASH CRASH GUARD RADAR (THE KILLER CONVERSION FEATURE) */}
@@ -794,10 +816,66 @@ export function MinimalistDecisionEngine({
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
+
+              {/* LAYER 3-5 HIGH VALUE INTELLIGENCE CARDS */}
+              <div className="space-y-6 pt-4">
+                <FutureCostConsequenceCard
+                  amount={extractedAmount}
+                  monthlyPayment={isRecurring ? extractedAmount : 0}
+                  termMonths={36}
+                  goalDelayDays={simulation.delta.delayInDays || 45}
+                  reserveMonthsAfter={simulation.affordability.obligationsPreservedMonths}
+                  decisionTitle={extractedTitle}
+                />
+
+                <MaxSafePriceCard
+                  baselineProfile={activeBaseline}
+                  requestedPrice={extractedAmount}
+                  isRecurring={isRecurring}
+                  onApplyComfortablePrice={(safePrice) => {
+                    setQueryInput(`${extractedTitle} for KES ${safePrice}`);
+                  }}
+                />
+
+                {verdict.type !== "AFFORDABLE" && (
+                  <BetterAlternativesCard
+                    baselineProfile={activeBaseline}
+                    requestedAmount={extractedAmount}
+                    decisionTitle={extractedTitle}
+                    onSelectAlternative={(alt) => {
+                      setQueryInput(`${alt.title}`);
+                    }}
+                  />
+                )}
+
+                <DecisionStressTestCard
+                  baselineProfile={activeBaseline}
+                  decisionAmount={extractedAmount}
+                  decisionTitle={extractedTitle}
+                  isRecurring={isRecurring}
+                />
+              </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Modals */}
+      <OfferDocumentModal
+        isOpen={isOfferModalOpen}
+        onClose={() => setIsOfferModalOpen(false)}
+        onConfirmOffer={(details) => {
+          setQueryInput(`${details.title} - Total: ${details.totalPrice} KES, Deposit: ${details.downPayment} KES, Monthly: ${details.monthlyPayment} KES`);
+          const el = document.getElementById("verdict-result-section");
+          el?.scrollIntoView({ behavior: "smooth" });
+        }}
+      />
+
+      <ProUpgradeModal
+        isOpen={isProModalOpen}
+        onClose={() => setIsProModalOpen(false)}
+      />
     </div>
   );
 }
+

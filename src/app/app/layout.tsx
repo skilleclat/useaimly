@@ -36,10 +36,16 @@ const NAV_ITEMS: NavItem[] = [
     icon: <Compass className="w-4 h-4" />,
   },
   {
-    label: "Decisions",
+    label: "Studio",
     href: "/app/decide",
     description: "Current and past financial decision simulations.",
     icon: <CheckCircle2 className="w-4 h-4" />,
+  },
+  {
+    label: "Vault",
+    href: "/app/decisions",
+    description: "Decision memory and re-analysis vault.",
+    icon: <Wallet className="w-4 h-4" />,
   },
   {
     label: "Goals",
@@ -54,6 +60,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: <User className="w-4 h-4" />,
   },
 ];
+
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
