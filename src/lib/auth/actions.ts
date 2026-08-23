@@ -168,6 +168,24 @@ export async function loginAction(data: LoginInput): Promise<AuthActionResult> {
     return { success: false, message: "Authentication failed." };
   }
 
+  // If owner (skilleclat@gmail.com), guarantee immediate premium tier
+  const isOwner = email.trim().toLowerCase() === "skilleclat@gmail.com";
+  if (isOwner) {
+    try {
+      await supabase.auth.updateUser({
+        data: { plan_tier: "premium", is_admin: true },
+      });
+      await (supabase.from("profiles") as any).upsert({
+        id: authData.user.id,
+        plan_tier: "premium",
+        plan_status: "active",
+        onboarding_completed: true,
+      });
+    } catch (e) {
+      console.warn("Owner auto-promote sync note:", e);
+    }
+  }
+
   // Check onboarding status
   const { data: profile } = await supabase
     .from("profiles")
@@ -175,7 +193,7 @@ export async function loginAction(data: LoginInput): Promise<AuthActionResult> {
     .eq("id", authData.user.id)
     .single();
 
-  const isCompleted = (profile as { onboarding_completed?: boolean } | null)?.onboarding_completed;
+  const isCompleted = isOwner || (profile as { onboarding_completed?: boolean } | null)?.onboarding_completed;
   const redirectTo = isCompleted ? "/app" : "/onboarding";
 
   return {

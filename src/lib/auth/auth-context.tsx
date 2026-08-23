@@ -72,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const buildFallbackProfile = useCallback((authUser: User): Profile => {
     const userFullName = getUserDisplayName(authUser, null);
+    const isOwner = authUser.email?.trim().toLowerCase() === "skilleclat@gmail.com";
     return {
       id: authUser.id,
       full_name: userFullName,
@@ -80,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       timezone: "Africa/Nairobi",
       locale: "en",
       onboarding_completed: true,
-      plan_tier: (authUser.user_metadata?.plan_tier as any) || "free",
+      plan_tier: isOwner ? "premium" : (authUser.user_metadata?.plan_tier as any) || "free",
       plan_status: "active",
       created_at: authUser.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -88,6 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const fetchProfile = useCallback(async (authUser: User) => {
+    const isOwner = authUser.email?.trim().toLowerCase() === "skilleclat@gmail.com";
     try {
       const { data, error } = await supabase
         .from("profiles")
@@ -101,10 +103,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             ? data.full_name
             : getUserDisplayName(authUser, null);
 
+        const effectiveTier = isOwner ? "premium" : (data.plan_tier || "free");
+
         setProfile({
           ...data,
           full_name: effectiveName,
+          plan_tier: effectiveTier,
+          plan_status: "active",
         });
+
+        // Automatically sync owner status in Supabase if not already premium
+        if (isOwner && data.plan_tier !== "premium") {
+          await (supabase.from("profiles") as any)
+            .update({
+              plan_tier: "premium",
+              plan_status: "active",
+            })
+            .eq("id", authUser.id);
+          await supabase.auth.updateUser({
+            data: { plan_tier: "premium", is_admin: true },
+          });
+        }
         return;
       }
 
@@ -116,10 +135,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: authUser.id,
         full_name: fallback.full_name,
         preferred_currency: fallback.preferred_currency,
-        plan_tier: fallback.plan_tier,
+        plan_tier: isOwner ? "premium" : fallback.plan_tier,
         plan_status: "active",
         onboarding_completed: true,
       });
+
+      if (isOwner) {
+        await supabase.auth.updateUser({
+          data: { plan_tier: "premium", is_admin: true },
+        });
+      }
     } catch (e) {
       console.warn("Failed to fetch profile, using metadata fallback:", e);
       setProfile(buildFallbackProfile(authUser));
