@@ -169,7 +169,10 @@ export default function DecideStudioPage() {
         baselineProfile={baselineProfile}
         initialQuery={queryInput}
         showQuickActions={true}
+        autoExpandAnalysis={true}
+        redirectOnSelect={false}
       />
+
 
       {/* STRATEGY COMPARISON (LAYER 4 DETAILED OPTIONS) */}
       <section className="space-y-4 rounded-3xl border border-border/80 bg-card p-6 sm:p-8">

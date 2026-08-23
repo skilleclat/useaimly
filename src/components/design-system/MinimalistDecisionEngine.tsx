@@ -2,6 +2,8 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
 import {
   Car,
   Home,
@@ -117,11 +119,16 @@ export function MinimalistDecisionEngine({
   baselineProfile,
   initialQuery = "",
   showQuickActions = true,
+  autoExpandAnalysis = false,
+  redirectOnSelect = true,
 }: {
   baselineProfile?: BaselineFinancialProfile;
   initialQuery?: string;
   showQuickActions?: boolean;
+  autoExpandAnalysis?: boolean;
+  redirectOnSelect?: boolean;
 }) {
+  const router = useRouter();
   const { currency, format } = useCurrency();
   const { t, language } = useI18n();
   const isFr = language === "fr";
@@ -132,9 +139,10 @@ export function MinimalistDecisionEngine({
 
   const [queryInput, setQueryInput] = useState(initialQuery || defaultDefaultQuery);
   const [activeCardId, setActiveCardId] = useState<string | null>("car");
-  const [showFullAnalysis, setShowFullAnalysis] = useState(false);
+  const [showFullAnalysis, setShowFullAnalysis] = useState(autoExpandAnalysis);
   const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
+
 
 
   // Default baseline profile
@@ -379,11 +387,18 @@ export function MinimalistDecisionEngine({
   const handleCardClick = (card: DecisionCardOption) => {
     setActiveCardId(card.id);
     setQueryInput(card.defaultQuery);
+    if (redirectOnSelect) {
+      router.push(`/app/decide?q=${encodeURIComponent(card.defaultQuery)}`);
+    }
   };
 
   const handleQuickAction = (text: string) => {
     setQueryInput(text);
+    if (redirectOnSelect) {
+      router.push(`/app/decide?q=${encodeURIComponent(text)}`);
+    }
   };
+
 
   return (
     <div className="space-y-10 w-full max-w-4xl mx-auto font-sans">
@@ -506,11 +521,16 @@ export function MinimalistDecisionEngine({
           <button
             type="button"
             onClick={() => {
-              const el = document.getElementById("verdict-result-section");
-              el?.scrollIntoView({ behavior: "smooth" });
+              if (redirectOnSelect) {
+                router.push(`/app/decide?q=${encodeURIComponent(queryInput)}`);
+              } else {
+                const el = document.getElementById("verdict-result-section");
+                el?.scrollIntoView({ behavior: "smooth" });
+              }
             }}
             className="w-full inline-flex items-center justify-center gap-3 rounded-2xl bg-[#00A859] hover:bg-[#00964F] text-white font-bold text-base py-4 px-6 shadow-lg shadow-[#00A859]/30 transition-all cursor-pointer"
           >
+
             <span>{isFr ? "Calculer l'impact sur ma Liberté" : "Analyze My Decision"}</span>
             <div className="w-7 h-7 rounded-full bg-black/20 flex items-center justify-center">
               <ArrowRight className="w-4 h-4" />
