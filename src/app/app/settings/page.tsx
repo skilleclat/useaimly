@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useCurrency } from "@/lib/currency/currency-context";
 import { CurrencyCode } from "@/lib/types/finance";
@@ -27,6 +28,10 @@ import {
 } from "lucide-react";
 
 export default function SettingsPage() {
+  const searchParams = useSearchParams();
+  const paymentSuccessParam = searchParams.get("payment_success");
+  const planParam = searchParams.get("plan");
+
   const { user, profile, displayName, refreshProfile } = useAuth();
   const { currency, setCurrency } = useCurrency();
   const [preferredCurrency, setPreferredCurrency] = useState<CurrencyCode>(currency);
@@ -84,6 +89,34 @@ export default function SettingsPage() {
       setTimeout(() => setTierSuccessMsg(null), 5000);
     }
   };
+
+  React.useEffect(() => {
+    if (paymentSuccessParam === "true" && (planParam === "pro" || planParam === "premium")) {
+      const activatePurchasedPlan = async () => {
+        try {
+          if (user) {
+            const { createClient } = await import("@/lib/supabase/client");
+            const supabase = createClient();
+            await supabase.auth.updateUser({
+              data: { plan_tier: planParam, plan_status: "active" },
+            });
+            await (supabase.from("profiles") as any)
+              .update({ plan_tier: planParam, plan_status: "active" })
+              .eq("id", user.id);
+            await refreshProfile();
+            setTierSuccessMsg(
+              `Félicitations ! Votre paiement a été validé avec succès. Votre formule ${
+                planParam === "premium" ? "AIMLY ÉLITE" : "AIMLY PRO"
+              } est désormais 100% active !`
+            );
+          }
+        } catch (e) {
+          console.warn("Payment auto-activation sync warning:", e);
+        }
+      };
+      activatePurchasedPlan();
+    }
+  }, [paymentSuccessParam, planParam, user, refreshProfile]);
 
   React.useEffect(() => {
     if (displayName && displayName !== "Strategist") {
