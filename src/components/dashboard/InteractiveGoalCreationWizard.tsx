@@ -16,11 +16,11 @@ import {
   ChevronRight,
   ChevronLeft,
   X,
-  Sparkles,
   CheckCircle2,
   Calendar,
   Clock,
   Target,
+  Sparkles,
 } from "lucide-react";
 
 interface CategoryOption {
@@ -162,117 +162,120 @@ export function InteractiveGoalCreationWizard({
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-md animate-fadeIn flex items-start justify-center pt-14 sm:pt-20 pb-12 px-3 sm:px-6">
-      {/* Modal Container: Generous 2-column width docked right below the header */}
-      <div className="relative w-full max-w-xl md:max-w-2xl lg:max-w-3xl rounded-3xl sm:rounded-[2rem] border border-border/80 bg-card p-5 sm:p-8 md:p-9 space-y-6 shadow-2xl text-left">
-          
-          {/* Header & Step Progress Bar */}
-          <div className="space-y-4 pb-2 border-b border-border/60">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {step > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => setStep((s) => (s - 1) as any)}
-                    className="p-2 rounded-xl border border-border/80 bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
-                    title="Previous Step"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                )}
-                <div>
-                  <h3 className="text-base sm:text-xl font-bold font-editorial text-foreground tracking-tight flex items-center gap-2">
-                    <Target className="w-5 h-5 text-primary" />
-                    <span>{language === "fr" ? "Créer un Objectif" : "Create a Goal"}</span>
-                  </h3>
-                  <p className="text-xs text-muted-foreground hidden sm:block">
-                    {language === "fr"
-                      ? "Définissez votre projet, chiffrez vos besoins et visualisez votre trajectoire."
-                      : "Define your destination, target capital, and accumulation trajectory."}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={onClose}
-                className="p-2 rounded-xl border border-border/80 bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
-                title="Close"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* 4 Step Segmented Line Bar */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs font-mono font-semibold text-muted-foreground">
-                <span>
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-md animate-fadeIn flex items-start justify-center pt-3 sm:pt-6 pb-6 px-3 sm:px-6">
+      {/* Modal Container: Docked cleanly near top, responsive on mobile & 2-column desktop */}
+      <div className="relative w-full max-w-xl md:max-w-2xl lg:max-w-3xl rounded-2xl sm:rounded-3xl border border-border/80 bg-card p-4 sm:p-7 space-y-4 sm:space-y-5 shadow-2xl text-left max-h-[92vh] flex flex-col">
+        
+        {/* Header & Step Progress Bar */}
+        <div className="space-y-3 pb-2 border-b border-border/60 shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 sm:gap-3">
+              {step > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setStep((s) => (s - 1) as any)}
+                  className="p-1.5 sm:p-2 rounded-xl border border-border/80 bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
+                  title="Previous Step"
+                >
+                  <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+              )}
+              <div>
+                <h3 className="text-base sm:text-lg font-bold font-editorial text-foreground tracking-tight flex items-center gap-1.5 sm:gap-2">
+                  <Target className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                  <span>{language === "fr" ? "Créer un Objectif" : "Create a Goal"}</span>
+                </h3>
+                <p className="text-[11px] text-muted-foreground hidden sm:block">
                   {language === "fr"
-                    ? `Étape ${step} sur 4 : ${
-                        step === 1
-                          ? "C'est quoi ton objectif ?"
-                          : step === 2
-                          ? "Détails de l'Objectif"
-                          : step === 3
-                          ? "Échéance & Rythme"
-                          : "Synthèse de l'Objectif"
-                      }`
-                    : `Step ${step} of 4: ${
-                        step === 1
-                          ? "What's your goal?"
-                          : step === 2
-                          ? "Goal Details"
-                          : step === 3
-                          ? "Timeline & Pace"
-                          : "Goal Summary"
-                      }`}
-                </span>
-                <span className="text-primary font-bold">{step * 25}%</span>
-              </div>
-              <div className="grid grid-cols-4 gap-2">
-                {[1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      i <= step ? "bg-emerald-600 dark:bg-emerald-500" : "bg-secondary"
-                    }`}
-                  />
-                ))}
+                    ? "Définissez votre projet, chiffrez vos besoins et visualisez votre trajectoire."
+                    : "Define your destination, target capital, and accumulation trajectory."}
+                </p>
               </div>
             </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 sm:p-2 rounded-xl border border-border/80 bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
+              title="Close"
+            >
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
           </div>
 
-          {/* STEP 1: CATEGORY SELECTION IN 2-COLUMN GRID (NO CRAMMING) */}
+          {/* 4 Step Segmented Line Bar */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-[11px] font-mono font-semibold text-muted-foreground">
+              <span>
+                {language === "fr"
+                  ? `Étape ${step} sur 4 : ${
+                      step === 1
+                        ? "C'est quoi ton objectif ?"
+                        : step === 2
+                        ? "Détails de l'Objectif"
+                        : step === 3
+                        ? "Échéance & Rythme"
+                        : "Synthèse de l'Objectif"
+                    }`
+                  : `Step ${step} of 4: ${
+                      step === 1
+                        ? "What's your goal?"
+                        : step === 2
+                        ? "Goal Details"
+                        : step === 3
+                        ? "Timeline & Pace"
+                        : "Goal Summary"
+                    }`}
+              </span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-bold">{step * 25}%</span>
+            </div>
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    i <= step ? "bg-emerald-600 dark:bg-emerald-500" : "bg-secondary"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Scrollable Step Body */}
+        <div className="overflow-y-auto flex-1 pr-1 space-y-4 overscroll-contain">
+          
+          {/* STEP 1: CATEGORY SELECTION IN 2-COLUMN GRID (COMPACT & CLEAN ON MOBILE & DESKTOP) */}
           {step === 1 && (
-            <div className="space-y-4 animate-fadeIn">
-              <div className="space-y-1">
-                <h2 className="text-lg sm:text-2xl font-extrabold text-foreground">
+            <div className="space-y-3 animate-fadeIn">
+              <div className="space-y-0.5">
+                <h2 className="text-base sm:text-xl font-extrabold text-foreground">
                   {language === "fr" ? "C'est quoi ton objectif ?" : "What's your goal?"}
                 </h2>
-                <p className="text-xs sm:text-sm text-muted-foreground">
+                <p className="text-[11px] sm:text-xs text-muted-foreground">
                   {language === "fr"
                     ? "Choisissez un modèle de projet ou définissez un jalon personnalisé."
                     : "Select a goal category or create a custom financial milestone."}
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 pt-1">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat.id}
                     type="button"
                     onClick={() => handleSelectCategory(cat)}
-                    className="w-full p-4 rounded-2xl border border-border/80 bg-card hover:border-emerald-600 hover:bg-secondary/40 transition-all flex items-center justify-between text-left group shadow-xs cursor-pointer"
+                    className="w-full p-3 sm:p-3.5 rounded-xl sm:rounded-2xl border border-border/80 bg-card hover:border-emerald-600 hover:bg-secondary/40 transition-all flex items-center justify-between text-left group shadow-xs cursor-pointer"
                   >
-                    <div className="flex items-center gap-3.5">
-                      <div className={`p-3 rounded-2xl border ${cat.iconBg} shrink-0`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 sm:p-2.5 rounded-xl border ${cat.iconBg} shrink-0`}>
                         {cat.icon}
                       </div>
                       <div>
                         <h4 className="text-xs sm:text-sm font-bold text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                           {language === "fr" ? cat.nameFr : cat.name}
                         </h4>
-                        <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
+                        <p className="text-[10px] sm:text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
                           {language === "fr" ? cat.descFr : cat.desc}
                         </p>
                       </div>
@@ -286,20 +289,20 @@ export function InteractiveGoalCreationWizard({
 
           {/* STEP 2: NAME & TARGET AMOUNT */}
           {step === 2 && (
-            <div className="space-y-5 animate-fadeIn">
-              <div className="space-y-1">
-                <h2 className="text-lg sm:text-2xl font-extrabold text-foreground">
+            <div className="space-y-4 animate-fadeIn">
+              <div className="space-y-0.5">
+                <h2 className="text-base sm:text-xl font-extrabold text-foreground">
                   {language === "fr" ? "Détails de l'Objectif" : "Goal Details"}
                 </h2>
-                <p className="text-xs sm:text-sm text-muted-foreground">
+                <p className="text-[11px] sm:text-xs text-muted-foreground">
                   {language === "fr"
                     ? "Précisez le nom du projet et le montant financier cible."
                     : "Specify the exact capital needed and your initial seed reserve."}
                 </p>
               </div>
 
-              <div className="space-y-4 pt-1">
-                <div className="space-y-1.5">
+              <div className="space-y-3 pt-1">
+                <div className="space-y-1">
                   <label className="text-xs font-bold text-foreground block">
                     {language === "fr" ? "Titre de l'Objectif" : "Goal Title"}
                   </label>
@@ -307,13 +310,13 @@ export function InteractiveGoalCreationWizard({
                     type="text"
                     value={goalName}
                     onChange={(e) => setGoalName(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl border border-border bg-secondary/30 text-sm font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-600/40"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-xs sm:text-sm font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-600/40"
                     placeholder="e.g. Acheter une maison / Lancer une entreprise"
                     required
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <MoneyInput
                     label={language === "fr" ? "Montant Cible Requis" : "Target Amount"}
                     value={targetAmount}
@@ -329,7 +332,7 @@ export function InteractiveGoalCreationWizard({
                   />
                 </div>
 
-                <div className="p-3.5 rounded-2xl border border-border/80 bg-secondary/20 flex items-center justify-between text-xs font-mono">
+                <div className="p-3 rounded-xl border border-border/80 bg-secondary/20 flex items-center justify-between text-xs font-mono">
                   <span className="text-muted-foreground">
                     {language === "fr" ? "Capital restant à accumuler :" : "Remaining capital to accumulate:"}
                   </span>
@@ -342,7 +345,7 @@ export function InteractiveGoalCreationWizard({
               <button
                 type="button"
                 onClick={() => setStep(3)}
-                className="w-full py-4 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs sm:text-sm shadow-md hover:opacity-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs sm:text-sm shadow-md hover:opacity-95 transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <span>{language === "fr" ? "Continuer vers l'Étape 3 (Échéance) →" : "Continue to Step 3 (Timeline) →"}</span>
               </button>
@@ -351,25 +354,25 @@ export function InteractiveGoalCreationWizard({
 
           {/* STEP 3: TIMELINE & MONTHS */}
           {step === 3 && (
-            <div className="space-y-5 animate-fadeIn">
-              <div className="space-y-1">
-                <h2 className="text-lg sm:text-2xl font-extrabold text-foreground">
+            <div className="space-y-4 animate-fadeIn">
+              <div className="space-y-0.5">
+                <h2 className="text-base sm:text-xl font-extrabold text-foreground">
                   {language === "fr" ? "Échéance & Rythme" : "Timeline & Pace"}
                 </h2>
-                <p className="text-xs sm:text-sm text-muted-foreground">
+                <p className="text-[11px] sm:text-xs text-muted-foreground">
                   {language === "fr"
                     ? "En combien de mois souhaitez-vous concrétiser cet objectif ?"
                     : "Choose your target timeframe to calculate the required monthly savings rate."}
                 </p>
               </div>
 
-              <div className="space-y-4 pt-1">
-                <div className="space-y-3 p-5 rounded-2xl border border-border/80 bg-secondary/20">
+              <div className="space-y-3 pt-1">
+                <div className="space-y-2.5 p-4 rounded-xl border border-border/80 bg-secondary/20">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-foreground">
                       {language === "fr" ? "Nombre de Mois Cibles" : "Target Months to Goal"}
                     </label>
-                    <span className="text-base sm:text-lg font-black font-mono text-emerald-600 dark:text-emerald-400">
+                    <span className="text-sm sm:text-base font-black font-mono text-emerald-600 dark:text-emerald-400">
                       {monthsToGoal} {language === "fr" ? "mois" : "months"} ({ (monthsToGoal / 12).toFixed(1)} {language === "fr" ? "ans" : "yrs"})
                     </span>
                   </div>
@@ -381,7 +384,7 @@ export function InteractiveGoalCreationWizard({
                     step="1"
                     value={monthsToGoal}
                     onChange={(e) => setMonthsToGoal(Number(e.target.value))}
-                    className="w-full h-2.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                    className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-emerald-600"
                   />
 
                   <div className="flex justify-between text-[10px] font-mono text-muted-foreground">
@@ -394,21 +397,21 @@ export function InteractiveGoalCreationWizard({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="p-4 rounded-2xl border border-border/80 bg-card space-y-1">
-                    <span className="text-[11px] font-mono text-muted-foreground font-bold uppercase tracking-wider block">
+                  <div className="p-3.5 rounded-xl border border-border/80 bg-card space-y-0.5">
+                    <span className="text-[10px] font-mono text-muted-foreground font-bold uppercase tracking-wider block">
                       {language === "fr" ? "Épargne Mensuelle Requise" : "Required Monthly Savings"}
                     </span>
-                    <div className="text-xl font-black font-mono text-emerald-600 dark:text-emerald-400">
+                    <div className="text-lg font-black font-mono text-emerald-600 dark:text-emerald-400">
                       {formatCurrency(monthlySavingsNeeded, currency)}
-                      <span className="text-xs text-muted-foreground font-normal"> / mo</span>
+                      <span className="text-[11px] text-muted-foreground font-normal"> / mo</span>
                     </div>
                   </div>
 
-                  <div className="p-4 rounded-2xl border border-border/80 bg-card space-y-1">
-                    <span className="text-[11px] font-mono text-muted-foreground font-bold uppercase tracking-wider block">
+                  <div className="p-3.5 rounded-xl border border-border/80 bg-card space-y-0.5">
+                    <span className="text-[10px] font-mono text-muted-foreground font-bold uppercase tracking-wider block">
                       {language === "fr" ? "Part du Revenu Mensuel" : "Share of Monthly Income"}
                     </span>
-                    <div className="text-xl font-black font-mono text-foreground">
+                    <div className="text-lg font-black font-mono text-foreground">
                       {shareOfIncomePercent}%
                     </div>
                   </div>
@@ -418,7 +421,7 @@ export function InteractiveGoalCreationWizard({
               <button
                 type="button"
                 onClick={() => setStep(4)}
-                className="w-full py-4 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs sm:text-sm shadow-md hover:opacity-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs sm:text-sm shadow-md hover:opacity-95 transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <span>{language === "fr" ? "Voir le Récapitulatif (Étape 4) →" : "Review Goal Summary (Step 4) →"}</span>
               </button>
@@ -427,14 +430,14 @@ export function InteractiveGoalCreationWizard({
 
           {/* STEP 4: GOAL SUMMARY & CONFIRMATION */}
           {step === 4 && (
-            <div className="space-y-5 animate-fadeIn">
-              <div className="p-4 rounded-2xl border border-emerald-600/30 bg-emerald-500/5 flex items-center justify-between">
-                <div className="flex items-center gap-3.5">
-                  <div className={`p-3 rounded-2xl border ${selectedCategory.iconBg} shrink-0`}>
+            <div className="space-y-4 animate-fadeIn">
+              <div className="p-3.5 rounded-xl border border-emerald-600/30 bg-emerald-500/5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2.5 rounded-xl border ${selectedCategory.iconBg} shrink-0`}>
                     {selectedCategory.icon}
                   </div>
                   <div>
-                    <h4 className="text-sm sm:text-base font-bold text-foreground">{goalName}</h4>
+                    <h4 className="text-xs sm:text-sm font-bold text-foreground">{goalName}</h4>
                     <span className="text-xs text-muted-foreground font-mono font-bold">
                       {language === "fr" ? "Objectif :" : "Target:"} {formatCurrency(targetAmount, currency)}
                     </span>
@@ -447,33 +450,33 @@ export function InteractiveGoalCreationWizard({
                 </div>
               </div>
 
-              <div className="p-5 rounded-3xl border border-border bg-card space-y-4 shadow-xs">
-                <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">
+              <div className="p-4 rounded-2xl border border-border bg-card space-y-3 shadow-xs">
+                <h3 className="text-[11px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
                   {language === "fr" ? "Synthèse de l'Objectif" : "Goal summary"}
                 </h3>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono">
-                  <div className="p-3.5 rounded-2xl bg-secondary/30 border border-border/60">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 font-mono">
+                  <div className="p-3 rounded-xl bg-secondary/30 border border-border/60">
                     <span className="text-[10px] text-muted-foreground block font-sans">
                       {language === "fr" ? "Épargne requise" : "Monthly savings needed"}
                     </span>
-                    <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-base">
+                    <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-sm sm:text-base">
                       {formatCurrency(monthlySavingsNeeded, currency)}
                     </span>
                   </div>
 
-                  <div className="p-3.5 rounded-2xl bg-secondary/30 border border-border/60">
+                  <div className="p-3 rounded-xl bg-secondary/30 border border-border/60">
                     <span className="text-[10px] text-muted-foreground block font-sans">
                       {language === "fr" ? "Mois restants" : "Months to destination"}
                     </span>
-                    <span className="font-extrabold text-foreground text-base">{monthsToGoal}</span>
+                    <span className="font-extrabold text-foreground text-sm sm:text-base">{monthsToGoal}</span>
                   </div>
 
-                  <div className="p-3.5 rounded-2xl bg-secondary/30 border border-border/60">
+                  <div className="p-3 rounded-xl bg-secondary/30 border border-border/60">
                     <span className="text-[10px] text-muted-foreground block font-sans">
                       {language === "fr" ? "Part du revenu" : "Share of income"}
                     </span>
-                    <span className="font-extrabold text-foreground text-base">{shareOfIncomePercent}%</span>
+                    <span className="font-extrabold text-foreground text-sm sm:text-base">{shareOfIncomePercent}%</span>
                   </div>
                 </div>
               </div>
@@ -481,14 +484,15 @@ export function InteractiveGoalCreationWizard({
               <button
                 type="button"
                 onClick={handleSubmit}
-                className="w-full py-4 rounded-2xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs sm:text-sm font-extrabold transition-all shadow-lg shadow-emerald-800/20 active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-3.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs sm:text-sm font-extrabold transition-all shadow-lg shadow-emerald-800/20 active:scale-95 cursor-pointer flex items-center justify-center gap-2"
               >
-                <CheckCircle2 className="w-5 h-5" />
+                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>{language === "fr" ? "Créer l'Objectif" : "Create Goal"}</span>
               </button>
             </div>
           )}
         </div>
       </div>
+    </div>
   );
 }
