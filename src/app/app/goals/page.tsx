@@ -307,22 +307,22 @@ export default function GoalsPage() {
 
       {/* CREATE NEW DESTINATION MODAL */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-lg rounded-3xl border border-border/80 bg-card p-6 space-y-5 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-border/60 pb-3">
-              <h3 className="text-xl font-bold font-editorial text-foreground">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fadeIn">
+          <div className="relative w-full max-w-lg rounded-3xl border border-border/80 bg-card p-5 sm:p-7 space-y-4 shadow-2xl my-auto max-h-[92dvh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-border/60 pb-3 shrink-0">
+              <h3 className="text-lg sm:text-xl font-bold font-editorial text-foreground">
                 Define New Goal Destination
               </h3>
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="p-1.5 rounded-xl border border-border/80 bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors"
+                className="p-1.5 rounded-xl border border-border/80 bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateDestination} className="space-y-4">
+            <form onSubmit={handleCreateDestination} className="space-y-4 overflow-y-auto flex-1 pr-1 overscroll-contain">
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-muted-foreground block">
                   Goal Name
@@ -333,11 +333,11 @@ export default function GoalsPage() {
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="e.g. Launch my business"
-                  className="w-full rounded-xl border border-border/80 bg-background px-4 py-2.5 text-sm font-medium text-foreground focus:outline-hidden focus:border-primary"
+                  className="w-full rounded-xl border border-border/80 bg-background px-4 py-2.5 text-xs sm:text-sm font-medium text-foreground focus:outline-hidden focus:border-primary"
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <MoneyInput
                   label="Target Amount"
                   value={newTargetAmount}
@@ -353,7 +353,7 @@ export default function GoalsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <MoneyInput
                   label="Monthly Contribution"
                   value={newMonthlyContribution}
@@ -375,17 +375,17 @@ export default function GoalsPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 pt-3 border-t border-border/60">
+              <div className="flex items-center gap-3 pt-3 border-t border-border/60 shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="flex-1 rounded-xl border border-border/80 bg-secondary/50 py-2.5 text-xs font-semibold text-foreground hover:bg-secondary transition-colors"
+                  className="flex-1 rounded-xl border border-border/80 bg-secondary/50 py-3 text-xs font-semibold text-foreground hover:bg-secondary transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-primary py-2.5 text-xs font-semibold text-primary-foreground hover:opacity-95 shadow-xs transition-opacity"
+                  className="flex-1 rounded-xl bg-primary py-3 text-xs font-semibold text-primary-foreground hover:opacity-95 shadow-xs transition-opacity cursor-pointer"
                 >
                   Create Goal
                 </button>

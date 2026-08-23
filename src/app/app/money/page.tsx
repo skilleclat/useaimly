@@ -530,15 +530,15 @@ export default function MoneyPage() {
 
           {/* Add Income Modal */}
           {showAddIncome && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fadeIn">
-              <div className="max-w-md w-full rounded-3xl border border-border bg-card p-6 space-y-4 shadow-elevation-2">
-                <div className="flex items-center justify-between border-b border-border/70 pb-3">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-sm overflow-y-auto animate-fadeIn">
+              <div className="relative max-w-md w-full rounded-3xl border border-border bg-card p-5 sm:p-6 space-y-4 shadow-elevation-2 my-auto max-h-[92dvh] overflow-y-auto flex flex-col">
+                <div className="flex items-center justify-between border-b border-border/70 pb-3 shrink-0">
                   <h4 className="font-bold text-foreground">Add Income Stream</h4>
-                  <button type="button" onClick={() => setShowAddIncome(false)}>
-                    <X className="w-5 h-5 text-muted-foreground" />
+                  <button type="button" onClick={() => setShowAddIncome(false)} className="p-1 text-muted-foreground hover:text-foreground cursor-pointer">
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
-                <form onSubmit={handleAddIncome} className="space-y-4">
+                <form onSubmit={handleAddIncome} className="space-y-4 overflow-y-auto flex-1 pr-1 overscroll-contain">
                   <div className="space-y-1">
                     <label className="text-xs text-muted-foreground block">Income Name</label>
                     <input
@@ -556,17 +556,17 @@ export default function MoneyPage() {
                     onChange={(val) => setNewIncAmount(val)}
                     currency={currency}
                   />
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex gap-2 pt-2 shrink-0">
                     <button
                       type="button"
                       onClick={() => setShowAddIncome(false)}
-                      className="flex-1 rounded-xl border border-border py-2 text-xs font-bold"
+                      className="flex-1 rounded-xl border border-border py-2 text-xs font-bold cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 rounded-xl bg-primary py-2 text-xs font-bold text-primary-foreground"
+                      className="flex-1 rounded-xl bg-primary py-2 text-xs font-bold text-primary-foreground cursor-pointer"
                     >
                       Save Income
                     </button>
@@ -582,11 +582,11 @@ export default function MoneyPage() {
       {activeTab === "EXPENSES" && (
         <div className="space-y-6 animate-fadeIn">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-bold font-editorial text-foreground">Living Expenses & Outflows</h3>
+            <h3 className="text-xl font-bold font-editorial text-foreground">Living Expenses &amp; Outflows</h3>
             <button
               type="button"
               onClick={() => setShowAddExpense(true)}
-              className="inline-flex items-center gap-1.5 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground hover:opacity-95"
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground hover:opacity-95 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Expense</span>
@@ -624,15 +624,15 @@ export default function MoneyPage() {
 
           {/* Add Expense Modal */}
           {showAddExpense && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fadeIn">
-              <div className="max-w-md w-full rounded-3xl border border-border bg-card p-6 space-y-4 shadow-elevation-2">
-                <div className="flex items-center justify-between border-b border-border/70 pb-3">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-sm overflow-y-auto animate-fadeIn">
+              <div className="relative max-w-md w-full rounded-3xl border border-border bg-card p-5 sm:p-6 space-y-4 shadow-elevation-2 my-auto max-h-[92dvh] overflow-y-auto flex flex-col">
+                <div className="flex items-center justify-between border-b border-border/70 pb-3 shrink-0">
                   <h4 className="font-bold text-foreground">Add Living Expense</h4>
-                  <button type="button" onClick={() => setShowAddExpense(false)}>
-                    <X className="w-5 h-5 text-muted-foreground" />
+                  <button type="button" onClick={() => setShowAddExpense(false)} className="p-1 text-muted-foreground hover:text-foreground cursor-pointer">
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
-                <form onSubmit={handleAddExpense} className="space-y-4">
+                <form onSubmit={handleAddExpense} className="space-y-4 overflow-y-auto flex-1 pr-1 overscroll-contain">
                   <div className="space-y-1">
                     <label className="text-xs text-muted-foreground block">Expense Name</label>
                     <input
@@ -650,17 +650,17 @@ export default function MoneyPage() {
                     onChange={(val) => setNewExpAmount(val)}
                     currency={currency}
                   />
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex gap-2 pt-2 shrink-0">
                     <button
                       type="button"
                       onClick={() => setShowAddExpense(false)}
-                      className="flex-1 rounded-xl border border-border py-2 text-xs font-bold"
+                      className="flex-1 rounded-xl border border-border py-2 text-xs font-bold cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 rounded-xl bg-primary py-2 text-xs font-bold text-primary-foreground"
+                      className="flex-1 rounded-xl bg-primary py-2 text-xs font-bold text-primary-foreground cursor-pointer"
                     >
                       Save Expense
                     </button>
