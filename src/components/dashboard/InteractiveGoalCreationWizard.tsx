@@ -162,12 +162,9 @@ export function InteractiveGoalCreationWizard({
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-md animate-fadeIn">
-      {/* Viewport centering wrapper - Guaranteed vertical & horizontal centering */}
-      <div className="min-h-full flex items-center justify-center p-3 sm:p-6 md:p-8">
-        
-        {/* Modal Container: Generous 2-column width on desktop */}
-        <div className="relative w-full max-w-xl md:max-w-2xl lg:max-w-3xl rounded-3xl sm:rounded-[2rem] border border-border/80 bg-card p-5 sm:p-8 md:p-9 space-y-6 shadow-2xl text-left">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-md animate-fadeIn flex items-start justify-center pt-14 sm:pt-20 pb-12 px-3 sm:px-6">
+      {/* Modal Container: Generous 2-column width docked right below the header */}
+      <div className="relative w-full max-w-xl md:max-w-2xl lg:max-w-3xl rounded-3xl sm:rounded-[2rem] border border-border/80 bg-card p-5 sm:p-8 md:p-9 space-y-6 shadow-2xl text-left">
           
           {/* Header & Step Progress Bar */}
           <div className="space-y-4 pb-2 border-b border-border/60">
@@ -493,6 +490,5 @@ export function InteractiveGoalCreationWizard({
           )}
         </div>
       </div>
-    </div>
   );
 }

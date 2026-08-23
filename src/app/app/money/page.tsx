@@ -530,8 +530,8 @@ export default function MoneyPage() {
 
           {/* Add Income Modal */}
           {showAddIncome && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-sm overflow-y-auto animate-fadeIn">
-              <div className="relative max-w-md w-full rounded-3xl border border-border bg-card p-5 sm:p-6 space-y-4 shadow-elevation-2 my-auto max-h-[92dvh] overflow-y-auto flex flex-col">
+            <div className="fixed inset-0 z-50 flex items-start justify-center pt-14 sm:pt-20 pb-8 px-3 sm:px-6 bg-background/80 backdrop-blur-sm overflow-y-auto animate-fadeIn">
+              <div className="relative max-w-md w-full rounded-3xl border border-border bg-card p-5 sm:p-6 space-y-4 shadow-elevation-2 max-h-[92dvh] overflow-y-auto flex flex-col">
                 <div className="flex items-center justify-between border-b border-border/70 pb-3 shrink-0">
                   <h4 className="font-bold text-foreground">Add Income Stream</h4>
                   <button type="button" onClick={() => setShowAddIncome(false)} className="p-1 text-muted-foreground hover:text-foreground cursor-pointer">
@@ -624,8 +624,8 @@ export default function MoneyPage() {
 
           {/* Add Expense Modal */}
           {showAddExpense && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-sm overflow-y-auto animate-fadeIn">
-              <div className="relative max-w-md w-full rounded-3xl border border-border bg-card p-5 sm:p-6 space-y-4 shadow-elevation-2 my-auto max-h-[92dvh] overflow-y-auto flex flex-col">
+            <div className="fixed inset-0 z-50 flex items-start justify-center pt-14 sm:pt-20 pb-8 px-3 sm:px-6 bg-background/80 backdrop-blur-sm overflow-y-auto animate-fadeIn">
+              <div className="relative max-w-md w-full rounded-3xl border border-border bg-card p-5 sm:p-6 space-y-4 shadow-elevation-2 max-h-[92dvh] overflow-y-auto flex flex-col">
                 <div className="flex items-center justify-between border-b border-border/70 pb-3 shrink-0">
                   <h4 className="font-bold text-foreground">Add Living Expense</h4>
                   <button type="button" onClick={() => setShowAddExpense(false)} className="p-1 text-muted-foreground hover:text-foreground cursor-pointer">

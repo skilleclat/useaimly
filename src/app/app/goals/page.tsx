@@ -324,8 +324,8 @@ export default function GoalsPage() {
 
       {/* CREATE NEW DESTINATION MODAL */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fadeIn">
-          <div className="relative w-full max-w-lg rounded-3xl border border-border/80 bg-card p-5 sm:p-7 space-y-4 shadow-2xl my-auto max-h-[92dvh] flex flex-col">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-start justify-center pt-14 sm:pt-20 pb-8 px-3 sm:px-6 overflow-y-auto animate-fadeIn">
+          <div className="relative w-full max-w-lg rounded-3xl border border-border/80 bg-card p-5 sm:p-7 space-y-4 shadow-2xl max-h-[92dvh] flex flex-col">
             <div className="flex items-center justify-between border-b border-border/60 pb-3 shrink-0">
               <h3 className="text-lg sm:text-xl font-bold font-editorial text-foreground">
                 Define New Goal Destination
@@ -414,8 +414,8 @@ export default function GoalsPage() {
 
       {/* PRO PLAN UPGRADE GATE MODAL (FREE TIER LIMITED TO 1 GOAL) */}
       {showUpgradeGateModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
-          <div className="relative w-full max-w-2xl my-auto">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-start justify-center pt-14 sm:pt-20 pb-8 px-3 sm:px-6 overflow-y-auto animate-fadeIn">
+          <div className="relative w-full max-w-2xl">
             <button
               type="button"
               onClick={() => setShowUpgradeGateModal(false)}

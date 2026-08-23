@@ -54,8 +54,8 @@ export function GoalNotificationSettingsModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fadeIn">
-      <div className="relative max-w-md w-full rounded-3xl border border-border/80 bg-card p-5 sm:p-6 space-y-4 sm:space-y-5 shadow-2xl my-auto font-sans max-h-[92dvh] overflow-y-auto flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-start justify-center pt-14 sm:pt-20 pb-8 px-3 sm:px-6 overflow-y-auto animate-fadeIn">
+      <div className="relative max-w-md w-full rounded-3xl border border-border/80 bg-card p-5 sm:p-6 space-y-4 sm:space-y-5 shadow-2xl font-sans max-h-[92dvh] overflow-y-auto flex flex-col">
         <div className="flex items-center justify-between border-b border-border/60 pb-3 shrink-0">
           <div className="flex items-center gap-2">
             <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20">
