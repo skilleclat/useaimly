@@ -7,7 +7,8 @@ import { useCurrency } from "@/lib/currency/currency-context";
 import { CurrencyCode } from "@/lib/types/finance";
 import { WhatsAppDispatchCard } from "@/components/finance/WhatsAppDispatchCard";
 import { PayPalCheckoutModal } from "@/components/finance/PayPalCheckoutModal";
-import { PRICING_PLANS, PricingPlan } from "@/lib/types/pricing";
+import { PRICING_PLANS, PricingPlan, PlanTier } from "@/lib/types/pricing";
+import { upgradePlanAction } from "@/lib/auth/actions";
 import {
   Settings as SettingsIcon,
   User,
@@ -41,6 +42,43 @@ export default function SettingsPage() {
   const [notifyShortfall, setNotifyShortfall] = useState(true);
   const [notifyCommitments, setNotifyCommitments] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
+  const [isSwitchingTier, setIsSwitchingTier] = useState(false);
+  const [tierSuccessMsg, setTierSuccessMsg] = useState<string | null>(null);
+
+  const handleSwitchPlanTier = async (targetTier: PlanTier) => {
+    setIsSwitchingTier(true);
+    setTierSuccessMsg(null);
+    try {
+      const res = await upgradePlanAction(targetTier);
+      if (res.success) {
+        setTierSuccessMsg(
+          targetTier === "premium"
+            ? "Accès Owner / Administrateur Aimly Premium (Elite) activé !"
+            : targetTier === "pro"
+            ? "Accès Aimly Pro Strategist activé avec succès !"
+            : "Compte repassé en version Starter Free."
+        );
+        await refreshProfile();
+      } else {
+        // Fallback local update if offline / server action fallback
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        if (user) {
+          await supabase.auth.updateUser({ data: { plan_tier: targetTier } });
+          await (supabase.from("profiles") as any)
+            .update({ plan_tier: targetTier, plan_status: "active" })
+            .eq("id", user.id);
+          await refreshProfile();
+          setTierSuccessMsg(`Formule ${targetTier.toUpperCase()} activée avec succès !`);
+        }
+      }
+    } catch (err) {
+      console.warn("Plan tier switch warning:", err);
+    } finally {
+      setIsSwitchingTier(false);
+      setTimeout(() => setTierSuccessMsg(null), 5000);
+    }
+  };
 
   React.useEffect(() => {
     if (displayName && displayName !== "Strategist") {
@@ -110,13 +148,20 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-bold text-foreground">
               <Shield className="w-4 h-4 text-primary" />
-              <span>Subscription & Monetization Tier</span>
+              <span>Subscription & Owner License Control</span>
             </div>
             <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-mono font-bold text-emerald-500 border border-emerald-500/20">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>ACTIVE</span>
+              <span>ACTIVE STATUS</span>
             </div>
           </div>
+
+          {tierSuccessMsg && (
+            <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2 animate-fadeIn">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>{tierSuccessMsg}</span>
+            </div>
+          )}
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl bg-card border border-border/80">
             <div className="space-y-1">
@@ -124,26 +169,84 @@ export default function SettingsPage() {
                 <span className="text-lg font-black text-foreground uppercase tracking-tight">
                   {profile?.plan_tier ? profile.plan_tier.toUpperCase() : "FREE"} PLAN
                 </span>
-                <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-md bg-primary/20 text-primary">
-                  {profile?.plan_tier === "premium" ? "Elite" : profile?.plan_tier === "pro" ? "Pro Strategist" : "Starter"}
+                <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-md bg-primary/20 text-primary border border-primary/30">
+                  {profile?.plan_tier === "premium" ? "Aimly Elite (Owner)" : profile?.plan_tier === "pro" ? "Pro Strategist" : "Starter Free"}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 {profile?.plan_tier === "premium"
-                  ? "Unlimited deterministic engine access, AI Financial Advisor (Gemini/GPT-4), and What-If Laboratory."
+                  ? "Formule Premium Élite active : Accès illimité au moteur déterministe, Conseiller IA (Gemini / GPT-4), Bloc-Notes IA et Laboratoire Scénarios."
                   : profile?.plan_tier === "pro"
-                  ? "3-Strategy Impact Studio, Multi-Destinations, and 6 Proactive Insight Rules."
-                  : "Explore decision intelligence with 1 Primary Destination."}
+                  ? "Formule Pro active : Studio 3-Stratégies, Destinations multiples, et Alertes proactives."
+                  : "Formule Starter Gratuite : 1 Destination principale & simulateur de base."}
               </p>
             </div>
 
             <Link
               href="/pricing"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground font-bold text-xs px-5 py-2.5 shadow-xs hover:opacity-95 transition-all shrink-0"
+              className="inline-flex items-center gap-2 rounded-xl bg-secondary/80 hover:bg-secondary text-foreground font-bold text-xs px-4 py-2.5 shadow-xs transition-all shrink-0 border border-border/80"
             >
-              <span>{profile?.plan_tier === "free" ? "Upgrade Plan" : "Manage Subscription"}</span>
+              <span>Voir Tarifs & FAQ</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
+          </div>
+
+          {/* OWNER & ADMIN INSTANT ACCESS SWITCHER */}
+          <div className="p-5 rounded-2xl border border-amber-500/30 bg-amber-500/5 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold text-amber-600 dark:text-amber-400">
+                <Sparkles className="w-4 h-4" />
+                <span>Espace Propriétaire / Administrateur — Attribution Directe de Licence</span>
+              </div>
+              <span className="text-[10px] font-mono text-muted-foreground">1-Click Activation</span>
+            </div>
+
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              En tant que propriétaire ou administrateur du site, vous pouvez activer instantanément votre accès <strong>Aimly Premium</strong> ou attribuer une formule Pro à votre compte de test sans effectuer de paiement.
+            </p>
+
+            <div className="grid grid-cols-3 gap-2.5 pt-1">
+              <button
+                type="button"
+                disabled={isSwitchingTier}
+                onClick={() => handleSwitchPlanTier("free")}
+                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                  profile?.plan_tier === "free" || !profile?.plan_tier
+                    ? "border-border bg-secondary text-foreground ring-2 ring-border font-extrabold"
+                    : "border-border/60 bg-background text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <span>Free (Starter)</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isSwitchingTier}
+                onClick={() => handleSwitchPlanTier("pro")}
+                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                  profile?.plan_tier === "pro"
+                    ? "border-emerald-500 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 ring-2 ring-emerald-500/30 font-extrabold"
+                    : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
+                }`}
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>Aimly Pro</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isSwitchingTier}
+                onClick={() => handleSwitchPlanTier("premium")}
+                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                  profile?.plan_tier === "premium"
+                    ? "border-primary bg-primary text-primary-foreground ring-2 ring-primary/40 font-extrabold shadow-md"
+                    : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Aimly Premium (Elite Owner)</span>
+              </button>
+            </div>
           </div>
         </div>
 

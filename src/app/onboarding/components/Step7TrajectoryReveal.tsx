@@ -311,16 +311,17 @@ export function Step7TrajectoryReveal({
           </button>
         </div>
       </div>
-
-      {/* WHATSAPP PRO DISPATCH INTELLIGENCE CARD */}
-      <WhatsAppDispatchCard
-        destinationTitle={destination.title}
-        targetDate={formatMonthYear(destination.targetDate)}
-        projectedDate={formatMonthYear(calculatedPath.projectedCompletionDate)}
-        delayInDays={Math.max(0, (calculatedPath.projectedMonthsToCompletion - 24) * 30)}
-        monthlyGoalCapacity={calculatedPath.monthlyFreeCashFlow}
-        currency={currency}
-      />
     </div>
+
+    {/* WHATSAPP PRO DISPATCH INTELLIGENCE CARD */}
+    <WhatsAppDispatchCard
+      destinationTitle={destination.title}
+      targetDate={formatMonthYear(destination.targetDate)}
+      projectedDate={formatMonthYear(calculatedPath.projectedCompletionDate)}
+      delayInDays={Math.max(0, (calculatedPath.projectedMonthsToCompletion - 24) * 30)}
+      monthlyGoalCapacity={calculatedPath.monthlyFreeCashFlow}
+      currency={currency}
+    />
+  </div>
   );
 }

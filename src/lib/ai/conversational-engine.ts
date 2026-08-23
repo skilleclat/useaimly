@@ -77,8 +77,8 @@ export class ConversationalIntelligenceEngine {
 
       const strategist = generateSeniorStrategistAssessment({
         currency,
-        monthlyInflow: context.profile.totalGrossIncome || 180000,
-        monthlyOutflow: context.profile.totalMandatoryExpenses || 112000,
+        monthlyInflow: context.profile.monthlyGrossIncome || 180000,
+        monthlyOutflow: (context.profile.monthlyLivingExpenses + context.profile.monthlyDebtService) || 112000,
         monthlyFreeCashFlow: context.profile.monthlyFreeCashFlow,
         totalLiquidSavings: context.profile.totalLiquidSavings,
         targetAmount: context.primaryDestination.targetAmount,

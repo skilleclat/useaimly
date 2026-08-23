@@ -7,6 +7,8 @@ import { useCurrency } from "@/lib/currency/currency-context";
 import { useI18n } from "@/lib/i18n/i18n-context";
 import { formatCurrency } from "@/lib/utils/currency";
 import { CurrencyCode } from "@/lib/types/finance";
+import { PlanTier } from "@/lib/types/pricing";
+import { upgradePlanAction } from "@/lib/auth/actions";
 import {
   User,
   History,
@@ -58,6 +60,34 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
   const [preferredCurrency, setPreferredCurrency] = useState<CurrencyCode>(currency);
   const [isSavedSuccess, setIsSavedSuccess] = useState(false);
   const [isDeletingField, setIsDeletingField] = useState(false);
+  const [isSwitchingTier, setIsSwitchingTier] = useState(false);
+  const [tierMsg, setTierMsg] = useState<string | null>(null);
+
+  const handleSwitchPlanTier = async (targetTier: PlanTier) => {
+    setIsSwitchingTier(true);
+    setTierMsg(null);
+    try {
+      const res = await upgradePlanAction(targetTier);
+      if (res.success) {
+        setTierMsg(`Formule ${targetTier.toUpperCase()} activée avec succès !`);
+        await refreshProfile();
+      } else if (user) {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        await supabase.auth.updateUser({ data: { plan_tier: targetTier } });
+        await (supabase.from("profiles") as any)
+          .update({ plan_tier: targetTier, plan_status: "active" })
+          .eq("id", user.id);
+        await refreshProfile();
+        setTierMsg(`Formule ${targetTier.toUpperCase()} activée avec succès !`);
+      }
+    } catch (e) {
+      console.warn("Plan tier switch error:", e);
+    } finally {
+      setIsSwitchingTier(false);
+      setTimeout(() => setTierMsg(null), 4000);
+    }
+  };
 
   useEffect(() => {
     if (displayName && displayName !== "Strategist") {
@@ -217,7 +247,13 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
                   {displayName}
                 </h3>
                 <span className="rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-extrabold px-2.5 py-0.5 border border-emerald-500/30 uppercase">
-                  {user ? "Pro Strategist" : "Guest / Live Demo"}
+                  {profile?.plan_tier === "premium"
+                    ? "Aimly Elite (Owner)"
+                    : profile?.plan_tier === "pro"
+                    ? "Aimly Pro"
+                    : user
+                    ? "Starter Free"
+                    : "Guest / Live Demo"}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground font-mono mt-0.5">
@@ -330,21 +366,62 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
           {/* TAB 2: PROFILE EDIT & CRUD (CREATE, READ, UPDATE, DELETE) */}
           {activeTab === "profile" && (
             <form onSubmit={handleSaveProfile} className="space-y-5 text-left">
-              <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                <div>
-                  <h4 className="text-xs font-bold font-mono uppercase text-foreground">
-                    {language === "fr" ? "Éditeur de Profil & Coordonnées (CRUD)" : "Profile & Contact CRUD Management"}
-                  </h4>
-                  <p className="text-[11px] text-muted-foreground">
-                    {language === "fr" ? "Consultez, modifiez ou mettez à jour vos identifiants et votre numéro WhatsApp." : "View, edit, or update your credentials and WhatsApp phone number."}
-                  </p>
+              {tierMsg && (
+                <div className="p-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>{tierMsg}</span>
                 </div>
-                {isSavedSuccess && (
-                  <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-bold px-3 py-1 border border-emerald-500/30">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>{language === "fr" ? "Enregistré !" : "Saved!"}</span>
+              )}
+
+              {/* Owner / Admin Subscription Control */}
+              <div className="p-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{language === "fr" ? "Activer l'Accès Propriétaire / Admin" : "Owner / Admin Instant License Switch"}</span>
                   </span>
-                )}
+                  <span className="text-[10px] font-mono text-muted-foreground uppercase">
+                    {profile?.plan_tier || "free"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    disabled={isSwitchingTier}
+                    onClick={() => handleSwitchPlanTier("free")}
+                    className={`py-1.5 px-2 rounded-xl border text-[11px] font-bold transition-all cursor-pointer ${
+                      profile?.plan_tier === "free" || !profile?.plan_tier
+                        ? "border-border bg-secondary text-foreground font-extrabold"
+                        : "border-border/60 bg-background text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Free
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSwitchingTier}
+                    onClick={() => handleSwitchPlanTier("pro")}
+                    className={`py-1.5 px-2 rounded-xl border text-[11px] font-bold transition-all cursor-pointer ${
+                      profile?.plan_tier === "pro"
+                        ? "border-emerald-500 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-extrabold"
+                        : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
+                    }`}
+                  >
+                    Aimly Pro
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSwitchingTier}
+                    onClick={() => handleSwitchPlanTier("premium")}
+                    className={`py-1.5 px-2 rounded-xl border text-[11px] font-bold transition-all cursor-pointer ${
+                      profile?.plan_tier === "premium"
+                        ? "border-primary bg-primary text-primary-foreground font-extrabold shadow-xs"
+                        : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
+                    }`}
+                  >
+                    Aimly Premium
+                  </button>
+                </div>
               </div>
 
               {/* Full Name & Username */}

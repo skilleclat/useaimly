@@ -193,9 +193,6 @@ export default function DecideStudioPage() {
     }
   };
 
-  const primaryGoal = baselineProfile.goals[0];
-  const goalTitle = primaryGoal?.title || "Start my business";
-
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
       {/* Top Header Navigation */}

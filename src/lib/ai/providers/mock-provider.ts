@@ -38,7 +38,7 @@ export class MockAIProvider implements AIProvider {
       decisionContext: {
         title: simulation.decision.title,
         amount: decisionAmount,
-        isRecurring: simulation.decision.isRecurring,
+        isRecurring: Boolean((simulation.decision as any).isRecurring),
         frequency: simulation.decision.recurringFrequency,
       },
     });
