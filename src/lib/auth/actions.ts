@@ -697,7 +697,7 @@ export async function submitMpesaPaymentAction(
     }
 
     // 2. Strict minimum amount check for the requested tier
-    const requiredMinKES = planTier === "premium" ? (isYearly ? 10400 : 1300) : (isYearly ? 1300 : 130);
+    const requiredMinKES = planTier === "premium" ? (isYearly ? 10400 : 1300) : (isYearly ? 5200 : 650);
     if (amountKES < requiredMinKES) {
       return {
         success: false,
@@ -789,7 +789,7 @@ export async function submitPayPalPaymentAction(
     }
 
     // 1. Strict minimum amount check for the requested tier
-    const requiredMinUSD = planTier === "premium" ? (isYearly ? 79.99 : 9.99) : (isYearly ? 10.00 : 1.00);
+    const requiredMinUSD = planTier === "premium" ? (isYearly ? 79.99 : 9.99) : (isYearly ? 39.99 : 4.99);
     if (amountUSD < requiredMinUSD) {
       return {
         success: false,
