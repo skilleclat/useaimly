@@ -317,21 +317,31 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
         <Link
           href="/app/notes"
-          className={`flex flex-col items-center justify-center gap-1 text-[10px] font-semibold transition-all ${
+          className={`relative flex flex-col items-center justify-center gap-1 text-[10px] font-semibold transition-all ${
             pathname.startsWith("/app/notes") ? "text-primary font-bold" : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <FileText className="w-4 h-4" />
+          <div className="relative">
+            <FileText className="w-4 h-4 text-amber-500" />
+            <span className="absolute -top-1 -right-3 text-[7px] font-mono font-extrabold px-1 rounded-sm bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+              PRO
+            </span>
+          </div>
           <span>Notes</span>
         </Link>
 
         <Link
           href="/app/what-if"
-          className={`flex flex-col items-center justify-center gap-1 text-[10px] font-semibold transition-all ${
+          className={`relative flex flex-col items-center justify-center gap-1 text-[10px] font-semibold transition-all ${
             pathname.startsWith("/app/what-if") ? "text-primary font-bold" : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <TrendingUp className="w-4 h-4" />
+          <div className="relative">
+            <TrendingUp className="w-4 h-4 text-purple-500" />
+            <span className="absolute -top-1 -right-3.5 text-[7px] font-mono font-extrabold px-1 rounded-sm bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30">
+              ELITE
+            </span>
+          </div>
           <span>What-If</span>
         </Link>
 
