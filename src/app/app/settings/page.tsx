@@ -196,105 +196,67 @@ export default function SettingsPage() {
             </Link>
           </div>
 
-          {/* OWNER & ADMIN INSTANT ACCESS SWITCHER (PROTECTED) */}
-          {(() => {
-            const isOwnerOrAdmin = isAdminUser(user) || isAdminUnlocked;
-            return (
-              <div className="p-5 rounded-2xl border border-amber-500/30 bg-amber-500/5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs font-bold text-amber-600 dark:text-amber-400">
-                    <Shield className="w-4 h-4" />
-                    <span>Espace Administrateur — Controle des Licences Systemes</span>
-                  </div>
-                  <span className="text-[10px] font-mono text-muted-foreground">
-                    {isOwnerOrAdmin ? "UNLOCKED (ADMIN)" : "PROTECTED BY ADMIN LOCK"}
-                  </span>
+          {/* EXCLUSIVE OWNER & ADMIN LICENSE CONTROL (skilleclat@gmail.com ONLY) */}
+          {isAdminUser(user) && (
+            <div className="p-5 rounded-2xl border border-amber-500/30 bg-amber-500/5 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-bold text-amber-600 dark:text-amber-400">
+                  <Shield className="w-4 h-4" />
+                  <span>Espace Propriétaire Exclusif — (skilleclat@gmail.com)</span>
                 </div>
-
-                {isOwnerOrAdmin ? (
-                  <>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      En tant que propriétaire du site, vous êtes identifié. Vous pouvez basculer le niveau de votre licence ou attribuer une formule Pro/Premium d&apos;un seul clic.
-                    </p>
-
-                    <div className="grid grid-cols-3 gap-2.5 pt-1">
-                      <button
-                        type="button"
-                        disabled={isSwitchingTier}
-                        onClick={() => handleSwitchPlanTier("free")}
-                        className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                          profile?.plan_tier === "free" || !profile?.plan_tier
-                            ? "border-border bg-secondary text-foreground ring-2 ring-border font-extrabold"
-                            : "border-border/60 bg-background text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        <span>Free (Starter)</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={isSwitchingTier}
-                        onClick={() => handleSwitchPlanTier("pro")}
-                        className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                          profile?.plan_tier === "pro"
-                            ? "border-emerald-500 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 ring-2 ring-emerald-500/30 font-extrabold"
-                            : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
-                        }`}
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                        <span>Aimly Pro</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={isSwitchingTier}
-                        onClick={() => handleSwitchPlanTier("premium")}
-                        className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                          profile?.plan_tier === "premium"
-                            ? "border-primary bg-primary text-primary-foreground ring-2 ring-primary/40 font-extrabold shadow-md"
-                            : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
-                        }`}
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Aimly Premium (Elite Owner)</span>
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <form onSubmit={handleVerifyPasscode} className="space-y-3 pt-1">
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      Seul le propriétaire du site possède le code secret d&apos;attribution de licence. Si vous êtes l&apos;administrateur, saisissez votre code secret pour déverrouiller.
-                    </p>
-
-                    <div className="flex items-center gap-2">
-                      <div className="relative flex-1">
-                        <Lock className="w-3.5 h-3.5 absolute left-3 top-3 text-muted-foreground" />
-                        <input
-                          type="password"
-                          value={adminPasscode}
-                          onChange={(e) => setAdminPasscode(e.target.value)}
-                          placeholder="Code secret Administrateur..."
-                          className="w-full rounded-xl border border-border bg-background pl-9 pr-3 py-2 text-xs font-mono text-foreground focus:border-amber-500 focus:outline-none"
-                        />
-                      </div>
-                      <button
-                        type="submit"
-                        className="rounded-xl bg-amber-500 hover:bg-amber-600 text-amber-950 font-bold text-xs px-4 py-2 transition-all cursor-pointer"
-                      >
-                        Déverrouiller
-                      </button>
-                    </div>
-
-                    {passcodeError && (
-                      <p className="text-[11px] font-mono text-rose-500 font-bold">
-                        {passcodeError}
-                      </p>
-                    )}
-                  </form>
-                )}
+                <span className="text-[10px] font-mono font-extrabold text-emerald-500 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+                  OWNER VERIFIED
+                </span>
               </div>
-            );
-          })()}
+
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Vous êtes identifié en tant que propriétaire du site (<strong>skilleclat@gmail.com</strong>). Vous pouvez basculer le niveau de votre licence ou attribuer une formule Pro/Premium d&apos;un seul clic.
+              </p>
+
+              <div className="grid grid-cols-3 gap-2.5 pt-1">
+                <button
+                  type="button"
+                  disabled={isSwitchingTier}
+                  onClick={() => handleSwitchPlanTier("free")}
+                  className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    profile?.plan_tier === "free" || !profile?.plan_tier
+                      ? "border-border bg-secondary text-foreground ring-2 ring-border font-extrabold"
+                      : "border-border/60 bg-background text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span>Free (Starter)</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isSwitchingTier}
+                  onClick={() => handleSwitchPlanTier("pro")}
+                  className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    profile?.plan_tier === "pro"
+                      ? "border-emerald-500 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 ring-2 ring-emerald-500/30 font-extrabold"
+                      : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
+                  }`}
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Aimly Pro</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isSwitchingTier}
+                  onClick={() => handleSwitchPlanTier("premium")}
+                  className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    profile?.plan_tier === "premium"
+                      ? "border-primary bg-primary text-primary-foreground ring-2 ring-primary/40 font-extrabold shadow-md"
+                      : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Aimly Premium (Elite)</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 1. PROFILE & IDENTITY CRUD */}

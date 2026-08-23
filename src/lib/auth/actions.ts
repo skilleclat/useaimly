@@ -677,12 +677,12 @@ export async function upgradePlanAction(
     }
 
     const { isAdminUser, verifyAdminPasscode } = await import("./admin-check");
-    const isAuthorized = isAdminUser(user) || (adminPasscode && verifyAdminPasscode(adminPasscode));
+    const isAuthorized = isAdminUser(user) || (adminPasscode && verifyAdminPasscode(adminPasscode, user.email));
 
     if (!isAuthorized) {
       return {
         success: false,
-        message: "Accès refusé : Seul le propriétaire ou un administrateur autorisé peut attribuer des licences directement sans paiement.",
+        message: "Accès refusé : Seul le compte propriétaire (skilleclat@gmail.com) est autorisé à attribuer des licences directement sans paiement.",
       };
     }
 

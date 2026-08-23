@@ -1,49 +1,37 @@
 import { User } from "@supabase/supabase-js";
 
 /**
- * List of authorized Admin / Owner emails for UseAimly
- * Can be configured via NEXT_PUBLIC_ADMIN_EMAILS in .env.local
+ * Sole Authorized Owner Email for UseAimly Admin Privileges
  */
-const DEFAULT_ADMIN_EMAILS = [
-  "skilleclat@gmail.com",
-  "admin@useaimly.com",
-  "owner@useaimly.com",
-];
-
-export const DEFAULT_ADMIN_PASSCODE = process.env.NEXT_PUBLIC_ADMIN_PASSCODE || "AIMLY_2026_OWNER";
+export const SOLE_OWNER_EMAIL = "skilleclat@gmail.com";
 
 /**
- * Checks if a user has Admin / Owner privileges
+ * Strictly checks if a user is the authorized site owner (skilleclat@gmail.com)
  */
 export function isAdminUser(user: User | null | any): boolean {
   if (!user || !user.email) return false;
 
-  const envAdminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS
+  const userEmail = user.email.trim().toLowerCase();
+
+  // Allow env override if explicitly set in .env.local, otherwise strictly skilleclat@gmail.com
+  const envAdmins = process.env.NEXT_PUBLIC_ADMIN_EMAILS
     ? process.env.NEXT_PUBLIC_ADMIN_EMAILS.split(",").map((e) => e.trim().toLowerCase())
     : [];
 
-  const allAdmins = [...DEFAULT_ADMIN_EMAILS, ...envAdminEmails].map((e) => e.toLowerCase());
+  const authorizedEmails = [SOLE_OWNER_EMAIL.toLowerCase(), ...envAdmins];
 
-  const userEmail = user.email.toLowerCase();
-
-  // 1. Email whitelist check
-  if (allAdmins.some((adminEmail) => userEmail === adminEmail || userEmail.endsWith("@useaimly.com"))) {
-    return true;
-  }
-
-  // 2. Metadata / Role check
-  if (user.user_metadata?.is_admin === true || user.user_metadata?.role === "admin") {
-    return true;
-  }
-
-  return false;
+  return authorizedEmails.includes(userEmail);
 }
 
 /**
- * Verifies if an entered passcode matches the Admin Secret Key
+ * Verifies if an entered passcode matches the Admin Secret Key (only for skilleclat@gmail.com)
  */
-export function verifyAdminPasscode(passcode: string): boolean {
-  if (!passcode) return false;
+export function verifyAdminPasscode(passcode: string, userEmail?: string): boolean {
+  if (!passcode || !userEmail) return false;
+  if (userEmail.trim().toLowerCase() !== SOLE_OWNER_EMAIL.toLowerCase()) return false;
+
+  const envPass = process.env.NEXT_PUBLIC_ADMIN_PASSCODE || "SKILLECLAT_OWNER_2026";
   const clean = passcode.trim();
-  return clean === DEFAULT_ADMIN_PASSCODE || clean === "AIMLY_2026_OWNER" || clean === "useaimly2026";
+
+  return clean === envPass || clean === "SKILLECLAT_OWNER_2026";
 }
