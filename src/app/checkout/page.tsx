@@ -34,14 +34,16 @@ function CheckoutContent() {
   const { currency, format } = useCurrency();
   const { language } = useI18n();
 
-  const baseUSD = isYearly ? plan.totalYearlyUSD : plan.priceMonthlyUSD;
-  const formattedPriceUSD = format(baseUSD, { fromCurrency: "USD", showDecimals: true });
+  const baseUSD = isYearly
+    ? (plan?.totalYearlyUSD || (plan?.priceYearlyUSD ? plan.priceYearlyUSD * 12 : 39.99))
+    : (plan?.priceMonthlyUSD || 5.00);
 
-  const amountKES = plan.id === "premium"
-    ? (isYearly ? MPESA_CONFIG.premiumYearlyKES : MPESA_CONFIG.premiumMonthlyKES)
-    : (isYearly ? MPESA_CONFIG.proYearlyKES : MPESA_CONFIG.proMonthlyKES);
+  const amountKES = plan?.id === "premium"
+    ? (isYearly ? (MPESA_CONFIG?.premiumYearlyKES || 10400) : (MPESA_CONFIG?.premiumMonthlyKES || 1300))
+    : (isYearly ? (MPESA_CONFIG?.proYearlyKES || 5200) : (MPESA_CONFIG?.proMonthlyKES || 650));
 
-  const formattedPriceKES = `KES ${amountKES.toLocaleString()}`;
+  const formattedPriceUSD = typeof format === "function" ? format(baseUSD, { fromCurrency: "USD", showDecimals: true }) : `$${Number(baseUSD || 0).toFixed(2)}`;
+  const formattedPriceKES = `KES ${Number(amountKES || 0).toLocaleString()}`;
 
   const handleCopy = (text: string, fieldKey: string) => {
     if (typeof navigator !== "undefined") {

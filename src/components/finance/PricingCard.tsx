@@ -227,8 +227,8 @@ export function PricingCard({
         )}
       </div>
 
-      {/* Built-in PayPal Checkout Modal */}
-      {plan.id !== "free" && (
+      {/* Built-in PayPal Checkout Modal (Only when no parent onSelectPlan handler is provided) */}
+      {plan.id !== "free" && !onSelectPlan && (
         <PayPalCheckoutModal
           isOpen={isPayPalOpen}
           onClose={() => setIsPayPalOpen(false)}

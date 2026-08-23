@@ -57,16 +57,16 @@ export function PayPalCheckoutModal({
 
   // Calculate Base USD amount
   const baseUSD = isYearly
-    ? (plan.totalYearlyUSD || plan.priceYearlyUSD * 12)
-    : plan.priceMonthlyUSD;
+    ? (plan?.totalYearlyUSD || (plan?.priceYearlyUSD ? plan.priceYearlyUSD * 12 : 39.99))
+    : (plan?.priceMonthlyUSD || 5.00);
 
   // Calculate KES amount
-  const amountKES = plan.id === "premium"
-    ? (isYearly ? MPESA_CONFIG.premiumYearlyKES : MPESA_CONFIG.premiumMonthlyKES)
-    : (isYearly ? MPESA_CONFIG.proYearlyKES : MPESA_CONFIG.proMonthlyKES);
+  const amountKES = plan?.id === "premium"
+    ? (isYearly ? (MPESA_CONFIG?.premiumYearlyKES || 10400) : (MPESA_CONFIG?.premiumMonthlyKES || 1300))
+    : (isYearly ? (MPESA_CONFIG?.proYearlyKES || 5200) : (MPESA_CONFIG?.proMonthlyKES || 650));
 
-  const formattedPriceUSD = format(baseUSD, { fromCurrency: "USD", showDecimals: true });
-  const formattedPriceKES = `KES ${amountKES.toLocaleString()}`;
+  const formattedPriceUSD = typeof format === "function" ? format(baseUSD, { fromCurrency: "USD", showDecimals: true }) : `$${Number(baseUSD || 0).toFixed(2)}`;
+  const formattedPriceKES = `KES ${Number(amountKES || 0).toLocaleString()}`;
 
   const billingCycleLabel = isYearly
     ? (language === "fr" ? "Facturation Annuelle (-20% de réduction)" : "Annual Billing (-20% discount)")
@@ -76,7 +76,7 @@ export function PayPalCheckoutModal({
 
   // Copy helper
   const handleCopy = (text: string, fieldKey: string) => {
-    if (typeof navigator !== "undefined") {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(text);
       setCopiedField(fieldKey);
       setTimeout(() => setCopiedField(null), 2500);
@@ -86,19 +86,29 @@ export function PayPalCheckoutModal({
   // Real PayPal Checkout Link Builder
   const getPayPalCheckoutUrl = () => {
     const origin = typeof window !== "undefined" ? window.location.origin : "https://useaimly.com";
-    const itemName = encodeURIComponent(`UseAimly ${plan.name} (${isYearly ? "Annual" : "Monthly"})`);
-    const returnUrl = encodeURIComponent(`${origin}/app/settings?payment_success=true&plan=${plan.id}`);
+    const planName = plan?.name || "Aimly Pro";
+    const planId = plan?.id || "pro";
+    const itemName = encodeURIComponent(`UseAimly ${planName} (${isYearly ? "Annual" : "Monthly"})`);
+    const returnUrl = encodeURIComponent(`${origin}/app/settings?payment_success=true&plan=${planId}`);
     const cancelUrl = encodeURIComponent(`${origin}/pricing`);
+    const safeAmount = Number(baseUSD || 5).toFixed(2);
 
     return `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=${encodeURIComponent(
       merchantEmail
-    )}&item_name=${itemName}&amount=${baseUSD.toFixed(2)}&currency_code=USD&return=${returnUrl}&cancel_return=${cancelUrl}`;
+    )}&item_name=${itemName}&amount=${safeAmount}&currency_code=USD&return=${returnUrl}&cancel_return=${cancelUrl}`;
   };
 
   const handleOpenPayPal = () => {
-    const payPalUrl = getPayPalCheckoutUrl();
-    window.open(payPalUrl, "_blank", "noopener,noreferrer");
-    setModalState("redirected");
+    try {
+      const payPalUrl = getPayPalCheckoutUrl();
+      if (typeof window !== "undefined") {
+        window.open(payPalUrl, "_blank", "noopener,noreferrer");
+      }
+      setModalState("redirected");
+    } catch (err) {
+      console.error("PayPal checkout link error:", err);
+      setModalState("redirected");
+    }
   };
 
   const handleVerifyPayPal = async (e: React.FormEvent) => {
