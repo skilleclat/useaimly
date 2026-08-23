@@ -9,6 +9,7 @@ import { formatCurrency } from "@/lib/utils/currency";
 import { CurrencyCode } from "@/lib/types/finance";
 import { PlanTier } from "@/lib/types/pricing";
 import { upgradePlanAction } from "@/lib/auth/actions";
+import { isAdminUser } from "@/lib/auth/admin-check";
 import {
   User,
   History,
@@ -373,56 +374,58 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
                 </div>
               )}
 
-              {/* Owner / Admin Subscription Control */}
-              <div className="p-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>{language === "fr" ? "Activer l'Accès Propriétaire / Admin" : "Owner / Admin Instant License Switch"}</span>
-                  </span>
-                  <span className="text-[10px] font-mono text-muted-foreground uppercase">
-                    {profile?.plan_tier || "free"}
-                  </span>
+              {/* Owner / Admin Subscription Control (Authorized Admins Only) */}
+              {isAdminUser(user) && (
+                <div className="p-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>{language === "fr" ? "Accès Propriétaire / Admin" : "Owner / Admin Instant License Switch"}</span>
+                    </span>
+                    <span className="text-[10px] font-mono text-muted-foreground uppercase">
+                      {profile?.plan_tier || "free"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      disabled={isSwitchingTier}
+                      onClick={() => handleSwitchPlanTier("free")}
+                      className={`py-1.5 px-2 rounded-xl border text-[11px] font-bold transition-all cursor-pointer ${
+                        profile?.plan_tier === "free" || !profile?.plan_tier
+                          ? "border-border bg-secondary text-foreground font-extrabold"
+                          : "border-border/60 bg-background text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Free
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isSwitchingTier}
+                      onClick={() => handleSwitchPlanTier("pro")}
+                      className={`py-1.5 px-2 rounded-xl border text-[11px] font-bold transition-all cursor-pointer ${
+                        profile?.plan_tier === "pro"
+                          ? "border-emerald-500 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-extrabold"
+                          : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
+                      }`}
+                    >
+                      Aimly Pro
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isSwitchingTier}
+                      onClick={() => handleSwitchPlanTier("premium")}
+                      className={`py-1.5 px-2 rounded-xl border text-[11px] font-bold transition-all cursor-pointer ${
+                        profile?.plan_tier === "premium"
+                          ? "border-primary bg-primary text-primary-foreground font-extrabold shadow-xs"
+                          : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
+                      }`}
+                    >
+                      Aimly Premium
+                    </button>
+                  </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    disabled={isSwitchingTier}
-                    onClick={() => handleSwitchPlanTier("free")}
-                    className={`py-1.5 px-2 rounded-xl border text-[11px] font-bold transition-all cursor-pointer ${
-                      profile?.plan_tier === "free" || !profile?.plan_tier
-                        ? "border-border bg-secondary text-foreground font-extrabold"
-                        : "border-border/60 bg-background text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    Free
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isSwitchingTier}
-                    onClick={() => handleSwitchPlanTier("pro")}
-                    className={`py-1.5 px-2 rounded-xl border text-[11px] font-bold transition-all cursor-pointer ${
-                      profile?.plan_tier === "pro"
-                        ? "border-emerald-500 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-extrabold"
-                        : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
-                    }`}
-                  >
-                    Aimly Pro
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isSwitchingTier}
-                    onClick={() => handleSwitchPlanTier("premium")}
-                    className={`py-1.5 px-2 rounded-xl border text-[11px] font-bold transition-all cursor-pointer ${
-                      profile?.plan_tier === "premium"
-                        ? "border-primary bg-primary text-primary-foreground font-extrabold shadow-xs"
-                        : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
-                    }`}
-                  >
-                    Aimly Premium
-                  </button>
-                </div>
-              </div>
+              )}
 
               {/* Full Name & Username */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

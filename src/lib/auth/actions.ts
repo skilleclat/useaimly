@@ -661,7 +661,10 @@ export async function resendOtpAction(email: string): Promise<AuthActionResult> 
   }
 }
 
-export async function upgradePlanAction(planTier: "free" | "pro" | "premium"): Promise<AuthActionResult> {
+export async function upgradePlanAction(
+  planTier: "free" | "pro" | "premium",
+  adminPasscode?: string
+): Promise<AuthActionResult> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -673,9 +676,22 @@ export async function upgradePlanAction(planTier: "free" | "pro" | "premium"): P
       };
     }
 
+    const { isAdminUser, verifyAdminPasscode } = await import("./admin-check");
+    const isAuthorized = isAdminUser(user) || (adminPasscode && verifyAdminPasscode(adminPasscode));
+
+    if (!isAuthorized) {
+      return {
+        success: false,
+        message: "Accès refusé : Seul le propriétaire ou un administrateur autorisé peut attribuer des licences directement sans paiement.",
+      };
+    }
+
     // Update user metadata in auth
     await supabase.auth.updateUser({
-      data: { plan_tier: planTier },
+      data: {
+        plan_tier: planTier,
+        is_admin: true,
+      },
     });
 
     // Update profiles table in Supabase
@@ -692,7 +708,7 @@ export async function upgradePlanAction(planTier: "free" | "pro" | "premium"): P
 
     return {
       success: true,
-      message: `Your account has been upgraded to ${planTier.toUpperCase()} successfully!`,
+      message: `Votre compte a été mis à jour avec la formule ${planTier.toUpperCase()} avec succès !`,
       redirectTo: "/app",
     };
   } catch (err: any) {
