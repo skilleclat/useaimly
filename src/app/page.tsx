@@ -172,23 +172,43 @@ export default function LandingPage() {
 
             {/* Dual CTAs */}
             <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5">
-              <Link
-                href="/onboarding"
-                className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white font-bold text-sm px-8 py-4 shadow-lg shadow-orange-500/25 hover:opacity-95 hover:scale-[1.01] transition-all cursor-pointer"
-              >
-                <span>{t("btnTryRealDecision")}</span>
-                <span className="text-xs font-normal opacity-90">{t("noAccountNeeded")}</span>
-                <ArrowRight className="w-4 h-4 ml-1" />
-              </Link>
+              {user ? (
+                <>
+                  <Link
+                    href="/app"
+                    className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white font-bold text-sm px-8 py-4 shadow-lg shadow-orange-500/25 hover:opacity-95 hover:scale-[1.01] transition-all cursor-pointer"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>Ouvrir Mon Dashboard Élite →</span>
+                  </Link>
 
-              {!user && (
-                <Link
-                  href="/signup"
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card hover:bg-secondary/70 text-foreground font-bold text-sm px-6 py-4 shadow-xs transition-all"
-                >
-                  <span>{t("btnCreateFreeAccount")}</span>
-                  <span className="text-xs text-muted-foreground font-normal">{t("signupTime")}</span>
-                </Link>
+                  <Link
+                    href="/app/decide"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card hover:bg-secondary/70 text-foreground font-bold text-sm px-6 py-4 shadow-xs transition-all"
+                  >
+                    <HelpCircle className="w-4 h-4 text-primary" />
+                    <span>Studio Décisionnel</span>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/onboarding"
+                    className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white font-bold text-sm px-8 py-4 shadow-lg shadow-orange-500/25 hover:opacity-95 hover:scale-[1.01] transition-all cursor-pointer"
+                  >
+                    <span>{t("btnTryRealDecision")}</span>
+                    <span className="text-xs font-normal opacity-90">{t("noAccountNeeded")}</span>
+                    <ArrowRight className="w-4 h-4 ml-1" />
+                  </Link>
+
+                  <Link
+                    href="/signup"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card hover:bg-secondary/70 text-foreground font-bold text-sm px-6 py-4 shadow-xs transition-all"
+                  >
+                    <span>{t("btnCreateFreeAccount")}</span>
+                    <span className="text-xs text-muted-foreground font-normal">{t("signupTime")}</span>
+                  </Link>
+                </>
               )}
             </div>
 
@@ -290,7 +310,7 @@ export default function LandingPage() {
 
               {/* Action Button */}
               <Link
-                href="/onboarding"
+                href={user ? "/app/decide" : "/onboarding"}
                 className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-primary text-primary-foreground font-bold text-sm py-3.5 shadow-md hover:opacity-95 transition-all cursor-pointer"
               >
                 <span>{t("widgetSeeFullAnalysis")}</span>

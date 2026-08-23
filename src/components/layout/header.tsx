@@ -80,10 +80,79 @@ export function Header() {
           </Link>
         </div>
 
+        {/* Center Desktop Navigation for Logged-In Users */}
+        {user ? (
+          <nav className="hidden lg:flex items-center gap-1">
+            <Link
+              href="/app"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex items-center gap-1.5"
+            >
+              <Compass className="w-3.5 h-3.5 text-primary" />
+              <span>Dashboard</span>
+            </Link>
+            <Link
+              href="/app/decide"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex items-center gap-1.5"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span>Decide</span>
+            </Link>
+            <Link
+              href="/app/goals"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex items-center gap-1.5"
+            >
+              <Target className="w-3.5 h-3.5" />
+              <span>Goals</span>
+            </Link>
+            <Link
+              href="/app/what-if"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex items-center gap-1.5"
+            >
+              <TrendingUp className="w-3.5 h-3.5" />
+              <span>What-If</span>
+            </Link>
+            <Link
+              href="/app/notes"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex items-center gap-1.5"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>Notes AI</span>
+            </Link>
+          </nav>
+        ) : (
+          <nav className="hidden md:flex items-center gap-6">
+            <Link
+              href="/pricing"
+              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t("navPricing")}
+            </Link>
+            <Link
+              href="/app/decide"
+              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t("navDecide")}
+            </Link>
+            <Link
+              href="/app/what-if"
+              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t("navWhatIf")}
+            </Link>
+          </nav>
+        )}
+
         {/* Right Actions */}
         <div className="flex items-center gap-2 sm:gap-3">
           {user ? (
             <div className="flex items-center gap-2">
+              <Link
+                href="/app"
+                className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary via-orange-500 to-amber-500 text-white px-3.5 py-1.5 text-xs font-bold shadow-xs hover:opacity-95 transition-all"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Dashboard Élite →</span>
+              </Link>
               <button
                 type="button"
                 onClick={() => setIsProfileModalOpen(true)}
@@ -94,6 +163,9 @@ export function Header() {
                   {displayName.charAt(0).toUpperCase()}
                 </div>
                 <span className="hidden sm:inline">{displayName}</span>
+                <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                  {profile?.plan_tier === "premium" ? "Élite" : profile?.plan_tier === "pro" ? "Pro" : "Starter"}
+                </span>
               </button>
               <button
                 onClick={() => signOut()}
