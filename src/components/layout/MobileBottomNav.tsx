@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Clock, Target, FileText } from "lucide-react";
@@ -10,6 +10,24 @@ export function MobileBottomNav() {
   const pathname = usePathname();
   const { language } = useI18n();
   const isFr = language === "fr";
+  const [isMobile, setIsMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const checkMobile = () => {
+      // Strictly mobile only (< 768px)
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // On server rendering or on desktop screens (>= 768px), DO NOT RENDER AT ALL
+  if (!mounted || !isMobile) {
+    return null;
+  }
 
   const NAV_ITEMS = [
     {
@@ -39,8 +57,7 @@ export function MobileBottomNav() {
   ];
 
   return (
-    // STRICTLY HIDDEN ON DESKTOP (md:hidden lg:hidden)
-    <div className="md:hidden lg:hidden fixed bottom-4 left-4 right-4 z-50 flex justify-center pointer-events-none">
+    <div className="fixed bottom-4 left-4 right-4 z-50 flex justify-center pointer-events-none md:hidden lg:hidden">
       <nav className="pointer-events-auto w-full max-w-md bg-[#062317] text-white rounded-3xl px-4 py-2.5 shadow-[0_12px_40px_rgba(0,0,0,0.35)] border border-emerald-900/30">
         <div className="grid grid-cols-4 items-center">
           {NAV_ITEMS.map((item) => {
