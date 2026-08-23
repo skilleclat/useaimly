@@ -4,31 +4,34 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Clock, Target, FileText } from "lucide-react";
+import { useI18n } from "@/lib/i18n/i18n-context";
 
 export function MobileBottomNav() {
   const pathname = usePathname();
+  const { language } = useI18n();
+  const isFr = language === "fr";
 
   const NAV_ITEMS = [
     {
-      label: "Home",
+      label: isFr ? "Accueil" : "Home",
       href: "/app",
       icon: <Home className="w-5 h-5" />,
       exact: true,
     },
     {
-      label: "History",
+      label: isFr ? "Historique" : "History",
       href: "/app/decide",
       icon: <Clock className="w-5 h-5" />,
       exact: false,
     },
     {
-      label: "Goals",
+      label: isFr ? "Objectifs" : "Goals",
       href: "/app/goals",
       icon: <Target className="w-5 h-5" />,
       exact: false,
     },
     {
-      label: "Insights",
+      label: isFr ? "Insights" : "Insights",
       href: "/app/insights",
       icon: <FileText className="w-5 h-5" />,
       exact: false,
@@ -36,7 +39,8 @@ export function MobileBottomNav() {
   ];
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 flex justify-center pointer-events-none">
+    // STRICTLY HIDDEN ON DESKTOP (md:hidden lg:hidden)
+    <div className="md:hidden lg:hidden fixed bottom-4 left-4 right-4 z-50 flex justify-center pointer-events-none">
       <nav className="pointer-events-auto w-full max-w-md bg-[#062317] text-white rounded-3xl px-4 py-2.5 shadow-[0_12px_40px_rgba(0,0,0,0.35)] border border-emerald-900/30">
         <div className="grid grid-cols-4 items-center">
           {NAV_ITEMS.map((item) => {
@@ -57,7 +61,7 @@ export function MobileBottomNav() {
                 <div className={`p-1.5 rounded-full ${isActive ? "bg-white/10" : ""}`}>
                   {item.icon}
                 </div>
-                <span className="text-[10px] mt-0.5 tracking-tight font-medium">
+                <span className="text-[10px] mt-0.5 tracking-tight font-semibold">
                   {item.label}
                 </span>
               </Link>

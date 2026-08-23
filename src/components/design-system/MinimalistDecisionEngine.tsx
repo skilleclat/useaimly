@@ -24,6 +24,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { useCurrency } from "@/lib/currency/currency-context";
+import { useI18n } from "@/lib/i18n/i18n-context";
 import { parseDecisionQuery } from "@/lib/nlp/decision-query-parser";
 import { simulateDecision, BaselineFinancialProfile } from "@/lib/finance";
 
@@ -86,7 +87,7 @@ export function Hero3DGraphic() {
           <div className="w-10 h-10 rounded-full border-4 border-[#00A859] border-t-transparent transform -rotate-45" />
         </div>
 
-        {/* 3D Floating Emerald Shield Badge (Absolute Left) */}
+        {/* 3D Floating Emerald Shield Badge */}
         <div className="absolute -left-6 top-1/2 transform -translate-y-1/2 bg-[#00A859] text-white p-3.5 rounded-2xl shadow-[0_12px_30px_rgba(0,168,89,0.4)] flex items-center justify-center border-2 border-white dark:border-card">
           <CheckCircle2 className="w-7 h-7 stroke-[2.5]" />
         </div>
@@ -105,9 +106,14 @@ export function MinimalistDecisionEngine({
   showQuickActions?: boolean;
 }) {
   const { currency, format } = useCurrency();
-  const [queryInput, setQueryInput] = useState(
-    initialQuery || "I'm thinking of buying a KES 500,000 car."
-  );
+  const { t, language } = useI18n();
+  const isFr = language === "fr";
+
+  const defaultDefaultQuery = isFr
+    ? "Je veux acheter une voiture à 500 000 KES."
+    : "I'm thinking of buying a KES 500,000 car.";
+
+  const [queryInput, setQueryInput] = useState(initialQuery || defaultDefaultQuery);
   const [activeCardId, setActiveCardId] = useState<string | null>("car");
   const [showFullAnalysis, setShowFullAnalysis] = useState(false);
 
@@ -129,7 +135,7 @@ export function MinimalistDecisionEngine({
         goals: [
           {
             id: "main-goal",
-            title: "Financial Goal",
+            title: isFr ? "Objectif d'Épargne & Entreprise" : "Financial Goal & Emergency Fund",
             targetAmount: 500000,
             currentAmount: 180000,
             targetDate: "2027-03-31",
@@ -138,66 +144,81 @@ export function MinimalistDecisionEngine({
           },
         ],
       },
-    [baselineProfile]
+    [baselineProfile, isFr]
   );
 
-  // 6 DECISION CARDS MATCHING REFERENCE UI
-  const DECISION_CARDS: DecisionCardOption[] = [
-    {
-      id: "car",
-      title: "Buy a car",
-      subtitle: "Can I afford it?",
-      defaultQuery: "Can I afford a KES 500,000 car?",
-      bgColor: "bg-emerald-500/10",
-      iconBg: "bg-emerald-500 text-white",
-      icon: <Car className="w-5 h-5" />,
-    },
-    {
-      id: "home",
-      title: "Buy a home",
-      subtitle: "See the financial impact",
-      defaultQuery: "Can I afford a KES 2,500,000 home deposit?",
-      bgColor: "bg-emerald-500/10",
-      iconBg: "bg-[#00A859] text-white",
-      icon: <Home className="w-5 h-5" />,
-    },
-    {
-      id: "loan",
-      title: "Take a loan",
-      subtitle: "Can I handle the payments?",
-      defaultQuery: "What happens if I take a KES 200,000 loan?",
-      bgColor: "bg-purple-500/10",
-      iconBg: "bg-purple-600 text-white",
-      icon: <CreditCard className="w-5 h-5" />,
-    },
-    {
-      id: "purchase",
-      title: "Make a big purchase",
-      subtitle: "Know before you spend",
-      defaultQuery: "Can I buy a KES 120,000 laptop?",
-      bgColor: "bg-amber-500/10",
-      iconBg: "bg-amber-500 text-white",
-      icon: <ShoppingBag className="w-5 h-5" />,
-    },
-    {
-      id: "business",
-      title: "Start a business",
-      subtitle: "Can my finances support it?",
-      defaultQuery: "Can I invest KES 300,000 into a new business?",
-      bgColor: "bg-blue-500/10",
-      iconBg: "bg-blue-600 text-white",
-      icon: <Briefcase className="w-5 h-5" />,
-    },
-    {
-      id: "trip",
-      title: "Take a trip",
-      subtitle: "Will it affect my goals?",
-      defaultQuery: "Can I afford a KES 150,000 vacation?",
-      bgColor: "bg-sky-500/10",
-      iconBg: "bg-sky-500 text-white",
-      icon: <Plane className="w-5 h-5" />,
-    },
-  ];
+  // 6 DECISION CARDS WITH ROMAIN BOUVET COPYWRITING
+  const DECISION_CARDS: DecisionCardOption[] = useMemo(
+    () => [
+      {
+        id: "car",
+        title: isFr ? "Acheter une voiture" : "Buy a car",
+        subtitle: isFr ? "Puis-je financer ce véhicule ?" : "Can I afford it?",
+        defaultQuery: isFr
+          ? "Puis-je m'offrir une voiture à 500 000 KES ?"
+          : "Can I afford a KES 500,000 car?",
+        bgColor: "bg-emerald-500/10",
+        iconBg: "bg-[#00A859] text-white",
+        icon: <Car className="w-5 h-5" />,
+      },
+      {
+        id: "home",
+        title: isFr ? "Acheter un bien immobilier" : "Buy a home",
+        subtitle: isFr ? "Quel impact sur ma trésorerie ?" : "See the financial impact",
+        defaultQuery: isFr
+          ? "Puis-je financer un apport immobilier de 2 500 000 KES ?"
+          : "Can I afford a KES 2,500,000 home deposit?",
+        bgColor: "bg-emerald-500/10",
+        iconBg: "bg-[#00A859] text-white",
+        icon: <Home className="w-5 h-5" />,
+      },
+      {
+        id: "loan",
+        title: isFr ? "Souscrire un crédit" : "Take a loan",
+        subtitle: isFr ? "Puis-je assumer les mensualités ?" : "Can I handle the payments?",
+        defaultQuery: isFr
+          ? "Que se passe-t-il si je prends un crédit de 200 000 KES ?"
+          : "What happens if I take a KES 200,000 loan?",
+        bgColor: "bg-purple-500/10",
+        iconBg: "bg-purple-600 text-white",
+        icon: <CreditCard className="w-5 h-5" />,
+      },
+      {
+        id: "purchase",
+        title: isFr ? "Achat coup de cœur" : "Make a big purchase",
+        subtitle: isFr ? "Vérifiez avant de céder" : "Know before you spend",
+        defaultQuery: isFr
+          ? "Puis-je acheter un ordinateur portable à 120 000 KES ?"
+          : "Can I buy a KES 120,000 laptop?",
+        bgColor: "bg-amber-500/10",
+        iconBg: "bg-amber-500 text-white",
+        icon: <ShoppingBag className="w-5 h-5" />,
+      },
+      {
+        id: "business",
+        title: isFr ? "Lancer un business" : "Start a business",
+        subtitle: isFr ? "Mes finances tiennent le choc ?" : "Can my finances support it?",
+        defaultQuery: isFr
+          ? "Puis-je investir 300 000 KES dans un nouveau projet ?"
+          : "Can I invest KES 300,000 into a new business?",
+        bgColor: "bg-blue-500/10",
+        iconBg: "bg-blue-600 text-white",
+        icon: <Briefcase className="w-5 h-5" />,
+      },
+      {
+        id: "trip",
+        title: isFr ? "S'offrir un voyage" : "Take a trip",
+        subtitle: isFr ? "Est-ce que ça retarde mes projets ?" : "Will it affect my goals?",
+        defaultQuery: isFr
+          ? "Puis-je m'offrir des vacances à 150 000 KES ?"
+          : "Can I afford a KES 150,000 vacation?",
+        bgColor: "bg-sky-500/10",
+        iconBg: "bg-sky-500 text-white",
+        icon: <Plane className="w-5 h-5" />,
+      },
+    ],
+    [isFr]
+  );
 
   // Parse natural language intent
   const parsedIntent = useMemo(() => {
@@ -210,6 +231,8 @@ export function MinimalistDecisionEngine({
 
   const extractedTitle = parsedIntent?.isValid && parsedIntent.extractedTitle
     ? parsedIntent.extractedTitle
+    : isFr
+    ? "Achat de Véhicule"
     : "Vehicle Purchase";
 
   const isRecurring = parsedIntent?.isRecurring ?? false;
@@ -229,7 +252,7 @@ export function MinimalistDecisionEngine({
     if (status === "SAFE" || status === "GO") {
       return {
         type: "AFFORDABLE",
-        label: "YOU CAN AFFORD IT",
+        label: isFr ? "VOUS POUVEZ L'ACHETER" : "YOU CAN AFFORD IT",
         badgeBg: "bg-emerald-500/10 text-[#00A859] border-emerald-500/30",
         cardBorder: "border-emerald-500/40",
         icon: <CheckCircle2 className="w-5 h-5 text-[#00A859]" />,
@@ -237,7 +260,7 @@ export function MinimalistDecisionEngine({
     } else if (status === "MANAGEABLE" || status === "ADJUST") {
       return {
         type: "ADJUST",
-        label: "ADJUST",
+        label: isFr ? "À AJUSTER" : "ADJUST",
         badgeBg: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30",
         cardBorder: "border-amber-500/40",
         icon: <AlertTriangle className="w-5 h-5 text-amber-500" />,
@@ -245,13 +268,13 @@ export function MinimalistDecisionEngine({
     } else {
       return {
         type: "NOT_YET",
-        label: "NOT YET",
+        label: isFr ? "PAS ENCORE" : "NOT YET",
         badgeBg: "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/30",
         cardBorder: "border-rose-500/40",
         icon: <XCircle className="w-5 h-5 text-rose-500" />,
       };
     }
-  }, [simulation]);
+  }, [simulation, isFr]);
 
   const plainReasons = useMemo(() => {
     const reasons: string[] = [];
@@ -259,25 +282,65 @@ export function MinimalistDecisionEngine({
     const formattedSavings = format(activeBaseline.liquidSavings, { fromCurrency: "KES" });
 
     if (verdict.type === "AFFORDABLE") {
-      reasons.push(`Your liquid savings (${formattedSavings}) comfortably cover this ${formattedAmt} decision.`);
-      reasons.push(`Your monthly cash flow remains positive after this purchase.`);
-      reasons.push(`Your emergency reserve stays protected above your 3-month safety target.`);
+      reasons.push(
+        isFr
+          ? `Vos liquidités disponibles (${formattedSavings}) couvrent confortablement cette dépense de ${formattedAmt}.`
+          : `Your liquid savings (${formattedSavings}) comfortably cover this ${formattedAmt} decision.`
+      );
+      reasons.push(
+        isFr
+          ? `Votre reste à vivre mensuel demeure positif après cette opération.`
+          : `Your monthly cash flow remains positive after this purchase.`
+      );
+      reasons.push(
+        isFr
+          ? `Votre réserve de sécurité reste au-dessus de votre cible minimale de 3 mois.`
+          : `Your emergency reserve stays protected above your 3-month safety target.`
+      );
     } else if (verdict.type === "ADJUST") {
       const shortage = Math.max(0, extractedAmount - activeBaseline.liquidSavings);
       if (shortage > 0) {
-        reasons.push(`You need approximately ${format(shortage, { fromCurrency: "KES" })} more to reach your budget target.`);
+        reasons.push(
+          isFr
+            ? `Il vous manque environ ${format(shortage, { fromCurrency: "KES" })} pour atteindre l'objectif sans puiser dans votre réserve.`
+            : `You need approximately ${format(shortage, { fromCurrency: "KES" })} more to reach your budget target.`
+        );
       } else {
-        reasons.push(`Paying comptant will temporarily lower your liquid emergency reserve.`);
+        reasons.push(
+          isFr
+            ? `Un paiement comptant diminuera temporairement votre matelas de sécurité d'urgence.`
+            : `Paying comptant will temporarily lower your liquid emergency reserve.`
+        );
       }
-      reasons.push(`At your current saving rate, you could reach this target around March 2027.`);
-      reasons.push(`Consider spreading payments across 3 months or increasing your monthly savings rate.`);
+      reasons.push(
+        isFr
+          ? `Au rythme d'épargne actuel, vous serez en mesure de concrétiser ce projet vers Mars 2027.`
+          : `At your current saving rate, you could reach this target around March 2027.`
+      );
+      reasons.push(
+        isFr
+          ? `Nous recommandons d'étaler le paiement sur 3 mois ou d'augmenter votre capacité d'épargne mensuelle.`
+          : `Consider spreading payments across 3 months or increasing your monthly savings rate.`
+      );
     } else {
-      reasons.push(`This purchase requires more liquid reserves than your current available savings (${formattedSavings}).`);
-      reasons.push(`Taking this on now would push your primary savings goal back by +${simulation.delta.delayInDays || 45} days.`);
-      reasons.push(`We recommend saving for another 4 to 6 months before completing this decision.`);
+      reasons.push(
+        isFr
+          ? `Cet achat requiert davantage de trésorerie disponible que votre épargne actuelle (${formattedSavings}).`
+          : `This purchase requires more liquid reserves than your current available savings (${formattedSavings}).`
+      );
+      reasons.push(
+        isFr
+          ? `Exécuter cette dépense aujourd'hui décalerait votre objectif principal de +${simulation.delta.delayInDays || 45} jours.`
+          : `Taking this on now would push your primary savings goal back by +${simulation.delta.delayInDays || 45} days.`
+      );
+      reasons.push(
+        isFr
+          ? `Nous vous recommandons d'épargner pendant 4 à 6 mois supplémentaires avant d'effectuer cet achat.`
+          : `We recommend saving for another 4 to 6 months before completing this decision.`
+      );
     }
     return reasons.slice(0, 3);
-  }, [extractedAmount, activeBaseline, verdict, simulation, format]);
+  }, [extractedAmount, activeBaseline, verdict, simulation, format, isFr]);
 
   const handleCardClick = (card: DecisionCardOption) => {
     setActiveCardId(card.id);
@@ -290,10 +353,10 @@ export function MinimalistDecisionEngine({
 
   return (
     <div className="space-y-10 w-full max-w-4xl mx-auto font-sans">
-      {/* 1. DECISION CARDS ("What are you planning?") */}
+      {/* 1. DECISION CARDS ("Quels sont vos projets ? / What are you planning?") */}
       <div className="space-y-4">
         <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-foreground">
-          What are you planning?
+          {t("scenariosSectionTitle")}
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -336,10 +399,10 @@ export function MinimalistDecisionEngine({
         </div>
       </div>
 
-      {/* 2. PRIMARY ACTION INPUT BOX ("What money decision are you considering?") */}
+      {/* 2. PRIMARY ACTION INPUT BOX */}
       <div className="space-y-5 rounded-3xl bg-[#062317] p-6 sm:p-8 text-white shadow-2xl relative overflow-hidden">
         <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-          What money decision are you considering?
+          {isFr ? "Quelle décision financière vous fait hésiter aujourd'hui ?" : "What money decision are you considering?"}
         </h2>
 
         <div className="space-y-4">
@@ -352,7 +415,7 @@ export function MinimalistDecisionEngine({
               type="text"
               value={queryInput}
               onChange={(e) => setQueryInput(e.target.value)}
-              placeholder="For example: &quot;I'm thinking of buying a KES 500,000 car.&quot;"
+              placeholder={isFr ? "Exemple : \"Je veux acheter un véhicule à 500 000 KES.\"" : "For example: \"I'm thinking of buying a KES 500,000 car.\""}
               className="w-full rounded-2xl bg-white text-gray-900 placeholder:text-gray-400 pl-11 pr-4 py-4 text-sm sm:text-base font-medium focus:outline-none focus:ring-4 focus:ring-[#00A859]/30 transition-all shadow-sm"
             />
           </div>
@@ -365,7 +428,7 @@ export function MinimalistDecisionEngine({
             }}
             className="w-full inline-flex items-center justify-center gap-3 rounded-2xl bg-[#00A859] hover:bg-[#00964F] text-white font-bold text-base py-4 px-6 shadow-lg shadow-[#00A859]/30 transition-all cursor-pointer"
           >
-            <span>Analyze my decision</span>
+            <span>{isFr ? "Analyser l'impact de ma décision" : "Analyze my decision"}</span>
             <div className="w-7 h-7 rounded-full bg-black/20 flex items-center justify-center">
               <ArrowRight className="w-4 h-4" />
             </div>
@@ -373,15 +436,15 @@ export function MinimalistDecisionEngine({
         </div>
       </div>
 
-      {/* 3. PERSONALIZED QUICK ACTIONS ("Based on your finances") */}
+      {/* 3. PERSONALIZED QUICK ACTIONS */}
       {showQuickActions && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-foreground">
-              Based on your finances
+              {isFr ? "Selon vos finances actuelles" : "Based on your finances"}
             </h2>
             <span className="text-xs font-semibold text-gray-500 hover:text-gray-900 dark:hover:text-foreground flex items-center gap-1 cursor-pointer">
-              <span>View all</span>
+              <span>{isFr ? "Tout voir" : "View all"}</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </span>
           </div>
@@ -390,7 +453,13 @@ export function MinimalistDecisionEngine({
             {/* Prompt 1 */}
             <button
               type="button"
-              onClick={() => handleQuickAction("Can I afford a KES 500,000 car?")}
+              onClick={() =>
+                handleQuickAction(
+                  isFr
+                    ? "Puis-je m'offrir une voiture à 500 000 KES ?"
+                    : "Can I afford a KES 500,000 car?"
+                )
+              }
               className="w-full text-left p-4 rounded-2xl bg-white dark:bg-card border border-gray-100 dark:border-border hover:border-gray-200 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center justify-between transition-all cursor-pointer group"
             >
               <div className="flex items-center gap-3.5">
@@ -399,17 +468,17 @@ export function MinimalistDecisionEngine({
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-gray-900 dark:text-foreground group-hover:text-[#00A859] transition-colors">
-                    Can I afford a KES 500,000 car?
+                    {isFr ? "Puis-je m'offrir un véhicule à 500 000 KES ?" : "Can I afford a KES 500,000 car?"}
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-muted-foreground font-medium">
-                    See affordability and monthly impact
+                    {isFr ? "Voir la faisabilité & l'impact mensuel" : "See affordability and monthly impact"}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
                 <span className="hidden sm:inline-block text-[11px] font-bold text-[#00A859] bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 rounded-full">
-                  Popular
+                  {isFr ? "Populaire" : "Popular"}
                 </span>
                 <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-[#00A859] transition-colors" />
               </div>
@@ -418,7 +487,13 @@ export function MinimalistDecisionEngine({
             {/* Prompt 2 */}
             <button
               type="button"
-              onClick={() => handleQuickAction("What happens if I take a KES 200,000 loan?")}
+              onClick={() =>
+                handleQuickAction(
+                  isFr
+                    ? "Et si je contractais un crédit de 200 000 KES ?"
+                    : "What happens if I take a KES 200,000 loan?"
+                )
+              }
               className="w-full text-left p-4 rounded-2xl bg-white dark:bg-card border border-gray-100 dark:border-border hover:border-gray-200 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center justify-between transition-all cursor-pointer group"
             >
               <div className="flex items-center gap-3.5">
@@ -427,10 +502,10 @@ export function MinimalistDecisionEngine({
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-gray-900 dark:text-foreground group-hover:text-purple-600 transition-colors">
-                    What happens if I take a KES 200,000 loan?
+                    {isFr ? "Et si je contractais un prêt de 200 000 KES ?" : "What happens if I take a KES 200,000 loan?"}
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-muted-foreground font-medium">
-                    See repayment ability and total cost
+                    {isFr ? "Voir la capacité de remboursement" : "See repayment ability and total cost"}
                   </p>
                 </div>
               </div>
@@ -441,7 +516,13 @@ export function MinimalistDecisionEngine({
             {/* Prompt 3 */}
             <button
               type="button"
-              onClick={() => handleQuickAction("Can I reach my savings goal by March 2027?")}
+              onClick={() =>
+                handleQuickAction(
+                  isFr
+                    ? "Serai-je dans les temps pour mon objectif de Mars 2027 ?"
+                    : "Can I reach my savings goal by March 2027?"
+                )
+              }
               className="w-full text-left p-4 rounded-2xl bg-white dark:bg-card border border-gray-100 dark:border-border hover:border-gray-200 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center justify-between transition-all cursor-pointer group"
             >
               <div className="flex items-center gap-3.5">
@@ -450,10 +531,10 @@ export function MinimalistDecisionEngine({
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-gray-900 dark:text-foreground group-hover:text-amber-600 transition-colors">
-                    Can I reach my savings goal by March 2027?
+                    {isFr ? "Serai-je dans les temps pour mon objectif de Mars 2027 ?" : "Can I reach my savings goal by March 2027?"}
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-muted-foreground font-medium">
-                    Check your progress and what to adjust
+                    {isFr ? "Mesurer le cap & ajuster la trajectoire" : "Check your progress and what to adjust"}
                   </p>
                 </div>
               </div>
@@ -472,10 +553,10 @@ export function MinimalistDecisionEngine({
           </div>
           <div>
             <h4 className="font-bold text-gray-900 dark:text-foreground">
-              Your data is private and secure
+              {isFr ? "Vos données restent confidentielles et protégées" : "Your data is private and secure"}
             </h4>
             <p className="text-gray-500 dark:text-muted-foreground font-medium">
-              Bank-level encryption. You&apos;re in control.
+              {isFr ? "Cryptage de niveau bancaire. Vous gardez 100% le contrôle." : "Bank-level encryption. You're in control."}
             </p>
           </div>
         </div>
@@ -492,7 +573,7 @@ export function MinimalistDecisionEngine({
         <div className="flex items-center justify-between border-b border-gray-100 dark:border-border pb-4">
           <div>
             <span className="text-xs font-mono uppercase tracking-wider text-gray-500 font-bold">
-              Your Decision
+              {isFr ? "Votre Décision" : "Your Decision"}
             </span>
             <h3 className="text-lg font-bold text-gray-900 dark:text-foreground">
               {extractedTitle} — {format(extractedAmount, { fromCurrency: "KES" })}
@@ -508,7 +589,7 @@ export function MinimalistDecisionEngine({
         {/* LAYER 1 & 2: WHY? (Max 3 simple reasons) */}
         <div className="space-y-3">
           <h4 className="text-sm font-bold text-gray-900 dark:text-foreground flex items-center gap-2">
-            <span>Why?</span>
+            <span>{isFr ? "Pourquoi ce verdict ?" : "Why?"}</span>
           </h4>
           <ul className="space-y-2.5">
             {plainReasons.map((reason, idx) => (
@@ -523,40 +604,56 @@ export function MinimalistDecisionEngine({
         {/* LAYER 3: WHAT HAPPENS NEXT? (Visual Timeline) */}
         <div className="space-y-3 pt-2">
           <h4 className="text-sm font-bold text-gray-900 dark:text-foreground">
-            What happens next?
+            {isFr ? "Quelles sont les étapes suivantes ?" : "What happens next?"}
           </h4>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-center">
             <div className="p-3.5 rounded-2xl bg-gray-50 dark:bg-secondary/50 border border-gray-100 dark:border-border">
               <span className="text-[10px] font-mono uppercase text-gray-400 font-bold block">
-                Stage 1
+                {isFr ? "Étape 1" : "Stage 1"}
               </span>
-              <span className="text-xs font-bold text-gray-900 dark:text-foreground mt-1 block">NOW</span>
-              <span className="text-[11px] text-gray-500 mt-0.5 block">Analyze decision</span>
+              <span className="text-xs font-bold text-gray-900 dark:text-foreground mt-1 block">
+                {isFr ? "MAINTENANT" : "NOW"}
+              </span>
+              <span className="text-[11px] text-gray-500 mt-0.5 block">
+                {isFr ? "Analyse de la décision" : "Analyze decision"}
+              </span>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-gray-50 dark:bg-secondary/50 border border-gray-100 dark:border-border">
               <span className="text-[10px] font-mono uppercase text-gray-400 font-bold block">
-                Stage 2
+                {isFr ? "Étape 2" : "Stage 2"}
               </span>
-              <span className="text-xs font-bold text-gray-900 dark:text-foreground mt-1 block">MONTH 3</span>
-              <span className="text-[11px] text-gray-500 mt-0.5 block">Buffer recovery</span>
+              <span className="text-xs font-bold text-gray-900 dark:text-foreground mt-1 block">
+                {isFr ? "MOIS 3" : "MONTH 3"}
+              </span>
+              <span className="text-[11px] text-gray-500 mt-0.5 block">
+                {isFr ? "Restauration du matelas" : "Buffer recovery"}
+              </span>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-gray-50 dark:bg-secondary/50 border border-gray-100 dark:border-border">
               <span className="text-[10px] font-mono uppercase text-gray-400 font-bold block">
-                Stage 3
+                {isFr ? "Étape 3" : "Stage 3"}
               </span>
-              <span className="text-xs font-bold text-gray-900 dark:text-foreground mt-1 block">MONTH 6</span>
-              <span className="text-[11px] text-gray-500 mt-0.5 block">Target reached</span>
+              <span className="text-xs font-bold text-gray-900 dark:text-foreground mt-1 block">
+                {isFr ? "MOIS 6" : "MONTH 6"}
+              </span>
+              <span className="text-[11px] text-gray-500 mt-0.5 block">
+                {isFr ? "Objectif atteint" : "Target reached"}
+              </span>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-[#00A859]/30 text-[#00A859]">
               <span className="text-[10px] font-mono uppercase font-bold block">
-                Stage 4
+                {isFr ? "Étape 4" : "Stage 4"}
               </span>
-              <span className="text-xs font-bold mt-1 block">PURCHASE READY</span>
-              <span className="text-[11px] opacity-90 mt-0.5 block">Safe execution</span>
+              <span className="text-xs font-bold mt-1 block">
+                {isFr ? "ACHAT PRÊT" : "PURCHASE READY"}
+              </span>
+              <span className="text-[11px] opacity-90 mt-0.5 block">
+                {isFr ? "Exécution sécurisée" : "Safe execution"}
+              </span>
             </div>
           </div>
         </div>
@@ -568,7 +665,15 @@ export function MinimalistDecisionEngine({
             onClick={() => setShowFullAnalysis(!showFullAnalysis)}
             className="inline-flex items-center gap-2 text-xs font-bold text-[#00A859] hover:underline cursor-pointer py-2"
           >
-            <span>{showFullAnalysis ? "Hide detailed analysis" : "View full analysis →"}</span>
+            <span>
+              {showFullAnalysis
+                ? isFr
+                  ? "Masquer l'analyse détaillée"
+                  : "Hide detailed analysis"
+                : isFr
+                ? "Voir l'analyse détaillée →"
+                : "View full analysis →"}
+            </span>
             {showFullAnalysis ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
 
@@ -576,23 +681,29 @@ export function MinimalistDecisionEngine({
             <div className="w-full pt-4 space-y-4 animate-fadeIn">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="p-4 rounded-2xl border border-gray-100 dark:border-border bg-gray-50 dark:bg-background space-y-1">
-                  <span className="text-[11px] text-gray-500 font-semibold block">Liquid Reserves After</span>
+                  <span className="text-[11px] text-gray-500 font-semibold block">
+                    {isFr ? "Épargne liquide restante" : "Liquid Reserves After"}
+                  </span>
                   <span className="text-base font-bold text-gray-900 dark:text-foreground">
                     {format(Math.max(0, activeBaseline.liquidSavings - (isRecurring ? 0 : extractedAmount)), { fromCurrency: "KES" })}
                   </span>
                 </div>
 
                 <div className="p-4 rounded-2xl border border-gray-100 dark:border-border bg-gray-50 dark:bg-background space-y-1">
-                  <span className="text-[11px] text-gray-500 font-semibold block">Primary Goal Impact</span>
+                  <span className="text-[11px] text-gray-500 font-semibold block">
+                    {isFr ? "Décalage d'objectif" : "Primary Goal Impact"}
+                  </span>
                   <span className="text-base font-bold text-amber-600 dark:text-amber-400">
-                    +{simulation.delta.delayInDays || 45} days delay
+                    +{simulation.delta.delayInDays || 45} {isFr ? "jours de décalage" : "days delay"}
                   </span>
                 </div>
 
                 <div className="p-4 rounded-2xl border border-gray-100 dark:border-border bg-gray-50 dark:bg-background space-y-1">
-                  <span className="text-[11px] text-gray-500 font-semibold block">Monthly Recovery Needed</span>
+                  <span className="text-[11px] text-gray-500 font-semibold block">
+                    {isFr ? "Effort mensuel complémentaire" : "Monthly Recovery Needed"}
+                  </span>
                   <span className="text-base font-bold text-[#00A859]">
-                    {format(1875, { fromCurrency: "KES" })} / month
+                    {format(1875, { fromCurrency: "KES" })} / {isFr ? "mois" : "month"}
                   </span>
                 </div>
               </div>
@@ -602,7 +713,7 @@ export function MinimalistDecisionEngine({
                   href={`/app/decide?q=${encodeURIComponent(queryInput)}`}
                   className="inline-flex items-center gap-2 text-xs font-bold text-gray-900 dark:text-foreground hover:text-[#00A859] transition-colors border border-gray-200 dark:border-border rounded-xl px-5 py-2.5 bg-gray-50 dark:bg-secondary/40"
                 >
-                  <span>Open Interactive Decision Studio</span>
+                  <span>{isFr ? "Ouvrir le Studio Décisionnel Interactif" : "Open Interactive Decision Studio"}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>

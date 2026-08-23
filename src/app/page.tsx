@@ -14,6 +14,7 @@ import { UseaimlyLogo } from "@/components/design-system/UseaimlyLogo";
 export default function LandingPage() {
   const { profile } = useAuth();
   const { currency } = useCurrency();
+  const { t } = useI18n();
   const [landingYearly, setLandingYearly] = useState(true);
   const [selectedPlanForCheckout, setSelectedPlanForCheckout] = useState<PricingPlan | null>(null);
 
@@ -21,18 +22,19 @@ export default function LandingPage() {
     <div className="bg-background text-foreground min-h-screen font-sans selection:bg-primary/15 flex flex-col">
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-14 space-y-12 sm:space-y-20">
-        {/* 1. HERO SECTION (2-COLUMN MATCHING REFERENCE UI SCREENSHOT) */}
+        {/* 1. HERO SECTION (ROMAIN BOUVET COPYWRITING STYLE) */}
         <section className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center pt-2">
           {/* Left Column: Title & Subtitle */}
           <div className="md:col-span-7 space-y-4 text-left">
             <h1 className="text-4xl sm:text-6xl font-black text-gray-900 dark:text-foreground tracking-tight leading-[1.1]">
-              Before you <br className="hidden sm:inline" />
-              spend big, <br />
-              ask <span className="text-[#00A859]">UseAimly.</span>
+              {t("heroTitlePrefix")}
+              <br className="hidden sm:inline" />
+              <span className="text-[#00A859]">{t("heroTitleTomorrow")}</span>
+              {t("heroTitleSuffix")}
             </h1>
 
             <p className="text-base sm:text-xl text-gray-500 dark:text-muted-foreground font-medium max-w-md leading-relaxed">
-              See what your next money decision could mean for your finances and goals.
+              {t("heroMainSubtitle")}
             </p>
           </div>
 
@@ -42,34 +44,32 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 2. MINIMALIST DECISION ENGINE (CARDS + INPUT BOX + PROMPTS + VERDICT) */}
+        {/* 2. MINIMALIST DECISION ENGINE */}
         <section className="w-full">
           <MinimalistDecisionEngine showQuickActions={true} />
         </section>
 
-        {/* 3. PRODUCT POSITIONING & HOW IT WORKS */}
+        {/* 3. WHY USEAIMLY? (ROMAIN BOUVET ANTI-BUDGET STORYTELLING) */}
         <section className="rounded-3xl border border-gray-100 dark:border-border bg-card p-8 sm:p-12 space-y-8 text-center shadow-xs">
           <div className="max-w-2xl mx-auto space-y-3">
             <span className="text-xs font-mono uppercase tracking-wider text-[#00A859] font-bold">
-              Why UseAimly?
+              {t("whyTitleTag")}
             </span>
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-foreground">
-              Know what your next money decision will cost you.
+              {t("whyMainTitle")}
+              <br />
+              <span className="text-[#00A859]">{t("whyMainTitleLine2")}</span>
             </h2>
-            <p className="text-sm sm:text-base text-gray-500 dark:text-muted-foreground leading-relaxed font-medium">
-              Thinking about buying a car, taking a loan, moving, or making a big purchase?
-              UseAimly analyzes your finances, simulates the impact, and shows you how the decision could affect your money and goals.
-            </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 text-left">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-4 text-left">
             <div className="p-6 rounded-2xl border border-gray-100 dark:border-border bg-gray-50 dark:bg-secondary/30 space-y-2">
               <div className="w-8 h-8 rounded-xl bg-[#00A859]/10 text-[#00A859] flex items-center justify-center font-bold text-sm">
                 1
               </div>
-              <h3 className="text-base font-bold text-gray-900 dark:text-foreground">Ask your question</h3>
+              <h3 className="text-base font-bold text-gray-900 dark:text-foreground">{t("whyCard1Title")}</h3>
               <p className="text-xs text-gray-500 dark:text-muted-foreground leading-relaxed font-medium">
-                Describe any decision in plain English. No spreadsheets or complex setup required.
+                {t("whyCard1Desc")}
               </p>
             </div>
 
@@ -77,9 +77,9 @@ export default function LandingPage() {
               <div className="w-8 h-8 rounded-xl bg-[#00A859]/10 text-[#00A859] flex items-center justify-center font-bold text-sm">
                 2
               </div>
-              <h3 className="text-base font-bold text-gray-900 dark:text-foreground">See your verdict</h3>
+              <h3 className="text-base font-bold text-gray-900 dark:text-foreground">{t("whyCard2Title")}</h3>
               <p className="text-xs text-gray-500 dark:text-muted-foreground leading-relaxed font-medium">
-                Get an instant, plain-language verdict (You Can Afford It, Adjust, or Not Yet) with 3 clear reasons.
+                {t("whyCard2Desc")}
               </p>
             </div>
 
@@ -87,9 +87,19 @@ export default function LandingPage() {
               <div className="w-8 h-8 rounded-xl bg-[#00A859]/10 text-[#00A859] flex items-center justify-center font-bold text-sm">
                 3
               </div>
-              <h3 className="text-base font-bold text-gray-900 dark:text-foreground">Know what to do next</h3>
+              <h3 className="text-base font-bold text-gray-900 dark:text-foreground">{t("whyCard3Title")}</h3>
               <p className="text-xs text-gray-500 dark:text-muted-foreground leading-relaxed font-medium">
-                Follow a step-by-step timeline or adjust your plan to stay on track to reach your goals.
+                {t("whyCard3Desc")}
+              </p>
+            </div>
+
+            <div className="p-6 rounded-2xl border border-gray-100 dark:border-border bg-gray-50 dark:bg-secondary/30 space-y-2">
+              <div className="w-8 h-8 rounded-xl bg-[#00A859]/10 text-[#00A859] flex items-center justify-center font-bold text-sm">
+                4
+              </div>
+              <h3 className="text-base font-bold text-gray-900 dark:text-foreground">{t("whyCard4Title")}</h3>
+              <p className="text-xs text-gray-500 dark:text-muted-foreground leading-relaxed font-medium">
+                {t("whyCard4Desc")}
               </p>
             </div>
           </div>
@@ -99,14 +109,16 @@ export default function LandingPage() {
         <section className="space-y-8 text-center">
           <div className="max-w-xl mx-auto space-y-2">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-foreground tracking-tight">
-              Simple, transparent pricing
+              {t("pricingSectionTitle")}
             </h2>
             <p className="text-xs sm:text-sm text-gray-500 dark:text-muted-foreground font-medium">
-              Start with our free plan. Upgrade anytime for unlimited decision simulations.
+              {t("pricingSectionSubtitle")}
             </p>
 
             <div className="pt-2 flex items-center justify-center gap-3 text-xs font-bold">
-              <span className={!landingYearly ? "text-gray-900 dark:text-foreground" : "text-gray-400"}>Monthly</span>
+              <span className={!landingYearly ? "text-gray-900 dark:text-foreground" : "text-gray-400"}>
+                {t("monthlyBilling")}
+              </span>
               <button
                 type="button"
                 onClick={() => setLandingYearly(!landingYearly)}
@@ -119,7 +131,7 @@ export default function LandingPage() {
                 />
               </button>
               <span className={landingYearly ? "text-gray-900 dark:text-foreground" : "text-gray-400"}>
-                Yearly <span className="text-[#00A859] font-mono text-[10px]">(Save 20%)</span>
+                {t("annualBilling")} <span className="text-[#00A859] font-mono text-[10px]">({t("discountBadge")})</span>
               </span>
             </div>
           </div>
@@ -144,18 +156,18 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <UseaimlyLogo size="sm" showTagline={false} />
-            <span>© {new Date().getFullYear()} UseAimly. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} UseAimly. {t("rightsReserved")}</span>
           </div>
 
           <div className="flex items-center gap-4">
             <Link href="/pricing" className="hover:text-gray-900 transition-colors">
-              Pricing
+              {t("navPricing")}
             </Link>
             <Link href="/app/settings" className="hover:text-gray-900 transition-colors">
-              Account
+              {t("navSettings")}
             </Link>
             <Link href="/login" className="hover:text-gray-900 transition-colors">
-              Sign In
+              {t("navSignIn")}
             </Link>
           </div>
         </div>
