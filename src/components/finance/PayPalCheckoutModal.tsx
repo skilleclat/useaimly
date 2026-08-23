@@ -425,18 +425,33 @@ export function PayPalCheckoutModal({
 
                 {/* Action Buttons */}
                 <div className="space-y-3">
-                  {/* 1. Official PayPal Checkout Button */}
-                  <button
-                    type="button"
-                    onClick={handleOpenPayPal}
-                    className="w-full rounded-2xl bg-[#FFC439] hover:bg-[#F2BA36] text-[#003087] font-black text-sm py-3.5 px-6 shadow-lg shadow-yellow-500/15 transition-all cursor-pointer flex items-center justify-center gap-2 group min-h-[48px]"
+                  {/* 1. Official PayPal Checkout Direct Link (Never blocked by popup blockers) */}
+                  <a
+                    href={getPayPalCheckoutUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setModalState("redirected")}
+                    className="w-full rounded-2xl bg-[#FFC439] hover:bg-[#F2BA36] text-[#003087] font-black text-sm py-3.5 px-6 shadow-lg shadow-yellow-500/15 transition-all cursor-pointer flex items-center justify-center gap-2 group min-h-[48px] text-center"
                   >
                     <span className="italic font-serif font-black text-lg text-[#003087]">PayPal</span>
                     <span className="font-extrabold text-xs text-[#003087]">
-                      {language === "fr" ? `Payer avec PayPal (${formattedPriceUSD})` : `Checkout with PayPal (${formattedPriceUSD})`}
+                      {language === "fr" ? `Payer avec PayPal (${formattedPriceUSD}) →` : `Checkout with PayPal (${formattedPriceUSD}) →`}
                     </span>
-                    <ExternalLink className="w-4 h-4 text-[#003087] group-hover:translate-x-0.5 transition-transform" />
-                  </button>
+                    <ExternalLink className="w-4 h-4 text-[#003087] group-hover:translate-x-0.5 transition-transform shrink-0" />
+                  </a>
+
+                  {/* Manual fallback link */}
+                  <div className="text-center pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setModalState("redirected")}
+                      className="text-[11px] font-mono text-muted-foreground hover:text-primary underline cursor-pointer"
+                    >
+                      {language === "fr"
+                        ? "J'ai déjà effectué mon paiement PayPal → Entrer mon reçu"
+                        : "I have already completed payment → Enter receipt ID"}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
