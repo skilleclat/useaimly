@@ -45,28 +45,32 @@ export function Header() {
       desc: "Plans & 14-day free trial",
     },
     {
-      label: t("navDestinations"),
-      href: "/app/goals",
-      icon: <Target className="w-4 h-4" />,
-      desc: "Life goals & target timelines",
-    },
-    {
       label: t("navDecide"),
       href: "/app/decide",
       icon: <HelpCircle className="w-4 h-4" />,
       desc: "Test purchase impact before spending",
     },
     {
-      label: t("navWhatIf"),
-      href: "/app/what-if",
-      icon: <TrendingUp className="w-4 h-4" />,
-      desc: "Financial scenario laboratory",
+      label: t("navDestinations"),
+      href: "/app/goals",
+      icon: <Target className="w-4 h-4" />,
+      desc: "Life goals & target timelines",
     },
     {
-      label: t("navDesignSystem"),
-      href: "/design-system",
-      icon: <Layers className="w-4 h-4" />,
-      desc: "UI component foundation",
+      label: t("navWhatIf"),
+      href: "/app/what-if",
+      icon: <TrendingUp className="w-4 h-4 text-purple-500" />,
+      desc: "Financial scenario laboratory",
+      badge: "Elite",
+      badgeColor: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+    },
+    {
+      label: t("navNotes"),
+      href: "/app/notes",
+      icon: <Sparkles className="w-4 h-4 text-amber-500" />,
+      desc: "Handwritten rules & AI sync",
+      badge: "Pro",
+      badgeColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
     },
   ];
 
@@ -108,8 +112,11 @@ export function Header() {
               href="/app/what-if"
               className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex items-center gap-1.5"
             >
-              <TrendingUp className="w-3.5 h-3.5" />
+              <TrendingUp className="w-3.5 h-3.5 text-purple-500" />
               <span>{t("navWhatIf")}</span>
+              <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                Elite
+              </span>
             </Link>
             <Link
               href="/app/notes"
@@ -117,6 +124,9 @@ export function Header() {
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
               <span>{t("navNotes")}</span>
+              <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                Pro
+              </span>
             </Link>
           </nav>
         ) : (
@@ -135,9 +145,12 @@ export function Header() {
             </Link>
             <Link
               href="/app/what-if"
-              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
             >
-              {t("navWhatIf")}
+              <span>{t("navWhatIf")}</span>
+              <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                Elite
+              </span>
             </Link>
           </nav>
         )}
@@ -252,7 +265,14 @@ export function Header() {
                       {link.icon}
                     </div>
                     <div className="flex flex-col text-left">
-                      <span className="text-xs font-bold leading-tight">{link.label}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold leading-tight">{link.label}</span>
+                        {link.badge && (
+                          <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-md border ${link.badgeColor}`}>
+                            {link.badge}
+                          </span>
+                        )}
+                      </div>
                       <span className="text-[11px] text-muted-foreground font-normal">{link.desc}</span>
                     </div>
                   </div>

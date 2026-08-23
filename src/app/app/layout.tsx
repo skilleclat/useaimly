@@ -30,6 +30,8 @@ interface NavItem {
   href: string;
   description: string;
   icon: React.ReactNode;
+  badge?: string;
+  badgeColor?: string;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -55,19 +57,25 @@ const NAV_ITEMS: NavItem[] = [
     label: "What-If",
     href: "/app/what-if",
     description: "Sandbox to simulate life events & income changes.",
-    icon: <TrendingUp className="w-4 h-4" />,
+    icon: <TrendingUp className="w-4 h-4 text-purple-500" />,
+    badge: "Elite",
+    badgeColor: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
   },
   {
     label: "Ask AI",
     href: "/app/ask",
     description: "Your deterministic AI financial co-pilot.",
-    icon: <MessageSquare className="w-4 h-4" />,
+    icon: <MessageSquare className="w-4 h-4 text-purple-500" />,
+    badge: "Elite",
+    badgeColor: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
   },
   {
     label: "Notes",
     href: "/app/notes",
     description: "Your handwritten rules & financial journal (AI Synced).",
-    icon: <FileText className="w-4 h-4" />,
+    icon: <FileText className="w-4 h-4 text-amber-500" />,
+    badge: "Pro",
+    badgeColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
   },
   {
     label: "Money",
@@ -131,6 +139,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   >
                     {item.icon}
                     <span>{item.label}</span>
+                    {item.badge && (
+                      <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md border ${item.badgeColor}`}>
+                        {item.badge}
+                      </span>
+                    )}
                   </Link>
                 );
               })}
@@ -242,9 +255,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                         {item.icon}
                       </div>
                       <div className="flex flex-col text-left">
-                        <span className="text-xs font-bold leading-tight">
-                          {item.label}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold leading-tight">
+                            {item.label}
+                          </span>
+                          {item.badge && (
+                            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-md border ${item.badgeColor}`}>
+                              {item.badge}
+                            </span>
+                          )}
+                        </div>
                         <span className="text-[11px] text-muted-foreground font-normal">
                           {item.description}
                         </span>
