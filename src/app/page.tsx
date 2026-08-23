@@ -38,7 +38,7 @@ import {
 
 export default function LandingPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { t, language } = useI18n();
   const { currency, format } = useCurrency();
 
@@ -179,7 +179,13 @@ export default function LandingPage() {
                     className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white font-bold text-sm px-8 py-4 shadow-lg shadow-orange-500/25 hover:opacity-95 hover:scale-[1.01] transition-all cursor-pointer"
                   >
                     <Sparkles className="w-4 h-4" />
-                    <span>Ouvrir Mon Dashboard Élite →</span>
+                    <span>
+                      {profile?.plan_tier === "premium"
+                        ? t("openEliteDashboard")
+                        : profile?.plan_tier === "pro"
+                        ? t("openProDashboard")
+                        : t("openDashboard")}
+                    </span>
                   </Link>
 
                   <Link
@@ -187,7 +193,7 @@ export default function LandingPage() {
                     className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card hover:bg-secondary/70 text-foreground font-bold text-sm px-6 py-4 shadow-xs transition-all"
                   >
                     <HelpCircle className="w-4 h-4 text-primary" />
-                    <span>Studio Décisionnel</span>
+                    <span>{t("decisionStudio")}</span>
                   </Link>
                 </>
               ) : (

@@ -16,6 +16,13 @@ export interface TranslationDictionary {
   navSignOut: string;
   navLiveDemo: string;
   quickNav: string;
+  openDashboard: string;
+  openEliteDashboard: string;
+  openProDashboard: string;
+  decisionStudio: string;
+  eliteTier: string;
+  proTier: string;
+  starterTier: string;
 
   // Hero & Dashboard
   greetingPrefix: string;
@@ -199,6 +206,13 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     navSignOut: "Sign Out",
     navLiveDemo: "Try Live Demo",
     quickNav: "Quick Navigation",
+    openDashboard: "Open Dashboard →",
+    openEliteDashboard: "Open Elite Dashboard →",
+    openProDashboard: "Open Pro Dashboard →",
+    decisionStudio: "Decision Studio",
+    eliteTier: "Elite",
+    proTier: "Pro",
+    starterTier: "Starter",
 
     // Hero & Dashboard
     greetingPrefix: "Hello",
@@ -381,6 +395,13 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     navSignOut: "Se Déconnecter",
     navLiveDemo: "Démo en direct",
     quickNav: "Navigation Rapide",
+    openDashboard: "Ouvrir mon Dashboard →",
+    openEliteDashboard: "Ouvrir Dashboard Élite →",
+    openProDashboard: "Ouvrir Dashboard Pro →",
+    decisionStudio: "Studio Décisionnel",
+    eliteTier: "Élite",
+    proTier: "Pro",
+    starterTier: "Starter",
 
     // Hero & Dashboard
     greetingPrefix: "Bonjour",

@@ -95,28 +95,28 @@ export function Header() {
               className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex items-center gap-1.5"
             >
               <HelpCircle className="w-3.5 h-3.5" />
-              <span>Decide</span>
+              <span>{t("navDecide")}</span>
             </Link>
             <Link
               href="/app/goals"
               className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex items-center gap-1.5"
             >
               <Target className="w-3.5 h-3.5" />
-              <span>Goals</span>
+              <span>{t("navDestinations")}</span>
             </Link>
             <Link
               href="/app/what-if"
               className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex items-center gap-1.5"
             >
               <TrendingUp className="w-3.5 h-3.5" />
-              <span>What-If</span>
+              <span>{t("navWhatIf")}</span>
             </Link>
             <Link
               href="/app/notes"
               className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex items-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Notes AI</span>
+              <span>{t("navNotes")}</span>
             </Link>
           </nav>
         ) : (
@@ -151,7 +151,13 @@ export function Header() {
                 className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary via-orange-500 to-amber-500 text-white px-3.5 py-1.5 text-xs font-bold shadow-xs hover:opacity-95 transition-all"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Dashboard Élite →</span>
+                <span>
+                  {profile?.plan_tier === "premium"
+                    ? t("openEliteDashboard")
+                    : profile?.plan_tier === "pro"
+                    ? t("openProDashboard")
+                    : t("openDashboard")}
+                </span>
               </Link>
               <button
                 type="button"
@@ -164,7 +170,11 @@ export function Header() {
                 </div>
                 <span className="hidden sm:inline">{displayName}</span>
                 <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                  {profile?.plan_tier === "premium" ? "Élite" : profile?.plan_tier === "pro" ? "Pro" : "Starter"}
+                  {profile?.plan_tier === "premium"
+                    ? t("eliteTier")
+                    : profile?.plan_tier === "pro"
+                    ? t("proTier")
+                    : t("starterTier")}
                 </span>
               </button>
               <button
