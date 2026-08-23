@@ -316,7 +316,7 @@ export default function LandingPage() {
 
               {/* Action Button */}
               <Link
-                href={user ? "/app/decide" : "/onboarding"}
+                href="/onboarding"
                 className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-primary text-primary-foreground font-bold text-sm py-3.5 shadow-md hover:opacity-95 transition-all cursor-pointer"
               >
                 <span>{t("widgetSeeFullAnalysis")}</span>
