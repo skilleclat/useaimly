@@ -8,6 +8,8 @@ import { formatCurrency } from "@/lib/utils/currency";
 import { CurrencyCode } from "@/lib/types/finance";
 import { FinancialStatus } from "@/components/design-system/FinancialStatus";
 import { ChatMessage, ConversationThread } from "@/lib/ai/conversational-engine";
+import { canAccessAiAdvisor } from "@/lib/auth/plan-permissions";
+import { PlanUpgradeGate } from "@/components/finance/PlanUpgradeGate";
 import {
   Compass,
   MessageSquare,
@@ -22,6 +24,7 @@ import {
   HelpCircle,
   TrendingUp,
   FileText,
+  ArrowLeft,
 } from "lucide-react";
 
 const INITIAL_THREADS: ConversationThread[] = [
@@ -101,7 +104,7 @@ const SUGGESTED_QUERIES = [
 ];
 
 export default function AskPage() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const { currency } = useCurrency();
 
   const [threads, setThreads] = useState<ConversationThread[]>(INITIAL_THREADS);
@@ -211,6 +214,32 @@ export default function AskPage() {
       setIsTyping(false);
     }
   };
+
+  const hasAccess = canAccessAiAdvisor(profile?.plan_tier, user?.email);
+
+  if (!hasAccess) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-6 animate-fadeIn">
+        <div className="flex items-center gap-2 pb-2">
+          <Link
+            href="/app"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Retour au Dashboard</span>
+          </Link>
+        </div>
+
+        <PlanUpgradeGate
+          requiredTier="premium"
+          featureTitle="Interactive AI Financial Advisor & Wealth Strategist"
+          featureTitleFr="Conseiller Financier IA Interactif & Stratège de Patrimoine"
+          featureDescription="Engage in deep, context-aware conversations with our senior wealth mentor powered by Gemini and GPT-4, coupled directly to your deterministic financial engine."
+          featureDescriptionFr="Bénéficiez d'un accompagnement stratégique personnalisé avec notre conseiller financier IA de calibre 30 ans d'expérience, directement connecté à vos chiffres."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fadeIn">

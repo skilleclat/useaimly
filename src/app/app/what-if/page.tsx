@@ -34,6 +34,8 @@ import {
 
 import { runStressTest, STRESS_SCENARIOS, StressScenarioId } from "@/lib/finance/stress-tester";
 import { OpportunityCostMatrix } from "@/components/finance/OpportunityCostMatrix";
+import { canAccessWhatIfLab } from "@/lib/auth/plan-permissions";
+import { PlanUpgradeGate } from "@/components/finance/PlanUpgradeGate";
 
 type ScenarioType =
   | "SAVE_MORE"
@@ -86,7 +88,7 @@ const PRESET_SCENARIOS: PresetScenario[] = [
 ];
 
 export default function WhatIfPage() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const { currency } = useCurrency();
 
   // Baseline Financial Reality
@@ -136,6 +138,32 @@ export default function WhatIfPage() {
       newMonthlyFreeCashFlow: baseline.monthlyFreeCashFlow + monthlyDelta,
     };
   }, [monthlyDelta, baseline]);
+
+  const hasAccess = canAccessWhatIfLab(profile?.plan_tier, user?.email);
+
+  if (!hasAccess) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-6 animate-fadeIn">
+        <div className="flex items-center gap-2 pb-2">
+          <Link
+            href="/app"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Retour au Dashboard</span>
+          </Link>
+        </div>
+
+        <PlanUpgradeGate
+          requiredTier="premium"
+          featureTitle="Unlimited 'What-If' Scenario Simulation Sandbox"
+          featureTitleFr="Laboratoire de Simulation 'Et Si ?' Illimité"
+          featureDescription="Stress-test your trajectory against future life choices, income shifts, career transitions, and debt acceleration before committing capital."
+          featureDescriptionFr="Simulez l'impact exact des variations de revenus, des choix de carrière et des imprévus sur votre date d'arrivée future avant de dépenser."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">

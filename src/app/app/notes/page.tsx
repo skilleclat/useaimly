@@ -34,6 +34,8 @@ import {
   updateFinancialNote,
 } from "@/lib/notes/notes-service";
 import { useAuth } from "@/lib/auth/auth-context";
+import { canAccessAiNotes } from "@/lib/auth/plan-permissions";
+import { PlanUpgradeGate } from "@/components/finance/PlanUpgradeGate";
 
 export default function NotesPage() {
   const { user, profile } = useAuth();
@@ -45,6 +47,7 @@ export default function NotesPage() {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<FinancialNote | null>(null);
+  const [showUpgradeGateModal, setShowUpgradeGateModal] = useState(false);
   const [formData, setFormData] = useState<CreateNotePayload>({
     title: "",
     content: "",
@@ -54,7 +57,7 @@ export default function NotesPage() {
   });
   const [tagInput, setTagInput] = useState("");
 
-  const planTier = profile?.plan_tier || "free";
+  const hasNotesAccess = canAccessAiNotes(profile?.plan_tier, user?.email);
 
   useEffect(() => {
     loadNotes();
@@ -68,6 +71,10 @@ export default function NotesPage() {
   }
 
   function handleOpenCreateModal() {
+    if (!hasNotesAccess) {
+      setShowUpgradeGateModal(true);
+      return;
+    }
     setEditingNote(null);
     setFormData({
       title: "",
@@ -81,6 +88,10 @@ export default function NotesPage() {
   }
 
   function handleOpenEditModal(note: FinancialNote) {
+    if (!hasNotesAccess) {
+      setShowUpgradeGateModal(true);
+      return;
+    }
     setEditingNote(note);
     setFormData({
       title: note.title,
@@ -449,12 +460,34 @@ export default function NotesPage() {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white px-5 py-2 text-xs font-extrabold hover:shadow-lg hover:shadow-orange-500/25 transition-all"
+                  className="rounded-xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white px-5 py-2 text-xs font-extrabold hover:shadow-lg hover:shadow-orange-500/25 transition-all cursor-pointer"
                 >
                   {editingNote ? "Save Changes" : "Create Note"}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* PRO PLAN UPGRADE GATE MODAL FOR NOTES */}
+      {showUpgradeGateModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
+          <div className="relative w-full max-w-2xl my-auto">
+            <button
+              type="button"
+              onClick={() => setShowUpgradeGateModal(false)}
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <PlanUpgradeGate
+              requiredTier="pro"
+              featureTitle="Unlock AI Financial Notepad & Strategic Directives"
+              featureTitleFr="Débloquez le Bloc-Notes Financier Stratégique & Règles IA"
+              featureDescription="The Free plan provides basic reading. Upgrade to Aimly Pro to write custom financial constraints, pin high-priority rules, and synchronize guidelines across your decision engine."
+              featureDescriptionFr="La formule Gratuite est en lecture seule. Passez à Aimly Pro pour rédiger vos propres règles, épingler des directives d'arbitrage et synchroniser votre contexte avec l'IA."
+            />
           </div>
         </div>
       )}

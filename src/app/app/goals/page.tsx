@@ -13,6 +13,8 @@ import { GoalVelocityBooster } from "@/components/dashboard/GoalVelocityBooster"
 import { InteractiveGoalCreationWizard } from "@/components/dashboard/InteractiveGoalCreationWizard";
 import { GoalCountdownAlertCard } from "@/components/dashboard/GoalCountdownAlertCard";
 import { GoalNotificationSettingsModal } from "@/components/goals/GoalNotificationSettingsModal";
+import { canAccessMultipleGoals } from "@/lib/auth/plan-permissions";
+import { PlanUpgradeGate } from "@/components/finance/PlanUpgradeGate";
 import {
   Target,
   Plus,
@@ -30,7 +32,7 @@ import { useCurrency } from "@/lib/currency/currency-context";
 import { useI18n } from "@/lib/i18n/i18n-context";
 
 export default function GoalsPage() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const { currency } = useCurrency();
   const { t } = useI18n();
 
@@ -39,6 +41,21 @@ export default function GoalsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showWizardModal, setShowWizardModal] = useState(false);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [showUpgradeGateModal, setShowUpgradeGateModal] = useState(false);
+
+  const hasMultiGoalAccess = canAccessMultipleGoals(profile?.plan_tier, user?.email);
+
+  const handleOpenCreateGoal = (isWizard: boolean) => {
+    if (!hasMultiGoalAccess && destinations.length >= 1) {
+      setShowUpgradeGateModal(true);
+      return;
+    }
+    if (isWizard) {
+      setShowWizardModal(true);
+    } else {
+      setShowAddModal(true);
+    }
+  };
 
   // New Destination Form State
   const [newTitle, setNewTitle] = useState("");
@@ -119,16 +136,16 @@ export default function GoalsPage() {
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <button
             type="button"
-            onClick={() => setShowWizardModal(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2.5 text-xs font-bold transition-all shadow-xs shrink-0"
+            onClick={() => handleOpenCreateGoal(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2.5 text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer"
           >
             <Sparkles className="w-4 h-4" />
             <span>Interactive Goal Wizard</span>
           </button>
           <button
             type="button"
-            onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-secondary hover:bg-secondary/80 border border-border/80 px-4 py-2.5 text-xs font-semibold text-foreground transition-all shrink-0"
+            onClick={() => handleOpenCreateGoal(false)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-secondary hover:bg-secondary/80 border border-border/80 px-4 py-2.5 text-xs font-semibold text-foreground transition-all shrink-0 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Quick Goal</span>
@@ -391,6 +408,28 @@ export default function GoalsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* PRO PLAN UPGRADE GATE MODAL (FREE TIER LIMITED TO 1 GOAL) */}
+      {showUpgradeGateModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
+          <div className="relative w-full max-w-2xl my-auto">
+            <button
+              type="button"
+              onClick={() => setShowUpgradeGateModal(false)}
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <PlanUpgradeGate
+              requiredTier="pro"
+              featureTitle="Unlock Unlimited Financial Destinations"
+              featureTitleFr="Débloquez des Objectifs & Destinations Illimités"
+              featureDescription="The Free plan includes 1 primary anchor goal. Upgrade to Aimly Pro to manage multiple life goals with automatic priority conflict resolution."
+              featureDescriptionFr="La formule Gratuite inclut 1 objectif principal. Passez à Aimly Pro pour planifier plusieurs projets de vie simultanés avec arbitrage automatique des priorités."
+            />
           </div>
         </div>
       )}

@@ -11,6 +11,8 @@ import { CurrencyCode } from "@/lib/types/finance";
 import { PdfReportDownloadButton } from "@/components/finance/PdfReportDownloadButton";
 import { OpportunityCostMatrix } from "@/components/finance/OpportunityCostMatrix";
 import { PDFReportData } from "@/lib/utils/pdf-report-generator";
+import { canAccessAllDecisionStrategies } from "@/lib/auth/plan-permissions";
+import { PlanUpgradeGate } from "@/components/finance/PlanUpgradeGate";
 import {
   Sparkles,
   ArrowRight,
@@ -29,6 +31,8 @@ import {
   HelpCircle,
   Heart,
   Plus,
+  Lock,
+  X,
 } from "lucide-react";
 
 import { useCurrency } from "@/lib/currency/currency-context";
@@ -37,7 +41,7 @@ import { useI18n } from "@/lib/i18n/i18n-context";
 import { generateSeniorStrategistAssessment } from "@/lib/ai/senior-strategist-engine";
 
 export default function DecideStudioPage() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const { currency } = useCurrency();
   const { t } = useI18n();
   const searchParams = useSearchParams();
@@ -56,6 +60,9 @@ export default function DecideStudioPage() {
   const [selectedStrategy, setSelectedStrategy] = useState<"CASH" | "SPREAD" | "POSTPONE">("CASH");
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [showUpgradeGateModal, setShowUpgradeGateModal] = useState(false);
+
+  const hasStrategyAccess = canAccessAllDecisionStrategies(profile?.plan_tier, user?.email);
 
   // Parse natural language queries when user updates queryInput
   useEffect(() => {
@@ -474,17 +481,34 @@ export default function DecideStudioPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {strategies.map((strat) => {
               const isActive = selectedStrategy === strat.id;
+              const isLocked = !hasStrategyAccess && strat.id !== "CASH";
+
               return (
                 <button
                   key={strat.id}
                   type="button"
-                  onClick={() => setSelectedStrategy(strat.id)}
-                  className={`rounded-2xl p-5 text-left transition-all border flex flex-col justify-between space-y-4 ${
+                  onClick={() => {
+                    if (isLocked) {
+                      setShowUpgradeGateModal(true);
+                      return;
+                    }
+                    setSelectedStrategy(strat.id);
+                  }}
+                  className={`rounded-2xl p-5 text-left transition-all border flex flex-col justify-between space-y-4 cursor-pointer relative overflow-hidden ${
                     isActive
                       ? "border-primary bg-card shadow-xs ring-2 ring-primary/20"
+                      : isLocked
+                      ? "border-border/60 bg-secondary/20 hover:border-primary/40 opacity-80"
                       : "border-border/80 bg-card hover:border-border"
                   }`}
                 >
+                  {isLocked && (
+                    <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400">
+                      <Lock className="w-3 h-3" />
+                      <span>Aimly Pro</span>
+                    </div>
+                  )}
+
                   <div className="space-y-1">
                     <div className="text-xs font-medium text-muted-foreground">{strat.title}</div>
                     <div className="text-xl font-bold text-foreground font-mono">
@@ -563,6 +587,28 @@ export default function DecideStudioPage() {
           )}
         </div>
       </section>
+
+      {/* PRO PLAN UPGRADE GATE MODAL FOR STRATEGIES */}
+      {showUpgradeGateModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
+          <div className="relative w-full max-w-2xl my-auto">
+            <button
+              type="button"
+              onClick={() => setShowUpgradeGateModal(false)}
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <PlanUpgradeGate
+              requiredTier="pro"
+              featureTitle="Unlock 3-Strategy Decision Studio"
+              featureTitleFr="Débloquez le Studio Décisionnel à 3 Stratégies"
+              featureDescription="The Free plan provides basic cash evaluation. Upgrade to Aimly Pro to compare 3-month spreading, postponement accumulation curves, and minimum drag recovery paths."
+              featureDescriptionFr="La formule Gratuite évalue uniquement le paiement comptant. Passez à Aimly Pro pour comparer l'échelonnement sur 3 mois et les stratégies d'épargne préalable."
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
