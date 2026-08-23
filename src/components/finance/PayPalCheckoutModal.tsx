@@ -425,12 +425,11 @@ export function PayPalCheckoutModal({
 
                 {/* Action Buttons */}
                 <div className="space-y-3">
-                  {/* 1. Official PayPal Checkout Direct Link (Never blocked by popup blockers) */}
+                  {/* 1. Official PayPal Checkout Direct Link */}
                   <a
                     href={getPayPalCheckoutUrl()}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={() => setModalState("redirected")}
                     className="w-full rounded-2xl bg-[#FFC439] hover:bg-[#F2BA36] text-[#003087] font-black text-sm py-3.5 px-6 shadow-lg shadow-yellow-500/15 transition-all cursor-pointer flex items-center justify-center gap-2 group min-h-[48px] text-center"
                   >
                     <span className="italic font-serif font-black text-lg text-[#003087]">PayPal</span>
@@ -440,19 +439,56 @@ export function PayPalCheckoutModal({
                     <ExternalLink className="w-4 h-4 text-[#003087] group-hover:translate-x-0.5 transition-transform shrink-0" />
                   </a>
 
-                  {/* Manual fallback link */}
-                  <div className="text-center pt-1">
+                  {/* 2. PayPal.Me Instant Link & Copy Email */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    <a
+                      href={`https://paypal.me/Herimaliya/${Number(baseUSD || 5).toFixed(2)}USD`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="py-2.5 px-3 rounded-xl border border-border/80 bg-secondary/40 hover:bg-secondary text-foreground text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-center"
+                    >
+                      <CreditCard className="w-3.5 h-3.5 text-primary" />
+                      <span>PayPal.Me direct →</span>
+                    </a>
+
                     <button
                       type="button"
-                      onClick={() => setModalState("redirected")}
-                      className="text-[11px] font-mono text-muted-foreground hover:text-primary underline cursor-pointer"
+                      onClick={() => handleCopy(merchantEmail, "paypal_email")}
+                      className="py-2.5 px-3 rounded-xl border border-border/80 bg-secondary/40 hover:bg-secondary text-foreground text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                     >
-                      {language === "fr"
-                        ? "J'ai déjà effectué mon paiement PayPal → Entrer mon reçu"
-                        : "I have already completed payment → Enter receipt ID"}
+                      {copiedField === "paypal_email" ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedField === "paypal_email" ? "Email Copié !" : "Copier Email PayPal"}</span>
                     </button>
                   </div>
                 </div>
+
+                {/* Form to submit PayPal Transaction ID directly */}
+                <form onSubmit={handleVerifyPayPal} className="space-y-3 pt-2 border-t border-border/60">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-mono font-bold text-foreground flex items-center justify-between">
+                      <span>Numéro de Transaction / Reçu PayPal</span>
+                      <span className="text-[10px] text-muted-foreground font-normal">Ex: 9XY12345Z ou PAYID-XXXX</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={paypalTxId}
+                        onChange={(e) => setPaypalTxId(e.target.value.toUpperCase())}
+                        placeholder="Ex: 9XY1234567 ou PAYID-XXXXX"
+                        required
+                        className="w-full rounded-2xl border-2 border-primary/40 bg-background px-4 py-3 text-sm font-mono font-bold text-foreground uppercase tracking-wider focus:border-primary focus:outline-none transition-colors min-h-[46px]"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs sm:text-sm py-4 px-6 shadow-lg shadow-emerald-600/20 transition-all cursor-pointer flex items-center justify-center gap-2 min-h-[48px]"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Valider mon Reçu PayPal &amp; Activer {plan.name}</span>
+                  </button>
+                </form>
               </div>
             )}
 

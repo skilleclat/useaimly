@@ -217,26 +217,20 @@ function CheckoutContent() {
             </button>
 
             {/* 2. Official PayPal Checkout Button */}
-            <button
-              type="button"
-              onClick={() => {
-                const origin = typeof window !== "undefined" ? window.location.origin : "https://useaimly.com";
-                const itemName = encodeURIComponent(`UseAimly ${plan.name} (${isYearly ? "Annual" : "Monthly"})`);
-                const returnUrl = encodeURIComponent(`${origin}/app/settings?payment_success=true&plan=${plan.id}`);
-                const cancelUrl = encodeURIComponent(`${origin}/pricing`);
-                const payPalUrl = `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=${encodeURIComponent(
-                  "herimaliyabwana@gmail.com"
-                )}&item_name=${itemName}&amount=${baseUSD.toFixed(2)}&currency_code=USD&return=${returnUrl}&cancel_return=${cancelUrl}`;
-                window.open(payPalUrl, "_blank", "noopener,noreferrer");
-                setIsModalOpen(true);
-              }}
-              className="w-full rounded-2xl bg-[#FFC439] hover:bg-[#F2BA36] text-[#003087] font-black text-sm py-3.5 px-6 shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 group min-h-[48px]"
+            <a
+              href={`https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=${encodeURIComponent(
+                "herimaliyabwana@gmail.com"
+              )}&item_name=${encodeURIComponent(`UseAimly ${plan?.name || "Pro"} (${isYearly ? "Annual" : "Monthly"})`)}&amount=${Number(baseUSD || 5).toFixed(2)}&currency_code=USD`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setIsModalOpen(true)}
+              className="w-full rounded-2xl bg-[#FFC439] hover:bg-[#F2BA36] text-[#003087] font-black text-sm py-3.5 px-6 shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 group min-h-[48px] text-center"
             >
               <span className="italic font-serif font-black text-lg text-[#003087]">PayPal</span>
               <span className="font-extrabold text-xs text-[#003087]">
-                Payer avec PayPal ou Carte ({formattedPriceUSD})
+                Payer avec PayPal ou Carte ({formattedPriceUSD}) →
               </span>
-            </button>
+            </a>
 
             {/* 3. Free Trial Button */}
             <button
