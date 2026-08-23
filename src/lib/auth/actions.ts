@@ -61,74 +61,15 @@ export async function signInWithGoogleAction(): Promise<AuthActionResult> {
   });
 
   if (error || !data?.url) {
-    console.warn("Google OAuth initialization error, triggering demo Google auth fallback:", error?.message);
-    return signInWithDemoGoogleAccountAction();
+    return {
+      success: false,
+      message: "La connexion Google n'est pas encore activée sur votre projet Supabase. Veuillez vous inscrire ou vous connecter avec votre adresse email.",
+    };
   }
 
   return {
     success: true,
     redirectTo: data.url,
-  };
-}
-
-export async function signInWithDemoGoogleAccountAction(): Promise<AuthActionResult> {
-  const supabase = await createClient();
-  const demoEmail = "google.user@useaimly.com";
-  const demoPassword = "GoogleDemoUserPass123!";
-
-  // 1. Try to sign in first
-  let { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
-    email: demoEmail,
-    password: demoPassword,
-  });
-
-  let user = authData?.user || null;
-
-  // 2. If user doesn't exist, create it automatically
-  if (signInError || !user) {
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: demoEmail,
-      password: demoPassword,
-      options: {
-        data: {
-          full_name: "Google Strategist",
-          avatar_url: "https://lh3.googleusercontent.com/a/default-user",
-          preferred_currency: "KES",
-        },
-      },
-    });
-
-    if (signUpError) {
-      console.error("Failed to auto-create Google account:", signUpError);
-      return {
-        success: false,
-        message: "Unable to complete Google authentication. Please try email login.",
-      };
-    }
-
-    user = signUpData.user;
-  }
-
-  // Ensure profile is initialized in profiles table
-  if (user) {
-    try {
-      await supabase.from("profiles").upsert({
-        id: user.id,
-        full_name: "Google Strategist",
-        avatar_url: "https://lh3.googleusercontent.com/a/default-user",
-        preferred_currency: "KES",
-        onboarding_completed: true,
-        plan_tier: "free",
-        plan_status: "active",
-      } as any);
-    } catch (e) {
-      console.warn("Google demo profile upsert warning:", e);
-    }
-  }
-
-  return {
-    success: true,
-    redirectTo: "/app",
   };
 }
 

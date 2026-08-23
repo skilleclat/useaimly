@@ -85,28 +85,14 @@ function LoginForm() {
       });
 
       if (error || !data?.url) {
-        console.warn("Google OAuth error, triggering fallback:", error?.message);
-        const { signInWithDemoGoogleAccountAction } = await import("@/lib/auth/actions");
-        const fallbackResult = await signInWithDemoGoogleAccountAction();
-        if (fallbackResult.success && fallbackResult.redirectTo) {
-          window.location.href = fallbackResult.redirectTo;
-        } else {
-          setServerError(fallbackResult.message || "Failed to log in with Google.");
-          setIsGooglePending(false);
-        }
+        setServerError("La connexion Google n'est pas configurée dans Supabase. Veuillez vous connecter avec votre adresse email et mot de passe.");
+        setIsGooglePending(false);
       } else if (data?.url) {
         window.location.href = data.url;
       }
     } catch (err: any) {
-      console.warn("Google sign-in exception:", err);
-      const { signInWithDemoGoogleAccountAction } = await import("@/lib/auth/actions");
-      const fallbackResult = await signInWithDemoGoogleAccountAction();
-      if (fallbackResult.success && fallbackResult.redirectTo) {
-        window.location.href = fallbackResult.redirectTo;
-      } else {
-        setServerError("Unable to complete Google login. Please use email login.");
-        setIsGooglePending(false);
-      }
+      setServerError("Impossible d'initialiser la connexion Google. Veuillez vous connecter par email.");
+      setIsGooglePending(false);
     }
   };
 
