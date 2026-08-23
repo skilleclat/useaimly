@@ -33,6 +33,8 @@ import { useI18n } from "@/lib/i18n/i18n-context";
 import { parseDecisionQuery } from "@/lib/nlp/decision-query-parser";
 import { simulateDecision, BaselineFinancialProfile } from "@/lib/finance";
 import { calculateFreedomClock } from "@/lib/finance/health/freedom-clock";
+import { runCashCrashGuard } from "@/lib/finance/simulations/cash-crash-guard";
+import { CashCrashGuardCard } from "@/components/finance/CashCrashGuardCard";
 
 export interface DecisionCardOption {
   id: string;
@@ -137,7 +139,15 @@ export function MinimalistDecisionEngine({
           { name: "Utilities", amount: 12000, frequency: "MONTHLY", isFixed: true },
         ],
         debts: [],
-        commitments: [],
+        commitments: [
+          {
+            id: "annual-ins",
+            title: "Assurance Annuelle & Taxes",
+            amount: 60000,
+            frequency: "ANNUALLY",
+            dueMonth: 11,
+          },
+        ],
         goals: [
           {
             id: "main-goal",
@@ -261,6 +271,11 @@ export function MinimalistDecisionEngine({
   const freedomClock = useMemo(() => {
     return calculateFreedomClock(activeBaseline, extractedAmount, isFr);
   }, [activeBaseline, extractedAmount, isFr]);
+
+  // Pre-Flight Cash Crash Guard Radar (365-Day Projection)
+  const cashCrashAlert = useMemo(() => {
+    return runCashCrashGuard(activeBaseline, extractedAmount, isRecurring, isFr);
+  }, [activeBaseline, extractedAmount, isRecurring, isFr]);
 
   // Verdict Badge
   const verdict = useMemo(() => {
@@ -481,6 +496,11 @@ export function MinimalistDecisionEngine({
             </div>
           </button>
         </div>
+      </div>
+
+      {/* PRE-FLIGHT CASH CRASH GUARD RADAR (THE KILLER CONVERSION FEATURE) */}
+      <div className="w-full">
+        <CashCrashGuardCard alert={cashCrashAlert} />
       </div>
 
       {/* 3. PERSONALIZED QUICK ACTIONS */}
