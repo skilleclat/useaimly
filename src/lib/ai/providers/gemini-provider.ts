@@ -1,6 +1,8 @@
 /**
  * Google Gemini AI Provider Adapter
  * Synthesizes natural language explanations using Gemini models.
+ * Enforces strict adherence to deterministic calculations, zero date contradictions,
+ * and zero ungrounded hyperbole.
  */
 
 import { DecisionExplanationPayload, AIExplanationResult } from "../../types/ai";
@@ -22,25 +24,29 @@ export class GeminiProvider implements AIProvider {
     payload: DecisionExplanationPayload
   ): Promise<AIExplanationResult> {
     if (!this.apiKey) {
-      // Fallback to high-fidelity mock if no API key is provided
       const mockResult = await this.fallbackProvider.generateDecisionExplanation(payload);
       return { ...mockResult, providerUsed: "gemini" };
     }
 
     try {
       const prompt = `
-You are UseAimly, an institutional-grade goal-aware decision intelligence platform designed by senior private wealth architects with 30+ years of advisory experience.
-Your core philosophy is: "See tomorrow before deciding today" and "Cash affordability != Plan affordability".
-Explain the following deterministic calculation to the user with authoritative financial wisdom, clarity, and empathy.
+You are UseAimly, a goal-aware financial decision intelligence platform.
+Your core philosophy is: "Calculate first. Decide second. Explain last."
+CRITICAL RULES FOR YOUR SYNTHESIS:
+1. You MUST NEVER change the calculated decision (GO / WAIT / ADJUST).
+2. You MUST NEVER use banned hyperbole words: "impregnable", "institutional-grade", "maximum resilience", "deterministic certainty", "top-tier", "financially unstoppable".
+3. Every date, monetary figure, and percentage you write MUST match the provided calculated metrics exactly.
+4. Keep the explanation transparent, evidence-based, and objective.
 
-User Query: "${payload.userQuery}"
-Decision: ${payload.simulation.decision.title} for ${payload.profileSummary.currency} ${payload.simulation.decision.amount}
-Cash Affordable: ${payload.simulation.cashAffordable}
-Primary Goal: "${payload.goalSummary.title}" (Target: ${payload.profileSummary.currency} ${payload.goalSummary.targetAmount}, Target Date: ${payload.goalSummary.targetDate})
-Baseline Completion: ${payload.simulation.primaryGoalImpact.baselineCompletionDate}
-Simulated Completion: ${payload.simulation.primaryGoalImpact.simulatedCompletionDate}
-Delay: ${payload.simulation.primaryGoalImpact.delayInMonths} months
-Additional Monthly Savings Needed to Maintain Date: ${payload.profileSummary.currency} ${payload.simulation.primaryGoalImpact.additionalMonthlySavingsRequired}
+Decision Input Context:
+- User Query: "${payload.userQuery}"
+- Decision: ${payload.simulation.decision.title} for ${payload.profileSummary.currency} ${payload.simulation.decision.amount}
+- Cash Affordable: ${payload.simulation.cashAffordable}
+- Primary Goal: "${payload.goalSummary.title}" (Target: ${payload.profileSummary.currency} ${payload.goalSummary.targetAmount}, Target Date: ${payload.goalSummary.targetDate})
+- Baseline Completion Date: ${payload.simulation.primaryGoalImpact.baselineCompletionDate}
+- Simulated Completion Date: ${payload.simulation.primaryGoalImpact.simulatedCompletionDate}
+- Delay: ${payload.simulation.primaryGoalImpact.delayInMonths} months
+- Additional Monthly Savings Needed: ${payload.profileSummary.currency} ${payload.simulation.primaryGoalImpact.additionalMonthlySavingsRequired}
 
 Output JSON in the following format:
 {
@@ -51,7 +57,7 @@ Output JSON in the following format:
   "tradeoffAnalysis": string,
   "actionableRecommendation": string,
   "recoveryGuidance": string,
-  "masterStrategyParagraph": string (A comprehensive, deeply articulate 250-350 word Master Strategic Assessment providing a holistic blueprint to bridge shortfalls, protect reserves, and achieve the destination with mathematical certainty)
+  "masterStrategyParagraph": string
 }
 `;
 

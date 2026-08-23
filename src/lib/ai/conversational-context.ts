@@ -158,7 +158,7 @@ export function simulateDecision(
   isRecurring: boolean = false
 ) {
   const baseline: BaselineFinancialProfile = {
-    liquidSavings: 240000,
+    liquidSavings: 360000,
     incomes: [{ name: "Salary & Retainer", amount: 180000, frequency: "MONTHLY", reliability: "STABLE", isActive: true }],
     expenses: [{ name: "Living Outflows", amount: 110750, frequency: "MONTHLY", isFixed: true }],
     debts: [],

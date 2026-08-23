@@ -11,12 +11,8 @@ import { UserProfileModal } from "./UserProfileModal";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useI18n } from "@/lib/i18n/i18n-context";
 import {
-  Compass,
   Target,
   HelpCircle,
-  TrendingUp,
-  Layers,
-  LogIn,
   LogOut,
   ArrowRight,
   Menu,
@@ -32,7 +28,7 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
-  // If inside the authenticated app shell, the AppLayout renders the top navigation
+  // If inside the authenticated app shell (/app/*), AppLayout handles top navigation
   if (pathname.startsWith("/app")) {
     return null;
   }
@@ -41,8 +37,8 @@ export function Header() {
     {
       label: t("navPricing"),
       href: "/pricing",
-      icon: <Sparkles className="w-4 h-4 text-primary" />,
-      desc: "Plans & 14-day free trial",
+      icon: <Sparkles className="w-4 h-4 text-[#00A859]" />,
+      desc: "Plans & options",
     },
     {
       label: t("navDecide"),
@@ -56,171 +52,76 @@ export function Header() {
       icon: <Target className="w-4 h-4" />,
       desc: "Life goals & target timelines",
     },
-    {
-      label: t("navWhatIf"),
-      href: "/app/what-if",
-      icon: <TrendingUp className="w-4 h-4 text-purple-500" />,
-      desc: "Financial scenario laboratory",
-      badge: "Elite",
-      badgeColor: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
-    },
-    {
-      label: t("navNotes"),
-      href: "/app/notes",
-      icon: <Sparkles className="w-4 h-4 text-amber-500" />,
-      desc: "Handwritten rules & AI sync",
-      badge: "Pro",
-      badgeColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
-    },
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 backdrop-blur-md transition-colors duration-200">
-      <Container className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 w-full border-b border-gray-100 dark:border-border bg-white/95 dark:bg-background/95 backdrop-blur-md transition-all duration-200">
+      <Container className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         {/* Brand Logo */}
         <div className="flex items-center gap-3">
-          <Link href="/">
+          <Link href="/" className="flex items-center gap-2">
             <UseaimlyLogo size="md" showTagline={false} />
           </Link>
         </div>
 
-        {/* Center Desktop Navigation for Logged-In Users */}
-        {user ? (
-          <nav className="hidden lg:flex items-center gap-1">
+        {/* Center Desktop Navigation */}
+        <nav className="hidden md:flex items-center gap-6">
+          {NAV_LINKS.map((link) => (
             <Link
-              href="/app"
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex items-center gap-1.5"
+              key={link.label}
+              href={link.href}
+              className="text-xs font-semibold text-gray-600 dark:text-muted-foreground hover:text-gray-900 dark:hover:text-foreground transition-colors"
             >
-              <Compass className="w-3.5 h-3.5 text-primary" />
-              <span>Dashboard</span>
+              {link.label}
             </Link>
-            <Link
-              href="/app/decide"
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex items-center gap-1.5"
-            >
-              <HelpCircle className="w-3.5 h-3.5" />
-              <span>{t("navDecide")}</span>
-            </Link>
-            <Link
-              href="/app/goals"
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex items-center gap-1.5"
-            >
-              <Target className="w-3.5 h-3.5" />
-              <span>{t("navDestinations")}</span>
-            </Link>
-            <Link
-              href="/app/what-if"
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex items-center gap-1.5"
-            >
-              <TrendingUp className="w-3.5 h-3.5 text-purple-500" />
-              <span>{t("navWhatIf")}</span>
-              <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-                Elite
-              </span>
-            </Link>
-            <Link
-              href="/app/notes"
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors flex items-center gap-1.5"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>{t("navNotes")}</span>
-              <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                Pro
-              </span>
-            </Link>
-          </nav>
-        ) : (
-          <nav className="hidden md:flex items-center gap-6">
-            <Link
-              href="/pricing"
-              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {t("navPricing")}
-            </Link>
-            <Link
-              href="/app/decide"
-              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {t("navDecide")}
-            </Link>
-            <Link
-              href="/app/what-if"
-              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
-            >
-              <span>{t("navWhatIf")}</span>
-              <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-                Elite
-              </span>
-            </Link>
-          </nav>
-        )}
+          ))}
+        </nav>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-3">
           {user ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <Link
                 href="/app"
-                className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary via-orange-500 to-amber-500 text-white px-3.5 py-1.5 text-xs font-bold shadow-xs hover:opacity-95 transition-all"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#00A859] hover:bg-[#00964F] text-white font-bold text-xs px-4 py-2 shadow-sm transition-all"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>
-                  {profile?.plan_tier === "premium"
-                    ? t("openEliteDashboard")
-                    : profile?.plan_tier === "pro"
-                    ? t("openProDashboard")
-                    : t("openDashboard")}
-                </span>
+                <span>Go to App</span>
               </Link>
+
+              {/* Black Circular User Avatar Pill (Matching Reference UI) */}
               <button
                 type="button"
                 onClick={() => setIsProfileModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:border-primary/40 transition-colors cursor-pointer"
-                title="View Profile & History"
+                className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center shadow-md hover:scale-105 transition-transform cursor-pointer"
+                title="Account Settings & Profile"
               >
-                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary via-orange-500 to-amber-500 text-white flex items-center justify-center text-[10px] font-bold">
-                  {displayName.charAt(0).toUpperCase()}
-                </div>
-                <span className="hidden sm:inline">{displayName}</span>
-                <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                  {profile?.plan_tier === "premium"
-                    ? t("eliteTier")
-                    : profile?.plan_tier === "pro"
-                    ? t("proTier")
-                    : t("starterTier")}
-                </span>
-              </button>
-              <button
-                onClick={() => signOut()}
-                className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-destructive hover:border-destructive/30 transition-colors"
-                title="Sign out"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>{t("navSignOut")}</span>
+                <User className="w-4 h-4 text-white" />
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Link
-                href="/onboarding"
-                className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3.5 py-1.5 text-xs font-bold text-primary hover:bg-primary/20 transition-all shadow-xs shrink-0 whitespace-nowrap"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{t("navLiveDemo")}</span>
-              </Link>
+            <div className="flex items-center gap-2.5">
               <Link
                 href="/login"
-                className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5"
+                className="text-xs font-bold text-gray-600 dark:text-muted-foreground hover:text-gray-900 dark:hover:text-foreground transition-colors px-2.5 py-1.5"
               >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>{t("navSignIn")}</span>
+                {t("navSignIn")}
               </Link>
               <Link
                 href="/signup"
-                className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-primary px-4 sm:px-5 py-1.5 sm:py-2 text-xs font-semibold text-primary-foreground hover:opacity-95 shadow-xs transition-all shrink-0 whitespace-nowrap"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#00A859] hover:bg-[#00964F] text-white font-bold text-xs px-4 py-2 shadow-sm transition-all"
               >
                 <span>{t("navGetStarted")}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+
+              {/* Black Circular User Account Icon (Matching Reference UI Image) */}
+              <Link
+                href="/login"
+                className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center shadow-md hover:scale-105 transition-transform"
+                title="Account Sign In"
+              >
+                <User className="w-4 h-4 text-white" />
               </Link>
             </div>
           )}
@@ -231,84 +132,56 @@ export function Header() {
           {/* Mobile Hamburger Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 text-foreground/80 hover:text-foreground rounded-xl border border-border/80 bg-card focus:outline-hidden"
+            className="md:hidden p-2 text-gray-700 dark:text-foreground hover:text-gray-900 rounded-xl border border-gray-200 dark:border-border bg-card focus:outline-hidden"
             aria-label="Toggle Menu"
           >
-            {mobileMenuOpen ? <X className="w-4 h-4 text-primary" /> : <Menu className="w-4 h-4" />}
+            {mobileMenuOpen ? <X className="w-4 h-4 text-[#00A859]" /> : <Menu className="w-4 h-4" />}
           </button>
         </div>
       </Container>
 
       {/* Mobile Dropdown Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-border/60 bg-background/98 backdrop-blur-2xl px-4 py-4 space-y-3 animate-fadeIn shadow-xl max-h-[calc(100vh-3.5rem)] overflow-y-auto">
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
-            {t("quickNav")}
-          </div>
-
+        <div className="md:hidden border-t border-gray-100 dark:border-border bg-white/98 dark:bg-background/98 backdrop-blur-2xl px-4 py-4 space-y-3 animate-fadeIn shadow-xl">
           <div className="grid grid-cols-1 gap-1">
-            {NAV_LINKS.map((link) => {
-              const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
-              return (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center justify-between p-3 rounded-xl transition-all ${
-                    isActive
-                      ? "bg-primary/10 text-primary font-bold border border-primary/20"
-                      : "text-foreground hover:bg-secondary/50 border border-transparent"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${isActive ? "bg-primary text-primary-foreground" : "bg-card border border-border/80 text-muted-foreground"}`}>
-                      {link.icon}
-                    </div>
-                    <div className="flex flex-col text-left">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold leading-tight">{link.label}</span>
-                        {link.badge && (
-                          <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-md border ${link.badgeColor}`}>
-                            {link.badge}
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-[11px] text-muted-foreground font-normal">{link.desc}</span>
-                    </div>
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-secondary/50 text-gray-900 dark:text-foreground text-xs font-bold transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-gray-100 dark:bg-card border border-gray-200 dark:border-border text-[#00A859]">
+                    {link.icon}
                   </div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                </Link>
-              );
-            })}
+                  <span>{link.label}</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-gray-400" />
+              </Link>
+            ))}
           </div>
 
-          <div className="pt-3 border-t border-border/60 flex flex-col gap-2">
-            <Link
-              href="/app"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full flex items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 py-2.5 text-xs font-bold text-primary hover:bg-primary/20 transition-colors"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>{t("navLiveDemo")}</span>
-            </Link>
-
+          <div className="pt-3 border-t border-gray-100 dark:border-border flex flex-col gap-2">
             <Link
               href={user ? "/app" : "/signup"}
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-xs font-semibold text-primary-foreground hover:opacity-95 shadow-xs transition-opacity"
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#00A859] py-2.5 text-xs font-bold text-white shadow-xs"
             >
-              <Compass className="w-4 h-4" />
-              <span>{t("navGetStarted")}</span>
+              <Sparkles className="w-4 h-4" />
+              <span>{user ? "Go to App" : t("navGetStarted")}</span>
             </Link>
           </div>
         </div>
       )}
 
-      {/* User Profile & Activity History Modal */}
-      <UserProfileModal
-        isOpen={isProfileModalOpen}
-        onClose={() => setIsProfileModalOpen(false)}
-      />
+      {/* User Profile Modal */}
+      {isProfileModalOpen && (
+        <UserProfileModal
+          isOpen={isProfileModalOpen}
+          onClose={() => setIsProfileModalOpen(false)}
+        />
+      )}
     </header>
   );
 }

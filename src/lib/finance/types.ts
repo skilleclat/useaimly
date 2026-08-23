@@ -143,6 +143,39 @@ export interface BaselineFinancialProfile {
   goals: NormalizedGoalItem[];
 }
 
+export type ExecutiveDecision = "GO" | "WAIT" | "ADJUST";
+
+export type ConfidenceLevel = "HIGH" | "MEDIUM" | "LOW";
+
+export type FactClassification =
+  | "CONFIRMED_FACT"
+  | "CALCULATED"
+  | "ESTIMATED"
+  | "STRATEGIC_RECOMMENDATION";
+
+export type ConstraintSeverity = "HARD_BLOCKER" | "SOFT_WARNING" | "OPTIMIZATION";
+
+export interface ConstraintEvaluationResult {
+  ruleName: string;
+  thresholdValue: string | number;
+  currentValue: string | number;
+  status: "SATISFIED" | "BELOW_TARGET" | "VIOLATED";
+  gap: string | number;
+  severity: ConstraintSeverity;
+  consequence: string;
+}
+
+export interface VehicleOwnershipBurden {
+  isVehiclePurchase: boolean;
+  estimatedMonthlyInsurance: number;
+  estimatedMonthlyFuel: number;
+  estimatedMonthlyMaintenance: number;
+  estimatedMonthlyParkingAndTires: number;
+  monthlyFinancingObligation: number;
+  totalMonthlyOwnershipBurden: number;
+  ownershipCostKnown: boolean;
+}
+
 export interface DecisionSimulationResult {
   decisionTitle: string;
   amount: number;
@@ -175,9 +208,47 @@ export interface DecisionSimulationResult {
   // 3-Pillar Affordability Check
   affordability: ThreePillarAffordability;
 
+  // Executive Decision Engine Output
+  executiveDecision: ExecutiveDecision;
+  confidenceLevel: ConfidenceLevel;
+  confidenceReasons: string[];
+  constraintResults: ConstraintEvaluationResult[];
+  
+  // Vehicle Framework (Decisions A & B)
+  vehicleFramework?: {
+    isVehiclePurchase: boolean;
+    decisionA: {
+      canFundPurchase: boolean;
+      purchasePrice: number;
+      dedicatedGoalSavings: number;
+      remainingFundingGap: number;
+      monthlyCapacity: number;
+      projectedFundingDate: string;
+      emergencyReserveTouched: boolean;
+    };
+    decisionB: {
+      canAffordOwnership: boolean;
+      monthlyOwnershipBurden: number;
+      operatingCostsBreakdown: VehicleOwnershipBurden;
+      freeCashFlowAfterOwnership: number;
+    };
+  };
+
+  // Fact / Calculation / Estimation / Recommendation Separation
+  factBreakdown: {
+    confirmedFacts: string[];
+    calculatedMetrics: string[];
+    estimatedVariables: string[];
+    recommendations: string[];
+  };
+
+  missingVariables: string[];
+  singleAction: string;
+
   // Synthesis & Status
   status: DecisionImpactStatus;
   headlineVerdict: string;
   detailedAnalysis: string;
   recommendation: string;
 }
+

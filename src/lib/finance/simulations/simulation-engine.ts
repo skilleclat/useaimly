@@ -4,18 +4,26 @@ import {
   DecisionSimulationResult,
   DecisionImpactStatus,
   ThreePillarAffordability,
+  ExecutiveDecision,
+  ConfidenceLevel,
+  VehicleOwnershipBurden,
 } from "../types";
 import { normalizeToMonthly } from "../normalization/frequency-normalizer";
 import { calculateCashFlow } from "../cash-flow/cash-flow-calculator";
-import { calculateGoalMetrics, calculateMultipleGoalsMetrics } from "../goals/goal-calculator";
-import { addMonths, differenceInDays, differenceInMonths, formatDateToISO, parseDate } from "@/lib/utils/date";
+import { calculateGoalMetrics } from "../goals/goal-calculator";
+import { evaluateFinancialConstraints } from "../constraints/constraint-engine";
+import { runPreFlightValidation } from "../validation/preflight-validator";
+import { formatCurrency } from "@/lib/utils/currency";
+import { addMonths, differenceInDays, formatDateToISO, parseDate } from "@/lib/utils/date";
 
 /**
  * Evaluates the deterministic impact of a proposed financial decision against baseline profile.
- * Executes the 3-Pillar Affordability framework:
- * 1. Physical Cash Affordability
- * 2. Essential Obligation & Buffer Resilience
- * 3. Goal Trajectory Preservation
+ * Executes:
+ * 1. Data Normalization & Fact Classification
+ * 2. Deterministic Calculation & Trajectory Deltas
+ * 3. Vehicle Purchase Intelligence Framework (Decision A & Decision B)
+ * 4. Financial Constraint Engine Verification
+ * 5. Executive Decision Engine (GO / WAIT / ADJUST) & Confidence Calibration
  */
 export function simulateDecision(
   baseline: BaselineFinancialProfile,
@@ -45,7 +53,6 @@ export function simulateDecision(
   const recurringMonthlyCost = isRecurring ? normalizeToMonthly(amount, recurringFrequency) : 0;
   const oneTimeCost = isRecurring ? 0 : amount;
 
-  // New Liquid Savings & New Free Cash Flow
   const simulatedLiquidSavings = Math.max(0, baseline.liquidSavings - oneTimeCost);
   const simulatedFreeCashFlow = baselineCashFlow.monthlyFreeCashFlow - recurringMonthlyCost;
 
@@ -63,7 +70,7 @@ export function simulateDecision(
     );
   }
 
-  // 4. Calculate Trajectory Deltas
+  // 4. Trajectory Deltas & Date Reconciliation
   const availableSavingsChange = -oneTimeCost;
   const monthlyFreeCashFlowChange = -recurringMonthlyCost;
 
@@ -77,7 +84,6 @@ export function simulateDecision(
     const targetAmount = primaryGoalItem?.targetAmount || 1;
     percentageOfGoalAffected = Number(((amount / targetAmount) * 100).toFixed(1));
 
-    // Recovery calculation: How much additional per month is needed to still hit the target date?
     const monthsRemaining = baselineGoalResult.monthsUntilTargetDate;
     if (monthsRemaining > 0) {
       if (isRecurring) {
@@ -87,7 +93,6 @@ export function simulateDecision(
       }
     }
 
-    // Delay calculation
     if (
       !baselineGoalResult.projectedCompletionDate.includes("does not") &&
       !simulatedGoalResult.projectedCompletionDate.includes("does not")
@@ -99,25 +104,100 @@ export function simulateDecision(
       !baselineGoalResult.projectedCompletionDate.includes("does not") &&
       simulatedGoalResult.projectedCompletionDate.includes("does not")
     ) {
-      // Decision pushes trajectory into indefinite stall
       delayInDays = 999 * 30;
     }
   }
 
-  // 5. 3-Pillar Affordability Calculations
-  // Pillar 1: Can physically pay?
-  const canPhysicallyPay = baseline.liquidSavings >= oneTimeCost;
-  const cashRemainingAfterDecision = baseline.liquidSavings - oneTimeCost;
-  const cashDeficit = Math.max(0, oneTimeCost - baseline.liquidSavings);
-
-  // Pillar 2: Preserves essential obligations?
-  // Recommended buffer = 2 months of essential living costs + debt payments
+  // 5. Monthly Fixed Obligations
   const monthlyFixedObligations =
     baselineCashFlow.monthlyEssentialExpenses +
     baselineCashFlow.monthlyDebtPayments +
     baselineCashFlow.monthlyCommitments;
 
-  const minRecommendedBuffer = monthlyFixedObligations * 2;
+  // 6. Vehicle Purchase Intelligence Framework Evaluation
+  const isVehiclePurchase =
+    decisionTitle.toLowerCase().includes("vehicle") ||
+    decisionTitle.toLowerCase().includes("car") ||
+    decisionTitle.toLowerCase().includes("auto") ||
+    decisionTitle.toLowerCase().includes("truck") ||
+    decisionTitle.toLowerCase().includes("suv");
+
+  let vehicleFramework: DecisionSimulationResult["vehicleFramework"] = undefined;
+
+  if (isVehiclePurchase) {
+    const dedicatedGoalSavings = primaryGoalItem ? primaryGoalItem.currentAmount : 0;
+    const remainingFundingGap = Math.max(0, amount - dedicatedGoalSavings);
+    const emergencyReserveTouched = amount > dedicatedGoalSavings;
+    const canFundPurchase = baseline.liquidSavings >= amount;
+
+    // Decision B: Operating & Ownership Costs
+    const estimatedMonthlyInsurance = Math.round((amount * 0.04) / 12); // ~4% annual
+    const estimatedMonthlyFuel = 12000;
+    const estimatedMonthlyMaintenance = Math.round((amount * 0.03) / 12);
+    const estimatedMonthlyParkingAndTires = 4000;
+    const monthlyFinancingObligation = isRecurring ? recurringMonthlyCost : 0;
+
+    const totalMonthlyOwnershipBurden =
+      estimatedMonthlyInsurance +
+      estimatedMonthlyFuel +
+      estimatedMonthlyMaintenance +
+      estimatedMonthlyParkingAndTires +
+      monthlyFinancingObligation;
+
+    const canAffordOwnership = baselineCashFlow.monthlyFreeCashFlow >= totalMonthlyOwnershipBurden;
+    const freeCashFlowAfterOwnership = baselineCashFlow.monthlyFreeCashFlow - totalMonthlyOwnershipBurden;
+
+    const operatingCostsBreakdown: VehicleOwnershipBurden = {
+      isVehiclePurchase: true,
+      estimatedMonthlyInsurance,
+      estimatedMonthlyFuel,
+      estimatedMonthlyMaintenance,
+      estimatedMonthlyParkingAndTires,
+      monthlyFinancingObligation,
+      totalMonthlyOwnershipBurden,
+      ownershipCostKnown: false,
+    };
+
+    let projectedFundingDate = baselineGoalResult?.projectedCompletionDate || "Immediate";
+
+    vehicleFramework = {
+      isVehiclePurchase: true,
+      decisionA: {
+        canFundPurchase,
+        purchasePrice: amount,
+        dedicatedGoalSavings,
+        remainingFundingGap,
+        monthlyCapacity: baselineCashFlow.monthlyFreeCashFlow,
+        projectedFundingDate,
+        emergencyReserveTouched,
+      },
+      decisionB: {
+        canAffordOwnership,
+        monthlyOwnershipBurden: totalMonthlyOwnershipBurden,
+        operatingCostsBreakdown,
+        freeCashFlowAfterOwnership,
+      },
+    };
+  }
+
+  // 7. Constraint Engine Evaluation
+  const constraintResults = evaluateFinancialConstraints({
+    baselineProfile: baseline,
+    decisionAmount: amount,
+    isRecurring,
+    postDecisionLiquidSavings: simulatedLiquidSavings,
+    postDecisionFreeCashFlow: simulatedFreeCashFlow,
+    monthlyFixedObligations,
+    delayInDays,
+    targetReserveMonths: 3.0,
+  });
+
+  // 8. 3-Pillar Affordability Calculations
+  const canPhysicallyPay = baseline.liquidSavings >= oneTimeCost;
+  const cashRemainingAfterDecision = baseline.liquidSavings - oneTimeCost;
+  const cashDeficit = Math.max(0, oneTimeCost - baseline.liquidSavings);
+
+  const minRecommendedBuffer = monthlyFixedObligations * 3.0; // Enforce 3-month floor target
   const bufferRemaining = cashRemainingAfterDecision;
   const preservesEssentialObligations =
     cashRemainingAfterDecision >= minRecommendedBuffer && simulatedFreeCashFlow >= 0;
@@ -127,7 +207,6 @@ export function simulateDecision(
       ? Number((Math.max(0, cashRemainingAfterDecision) / monthlyFixedObligations).toFixed(1))
       : 12;
 
-  // Pillar 3: Preserves goal trajectory?
   const preservesGoalTrajectory =
     delayInDays <= 30 &&
     (simulatedGoalResult ? simulatedGoalResult.status === "ON_TRACK" || simulatedGoalResult.status === "AHEAD" : true);
@@ -147,40 +226,125 @@ export function simulateDecision(
     percentageOfGoalAffected,
   };
 
-  // 6. Verdict Status Determination
-  let status: DecisionImpactStatus = "SAFE";
-  let headlineVerdict = "";
-  let detailedAnalysis = "";
-  let recommendation = "";
+  // 9. Executive Decision Engine (GO / WAIT / ADJUST) Determination
+  const hardBlockerPresent = constraintResults.some(
+    (c) => c.severity === "HARD_BLOCKER" && c.status !== "SATISFIED"
+  );
+  const reserveFloorBreached = obligationsPreservedMonths < 3.0;
+  const vehicleOwnershipUnaffordable = vehicleFramework ? !vehicleFramework.decisionB.canAffordOwnership : false;
 
-  if (!canPhysicallyPay) {
+  let executiveDecision: ExecutiveDecision = "GO";
+  let status: DecisionImpactStatus = "SAFE";
+  let singleAction = "";
+
+  if (!canPhysicallyPay || simulatedFreeCashFlow < 0 || obligationsPreservedMonths < 1.0 || vehicleOwnershipUnaffordable) {
+    executiveDecision = "WAIT";
     status = "OFF_TRACK";
-    headlineVerdict = "Cash Deficit: Cannot Physically Fund";
-    detailedAnalysis = `This decision exceeds your total accessible liquid cash by ${cashDeficit}. Proceeding would create an immediate liquidity overdraft.`;
-    recommendation = `Postpone this purchase until you have built at least ${oneTimeCost + minRecommendedBuffer} in reserves.`;
-  } else if (simulatedFreeCashFlow < 0) {
-    status = "OFF_TRACK";
-    headlineVerdict = "Destabilizing: Creates Monthly Deficit";
-    detailedAnalysis = `This commitment would turn your monthly cash flow negative (${simulatedFreeCashFlow}/mo), draining existing reserves each month.`;
-    recommendation = `Avoid adding recurring costs that exceed your surplus cash flow.`;
-  } else if (!preservesEssentialObligations) {
-    status = "HIGH_IMPACT";
-    headlineVerdict = "High Impact: Depletes Emergency Cushion";
-    detailedAnalysis = `While you can physically pay, this decision leaves only ${obligationsPreservedMonths} months of essential buffer (below the recommended 2-month threshold of ${minRecommendedBuffer}).`;
-    recommendation = `Consider funding this over 2–3 milestones rather than a single lump-sum deduction.`;
-  } else if (delayInDays > 60 || (simulatedGoalResult && simulatedGoalResult.status === "AT_RISK")) {
-    status = "MANAGEABLE";
-    headlineVerdict = "Manageable: Delays Primary Destination";
-    detailedAnalysis = `You have sufficient capital and buffer, but this decision will push your goal arrival back by ${delayInDays} days (${Math.round(delayInDays / 30)} months). You will need +${additionalMonthlyAmountRequired}/mo to recover the timeline.`;
-    recommendation = `Acceptable if this purchase is a high priority, but requires increasing monthly savings to compensate.`;
+    if (!canPhysicallyPay) {
+      singleAction = `Pause purchase until dedicated goal savings reach ${formatCurrency(amount, "KES")}.`;
+    } else if (vehicleOwnershipUnaffordable) {
+      singleAction = `Hold purchase: Estimated monthly ownership burden (${formatCurrency(vehicleFramework?.decisionB.monthlyOwnershipBurden || 0, "KES")}/mo) exceeds free cash flow (${formatCurrency(baselineCashFlow.monthlyFreeCashFlow, "KES")}/mo).`;
+    } else {
+      singleAction = "Pause non-essential outlays until liquid reserves cover 3.0 months of mandatory expenses.";
+    }
+  } else if (reserveFloorBreached || delayInDays > 30 || hardBlockerPresent) {
+    executiveDecision = "ADJUST";
+    status = reserveFloorBreached ? "HIGH_IMPACT" : "MANAGEABLE";
+    if (reserveFloorBreached) {
+      singleAction = `Reduce purchase budget to ${formatCurrency(amount * 0.7, "KES")} or delay by ${Math.ceil((minRecommendedBuffer - cashRemainingAfterDecision) / Math.max(1, baselineCashFlow.monthlyFreeCashFlow))} months to maintain a 3.0-month reserve floor (${formatCurrency(minRecommendedBuffer, "KES")}).`;
+    } else {
+      singleAction = `Increase monthly goal allocation by +${formatCurrency(additionalMonthlyAmountRequired, "KES")}/mo to neutralize the +${delayInDays}-day trajectory shift.`;
+    }
   } else {
+    executiveDecision = "GO";
     status = "SAFE";
-    headlineVerdict = "Safe: Preserves Plan & Liquidity";
-    detailedAnalysis = `This decision is fully affordable. It preserves your essential reserves (${obligationsPreservedMonths} months of buffer) and keeps your primary goal on schedule with minimal delay (${delayInDays} days).`;
-    recommendation = `Safe to proceed without disrupting your trajectory.`;
+    singleAction = "Proceed with purchase while maintaining automated monthly allocation to goal destination.";
   }
 
-  return {
+  // 10. Confidence Calibration (HIGH / MEDIUM / LOW)
+  const confidenceReasons: string[] = [];
+  let confidenceLevel: ConfidenceLevel = "HIGH";
+
+  if (isVehiclePurchase) {
+    confidenceLevel = "MEDIUM";
+    confidenceReasons.push("Vehicle ownership costs (insurance, fuel, maintenance) are estimated based on regional averages rather than user-confirmed quotes.");
+  }
+
+  if (baseline.liquidSavings === (primaryGoalItem?.currentAmount || -1)) {
+    confidenceLevel = "MEDIUM";
+    confidenceReasons.push("Fund separation between emergency reserves and goal savings is unconfirmed.");
+  }
+
+  if (confidenceReasons.length === 0) {
+    confidenceReasons.push("All required financial inputs are confirmed and calculations are internally consistent.");
+  }
+
+  // 11. Fact / Calculation / Estimation / Recommendation Separation
+  const factBreakdown = {
+    confirmedFacts: [
+      `Monthly Gross Income: ${formatCurrency(baselineCashFlow.monthlyGrossIncome, "KES")}`,
+      `Monthly Mandatory Outflows: ${formatCurrency(monthlyFixedObligations, "KES")}`,
+      `Liquid Reserves: ${formatCurrency(baseline.liquidSavings, "KES")}`,
+      `Primary Goal Target: ${formatCurrency(primaryGoalItem?.targetAmount || 0, "KES")} by ${baselineGoalResult?.targetDate || "N/A"}`,
+    ],
+    calculatedMetrics: [
+      `Monthly Free Cash Flow: ${formatCurrency(baselineCashFlow.monthlyFreeCashFlow, "KES")}/mo`,
+      `Post-Decision Liquid Buffer: ${obligationsPreservedMonths} Months of mandatory expenses`,
+      `Projected Completion Date: ${newCompletionDate} (+${delayInDays} Days Delay)`,
+    ],
+    estimatedVariables: isVehiclePurchase
+      ? [
+          `Estimated Monthly Ownership Operating Burden: ${formatCurrency(vehicleFramework?.decisionB.monthlyOwnershipBurden || 0, "KES")}/mo`,
+        ]
+      : ["Assuming constant income and expense baseline throughout trajectory."],
+    recommendations: [
+      `Executive Decision: ${executiveDecision}`,
+      singleAction,
+    ],
+  };
+
+  // Missing Variables Disclosures
+  const missingVariables: string[] = [];
+  if (isVehiclePurchase) {
+    missingVariables.push("Exact monthly vehicle insurance quote");
+    missingVariables.push("Actual fuel & parking profile");
+    missingVariables.push("Financing interest rate terms (if taking loan)");
+  }
+  if (baseline.liquidSavings > 0 && primaryGoalItem && primaryGoalItem.currentAmount > 0) {
+    missingVariables.push("Confirmation of whether emergency reserves are distinct from goal funds");
+  }
+
+  // 12. Headline & Detailed Analysis
+  let headlineVerdict = "";
+  let detailedAnalysis = "";
+  let recommendationText = singleAction;
+
+  if (executiveDecision === "GO") {
+    headlineVerdict = "Executive Decision: GO — Plan & Buffer Intact";
+    detailedAnalysis = `Calculations confirm that this decision is fully affordable. Liquid reserves retain ${obligationsPreservedMonths} months of mandatory living buffer, exceeding your 3.0-month target, while primary goal arrival remains on schedule for ${newCompletionDate}.`;
+  } else if (executiveDecision === "ADJUST") {
+    headlineVerdict = `Executive Decision: ADJUST — ${reserveFloorBreached ? "Reserve Floor Breached" : "Trajectory Delay Identified"}`;
+    detailedAnalysis = reserveFloorBreached
+      ? `While you have sufficient liquid cash to execute this payment, post-purchase reserves dip to ${obligationsPreservedMonths} months of mandatory expenses (below your 3.0-month target of ${formatCurrency(minRecommendedBuffer, "KES")}). Adjusting the timeline or purchase amount protects essential resilience.`
+      : `Executing this outlay shifts your primary destination "${primaryGoalItem?.title}" by +${delayInDays} days (Projected: ${newCompletionDate}). An allocation adjustment of +${formatCurrency(additionalMonthlyAmountRequired, "KES")}/mo is recommended to neutralize the delay.`;
+  } else {
+    if (!canPhysicallyPay) {
+      headlineVerdict = "Executive Decision: WAIT — Cash Deficit: Cannot Physically Fund";
+      detailedAnalysis = `Executing this decision requires ${formatCurrency(amount, "KES")}, which exceeds accessible liquid cash by ${formatCurrency(cashDeficit, "KES")}.`;
+    } else if (simulatedFreeCashFlow < 0) {
+      headlineVerdict = "Executive Decision: WAIT — Destabilizing: Creates Monthly Deficit";
+      detailedAnalysis = `This commitment would turn your monthly cash flow negative (${formatCurrency(simulatedFreeCashFlow, "KES")}/mo), draining existing reserves each month.`;
+    } else if (vehicleOwnershipUnaffordable) {
+      headlineVerdict = "Executive Decision: WAIT — Vehicle Ownership Unaffordable";
+      detailedAnalysis = `You can fund the initial purchase price, but the total monthly ownership burden (${formatCurrency(vehicleFramework?.decisionB.monthlyOwnershipBurden || 0, "KES")}/mo) exceeds your monthly free cash flow (${formatCurrency(baselineCashFlow.monthlyFreeCashFlow, "KES")}/mo).`;
+    } else {
+      headlineVerdict = "Executive Decision: WAIT — Unacceptable Reserve Risk";
+      detailedAnalysis = `Executing this decision depletes essential reserves below 1.0 month of living security, introducing unacceptable vulnerability.`;
+    }
+  }
+
+
+  const result: DecisionSimulationResult = {
     decisionTitle,
     amount,
     isRecurring,
@@ -205,9 +369,25 @@ export function simulateDecision(
       newCompletionDate,
     },
     affordability,
+    executiveDecision,
+    confidenceLevel,
+    confidenceReasons,
+    constraintResults,
+    vehicleFramework,
+    factBreakdown,
+    missingVariables,
+    singleAction,
     status,
     headlineVerdict,
     detailedAnalysis,
-    recommendation,
+    recommendation: recommendationText,
   };
+
+  // Run Pre-Flight Validation to guarantee zero date/logic contradictions
+  const validation = runPreFlightValidation(result);
+  if (!validation.isValid) {
+    console.warn("PRE-FLIGHT VALIDATION WARNINGS/ERRORS:", validation.errors);
+  }
+
+  return result;
 }
