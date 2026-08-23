@@ -6,7 +6,7 @@ import { PricingPlan } from "@/lib/types/pricing";
 import { useCurrency } from "@/lib/currency/currency-context";
 import { useI18n } from "@/lib/i18n/i18n-context";
 import { CurrencyCode } from "@/lib/types/finance";
-import { Check, Sparkles, Zap, Shield, ArrowRight } from "lucide-react";
+import { Check, Sparkles, Zap, Shield, ArrowRight, TrendingUp } from "lucide-react";
 
 import { useState } from "react";
 import { PayPalCheckoutModal } from "./PayPalCheckoutModal";
@@ -29,33 +29,28 @@ export function PricingCard({
 }: PricingCardProps) {
   const [isPayPalOpen, setIsPayPalOpen] = useState(false);
   const { user, profile } = useAuth();
-  const { currency: globalCurrency, format, convert } = useCurrency();
+  const { currency: globalCurrency, format } = useCurrency();
   const { t, language } = useI18n();
 
   const activeCurrency = propCurrency || globalCurrency;
   const isLoggedIn = Boolean(user || (profile && profile.id !== "demo-user-id"));
-  const targetHref = isLoggedIn ? `/pricing?plan=${plan.id}` : plan.ctaHref;
 
-  // Determine base USD amount for monthly vs yearly
   const basePriceUSD = isYearly
     ? (plan.totalYearlyUSD || plan.priceYearlyUSD * 12)
     : plan.priceMonthlyUSD;
 
   const shouldShowDecimals = activeCurrency === "USD" || activeCurrency === "EUR" || activeCurrency === "GBP" || activeCurrency === "CAD";
 
-  // Format main display price
   const formattedPrice = basePriceUSD === 0
     ? t("freePriceLabel")
     : format(basePriceUSD, { fromCurrency: "USD", showDecimals: shouldShowDecimals });
 
-  // Monthly equivalent for annual billing
   const monthlyEquivUSD = isYearly ? (plan.priceYearlyUSD) : plan.priceMonthlyUSD;
   const formattedMonthlyEquiv = format(monthlyEquivUSD, { fromCurrency: "USD", showDecimals: shouldShowDecimals });
 
   const isCurrentPlan = currentPlanId === plan.id;
   const periodLabel = isYearly ? t("perYear") : t("perMonth");
 
-  // Localized Taglines & Badges
   const planTagline = language === "fr"
     ? (plan.id === "free" ? t("planFreeTagline") : plan.id === "pro" ? t("planProTagline") : t("planPremiumTagline"))
     : plan.tagline;
@@ -70,10 +65,8 @@ export function PricingCard({
     ? (plan.id === "free" ? t("planFreeCta") : plan.id === "pro" ? t("planProCta") : t("planPremiumCta"))
     : plan.ctaText;
 
-  // Localized features in French when language === "fr"
-  const localizedFeatures = plan.features.map((feat, idx) => {
+  const localizedFeatures = plan.features.map((feat) => {
     if (language !== "fr") return feat;
-    // Map feature text to French
     const frMap: Record<string, string> = {
       "1 Primary Financial Destination": "1 Destination Financière Principale",
       "Monthly Cashflow & Free Balance Calculator": "Calculateur de Cash-Flow & Solde Libre Mensuel",
@@ -146,6 +139,18 @@ export function PricingCard({
             <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
               {t("billedAnnuallyEquiv").replace("{price}", formattedMonthlyEquiv)}
             </p>
+          )}
+
+          {/* MUSK ROI ANCHOR BADGE */}
+          {plan.id !== "free" && (
+            <div className="mt-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-2 text-[11px] font-bold text-amber-700 dark:text-amber-400">
+              <TrendingUp className="w-4 h-4 text-amber-500 shrink-0" />
+              <span>
+                {language === "fr"
+                  ? "Rendement x266 : Évite 1 erreur moyenne de 2 400 $+."
+                  : "266x ROI: Avoids $2,400+ average decision error."}
+              </span>
+            </div>
           )}
         </div>
 
@@ -227,7 +232,7 @@ export function PricingCard({
         )}
       </div>
 
-      {/* Built-in PayPal Checkout Modal (Only when no parent onSelectPlan handler is provided) */}
+      {/* Built-in PayPal Checkout Modal */}
       {plan.id !== "free" && !onSelectPlan && (
         <PayPalCheckoutModal
           isOpen={isPayPalOpen}
@@ -239,5 +244,3 @@ export function PricingCard({
     </div>
   );
 }
-
-

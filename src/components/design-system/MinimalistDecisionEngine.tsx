@@ -22,11 +22,17 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
+  Clock,
+  Zap,
+  TrendingUp,
+  Link as LinkIcon,
+  HelpCircle,
 } from "lucide-react";
 import { useCurrency } from "@/lib/currency/currency-context";
 import { useI18n } from "@/lib/i18n/i18n-context";
 import { parseDecisionQuery } from "@/lib/nlp/decision-query-parser";
 import { simulateDecision, BaselineFinancialProfile } from "@/lib/finance";
+import { calculateFreedomClock } from "@/lib/finance/health/freedom-clock";
 
 export interface DecisionCardOption {
   id: string;
@@ -135,7 +141,7 @@ export function MinimalistDecisionEngine({
         goals: [
           {
             id: "main-goal",
-            title: isFr ? "Objectif d'Épargne & Entreprise" : "Financial Goal & Emergency Fund",
+            title: isFr ? "Liberté Financière & Entreprise" : "Financial Freedom Goal",
             targetAmount: 500000,
             currentAmount: 180000,
             targetDate: "2027-03-31",
@@ -220,6 +226,11 @@ export function MinimalistDecisionEngine({
     [isFr]
   );
 
+  // Check if query is URL paste
+  const isUrlPaste = useMemo(() => {
+    return queryInput.includes("http://") || queryInput.includes("https://") || queryInput.includes("www.");
+  }, [queryInput]);
+
   // Parse natural language intent
   const parsedIntent = useMemo(() => {
     return parseDecisionQuery(queryInput, currency);
@@ -245,6 +256,11 @@ export function MinimalistDecisionEngine({
       isRecurring: isRecurring,
     });
   }, [activeBaseline, extractedTitle, extractedAmount, isRecurring]);
+
+  // Elon Musk Freedom Clock Engine
+  const freedomClock = useMemo(() => {
+    return calculateFreedomClock(activeBaseline, extractedAmount, isFr);
+  }, [activeBaseline, extractedAmount, isFr]);
 
   // Verdict Badge
   const verdict = useMemo(() => {
@@ -289,58 +305,49 @@ export function MinimalistDecisionEngine({
       );
       reasons.push(
         isFr
-          ? `Votre reste à vivre mensuel demeure positif après cette opération.`
-          : `Your monthly cash flow remains positive after this purchase.`
+          ? `Ce projet équivaut à ${freedomClock.lifeTimeCostDays} jours de travail — votre trésorerie reste saine.`
+          : `This purchase equals ${freedomClock.lifeTimeCostDays} days of labor — your cash flow remains healthy.`
       );
       reasons.push(
         isFr
-          ? `Votre réserve de sécurité reste au-dessus de votre cible minimale de 3 mois.`
-          : `Your emergency reserve stays protected above your 3-month safety target.`
+          ? `Votre Date de Liberté Financière (${freedomClock.formattedFreedomDate}) reste intacte et sécurisée.`
+          : `Your Financial Freedom Date (${freedomClock.formattedFreedomDate}) remains protected.`
       );
     } else if (verdict.type === "ADJUST") {
-      const shortage = Math.max(0, extractedAmount - activeBaseline.liquidSavings);
-      if (shortage > 0) {
-        reasons.push(
-          isFr
-            ? `Il vous manque environ ${format(shortage, { fromCurrency: "KES" })} pour atteindre l'objectif sans puiser dans votre réserve.`
-            : `You need approximately ${format(shortage, { fromCurrency: "KES" })} more to reach your budget target.`
-        );
-      } else {
-        reasons.push(
-          isFr
-            ? `Un paiement comptant diminuera temporairement votre matelas de sécurité d'urgence.`
-            : `Paying comptant will temporarily lower your liquid emergency reserve.`
-        );
-      }
       reasons.push(
         isFr
-          ? `Au rythme d'épargne actuel, vous serez en mesure de concrétiser ce projet vers Mars 2027.`
-          : `At your current saving rate, you could reach this target around March 2027.`
+          ? `Exécuter cet achat équivaut à céder ${freedomClock.lifeTimeCostDays} jours de votre liberté future.`
+          : `Executing this outlay equals trading ${freedomClock.lifeTimeCostDays} days of your future freedom.`
       );
       reasons.push(
         isFr
-          ? `Nous recommandons d'étaler le paiement sur 3 mois ou d'augmenter votre capacité d'épargne mensuelle.`
-          : `Consider spreading payments across 3 months or increasing your monthly savings rate.`
+          ? `Votre Date de Liberté Financière recule du ${freedomClock.formattedFreedomDate} au ${freedomClock.formattedNewFreedomDate}.`
+          : `Your Financial Freedom Date shifts from ${freedomClock.formattedFreedomDate} to ${freedomClock.formattedNewFreedomDate}.`
+      );
+      reasons.push(
+        isFr
+          ? `Nous recommandons d'étaler le paiement sur 3 mois ou d'augmenter votre épargne mensuelle.`
+          : `We recommend spreading payments across 3 months or increasing your monthly savings rate.`
       );
     } else {
       reasons.push(
         isFr
-          ? `Cet achat requiert davantage de trésorerie disponible que votre épargne actuelle (${formattedSavings}).`
-          : `This purchase requires more liquid reserves than your current available savings (${formattedSavings}).`
+          ? `Cet achat vous coûte ${freedomClock.lifeTimeCostDays} jours de travail et dépasse vos liquidités immédiates.`
+          : `This spend costs ${freedomClock.lifeTimeCostDays} days of labor and exceeds immediate cash.`
       );
       reasons.push(
         isFr
-          ? `Exécuter cette dépense aujourd'hui décalerait votre objectif principal de +${simulation.delta.delayInDays || 45} jours.`
-          : `Taking this on now would push your primary savings goal back by +${simulation.delta.delayInDays || 45} days.`
+          ? `Votre Date de Liberté est retardée jusqu'au ${freedomClock.formattedNewFreedomDate} (+${simulation.delta.delayInDays || 45} jours).`
+          : `Your Freedom Date is delayed until ${freedomClock.formattedNewFreedomDate} (+${simulation.delta.delayInDays || 45} days).`
       );
       reasons.push(
         isFr
-          ? `Nous vous recommandons d'épargner pendant 4 à 6 mois supplémentaires avant d'effectuer cet achat.`
-          : `We recommend saving for another 4 to 6 months before completing this decision.`
+          ? `Épargnez pendant 4 à 6 mois supplémentaires pour valider ce projet en toute sécurité.`
+          : `Save for another 4 to 6 months to validate this decision safely.`
       );
     }
     return reasons.slice(0, 3);
-  }, [extractedAmount, activeBaseline, verdict, simulation, format, isFr]);
+  }, [extractedAmount, activeBaseline, verdict, simulation, freedomClock, format, isFr]);
 
   const handleCardClick = (card: DecisionCardOption) => {
     setActiveCardId(card.id);
@@ -353,7 +360,40 @@ export function MinimalistDecisionEngine({
 
   return (
     <div className="space-y-10 w-full max-w-4xl mx-auto font-sans">
-      {/* 1. DECISION CARDS ("Quels sont vos projets ? / What are you planning?") */}
+      {/* ELON MUSK FREEDOM CLOCK HUD CARD */}
+      <div className="rounded-3xl border border-emerald-500/30 bg-gradient-to-r from-[#062317] via-[#0A2E20] to-[#041A11] p-6 sm:p-7 text-white shadow-2xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="space-y-1.5 text-center sm:text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00A859]/20 border border-[#00A859]/40 text-[#00A859] text-xs font-mono font-bold uppercase tracking-wider">
+            <Clock className="w-3.5 h-3.5" />
+            <span>{isFr ? "Horloge de Liberté Financière" : "Financial Freedom Clock"}</span>
+          </div>
+
+          <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+            {freedomClock.formattedFreedomDate}
+          </div>
+
+          <p className="text-xs text-gray-300 font-medium">
+            {isFr
+              ? "Date estimée de votre indépendance financière totale d'après votre rythme d'épargne"
+              : "Estimated total financial independence date based on your baseline saving velocity"}
+          </p>
+        </div>
+
+        {/* Dynamic Shift Indicator */}
+        <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-center sm:text-right shrink-0 space-y-1 min-w-[200px]">
+          <span className="text-[10px] font-mono uppercase text-gray-300 font-bold block">
+            {isFr ? "Impact sur votre Liberté" : "Freedom Impact"}
+          </span>
+          <span className="text-sm font-extrabold text-[#00A859] block">
+            {freedomClock.lifeTimeCostDays} {isFr ? "jours de travail" : "days of labor"}
+          </span>
+          <span className="text-[11px] text-amber-300 font-bold block">
+            ➔ {freedomClock.formattedNewFreedomDate}
+          </span>
+        </div>
+      </div>
+
+      {/* 1. DECISION CARDS ("Quels sont vos projets ?") */}
       <div className="space-y-4">
         <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-foreground">
           {t("scenariosSectionTitle")}
@@ -374,14 +414,12 @@ export function MinimalistDecisionEngine({
                 }`}
               >
                 <div className="flex items-center gap-4">
-                  {/* Icon Square Badge */}
                   <div className={`p-3 rounded-2xl ${card.bgColor} shrink-0`}>
                     <div className={`w-8 h-8 rounded-xl ${card.iconBg} flex items-center justify-center shadow-sm`}>
                       {card.icon}
                     </div>
                   </div>
 
-                  {/* Titles */}
                   <div className="space-y-0.5">
                     <h3 className="text-sm font-bold text-gray-900 dark:text-foreground group-hover:text-[#00A859] transition-colors">
                       {card.title}
@@ -399,23 +437,32 @@ export function MinimalistDecisionEngine({
         </div>
       </div>
 
-      {/* 2. PRIMARY ACTION INPUT BOX */}
+      {/* 2. PRIMARY ACTION INPUT BOX (WITH LINK PASTE RECOGNITION) */}
       <div className="space-y-5 rounded-3xl bg-[#062317] p-6 sm:p-8 text-white shadow-2xl relative overflow-hidden">
-        <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-          {isFr ? "Quelle décision financière vous fait hésiter aujourd'hui ?" : "What money decision are you considering?"}
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+            {isFr ? "Quelle décision financière vous fait hésiter aujourd'hui ?" : "What money decision are you considering?"}
+          </h2>
+
+          {isUrlPaste && (
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#00A859]/20 border border-[#00A859]/40 text-[#00A859] text-xs font-mono font-bold">
+              <LinkIcon className="w-3.5 h-3.5" />
+              <span>{isFr ? "Lien web détecté" : "Web Link Detected"}</span>
+            </span>
+          )}
+        </div>
 
         <div className="space-y-4">
           <div className="relative flex items-center">
             <div className="absolute left-4 text-gray-400">
-              <Pencil className="w-4 h-4" />
+              {isUrlPaste ? <LinkIcon className="w-4 h-4 text-[#00A859]" /> : <Pencil className="w-4 h-4" />}
             </div>
 
             <input
               type="text"
               value={queryInput}
               onChange={(e) => setQueryInput(e.target.value)}
-              placeholder={isFr ? "Exemple : \"Je veux acheter un véhicule à 500 000 KES.\"" : "For example: \"I'm thinking of buying a KES 500,000 car.\""}
+              placeholder={isFr ? "Collez un lien web ou décrivez : \"Acheter une voiture à 500k KES\"" : "Paste a link or describe: \"Buying a car for 500k KES\""}
               className="w-full rounded-2xl bg-white text-gray-900 placeholder:text-gray-400 pl-11 pr-4 py-4 text-sm sm:text-base font-medium focus:outline-none focus:ring-4 focus:ring-[#00A859]/30 transition-all shadow-sm"
             />
           </div>
@@ -428,7 +475,7 @@ export function MinimalistDecisionEngine({
             }}
             className="w-full inline-flex items-center justify-center gap-3 rounded-2xl bg-[#00A859] hover:bg-[#00964F] text-white font-bold text-base py-4 px-6 shadow-lg shadow-[#00A859]/30 transition-all cursor-pointer"
           >
-            <span>{isFr ? "Analyser l'impact de ma décision" : "Analyze my decision"}</span>
+            <span>{isFr ? "Calculer l'impact sur ma Liberté" : "Analyze My Decision"}</span>
             <div className="w-7 h-7 rounded-full bg-black/20 flex items-center justify-center">
               <ArrowRight className="w-4 h-4" />
             </div>
@@ -545,23 +592,33 @@ export function MinimalistDecisionEngine({
         </div>
       )}
 
-      {/* 4. SECURITY & ENCRYPTION BANNER */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-[#F0FDF4] dark:bg-emerald-950/20 border border-[#DCFCE7] dark:border-emerald-900/30 flex items-center justify-between text-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-[#00A859] text-white flex items-center justify-center shrink-0">
-            <ShieldCheck className="w-4 h-4" />
+      {/* 4. 266X ROI VALUE PROOF BANNER ("Pourquoi Payer l'Abonnement?") */}
+      <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+        <div className="flex items-center gap-3.5 text-center sm:text-left">
+          <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-md">
+            {freedomClock.roiMultiplier}x
           </div>
-          <div>
-            <h4 className="font-bold text-gray-900 dark:text-foreground">
-              {isFr ? "Vos données restent confidentielles et protégées" : "Your data is private and secure"}
+          <div className="space-y-0.5">
+            <h4 className="font-bold text-gray-900 dark:text-foreground text-sm">
+              {isFr
+                ? `Rendement x${freedomClock.roiMultiplier} garanti dès le 1er mois`
+                : `Guaranteed ${freedomClock.roiMultiplier}x ROI from Month 1`}
             </h4>
-            <p className="text-gray-500 dark:text-muted-foreground font-medium">
-              {isFr ? "Cryptage de niveau bancaire. Vous gardez 100% le contrôle." : "Bank-level encryption. You're in control."}
+            <p className="text-gray-600 dark:text-muted-foreground font-medium">
+              {isFr
+                ? `L'abonnement UseAimly Pro (9 $/mois) prévient en moyenne 2 400 $ de décisions impulsives.`
+                : `UseAimly Pro ($9/mo) prevents an average of $2,400+ in impulsive decision mistakes.`}
             </p>
           </div>
         </div>
 
-        <Lock className="w-4 h-4 text-gray-400 shrink-0" />
+        <Link
+          href="/pricing"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-5 py-2.5 shadow-sm transition-all shrink-0 cursor-pointer"
+        >
+          <span>{isFr ? "Voir l'Offre Pro" : "Unlock Pro ROI"}</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
       </div>
 
       {/* 5. VERDICT RESULT CARD (4 PROGRESSIVE LAYERS) */}
@@ -658,7 +715,7 @@ export function MinimalistDecisionEngine({
           </div>
         </div>
 
-        {/* LAYER 4: PROGRESSIVE DISCLOSURE ("View full analysis →") */}
+        {/* LAYER 4: PROGRESSIVE DISCLOSURE */}
         <div className="pt-2 border-t border-gray-100 dark:border-border flex flex-col items-center">
           <button
             type="button"
@@ -691,10 +748,10 @@ export function MinimalistDecisionEngine({
 
                 <div className="p-4 rounded-2xl border border-gray-100 dark:border-border bg-gray-50 dark:bg-background space-y-1">
                   <span className="text-[11px] text-gray-500 font-semibold block">
-                    {isFr ? "Décalage d'objectif" : "Primary Goal Impact"}
+                    {isFr ? "Décalage de Liberté" : "Freedom Date Shift"}
                   </span>
                   <span className="text-base font-bold text-amber-600 dark:text-amber-400">
-                    +{simulation.delta.delayInDays || 45} {isFr ? "jours de décalage" : "days delay"}
+                    +{simulation.delta.delayInDays || 45} {isFr ? "jours" : "days"} (➔ {freedomClock.formattedNewFreedomDate})
                   </span>
                 </div>
 
