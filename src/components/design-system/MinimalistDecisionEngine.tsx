@@ -139,9 +139,7 @@ export function MinimalistDecisionEngine({
   const { t, language } = useI18n();
   const isFr = language === "fr";
 
-  const defaultDefaultQuery = isFr
-    ? "Je veux acheter une voiture à 500 000 KES."
-    : "I'm thinking of buying a KES 500,000 car.";
+  const defaultDefaultQuery = "";
 
   const [queryInput, setQueryInput] = useState(initialQuery || defaultDefaultQuery);
   const [activeCardId, setActiveCardId] = useState<string | null>("car");
@@ -165,13 +163,21 @@ export function MinimalistDecisionEngine({
     setProcessingStep(isFr ? "Lecture de vos documents & extraction..." : "Reading your documents & extracting facts...");
 
     try {
+      const effectiveQuery =
+        queryInput.trim() ||
+        (uploadedFiles.length > 0
+          ? `${isFr ? "Analyse du document" : "Document analysis"}: ${uploadedFiles[0].name}`
+          : isFr
+          ? "Analyse financière et contractuelle de document"
+          : "Financial document & decision intelligence analysis");
+
       // 1. Ingest files if any
       const docs = await documentIngestionService.ingestMultipleDocuments(uploadedFiles);
       setProcessingStep(isFr ? "Calculs déterministes d'impact & décalage..." : "Calculating deterministic cash-flow impact...");
 
       // 2. Build decision context
       const context = decisionContextBuilder.buildContext({
-        userDecisionText: queryInput,
+        userDecisionText: effectiveQuery,
         documents: docs,
         userContext: {
           monthlyIncome: extraIncome || activeBaseline.incomes.reduce((s, i) => s + i.amount, 0),
@@ -537,15 +543,28 @@ export function MinimalistDecisionEngine({
         </div>
       </div>
 
-      {/* 2. PRIMARY ACTION INPUT BOX (WITH LINK PASTE RECOGNITION) */}
+      {/* 2. PRIMARY ACTION INPUT BOX (AUTONOMOUS DOCUMENT & DECISION AI ENGINE) */}
       <div className="space-y-5 rounded-3xl bg-[#062317] p-6 sm:p-8 text-white shadow-2xl relative overflow-hidden">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-            {isFr ? "Quelle décision financière vous fait hésiter aujourd'hui ?" : "What money decision are you considering?"}
-          </h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00A859]/20 border border-[#00A859]/40 text-[#00A859] text-[11px] font-mono font-bold">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{isFr ? "Intelligence Décisionnelle Financière & IA Documentaire" : "Financial Decision Intelligence & Document AI"}</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+              {isFr
+                ? "Insérez n'importe quel document comptable, devis, contrat ou rapport financier"
+                : "Upload or paste any financial document, quote, contract, or accounting report"}
+            </h2>
+            <p className="text-xs text-white/70 font-medium max-w-2xl">
+              {isFr
+                ? "Notre IA financière déterministe analyse chaque terme, identifie les risques cachés et produit un rapport exécutif complet avec conseils d'experts."
+                : "Our deterministic Financial AI extracts every term, detects hidden risk clauses, and generates an executive intelligence report with expert guidance."}
+            </p>
+          </div>
 
           {isUrlPaste && (
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#00A859]/20 border border-[#00A859]/40 text-[#00A859] text-xs font-mono font-bold">
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#00A859]/20 border border-[#00A859]/40 text-[#00A859] text-xs font-mono font-bold shrink-0">
               <LinkIcon className="w-3.5 h-3.5" />
               <span>{isFr ? "Lien web détecté" : "Web Link Detected"}</span>
             </span>
@@ -555,24 +574,28 @@ export function MinimalistDecisionEngine({
         <div className="space-y-4">
           <div className="relative flex items-center">
             <div className="absolute left-4 text-gray-400">
-              {isUrlPaste ? <LinkIcon className="w-4 h-4 text-[#00A859]" /> : <Pencil className="w-4 h-4" />}
+              {isUrlPaste ? <LinkIcon className="w-4 h-4 text-[#00A859]" /> : <FileText className="w-4 h-4" />}
             </div>
 
             <input
               type="text"
               value={queryInput}
               onChange={(e) => setQueryInput(e.target.value)}
-              placeholder={isFr ? "Collez un lien web ou décrivez : \"Acheter une voiture à 500k KES\"" : "Paste a link or describe: \"Buying a car for 500k KES\""}
-              className="w-full rounded-2xl bg-white text-gray-900 placeholder:text-gray-400 pl-11 pr-32 py-4 text-sm sm:text-base font-medium focus:outline-none focus:ring-4 focus:ring-[#00A859]/30 transition-all shadow-sm"
+              placeholder={
+                isFr
+                  ? "Glissez un fichier (PDF, devis, contrat) ou décrivez : \"Devis véhicule 500k KES, apport 100k, 36 mois\""
+                  : "Drop a file (PDF, quote, contract) or paste: \"Car financing quote 500k KES, deposit 100k, 36 mos\""
+              }
+              className="w-full rounded-2xl bg-white text-gray-900 placeholder:text-gray-400 pl-11 pr-36 py-4 text-sm sm:text-base font-medium focus:outline-none focus:ring-4 focus:ring-[#00A859]/30 transition-all shadow-sm"
             />
 
             <button
               type="button"
               onClick={() => setIsDocDrawerOpen(!isDocDrawerOpen)}
-              className="absolute right-3 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gray-100 dark:bg-secondary hover:bg-gray-200 text-gray-800 dark:text-foreground font-bold text-xs transition-all cursor-pointer"
+              className="absolute right-3 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gray-100 dark:bg-secondary hover:bg-gray-200 text-gray-800 dark:text-foreground font-bold text-xs transition-all cursor-pointer"
             >
               <UploadCloud className="w-4 h-4 text-[#00A859]" />
-              <span className="hidden sm:inline">{isFr ? "Ajouter Document" : "Add Doc"}</span>
+              <span className="hidden sm:inline">{isFr ? "Ajouter Fichier" : "Upload File"}</span>
             </button>
           </div>
 
@@ -581,27 +604,33 @@ export function MinimalistDecisionEngine({
             <button
               type="button"
               onClick={() => setIsDocDrawerOpen(!isDocDrawerOpen)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-semibold transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border font-semibold transition-all cursor-pointer ${
                 isDocDrawerOpen || uploadedFiles.length > 0
                   ? "bg-[#00A859]/20 border-[#00A859]/40 text-[#00A859]"
                   : "bg-white/10 border-white/10 text-white/80 hover:bg-white/20"
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
-              <span>{uploadedFiles.length > 0 ? `Documents (${uploadedFiles.length})` : (isFr ? "Analyser avec documents (PDF, devis, contrat)" : "Analyze with documents (PDF, quote, contract)")}</span>
+              <span>
+                {uploadedFiles.length > 0
+                  ? `Documents Chargés (${uploadedFiles.length})`
+                  : isFr
+                  ? "📄 Déposer un document (PDF, devis, contrat, relevé)"
+                  : "📄 Drop a document (PDF, quote, contract, statement)"}
+              </span>
             </button>
 
             <button
               type="button"
               onClick={() => setIsContextDrawerOpen(!isContextDrawerOpen)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-semibold transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border font-semibold transition-all cursor-pointer ${
                 isContextDrawerOpen || extraIncome !== undefined
                   ? "bg-[#00A859]/20 border-[#00A859]/40 text-[#00A859]"
                   : "bg-white/10 border-white/10 text-white/80 hover:bg-white/20"
               }`}
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>{isFr ? "Ajouter contexte financier" : "Add Context (Optional)"}</span>
+              <span>{isFr ? "⚙️ Paramètres financiers (Optionnel)" : "⚙️ Financial Parameters (Optional)"}</span>
             </button>
           </div>
 
@@ -667,18 +696,16 @@ export function MinimalistDecisionEngine({
           <button
             type="button"
             disabled={isAnalyzingDocs}
-            onClick={() => {
-              if (uploadedFiles.length > 0 || isDocDrawerOpen) {
-                handleRunAimlyAnalysis();
-              } else if (redirectOnSelect) {
-                router.push(`/onboarding?q=${encodeURIComponent(queryInput)}`);
-              } else {
-                handleRunAimlyAnalysis();
-              }
-            }}
+            onClick={handleRunAimlyAnalysis}
             className="w-full inline-flex items-center justify-center gap-3 rounded-2xl bg-[#00A859] hover:bg-[#00964F] text-white font-bold text-base py-4 px-6 shadow-lg shadow-[#00A859]/30 transition-all cursor-pointer disabled:opacity-50"
           >
-            <span>{isAnalyzingDocs ? processingStep : (isFr ? "Calculer l'impact sur ma Liberté" : "Analyze My Decision")}</span>
+            <span>
+              {isAnalyzingDocs
+                ? processingStep
+                : isFr
+                ? "Analyser le Document & Générer le Rapport PDF"
+                : "Analyze Document & Generate Intelligence Report"}
+            </span>
             <div className="w-7 h-7 rounded-full bg-black/20 flex items-center justify-center">
               <ArrowRight className="w-4 h-4" />
             </div>
