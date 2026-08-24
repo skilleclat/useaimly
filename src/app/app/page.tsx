@@ -157,7 +157,7 @@ export default function AuthenticatedDashboard() {
   );
 
   return (
-    <div className="max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-6 sm:space-y-9 font-sans antialiased text-left animate-fadeIn pb-12 sm:pb-8">
+    <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-2 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 space-y-8 sm:space-y-10 2xl:space-y-12 font-sans antialiased text-left animate-fadeIn pb-12 sm:pb-8">
       
       {/* ─────────────────────────────────────────────────────────────
           HERO BAR WITH PRIMARY CTA: "+ Analyze a Decision"

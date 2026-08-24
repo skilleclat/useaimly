@@ -94,7 +94,7 @@ function PricingContent() {
         </div>
 
         {/* 2-Column Pricing Grid (Free & Pro Only) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch max-w-4xl mx-auto pt-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch max-w-5xl 2xl:max-w-6xl mx-auto pt-2">
           {PRICING_PLANS.map((plan) => (
             <PricingCard
               key={plan.id}
@@ -107,7 +107,7 @@ function PricingContent() {
         </div>
 
         {/* Value Guarantee / Trust Banner */}
-        <div className="rounded-3xl border border-border/80 bg-card p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm max-w-4xl mx-auto">
+        <div className="rounded-3xl border border-border/80 bg-card p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm max-w-5xl 2xl:max-w-6xl mx-auto">
           <div className="flex items-center gap-4 text-left">
             <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shrink-0">
               <ShieldCheck className="w-6 h-6" />
@@ -134,7 +134,7 @@ function PricingContent() {
         </div>
 
         {/* FAQ Section */}
-        <div className="space-y-8 pt-4 max-w-4xl mx-auto">
+        <div className="space-y-8 pt-4 max-w-5xl 2xl:max-w-6xl mx-auto">
           <div className="text-center space-y-1">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground">
               {isFr ? "Questions Fréquentes" : "Frequently Asked Questions"}

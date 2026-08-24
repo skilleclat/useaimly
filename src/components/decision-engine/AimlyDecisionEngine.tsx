@@ -424,7 +424,7 @@ export function AimlyDecisionEngine({
   const verdict = canonicalAnalysis.verdict;
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-4 sm:space-y-6 font-sans antialiased text-left animate-fadeIn">
+    <div className="w-full max-w-7xl 2xl:max-w-[1600px] mx-auto space-y-6 2xl:space-y-8 font-sans antialiased text-left animate-fadeIn">
       
       {/* ─────────────────────────────────────────────────────────────
           PROGRESS NAVIGATION BAR (MOBILE-OPTIMIZED DOCK)

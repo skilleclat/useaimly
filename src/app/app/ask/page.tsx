@@ -245,7 +245,7 @@ export default function AskPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fadeIn">
+    <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-2 sm:px-4 lg:px-6 py-6 sm:py-8 space-y-6 animate-fadeIn">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/70 pb-5">
         <div className="space-y-1 text-left">

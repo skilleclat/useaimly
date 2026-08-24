@@ -88,7 +88,7 @@ export default function InsightsPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10 animate-fadeIn">
+    <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-2 sm:px-4 lg:px-6 py-6 sm:py-10 space-y-10 animate-fadeIn">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1.5">

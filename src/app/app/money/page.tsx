@@ -223,7 +223,7 @@ export default function MoneyPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10 animate-fadeIn">
+    <div className="max-w-7xl 2xl:max-w-[1680px] mx-auto px-2 sm:px-4 lg:px-6 py-6 sm:py-10 space-y-10 animate-fadeIn">
       {/* Header */}
       <div className="space-y-1">
         <h1 className="text-2xl sm:text-4xl font-bold font-editorial text-foreground tracking-tight">

@@ -56,22 +56,22 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-100 dark:border-border bg-white/95 dark:bg-background/95 backdrop-blur-md transition-all duration-200">
-      <Container className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <header className="sticky top-0 z-50 w-full border-b border-border/80 bg-background/95 backdrop-blur-md transition-all duration-200">
+      <Container size="hero" className="flex h-16 lg:h-20 items-center justify-between px-4 sm:px-6 lg:px-10 2xl:px-16">
         {/* Brand Logo */}
-        <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          <Link href="/" className="flex items-center gap-2 group">
             <UseaimlyLogo size="md" showTagline={false} />
           </Link>
         </div>
 
         {/* Center Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden md:flex items-center gap-7 lg:gap-9">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.label}
               href={link.href}
-              className="text-xs font-semibold text-gray-600 dark:text-muted-foreground hover:text-gray-900 dark:hover:text-foreground transition-colors"
+              className="text-xs lg:text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
             >
               {link.label}
             </Link>
@@ -79,11 +79,11 @@ export function Header() {
         </nav>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3.5 lg:gap-4">
           {/* OMNIPRESENT PRIMARY CTA: + Analyze a Decision */}
           <Link
             href="/app/decide"
-            className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white px-3.5 py-2 text-xs font-extrabold shadow-md shadow-orange-500/20 hover:opacity-95 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            className="hidden sm:inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white px-4.5 py-2.5 lg:px-5 lg:py-2.5 text-xs lg:text-sm font-extrabold shadow-md shadow-orange-500/20 hover:opacity-95 hover:scale-[1.02] active:scale-[0.98] transition-all"
             title="Test a purchase or spending decision"
           >
             <span className="text-sm leading-none font-black">+</span>
@@ -91,10 +91,10 @@ export function Header() {
           </Link>
 
           {user ? (
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-3">
               <Link
                 href="/app"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground border border-border font-bold text-xs px-3 py-2 shadow-2xs transition-all"
+                className="inline-flex items-center gap-1.5 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground border border-border font-bold text-xs lg:text-sm px-4 py-2 lg:px-4.5 lg:py-2.5 shadow-2xs transition-all"
               >
                 <span>Dashboard</span>
               </Link>
@@ -103,23 +103,23 @@ export function Header() {
               <button
                 type="button"
                 onClick={() => setIsProfileModalOpen(true)}
-                className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center shadow-md hover:scale-105 transition-transform cursor-pointer"
+                className="w-10 h-10 rounded-full bg-foreground text-background flex items-center justify-center shadow-md hover:scale-105 transition-transform cursor-pointer"
                 title="Account Settings & Profile"
               >
-                <User className="w-4 h-4 text-white" />
+                <User className="w-4 h-4 text-background" />
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <Link
                 href="/login"
-                className="text-xs font-bold text-gray-600 dark:text-muted-foreground hover:text-gray-900 dark:hover:text-foreground transition-colors px-2.5 py-1.5"
+                className="text-xs lg:text-sm font-bold text-muted-foreground hover:text-foreground transition-colors px-3 py-2"
               >
                 {t("navSignIn")}
               </Link>
               <Link
                 href="/signup"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground border border-border font-bold text-xs px-3.5 py-2 shadow-2xs transition-all"
+                className="inline-flex items-center gap-1.5 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground border border-border font-bold text-xs lg:text-sm px-4 py-2 lg:px-4.5 lg:py-2.5 shadow-2xs transition-all"
               >
                 <span>{t("navGetStarted")}</span>
                 <ArrowRight className="w-3.5 h-3.5" />

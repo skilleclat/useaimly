@@ -96,9 +96,9 @@ export function Footer() {
       {/* Top Emerald Gradient Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[120px] bg-gradient-to-b from-emerald-500/15 via-emerald-500/5 to-transparent blur-2xl pointer-events-none" />
 
-      <Container className="py-8 sm:py-14 px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-12 relative z-10">
+      <Container size="hero" className="py-10 sm:py-16 px-4 sm:px-6 lg:px-10 2xl:px-16 space-y-10 sm:space-y-14 relative z-10">
         {/* BRAND STATEMENT & NEWSLETTER CARD */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 pb-8 sm:pb-10 border-b border-zinc-800/80 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 pb-10 sm:pb-12 border-b border-zinc-800/80 items-center">
           <div className="lg:col-span-7 space-y-3 text-left">
             <UseaimlyLogo size="md" showTagline={true} />
             <p className="text-xs sm:text-sm text-zinc-400 max-w-xl font-medium leading-relaxed">

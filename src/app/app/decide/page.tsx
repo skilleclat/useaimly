@@ -48,7 +48,7 @@ export default function DecideStudioPage() {
   );
 
   return (
-    <div className="max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-8 animate-fadeIn font-sans pb-12 sm:pb-8">
+    <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-2 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 space-y-6 sm:space-y-8 animate-fadeIn font-sans pb-12 sm:pb-8">
       {/* Studio Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-border/60 pb-4 sm:pb-5 text-left">
         <div className="space-y-1">
