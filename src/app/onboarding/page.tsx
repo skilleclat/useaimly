@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useTransition, useMemo, useEffect } from "react";
+import React, { useState, useTransition, useMemo, useEffect, Suspense } from "react";
+
 import { useRouter, useSearchParams } from "next/navigation";
 import { StepIndicator } from "./components/StepIndicator";
 import { Step1Destination } from "./components/Step1Destination";
@@ -21,7 +22,8 @@ import { parseDecisionQuery } from "@/lib/nlp/decision-query-parser";
 import { DESTINATION_PRESETS } from "@/lib/onboarding/onboarding-presets";
 import { AlertCircle } from "lucide-react";
 
-export default function OnboardingWizardPage() {
+function OnboardingWizardContent() {
+
   const { profile, refreshProfile } = useAuth();
   const { currency } = useCurrency();
   const router = useRouter();
@@ -261,3 +263,12 @@ export default function OnboardingWizardPage() {
     </div>
   );
 }
+
+export default function OnboardingWizardPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background text-foreground flex items-center justify-center text-xs font-mono">Loading...</div>}>
+      <OnboardingWizardContent />
+    </Suspense>
+  );
+}
+
