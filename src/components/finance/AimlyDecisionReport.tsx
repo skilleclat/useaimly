@@ -6,6 +6,7 @@ import {
   GroundedChatMessage,
 } from "@/lib/types/document-intelligence";
 import { formatCurrency } from "@/lib/utils/currency";
+import { generateAimlyDecisionPDF } from "@/lib/documents/aimly-pdf-generator";
 import {
   Sparkles,
   ShieldCheck,
@@ -26,6 +27,8 @@ import {
   Sliders,
   Scale,
   ShieldAlert,
+  Download,
+  FileDown,
 } from "lucide-react";
 
 export interface AimlyDecisionReportProps {
@@ -49,22 +52,36 @@ export function AimlyDecisionReport({ report, className = "" }: AimlyDecisionRep
 
   const [activeTab, setActiveTab] = useState<"overview" | "missing" | "scenarios" | "compare" | "chat">("overview");
   const [activeScenarioId, setActiveScenarioId] = useState(scenarios[0]?.id || "");
+  const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
   const [chatMessages, setChatMessages] = useState<GroundedChatMessage[]>([
     {
       id: "welcome-msg",
       sender: "aimly",
-      text: `Hello! I have analyzed your decision "${context.userDecisionText}" along with your documents. Ask me anything about affordability, hidden clauses, total costs, or questions to negotiate.`,
+      text: `Bonjour ! J'ai analysé votre décision "${context.userDecisionText}" ainsi que vos documents. Posez-moi vos questions sur la faisabilité, les clauses cachées, le coût total réel ou les questions à poser avant de signer.`,
       timestamp: "Just now",
       suggestedFollowUps: [
-        "Can I realistically afford this?",
-        "What are the biggest hidden risks?",
-        "What will this cost me in total?",
-        "What questions should I ask before signing?",
+        "Puis-je me le permettre financièrement ?",
+        "Quels sont les plus gros risques cachés ?",
+        "Combien cela va-t-il me coûter au total ?",
+        "Quelles questions poser avant de signer ?",
       ],
     },
   ]);
   const [chatInput, setChatInput] = useState("");
   const [isAsking, setIsAsking] = useState(false);
+
+  const handleDownloadPDF = () => {
+    setIsDownloadingPDF(true);
+    try {
+      const doc = generateAimlyDecisionPDF(report, "fr");
+      const filename = `Aimly_Rapport_Decision_${(context.documents[0]?.name || "Analyse").replace(/\.[^/.]+$/, "")}.pdf`;
+      doc.save(filename);
+    } catch (e) {
+      console.error("PDF generation failed:", e);
+    } finally {
+      setIsDownloadingPDF(false);
+    }
+  };
 
   const selectedScenario = scenarios.find((s) => s.id === activeScenarioId) || scenarios[0];
 
@@ -141,10 +158,22 @@ export function AimlyDecisionReport({ report, className = "" }: AimlyDecisionRep
             </span>
           </div>
 
-          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold font-mono ${scoreBadgeColor}`}>
-            <span>Score: {score.overallScore}/100</span>
-            <span>•</span>
-            <span>{score.statusHeadline}</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleDownloadPDF}
+              disabled={isDownloadingPDF}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#00A859] hover:bg-[#00964F] text-white font-bold text-xs shadow-xs transition-all cursor-pointer disabled:opacity-50"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>{isDownloadingPDF ? "Génération PDF..." : "Télécharger Rapport PDF"}</span>
+            </button>
+
+            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold font-mono ${scoreBadgeColor}`}>
+              <span>Score: {score.overallScore}/100</span>
+              <span>•</span>
+              <span>{score.statusHeadline}</span>
+            </div>
           </div>
         </div>
 

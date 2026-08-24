@@ -610,6 +610,7 @@ export function MinimalistDecisionEngine({
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 animate-fadeIn">
               <DocumentUploadDropzone
                 onFilesSelected={(files) => setUploadedFiles(files)}
+                onAnalyzeTrigger={handleRunAimlyAnalysis}
                 isProcessing={isAnalyzingDocs}
                 processingStep={processingStep}
               />
