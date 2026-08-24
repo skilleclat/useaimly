@@ -6,7 +6,6 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { INITIAL_DESTINATIONS, DestinationItem } from "@/lib/destinations/destinations-data";
 import { formatCurrency } from "@/lib/utils/currency";
 import { formatMonthYear } from "@/lib/utils/date";
-import { CurrencyCode } from "@/lib/types/finance";
 import { FinancialStatus } from "@/components/design-system/FinancialStatus";
 import { MoneyInput } from "@/components/design-system/MoneyInput";
 import { GoalVelocityBooster } from "@/components/dashboard/GoalVelocityBooster";
@@ -26,15 +25,22 @@ import {
   Sparkles,
   X,
   Clock,
+  ShieldAlert,
+  Briefcase,
+  Home,
+  Car,
+  ChevronRight,
+  TrendingUp,
 } from "lucide-react";
 
 import { useCurrency } from "@/lib/currency/currency-context";
 import { useI18n } from "@/lib/i18n/i18n-context";
 
 export default function GoalsPage() {
-  const { user, profile } = useAuth();
-  const { currency } = useCurrency();
-  const { t } = useI18n();
+  const { user, profile, firstName } = useAuth();
+  const { currency, format } = useCurrency();
+  const { t, language } = useI18n();
+  const isFr = language === "fr";
 
   const [destinations, setDestinations] = useState<DestinationItem[]>(INITIAL_DESTINATIONS);
   const [filterTab, setFilterTab] = useState<"ALL" | "ACTIVE" | "PAUSED" | "COMPLETED">("ALL");
@@ -57,7 +63,7 @@ export default function GoalsPage() {
     }
   };
 
-  // New Destination Form State
+  // Form State for Quick Goal Creation
   const [newTitle, setNewTitle] = useState("");
   const [newCategory, setNewCategory] = useState("SAVINGS");
   const [newTargetAmount, setNewTargetAmount] = useState<number>(300000);
@@ -66,17 +72,23 @@ export default function GoalsPage() {
   const [newPriority, setNewPriority] = useState<"HIGH" | "MEDIUM" | "LOW">("HIGH");
   const [newMonthlyContribution, setNewMonthlyContribution] = useState<number>(15000);
 
-  const availableMonthlyCapacity = 68000;
-
-  const totalAllocated = useMemo(() => {
-    return destinations
-      .filter((d) => !d.isPaused && !d.isArchived && d.status !== "COMPLETED")
-      .reduce((acc, d) => acc + d.monthlyContribution, 0);
+  // Totals for Donut Summary
+  const totalSaved = useMemo(() => {
+    return destinations.reduce((acc, d) => acc + d.currentAmount, 0);
   }, [destinations]);
 
-  const hasCapacityConflict = totalAllocated > availableMonthlyCapacity;
-  const capacityDelta = totalAllocated - availableMonthlyCapacity;
+  const totalTarget = useMemo(() => {
+    return destinations.reduce((acc, d) => acc + d.targetAmount, 0);
+  }, [destinations]);
 
+  const overallPercent = totalTarget > 0 ? Math.min(100, Math.round((totalSaved / totalTarget) * 100)) : 0;
+
+  // Donut SVG circumference calculation
+  const radius = 42;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (overallPercent / 100) * circumference;
+
+  // Filtered goals
   const filteredDestinations = useMemo(() => {
     return destinations.filter((d) => {
       if (filterTab === "ACTIVE") return !d.isPaused && !d.isArchived && d.status !== "COMPLETED";
@@ -85,6 +97,8 @@ export default function GoalsPage() {
       return !d.isArchived;
     });
   }, [destinations, filterTab]);
+
+  const activeGoalsCount = destinations.filter((d) => !d.isPaused && !d.isArchived && d.status !== "COMPLETED").length;
 
   const handleCreateDestination = (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,39 +134,306 @@ export default function GoalsPage() {
     setNewTitle("");
   };
 
+  const getCategoryIcon = (category: string, name: string) => {
+    const cat = category.toUpperCase();
+    const nm = name.toLowerCase();
+
+    if (cat.includes("EMERGENCY") || nm.includes("emergency") || nm.includes("urgence") || nm.includes("sécurité")) {
+      return {
+        icon: <ShieldAlert className="w-5 h-5 text-rose-500" />,
+        bg: "bg-rose-500/10",
+      };
+    }
+    if (cat.includes("BUSINESS") || nm.includes("business") || nm.includes("entreprise")) {
+      return {
+        icon: <Briefcase className="w-5 h-5 text-emerald-500" />,
+        bg: "bg-emerald-500/10",
+      };
+    }
+    if (cat.includes("HOME") || nm.includes("home") || nm.includes("house") || nm.includes("maison") || nm.includes("immobilier")) {
+      return {
+        icon: <Home className="w-5 h-5 text-amber-500" />,
+        bg: "bg-amber-500/10",
+      };
+    }
+    if (cat.includes("CAR") || cat.includes("VEHICLE") || nm.includes("car") || nm.includes("voiture")) {
+      return {
+        icon: <Car className="w-5 h-5 text-blue-500" />,
+        bg: "bg-blue-500/10",
+      };
+    }
+    return {
+      icon: <Target className="w-5 h-5 text-[#FF5533]" />,
+      bg: "bg-primary/10",
+    };
+  };
+
   return (
-    <div className="max-w-7xl 2xl:max-w-[1680px] mx-auto px-2 sm:px-4 lg:px-6 py-6 sm:py-8 space-y-8 animate-fadeIn">
-      {/* Header Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
-        <div className="space-y-1">
-          <h1 className="text-2xl sm:text-4xl font-bold font-editorial text-foreground tracking-tight">
-            Your Goals & Destinations
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground font-medium">
-            Where your money is taking you. Clear arrival timelines for what matters.
-          </p>
+    <div className="max-w-7xl 2xl:max-w-[1680px] mx-auto px-2 sm:px-4 lg:px-6 py-4 sm:py-8 space-y-6 sm:space-y-8 animate-fadeIn font-sans pb-12 sm:pb-8">
+      
+      {/* ─────────────────────────────────────────────────────────────
+          MASTER CARD: EXACT SIGNATURE GOALS HERO
+          - Greeting: "Hello Pros 👋"
+          - Subtitle: "Every dollar saved is one step closer to your dreams."
+          - "+ Create Goal" button (Emerald)
+          - Circular Donut Progress (53% PROGRESS)
+          - Total Saved & Total Target Goals
+          - "View All Goals (3) >"
+      ───────────────────────────────────────────────────────────── */}
+      <div className="rounded-[2.5rem] border border-border/80 bg-card p-6 sm:p-8 2xl:p-10 space-y-6 shadow-sm">
+        
+        {/* Top Greeting & Action Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1 text-left">
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-foreground tracking-tight flex items-center gap-2">
+              <span>{isFr ? `Bonjour ${firstName || "Pros"}` : `Hello ${firstName || "Pros"}`}</span>
+              <span>👋</span>
+            </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+              {isFr
+                ? "Chaque somme épargnée vous rapproche un peu plus de vos rêves."
+                : "Every dollar saved is one step closer to your dreams."}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => handleOpenCreateGoal(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 text-xs sm:text-sm font-extrabold transition-all shadow-md shadow-emerald-600/20 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>{isFr ? "+ Créer un Objectif" : "+ Create Goal"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleOpenCreateGoal(false)}
+              className="hidden sm:inline-flex items-center justify-center gap-1.5 rounded-2xl bg-secondary hover:bg-secondary/80 border border-border px-4 py-3 text-xs font-bold text-foreground transition-all cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <span>{isFr ? "Rapide" : "Quick"}</span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        {/* Circular Progress & Totals Summary Box */}
+        <div className="rounded-3xl border border-border/80 bg-secondary/40 p-5 sm:p-7 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-6 sm:gap-8">
+            
+            {/* Donut Progress Ring */}
+            <div className="relative w-28 h-28 sm:w-32 sm:h-32 shrink-0 flex items-center justify-center">
+              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                <circle
+                  cx="50"
+                  cy="50"
+                  r={radius}
+                  className="text-secondary stroke-current opacity-80"
+                  strokeWidth="9"
+                  fill="transparent"
+                />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r={radius}
+                  className="text-emerald-500 stroke-current transition-all duration-1000 ease-out"
+                  strokeWidth="9"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  strokeLinecap="round"
+                  fill="transparent"
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <span className="text-xl sm:text-2xl font-black font-mono text-foreground leading-none">
+                  {overallPercent}%
+                </span>
+                <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider mt-1">
+                  {isFr ? "PROGRESSION" : "PROGRESS"}
+                </span>
+              </div>
+            </div>
+
+            {/* Total Saved & Total Target Values */}
+            <div className="space-y-3 text-left">
+              <div>
+                <span className="text-[11px] font-mono text-muted-foreground font-bold uppercase tracking-wider block">
+                  {isFr ? "TOTAL ÉPARGNÉ" : "TOTAL SAVED"}
+                </span>
+                <div className="text-2xl sm:text-3xl font-black font-mono text-foreground">
+                  {currency} {formatCurrency(totalSaved, currency).replace(/[^0-9,.\s]/g, "").trim()}
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground font-bold uppercase tracking-wider block">
+                  {isFr ? "TOTAL OBJECTIFS VISÉS" : "TOTAL TARGET GOALS"}
+                </span>
+                <div className="text-sm sm:text-base font-bold font-mono text-muted-foreground">
+                  {currency} {formatCurrency(totalTarget, currency).replace(/[^0-9,.\s]/g, "").trim()}
+                </div>
+              </div>
+            </div>
+
+          </div>
+
           <button
             type="button"
-            onClick={() => handleOpenCreateGoal(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2.5 text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer"
+            onClick={() => setFilterTab("ALL")}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-card border border-border/80 text-xs font-bold text-foreground hover:bg-secondary transition-colors cursor-pointer shadow-2xs self-stretch sm:self-auto justify-center"
           >
-            <Sparkles className="w-4 h-4" />
-            <span>Interactive Goal Wizard</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleOpenCreateGoal(false)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-secondary hover:bg-secondary/80 border border-border/80 px-4 py-2.5 text-xs font-semibold text-foreground transition-all shrink-0 cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Quick Goal</span>
+            <span>{isFr ? `Tous les Objectifs (${destinations.length})` : `View All Goals (${destinations.length})`}</span>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
           </button>
         </div>
+
       </div>
 
+
+      {/* ─────────────────────────────────────────────────────────────
+          SECTION: MY ACTIVE GOALS LIST & CARDS
+      ───────────────────────────────────────────────────────────── */}
+      <div className="space-y-4 text-left">
+        
+        {/* Section Header & Filter Pills */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h2 className="text-xs sm:text-sm font-mono font-bold uppercase tracking-wider text-muted-foreground">
+            {isFr ? `MES OBJECTIFS ACTIFS (${activeGoalsCount})` : `MY ACTIVE GOALS (${activeGoalsCount})`}
+          </h2>
+
+          {/* Filter Pills */}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-secondary/50 border border-border/60 w-fit max-w-full overflow-x-auto no-scrollbar">
+            {(["ALL", "ACTIVE", "PAUSED", "COMPLETED"] as const).map((tab) => {
+              const isActive = filterTab === tab;
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setFilterTab(tab)}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {tab === "ALL" ? (isFr ? `Tous (${destinations.length})` : `All (${destinations.length})`) : tab}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Goals Cards Stack */}
+        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
+          {filteredDestinations.map((dest) => {
+            const pct = dest.targetAmount > 0 ? Math.min(100, Math.round((dest.currentAmount / dest.targetAmount) * 100)) : 0;
+            const catVisual = getCategoryIcon(dest.category, dest.name);
+            const isOnTrack = dest.status === "ON_TRACK";
+            const isCompleted = dest.status === "COMPLETED";
+
+            return (
+              <Link
+                key={dest.id}
+                href={`/app/goals/${dest.id}`}
+                className="p-5 sm:p-6 rounded-3xl border border-border/80 bg-card hover:border-emerald-500/50 transition-all space-y-4 shadow-sm group cursor-pointer flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  
+                  {/* Top Row: Icon + Name + Status Badge + Percentage */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-3 rounded-2xl ${catVisual.bg} shrink-0`}>
+                        {catVisual.icon}
+                      </div>
+                      <div>
+                        <h3 className="text-base sm:text-lg font-bold text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                          {dest.name}
+                        </h3>
+                        <span className="text-xs text-muted-foreground font-mono">
+                          {currency} {formatCurrency(dest.currentAmount, currency).replace(/[^0-9,.\s]/g, "").trim()} of {currency} {formatCurrency(dest.targetAmount, currency).replace(/[^0-9,.\s]/g, "").trim()}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span
+                        className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                          isCompleted
+                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
+                            : isOnTrack
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                            : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                        }`}
+                      >
+                        {isCompleted ? (isFr ? "Terminé" : "Completed") : isOnTrack ? (isFr ? "Sur les rails" : "On track") : (isFr ? "À surveiller" : "Attention")}
+                      </span>
+                      <span className="text-xs sm:text-sm font-extrabold font-mono text-foreground">{pct}%</span>
+                    </div>
+                  </div>
+
+                  {/* Sleek Horizontal Progress Bar with Glowing Emerald Tone */}
+                  <div className="w-full h-2 rounded-full bg-secondary overflow-hidden border border-border/40 p-0.5">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        isCompleted
+                          ? "bg-blue-500"
+                          : isOnTrack
+                          ? "bg-[#00A859]"
+                          : "bg-amber-500"
+                      }`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+
+                </div>
+
+                {/* Bottom Timeline & Details */}
+                <div className="pt-2 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1 font-mono">
+                    <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span>{isFr ? "Échéance :" : "Target:"} {formatMonthYear(dest.targetDate)}</span>
+                  </div>
+
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono group-hover:underline flex items-center gap-1">
+                    <span>{isFr ? "Détails" : "Explore"}</span>
+                    <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                  </span>
+                </div>
+
+              </Link>
+            );
+          })}
+        </div>
+
+      </div>
+
+
+      {/* ─────────────────────────────────────────────────────────────
+          SUPPORTING TOOLS: VELOCITY ACCELERATOR & COUNTDOWN ALERTS
+      ───────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+        <GoalVelocityBooster goalTitle={destinations[0]?.name || "Business Fund"} currency={currency} />
+        
+        <GoalCountdownAlertCard
+          goalTitle={destinations[0]?.name || "Emergency Fund"}
+          targetDateStr={destinations[0]?.targetDate || "2027-12-31"}
+          currentAmount={destinations[0]?.currentAmount || 18000}
+          targetAmount={destinations[0]?.targetAmount || 20000}
+          currency={currency}
+          onOpenSettings={() => setShowNotificationModal(true)}
+        />
+      </div>
+
+      {showNotificationModal && (
+        <GoalNotificationSettingsModal
+          goalId={destinations[0]?.id || "dest-1"}
+          goalTitle={destinations[0]?.name || "Emergency Fund"}
+          targetDate={destinations[0]?.targetDate || "2027-12-31"}
+          onClose={() => setShowNotificationModal(false)}
+        />
+      )}
+
+      {/* INTERACTIVE WIZARD MODAL */}
       {showWizardModal && (
         <InteractiveGoalCreationWizard
           currency={currency}
@@ -180,155 +461,13 @@ export default function GoalsPage() {
         />
       )}
 
-      {/* Capacity Monitor Bar */}
-      {hasCapacityConflict ? (
-        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 space-y-2 shadow-xs">
-          <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-bold text-sm">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>Allocation Capacity Warning</span>
-          </div>
-          <p className="text-xs text-foreground/90 leading-relaxed font-medium">
-            Allocating {formatCurrency(totalAllocated, currency)} / mo across goals, exceeding capacity by -{formatCurrency(capacityDelta, currency)} / mo.
-          </p>
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-medium">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
-            <span className="text-muted-foreground">
-              Allocating <strong className="text-foreground">{formatCurrency(totalAllocated, currency)} / mo</strong> of <strong className="text-primary">{formatCurrency(availableMonthlyCapacity, currency)} / mo</strong> monthly capacity.
-            </span>
-          </div>
-          <span className="text-xs text-primary font-bold bg-primary/10 px-3 py-1 rounded-full shrink-0">
-            {formatCurrency(availableMonthlyCapacity - totalAllocated, currency)} / mo Free Buffer
-          </span>
-        </div>
-      )}
-
-      {/* GAME CHANGER #4: GOAL VELOCITY ACCELERATOR */}
-      <GoalVelocityBooster goalTitle={destinations[0]?.name || "Start my business"} currency={currency} />
-
-      {/* GOAL DEADLINE PROACTIVE COUNTDOWN ALERT ENGINE */}
-      <GoalCountdownAlertCard
-        goalTitle={destinations[0]?.name || "Start my business"}
-        targetDateStr={destinations[0]?.targetDate || "2027-12-31"}
-        currentAmount={destinations[0]?.currentAmount || 260000}
-        targetAmount={destinations[0]?.targetAmount || 500000}
-        currency={currency}
-        onOpenSettings={() => setShowNotificationModal(true)}
-      />
-
-      {showNotificationModal && (
-        <GoalNotificationSettingsModal
-          goalId={destinations[0]?.id || "dest-1"}
-          goalTitle={destinations[0]?.name || "Start my business"}
-          targetDate={destinations[0]?.targetDate || "2027-12-31"}
-          onClose={() => setShowNotificationModal(false)}
-        />
-      )}
-
-      {/* Filter Segmented Pills */}
-      <div className="flex items-center gap-1 p-1 rounded-xl bg-secondary/50 border border-border/60 w-fit max-w-full overflow-x-auto no-scrollbar">
-        {(["ALL", "ACTIVE", "PAUSED", "COMPLETED"] as const).map((tab) => {
-          const isActive = filterTab === tab;
-          return (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setFilterTab(tab)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 ${
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {tab === "ALL" ? `All (${destinations.length})` : tab}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* DESTINATION CARDS GRID — DESTINATION-FIRST HIERARCHY */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredDestinations.map((dest) => {
-          const progressPercent = Math.min(100, Math.round((dest.currentAmount / dest.targetAmount) * 100));
-
-          return (
-            <Link
-              key={dest.id}
-              href={`/app/goals/${dest.id}`}
-              className="group rounded-3xl border border-border/80 bg-card p-6 space-y-6 shadow-xs hover:border-primary/50 hover:shadow-sm transition-all flex flex-col justify-between"
-            >
-              <div className="space-y-4">
-                {/* Header: Status Badge */}
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold">
-                    Destination
-                  </span>
-                  <FinancialStatus status={dest.status} variant="badge" />
-                </div>
-
-                {/* 1. Destination Name */}
-                <div>
-                  <h3 className="text-xl font-bold font-editorial text-foreground group-hover:text-primary transition-colors">
-                    {dest.name}
-                  </h3>
-
-                  {/* 2. Progress & Amounts */}
-                  <div className="mt-2 flex items-baseline justify-between">
-                    <span className="text-xl font-bold font-mono text-foreground">
-                      {formatCurrency(dest.currentAmount, currency)}
-                    </span>
-                    <span className="text-xs font-medium text-muted-foreground">
-                      of {formatCurrency(dest.targetAmount, currency)}
-                    </span>
-                  </div>
-
-                  <div className="mt-2 w-full bg-secondary h-2.5 rounded-full overflow-hidden">
-                    <div
-                      className="bg-primary h-full rounded-full transition-all duration-500"
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                  </div>
-
-                  <div className="mt-1 flex justify-between text-xs text-muted-foreground font-medium">
-                    <span>{progressPercent}% Complete</span>
-                    <span>Pace: {formatCurrency(dest.monthlyContribution, currency)} / mo</span>
-                  </div>
-                </div>
-
-                {/* 3. Arrival Date in TIME */}
-                <div className="p-3.5 rounded-2xl border border-primary/20 bg-primary/5 space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground font-medium">Projected Arrival:</span>
-                    <div className="flex items-center gap-1 text-primary font-bold font-mono">
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>{formatMonthYear(dest.projectedCompletionDate)}</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between text-[11px] text-muted-foreground">
-                    <span>Original Target:</span>
-                    <span>{formatMonthYear(dest.targetDate)}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-border/60 flex items-center justify-between text-xs font-semibold text-primary group-hover:underline">
-                <span>Explore Trajectory</span>
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </div>
-            </Link>
-          );
-        })}
-      </div>
-
-      {/* CREATE NEW DESTINATION MODAL */}
+      {/* QUICK GOAL CREATION MODAL */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-start justify-center pt-14 sm:pt-20 pb-8 px-3 sm:px-6 overflow-y-auto animate-fadeIn">
           <div className="relative w-full max-w-lg rounded-3xl border border-border/80 bg-card p-5 sm:p-7 space-y-4 shadow-2xl max-h-[92dvh] flex flex-col">
             <div className="flex items-center justify-between border-b border-border/60 pb-3 shrink-0">
               <h3 className="text-lg sm:text-xl font-bold font-editorial text-foreground">
-                Define New Goal Destination
+                {isFr ? "Définir un Nouvel Objectif" : "Define New Goal Destination"}
               </h3>
               <button
                 type="button"
@@ -342,28 +481,28 @@ export default function GoalsPage() {
             <form onSubmit={handleCreateDestination} className="space-y-4 overflow-y-auto flex-1 pr-1 overscroll-contain">
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-muted-foreground block">
-                  Goal Name
+                  {isFr ? "Nom de l'Objectif" : "Goal Name"}
                 </label>
                 <input
                   type="text"
                   required
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="e.g. Launch my business"
+                  placeholder={isFr ? "ex: Lancer mon entreprise" : "e.g. Launch my business"}
                   className="w-full rounded-xl border border-border/80 bg-background px-4 py-2.5 text-xs sm:text-sm font-medium text-foreground focus:outline-hidden focus:border-primary"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <MoneyInput
-                  label="Target Amount"
+                  label={isFr ? "Montant Cible" : "Target Amount"}
                   value={newTargetAmount}
                   onChange={(val) => setNewTargetAmount(val)}
                   currency={currency}
                 />
 
                 <MoneyInput
-                  label="Current Saved"
+                  label={isFr ? "Déjà Épargné" : "Current Saved"}
                   value={newCurrentAmount}
                   onChange={(val) => setNewCurrentAmount(val)}
                   currency={currency}
@@ -372,7 +511,7 @@ export default function GoalsPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <MoneyInput
-                  label="Monthly Contribution"
+                  label={isFr ? "Épargne Mensuelle" : "Monthly Contribution"}
                   value={newMonthlyContribution}
                   onChange={(val) => setNewMonthlyContribution(val)}
                   currency={currency}
@@ -380,7 +519,7 @@ export default function GoalsPage() {
 
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-muted-foreground block">
-                    Target Date
+                    {isFr ? "Date Cible" : "Target Date"}
                   </label>
                   <input
                     type="date"
@@ -398,13 +537,13 @@ export default function GoalsPage() {
                   onClick={() => setShowAddModal(false)}
                   className="flex-1 rounded-xl border border-border/80 bg-secondary/50 py-3 text-xs font-semibold text-foreground hover:bg-secondary transition-colors cursor-pointer"
                 >
-                  Cancel
+                  {isFr ? "Annuler" : "Cancel"}
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-primary py-3 text-xs font-semibold text-primary-foreground hover:opacity-95 shadow-xs transition-opacity cursor-pointer"
+                  className="flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 py-3 text-xs font-bold text-white hover:opacity-95 shadow-xs transition-opacity cursor-pointer"
                 >
-                  Create Goal
+                  {isFr ? "Créer l'Objectif" : "Create Goal"}
                 </button>
               </div>
             </form>
@@ -412,7 +551,7 @@ export default function GoalsPage() {
         </div>
       )}
 
-      {/* PRO PLAN UPGRADE GATE MODAL (FREE TIER LIMITED TO 1 GOAL) */}
+      {/* PRO PLAN UPGRADE GATE MODAL */}
       {showUpgradeGateModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-start justify-center pt-14 sm:pt-20 pb-8 px-3 sm:px-6 overflow-y-auto animate-fadeIn">
           <div className="relative w-full max-w-2xl">
@@ -433,6 +572,7 @@ export default function GoalsPage() {
           </div>
         </div>
       )}
+
     </div>
   );
 }
