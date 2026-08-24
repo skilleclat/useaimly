@@ -4,7 +4,8 @@ import { formatCurrency } from "../utils/currency";
 import { USEAIMLY_LOGO_BASE64 } from "../brand/logo-base64";
 
 /**
- * Generate a professional, audit-grade Verified Financial Decision Report PDF
+ * GENERATE AUDIT-GRADE VERIFIED FINANCIAL DECISION REPORT PDF (V2)
+ * Consumes strictly canonical verified data with zero local recalculation.
  */
 export function generateVerifiedDecisionReportPDF(
   data: VerifiedDecisionData,
@@ -35,6 +36,7 @@ export function generateVerifiedDecisionReportPDF(
   const borderGray = [226, 232, 240]; // #E2E8F0
   const amberAccent = [217, 119, 6]; // #D97706
   const roseAccent = [225, 29, 72]; // #E11D48
+  const pureWhite = [255, 255, 255];
 
   const fmt = (amt: number) => formatCurrency(amt, data.currency);
 
@@ -43,7 +45,7 @@ export function generateVerifiedDecisionReportPDF(
       doc.addPage();
       y = 14;
       // Top header on subsequent pages
-      doc.setFillColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
+      doc.setFillColor(pureWhite[0], pureWhite[1], pureWhite[2]);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(7.5);
       doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
@@ -102,16 +104,19 @@ export function generateVerifiedDecisionReportPDF(
   );
 
   // Status Seal Badge
-  const sealWidth = 38;
+  const sealWidth = 42;
   const sealX = pageWidth - margin - sealWidth;
-  doc.setFillColor(brandEmerald[0], brandEmerald[1], brandEmerald[2]);
+  const isVerified = verification.status === "VERIFIED" || verification.status === "VERIFIED WITH ASSUMPTIONS";
+  const sealColor = isVerified ? brandEmerald : amberAccent;
+
+  doc.setFillColor(sealColor[0], sealColor[1], sealColor[2]);
   doc.roundedRect(sealX, 7, sealWidth, 16, 2, 2, "F");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
+  doc.setFontSize(6.5);
   doc.setTextColor(255, 255, 255);
   doc.text("AIMLY COHERENCE", sealX + sealWidth / 2, 12, { align: "center" });
-  doc.setFontSize(8);
-  doc.text("VERIFIED", sealX + sealWidth / 2, 18, { align: "center" });
+  doc.setFontSize(7.5);
+  doc.text(verification.status, sealX + sealWidth / 2, 18, { align: "center" });
 
   y = 28;
 
@@ -144,7 +149,7 @@ export function generateVerifiedDecisionReportPDF(
 
   // Verdict Headline
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
   const headlineLines = doc.splitTextToSize(data.calculatedImpact.verdictHeadline, contentWidth - 8);
   doc.text(headlineLines.slice(0, 2), margin + 4, y + 17);
@@ -165,7 +170,7 @@ export function generateVerifiedDecisionReportPDF(
   const colWidth = (contentWidth - 4) / 2;
 
   // Left Column: Decision Overview
-  doc.setFillColor(255, 255, 255);
+  doc.setFillColor(pureWhite[0], pureWhite[1], pureWhite[2]);
   doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2]);
   doc.setLineWidth(0.4);
   doc.roundedRect(margin, y, colWidth, 40, 2, 2, "FD");
@@ -179,19 +184,22 @@ export function generateVerifiedDecisionReportPDF(
   doc.setFontSize(7.5);
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
   doc.text(`${isFr ? "Intitulé :" : isSw ? "Kichwa :" : "Decision:"} ${data.decisionTitle}`, margin + 4, y + 13);
-  doc.text(`${isFr ? "Montant Total :" : isSw ? "Kiasi Kamili :" : "Purchase Outlay:"} ${fmt(data.amount)}`, margin + 4, y + 20);
+  doc.text(`${isFr ? "Montant Total :" : isSw ? "Kiasi Kamili :" : "Total Outlay:"} ${fmt(data.amount)}`, margin + 4, y + 20);
   doc.text(
     `${isFr ? "Modalité :" : isSw ? "Aina ya Malipo :" : "Payment Method:"} ${data.downPayment > 0 ? `${fmt(data.downPayment)} ${isFr ? "acompte" : "down"}` : isFr ? "Comptant" : "Full Outlay"}`,
     margin + 4,
     y + 27
   );
   doc.text(
-    `${isFr ? "Nature :" : isSw ? "Urejeshaji :" : "Structure:"} ${data.isRecurring ? (isFr ? "Récurrent mensuel" : "Recurring Monthly") : isFr ? "Achat Ponctuel" : "One-Off Decision"}`,
+    `${isFr ? "Nature :" : isSw ? "Urejeshaji :" : "Structure:"} ${data.decisionType ? data.decisionType.replace(/_/g, " ") : (data.isRecurring ? "Recurring Monthly" : "One-Off Decision")}`,
     margin + 4,
     y + 34
   );
 
-  // Right Column: Financial Context Used (User Data vs Assumptions)
+  // Right Column: Financial Context Used (Fix Dark Background Bug!)
+  doc.setFillColor(pureWhite[0], pureWhite[1], pureWhite[2]);
+  doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2]);
+  doc.setLineWidth(0.4);
   doc.roundedRect(margin + colWidth + 4, y, colWidth, 40, 2, 2, "FD");
 
   doc.setFont("helvetica", "bold");
@@ -232,33 +240,44 @@ export function generateVerifiedDecisionReportPDF(
 
   y += rowHeight;
 
+  // Reconciled Rows
+  const deltaCashFormatted =
+    data.calculatedImpact.deltaCash === 0
+      ? "0 (No change)"
+      : `-${fmt(Math.abs(data.calculatedImpact.deltaCash))}`;
+
+  const deltaFCFFormatted =
+    data.calculatedImpact.deltaFreeCashFlow === 0
+      ? "0% (No shift)"
+      : `-${fmt(Math.abs(data.calculatedImpact.deltaFreeCashFlow))}/mo (-${data.calculatedImpact.fcfPercentageShift}%)`;
+
   const tableRows = [
     {
       label: isFr ? "Liquidités Disponibles" : isSw ? "Akiba ya Papo Hapo" : "Liquid Cash Reserves",
       before: fmt(data.baseline.liquidSavings),
       after: fmt(data.calculatedImpact.postDecisionCash),
-      impact: `-${fmt(data.amount)}`,
+      impact: deltaCashFormatted,
       highlight: data.calculatedImpact.postDecisionCash < data.baseline.liquidSavings * 0.5,
     },
     {
       label: isFr ? "Matelas de Sécurité (Runway)" : isSw ? "Miezi ya Dharura" : "Emergency Living Buffer",
-      before: `${data.baseline.emergencyRunwayMonths} ${isFr ? "mois" : "mos"}`,
-      after: `${data.calculatedImpact.postDecisionRunway} ${isFr ? "mois" : "mos"}`,
+      before: `${data.baseline.emergencyRunwayMonths} mos`,
+      after: `${data.calculatedImpact.postDecisionRunway} mos`,
       impact: `${(data.calculatedImpact.postDecisionRunway - data.baseline.emergencyRunwayMonths).toFixed(1)} mos`,
       highlight: data.calculatedImpact.postDecisionRunway < 3.0,
     },
     {
-      label: isFr ? "Pression sur Cash-Flow Libre" : isSw ? "Mzigo wa Kila Mwezi" : "Monthly Free Cash Flow Shift",
+      label: isFr ? "Cash-Flow Libre Mensuel" : isSw ? "Pesa Huru ya Mwezi" : "Monthly Free Cash Flow",
       before: `+${fmt(data.baseline.netFreeCashFlow)}/mo`,
-      after: `+${fmt(Math.max(0, data.baseline.netFreeCashFlow - (data.monthlyPayment || 0)))}/mo`,
-      impact: `+${data.calculatedImpact.monthlyPressurePercent}% shift`,
-      highlight: data.calculatedImpact.monthlyPressurePercent > 25,
+      after: `+${fmt(data.calculatedImpact.postDecisionFreeCashFlow)}/mo`,
+      impact: deltaFCFFormatted,
+      highlight: data.calculatedImpact.deltaFreeCashFlow < 0 && Math.abs(data.calculatedImpact.deltaFreeCashFlow) > data.baseline.netFreeCashFlow * 0.3,
     },
     {
-      label: isFr ? `Objectif: ${data.baseline.primaryGoalTitle}` : isSw ? `Lengo: ${data.baseline.primaryGoalTitle}` : `Goal: ${data.baseline.primaryGoalTitle}`,
+      label: isFr ? `Objectif: ${data.baseline.primaryGoalTitle}` : `Goal: ${data.baseline.primaryGoalTitle}`,
       before: isFr ? "Dans les temps" : "On schedule",
-      after: `+${data.calculatedImpact.goalDelayDays}d shift`,
-      impact: `-${data.calculatedImpact.goalDelayDays} ${isFr ? "jours" : "days"}`,
+      after: data.calculatedImpact.goalStatus === "GOAL_FUNDING_PAUSED" ? "Funding Paused" : `+${data.calculatedImpact.goalDelayDays}d shift`,
+      impact: data.calculatedImpact.goalDelayDays === 0 ? "0 days delay" : `-${data.calculatedImpact.goalDelayDays} days`,
       highlight: data.calculatedImpact.goalDelayDays > 14,
     },
   ];
@@ -344,7 +363,7 @@ export function generateVerifiedDecisionReportPDF(
 
   y += 4;
 
-  doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
+  doc.setFillColor(pureWhite[0], pureWhite[1], pureWhite[2]);
   doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2]);
   doc.setLineWidth(0.4);
   doc.roundedRect(margin, y, contentWidth, 24, 2, 2, "FD");
@@ -354,14 +373,14 @@ export function generateVerifiedDecisionReportPDF(
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
   const analysisLines = doc.splitTextToSize(
     data.narrative.executiveSummary ||
-      `This analysis evaluates the exact capital impact of committing ${fmt(data.amount)} toward ${data.decisionTitle}. While cash capacity permits the immediate execution, it shifts primary goal compounding and reduces the living buffer to ${data.calculatedImpact.postDecisionRunway} months.`,
+      `This analysis evaluates the exact capital impact of committing ${fmt(data.amount)} toward ${data.decisionTitle}. It results in ${fmt(data.calculatedImpact.postDecisionCash)} in available reserves (${data.calculatedImpact.postDecisionRunway} months runway).`,
     contentWidth - 8
   );
   doc.text(analysisLines.slice(0, 4), margin + 4, y + 6);
 
   y += 28;
 
-  // 7. RECOMMENDED PATH & NEXT BEST ACTIONS
+  // 7. RECOMMENDED PATH & NEXT BEST ACTIONS (Reconciled Runway Claim!)
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
@@ -369,16 +388,21 @@ export function generateVerifiedDecisionReportPDF(
 
   y += 4;
 
+  const runwayBufferNote =
+    data.baseline.emergencyRunwayMonths >= 3.0
+      ? `protect your safe ${data.baseline.emergencyRunwayMonths}-month living reserve floor.`
+      : `preserve your current ${data.baseline.emergencyRunwayMonths}-month reserve buffer without further depletion.`;
+
   const actions = [
     isFr
-      ? `1. Privilégier l'Option B (Attendre ou étaler) afin de conserver un matelas de sécurité minimum de 3.0 mois.`
-      : `1. Execute Option B (Wait or Budget Alternative) to protect your essential 3.0-month living reserve floor.`,
+      ? `1. Privilégier l'Option B (Attendre ou épargner) afin de ${data.baseline.emergencyRunwayMonths >= 3.0 ? "conserver votre matelas sain de " + data.baseline.emergencyRunwayMonths + " mois" : "préserver votre matelas actuel de " + data.baseline.emergencyRunwayMonths + " mois sans le dégrader"}.`
+      : `1. Execute Option B (Wait & Save) to ${runwayBufferNote}`,
     isFr
-      ? `2. Allouer un surplus mensuel temporaire de +${fmt(Math.round(data.amount / 12))}/mois pour neutraliser tout retard sur "${data.baseline.primaryGoalTitle}".`
-      : `2. Channel an extra +${fmt(Math.round(data.amount / 12))}/month toward "${data.baseline.primaryGoalTitle}" to completely neutralize the +${data.calculatedImpact.goalDelayDays}-day shift.`,
+      ? `2. Maintenir une contribution régulière de +${fmt(data.baseline.netFreeCashFlow)}/mois vers "${data.baseline.primaryGoalTitle}" pour garantir la date d'arrivée.`
+      : `2. Maintain steady monthly contributions of +${fmt(data.baseline.netFreeCashFlow)}/month toward "${data.baseline.primaryGoalTitle}" to secure completion date.`,
     isFr
-      ? `3. Réévaluer la décision si une rentrée de trésorerie exceptionnelle intervient avant la date cible.`
-      : `3. Re-evaluate this decision if unexpected liquidity becomes available prior to target timeline.`,
+      ? `3. Réévaluer la décision si des rentrées de trésorerie supplémentaires interviennent avant la date cible.`
+      : `3. Re-evaluate this decision if additional liquidity becomes available prior to target timeline.`,
   ];
 
   actions.forEach((act) => {
@@ -401,9 +425,8 @@ export function generateVerifiedDecisionReportPDF(
   y += 4;
 
   (data.assumptions || [
-    "Monthly gross income remains stable over the 12 to 24-month horizon.",
-    "Fixed living expenses and debt payments remain consistent with active baseline profile.",
-    "No emergency liquidity drawdowns occur during the goal accumulation window.",
+    `Monthly gross income remains stable at ${fmt(data.baseline.monthlyIncome)}.`,
+    `Fixed living expenses remain consistent at ${fmt(data.baseline.monthlyExpenses)}/month.`,
   ]).forEach((ass) => {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
@@ -415,34 +438,34 @@ export function generateVerifiedDecisionReportPDF(
   y += 4;
 
   // 9. AIMLY ANALYSIS VALIDATION (SEAL & CHECKLIST)
-  doc.setFillColor(248, 250, 252);
-  doc.setDrawColor(brandEmerald[0], brandEmerald[1], brandEmerald[2]);
+  doc.setFillColor(pureWhite[0], pureWhite[1], pureWhite[2]);
+  doc.setDrawColor(sealColor[0], sealColor[1], sealColor[2]);
   doc.setLineWidth(0.6);
   doc.roundedRect(margin, y, contentWidth, 34, 2, 2, "FD");
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
-  doc.setTextColor(brandEmerald[0], brandEmerald[1], brandEmerald[2]);
-  doc.text("AIMLY ANALYSIS COHERENCE VERIFICATION SEAL", margin + 4, y + 6);
+  doc.setTextColor(sealColor[0], sealColor[1], sealColor[2]);
+  doc.text(`AIMLY ANALYSIS COHERENCE VERIFICATION SEAL • STATUS: ${verification.status}`, margin + 4, y + 6);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.text("✓ Mathematical Consistency Verified", margin + 4, y + 13);
-  doc.text("✓ Verdict Traceability to Risk Thresholds Verified", margin + 4, y + 18);
-  doc.text("✓ Scenario Comparison Coherence Verified", margin + 4, y + 23);
+  doc.text("✓ Mathematical & Cash Balance Reconciliation", margin + 4, y + 13);
+  doc.text("✓ Monthly Free Cash Flow Reconciliation", margin + 4, y + 18);
+  doc.text("✓ Transaction & Financing Model Traceability", margin + 4, y + 23);
 
-  doc.text("✓ Goal Impact & Trajectory Alignment Verified", margin + 95, y + 13);
-  doc.text("✓ Timeline Days/Months Model Verified", margin + 95, y + 18);
-  doc.text("✓ Narrative Facts Grounded in Calculation Data", margin + 95, y + 23);
+  doc.text("✓ Goal Compounding & Anomaly Guard Verified", margin + 95, y + 13);
+  doc.text("✓ Scenario Alternatives & Cross-Field Validated", margin + 95, y + 18);
+  doc.text("✓ Narrative Grounded in Canonical Data", margin + 95, y + 23);
 
   doc.setFont("helvetica", "italic");
   doc.setFontSize(6.5);
   doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
   doc.text(
-    isFr
-      ? "Aucune incohérence critique détectée. Ce rapport est certifié conforme au moteur mathématique déterministe UseAimly."
-      : "No critical inconsistencies detected. This report is certified mathematically grounded by the UseAimly engine.",
+    isVerified
+      ? "Certified mathematically coherent and reproducible by the UseAimly deterministic engine."
+      : "Audit alert: Requires user confirmation of missing parameters prior to institutional certification.",
     margin + 4,
     y + 29
   );

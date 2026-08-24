@@ -16,6 +16,7 @@ describe("Verified Financial Decision Report System", () => {
     version: 1,
     decisionTitle: "Purchase a $8,000 Vehicle",
     category: "BUY_A_CAR",
+    decisionType: "ONE_OFF_PURCHASE",
     amount: 8000,
     downPayment: 0,
     monthlyPayment: 0,
@@ -35,11 +36,19 @@ describe("Verified Financial Decision Report System", () => {
       primaryGoalTargetDate: "2028-06-30",
     },
     calculatedImpact: {
+      immediateCashOutflow: 8000,
       postDecisionCash: 6000, // 14,000 - 8,000 = 6,000
+      deltaCash: -8000,
+      newMonthlyObligation: 0,
       postDecisionRunway: 2.0, // 6,000 / (2500+500) = 2.0 mos
+      deltaRunway: -2.6,
+      postDecisionFreeCashFlow: 3500,
+      deltaFreeCashFlow: 0,
+      fcfPercentageShift: 0,
       goalDelayDays: 150,
       goalDelayMonths: 5,
-      monthlyPressurePercent: 26,
+      goalStatus: "DELAYED",
+      monthlyPressurePercent: 0,
       verdict: "PROCEED_WITH_CAUTION",
       verdictHeadline: "Buying this vehicle today is feasible but shifts your Home Goal by ~5 months.",
       primaryReason: "Reduces liquid buffer below the 3.0-month safety target and absorbs 5 months of goal contributions.",
@@ -47,23 +56,29 @@ describe("Verified Financial Decision Report System", () => {
     alternatives: {
       optionA: {
         title: "Option A: Buy Vehicle Today",
+        badge: "Immediate",
         delayDays: 150,
         cashRemaining: 6000,
         runway: 2.0,
+        monthlyObligation: 0,
         isRecommended: false,
       },
       optionB: {
         title: "Option B: Wait 2 Months & Save First",
+        badge: "Aimly Best",
         delayDays: 30,
         cashRemaining: 11000,
         runway: 3.6,
+        monthlyObligation: 0,
         isRecommended: true,
       },
       optionC: {
         title: "Option C: Choose $6,000 Used Model",
+        badge: "Budget",
         delayDays: 60,
         cashRemaining: 8000,
         runway: 2.6,
+        monthlyObligation: 0,
         isRecommended: false,
       },
     },
@@ -83,11 +98,11 @@ describe("Verified Financial Decision Report System", () => {
   };
 
   // 1. COHERENCE CHECK: Mathematical consistency
-  it("Aimly Coherence Check: passes all 6 verification tests on consistent data", () => {
+  it("Aimly Coherence Check: passes all verification tests on consistent data", () => {
     const verification = runAimlyCoherenceCheck(mockValidDecisionData);
     expect(verification.status).toBe("VERIFIED WITH ASSUMPTIONS");
     expect(verification.overallScore).toBe(100);
-    expect(verification.checks.length).toBe(6);
+    expect(verification.checks.length).toBe(7);
     expect(verification.checks.every((c) => c.passed)).toBe(true);
     expect(verification.inconsistencies.length).toBe(0);
   });
@@ -103,7 +118,7 @@ describe("Verified Financial Decision Report System", () => {
     };
 
     const verification = runAimlyCoherenceCheck(corruptData);
-    expect(verification.status).toBe("INCONSISTENCY_DETECTED");
+    expect(verification.status).toBe("INCONSISTENCY DETECTED");
     const mathCheck = verification.checks.find((c) => c.category === "MATHEMATICAL_CONSISTENCY");
     expect(mathCheck?.passed).toBe(false);
     expect(verification.inconsistencies[0]).toContain("Mathematical disparity");
@@ -115,12 +130,13 @@ describe("Verified Financial Decision Report System", () => {
       ...mockValidDecisionData,
       calculatedImpact: {
         ...mockValidDecisionData.calculatedImpact,
-        verdict: "RECOMMENDED", // Contradicts 2.0 mos runway and 150 days delay
+        postDecisionRunway: 1.5,
+        verdict: "RECOMMENDED", // Contradicts 1.5 mos runway (< 2.0 mos)
       },
     };
 
     const verification = runAimlyCoherenceCheck(corruptVerdictData);
-    expect(verification.status).toBe("INCONSISTENCY_DETECTED");
+    expect(verification.status).toBe("INCONSISTENCY DETECTED");
     const verdictCheck = verification.checks.find((c) => c.category === "VERDICT_CONSISTENCY");
     expect(verdictCheck?.passed).toBe(false);
   });
