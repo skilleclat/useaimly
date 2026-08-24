@@ -16,7 +16,7 @@ import {
   Globe,
   CheckCircle2,
   Activity,
-  Award,
+  Check,
 } from "lucide-react";
 
 export function Footer() {
@@ -27,10 +27,10 @@ export function Footer() {
   const isCheckout = pathname.startsWith("/checkout");
 
   // Hide footer on mobile screens (< 768px) during onboarding, decision completion, and checkout flows
-  // so mobile users don't get confused or distracted when looking for "Continue" / action buttons.
   const hideOnMobile = isOnboarding || isDecidePage || isCheckout;
 
-  const { t } = useI18n();
+  const { t, language } = useI18n();
+  const isFr = language === "fr";
   const { currency } = useCurrency();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -92,9 +92,9 @@ export function Footer() {
 
   // Full Executive Landing & Public Footer
   return (
-    <footer className={`relative mt-8 sm:mt-16 border-t border-zinc-800/80 bg-[#0B0C10] text-zinc-300 rounded-t-[2.5rem] sm:rounded-t-[3rem] shadow-2xl overflow-hidden font-sans ${hideOnMobile ? "hidden md:block" : ""}`}>
-      {/* Top Emerald Gradient Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[120px] bg-gradient-to-b from-emerald-500/15 via-emerald-500/5 to-transparent blur-2xl pointer-events-none" />
+    <footer className={`relative mt-8 sm:mt-16 border-t border-zinc-800/80 bg-[#09090C] text-zinc-300 rounded-t-[2.5rem] sm:rounded-t-[3rem] shadow-2xl overflow-hidden font-sans ${hideOnMobile ? "hidden md:block" : ""}`}>
+      {/* Subtle Warm Amber/Orange Radial Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[120px] bg-gradient-to-b from-[#FF5533]/10 via-[#FF5533]/3 to-transparent blur-2xl pointer-events-none" />
 
       <Container size="hero" className="py-10 sm:py-16 px-4 sm:px-6 lg:px-10 2xl:px-16 space-y-10 sm:space-y-14 relative z-10">
         {/* BRAND STATEMENT & NEWSLETTER CARD */}
@@ -102,7 +102,9 @@ export function Footer() {
           <div className="lg:col-span-7 space-y-3 text-left">
             <UseaimlyLogo size="md" showTagline={true} />
             <p className="text-xs sm:text-sm text-zinc-400 max-w-xl font-medium leading-relaxed">
-              UseAimly is a goal-aware decision intelligence platform. We calculate the exact future arrival impact of every purchase decision before you spend, protecting your cashflow resilience.
+              {isFr
+                ? "UseAimly est une plateforme d'intelligence décisionnelle financière. Nous calculons l'impact prédictif de chaque achat sur vos liquidités, vos charges fixes et vos objectifs de vie."
+                : "UseAimly is a financial decision intelligence platform. We calculate the exact future arrival impact of every purchase decision before you commit, protecting your cashflow resilience."}
             </p>
           </div>
 
@@ -110,10 +112,10 @@ export function Footer() {
           <div className="lg:col-span-5 rounded-3xl border border-zinc-800 bg-zinc-900/80 p-4 sm:p-5 space-y-3 shadow-lg backdrop-blur-md">
             <div className="flex items-center justify-between">
               <span className="text-xs font-mono font-bold uppercase text-zinc-100 tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                <Sparkles className="w-3.5 h-3.5 text-[#FF5533]" />
                 <span>{t("footerBriefingTitle")}</span>
               </span>
-              <span className="text-[10px] font-mono text-emerald-400 font-extrabold bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+              <span className="text-[10px] font-mono text-[#FF5533] font-bold bg-[#FF5533]/15 px-2.5 py-0.5 rounded-full border border-[#FF5533]/30">
                 {t("footerBriefingTag")}
               </span>
             </div>
@@ -127,7 +129,7 @@ export function Footer() {
                 <button
                   type="button"
                   onClick={() => setIsSubscribed(false)}
-                  className="text-[10px] font-mono underline opacity-80 shrink-0 hover:opacity-100"
+                  className="text-[10px] font-mono underline opacity-80 shrink-0 hover:opacity-100 cursor-pointer"
                 >
                   Reset
                 </button>
@@ -140,11 +142,11 @@ export function Footer() {
                   onChange={(e) => setNewsletterEmail(e.target.value)}
                   placeholder={t("footerSubscribePlaceholder")}
                   required
-                  className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-xs text-zinc-100 placeholder:text-zinc-500 focus:border-emerald-500 focus:outline-none min-h-[42px] font-medium"
+                  className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-xs text-zinc-100 placeholder:text-zinc-500 focus:border-[#FF5533] focus:outline-none min-h-[42px] font-medium"
                 />
                 <button
                   type="submit"
-                  className="rounded-2xl bg-emerald-700 hover:bg-emerald-600 text-white px-5 py-2.5 text-xs font-extrabold transition-all shrink-0 cursor-pointer flex items-center justify-center gap-1.5 min-h-[42px] shadow-sm"
+                  className="rounded-2xl bg-[#FF5533] hover:bg-[#FF4422] text-white px-5 py-2.5 text-xs font-extrabold transition-all shrink-0 cursor-pointer flex items-center justify-center gap-1.5 min-h-[42px] shadow-sm"
                 >
                   <span>{t("footerSubscribeBtn")}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -161,106 +163,97 @@ export function Footer() {
             <h4 className="font-mono font-bold uppercase tracking-wider text-zinc-100 text-xs">
               {t("footerSystemHealth")}
             </h4>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs font-mono text-emerald-400 font-bold">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs font-mono text-emerald-400 font-bold">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>{t("systemOperational")}</span>
             </div>
             <p className="text-xs text-zinc-400 font-mono">
-              Deterministic Engine v2.5
+              Decision Engine v2.5
             </p>
             <p className="text-[11px] text-zinc-500 font-mono">
-              {t("deterministicMath")}
+              Same inputs → same calculation → same result
             </p>
           </div>
 
           {/* Column 2: Platform Features */}
           <div className="space-y-3">
             <h4 className="font-mono font-bold uppercase tracking-wider text-zinc-100 text-xs">
-              {t("footerCorePlatform")}
+              {isFr ? "Plateforme" : "Platform"}
             </h4>
             <ul className="space-y-2 text-zinc-400 font-medium">
               <li>
-                <Link href="/app/goals" className="hover:text-emerald-400 transition-colors">
-                  {t("navDestinations")}
+                <Link href="/app/decide" className="hover:text-white transition-colors">
+                  {isFr ? "Studio de Décision" : "Decision Studio"}
                 </Link>
               </li>
               <li>
-                <Link href="/app/decide" className="hover:text-emerald-400 transition-colors">
-                  {t("navDecide")}
+                <Link href="/app/goals" className="hover:text-white transition-colors">
+                  {isFr ? "Objectifs de Vie" : "Life Destinations"}
                 </Link>
               </li>
               <li>
-                <Link href="/app/what-if" className="hover:text-emerald-400 transition-colors">
-                  {t("navWhatIf")}
+                <Link href="/app/what-if" className="hover:text-white transition-colors">
+                  {isFr ? "Simulations Et Si" : "What-If Sandbox"}
                 </Link>
               </li>
               <li>
-                <Link href="/app/money?tab=INVESTMENTS" className="hover:text-emerald-400 transition-colors">
-                  {t("navInvestments")}
+                <Link href="/pricing" className="hover:text-white transition-colors">
+                  {isFr ? "Tarifs & Offres" : "Pricing & Plans"}
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Column 3: Monetization & Pricing */}
+          {/* Column 3: Positioning */}
           <div className="space-y-3">
             <h4 className="font-mono font-bold uppercase tracking-wider text-zinc-100 text-xs">
-              {t("footerMonetization")}
+              {isFr ? "Méthodologie" : "Methodology"}
             </h4>
             <ul className="space-y-2 text-zinc-400 font-medium">
               <li>
-                <Link href="/pricing" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                  <span>Free Starter</span>
-                </Link>
+                <span className="text-zinc-300">Modèle des 3 Piliers</span>
               </li>
               <li>
-                <Link href="/pricing" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                  <span>Aimly Pro</span>
-                  <span className="text-[9px] font-mono font-bold bg-amber-500/20 text-amber-400 px-1.5 py-0.2 rounded">Popular</span>
-                </Link>
+                <span className="text-zinc-300">Coût Futur d'une Décision</span>
               </li>
               <li>
-                <Link href="/pricing" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                  <span>Aimly Premium</span>
-                  <span className="text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded">Complete</span>
-                </Link>
+                <span className="text-zinc-300">Calcul Déterministe</span>
+              </li>
+              <li>
+                <span className="text-zinc-300">Résilience du Cashflow</span>
               </li>
             </ul>
           </div>
 
-          {/* Column 4: Security & Compliance */}
+          {/* Column 4: Security & Privacy */}
           <div className="space-y-3">
             <h4 className="font-mono font-bold uppercase tracking-wider text-zinc-100 text-xs">
-              {t("footerSecurity")}
+              {isFr ? "Confiance & Sécurité" : "Trust & Security"}
             </h4>
             <ul className="space-y-2 text-zinc-300 font-medium">
               <li className="flex items-center gap-2">
-                <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Deterministic Computation</span>
+                <Lock className="w-3.5 h-3.5 text-[#FF5533] shrink-0" />
+                <span>Calculs purs sans hallucination</span>
               </li>
               <li className="flex items-center gap-2">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Zero Bank Login Credentials</span>
+                <span>Zéro identifiant bancaire requis</span>
               </li>
               <li className="flex items-center gap-2">
-                <Globe className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Row Level Security (RLS)</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Award className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>SOC2 Type II Ready</span>
+                <Globe className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                <span>Row Level Security (RLS) isolé</span>
               </li>
             </ul>
           </div>
         </div>
 
-        {/* EXECUTIVE COPYRIGHT & BACK TO TOP BAR */}
+        {/* COPYRIGHT & BACK TO TOP BAR */}
         <div className="pt-6 sm:pt-8 border-t border-zinc-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono">
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3 text-zinc-400 text-center sm:text-left">
-            <span>© {new Date().getFullYear()} UseAimly Inc. {t("rightsReserved")}</span>
+            <span>© {new Date().getFullYear()} UseAimly. {t("rightsReserved")}</span>
             <span className="hidden sm:inline">•</span>
             <span className="text-zinc-200 font-bold block sm:inline">
-              Cash Affordability ≠ Plan Affordability
+              Don&apos;t just see what it costs. See what it changes.
             </span>
           </div>
 
@@ -268,10 +261,10 @@ export function Footer() {
             <span className="text-zinc-500 text-[11px]">Currency: {currency}</span>
             <button
               onClick={scrollToTop}
-              className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-900 px-3.5 py-1.5 text-xs font-bold text-zinc-100 hover:border-emerald-500 transition-colors cursor-pointer shadow-sm"
+              className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-900 px-3.5 py-1.5 text-xs font-bold text-zinc-100 hover:border-[#FF5533] transition-colors cursor-pointer shadow-sm"
             >
               <span>{t("footerBackToTop")}</span>
-              <ArrowUp className="w-3.5 h-3.5 text-emerald-400" />
+              <ArrowUp className="w-3.5 h-3.5 text-[#FF5533]" />
             </button>
           </div>
         </div>

@@ -38,7 +38,7 @@ export function Header() {
     {
       label: isFr ? "Moteur de Décision" : "Decision Engine",
       href: "/app/decide",
-      icon: <HelpCircle className="w-4 h-4 text-primary" />,
+      icon: <HelpCircle className="w-4 h-4 text-[#FF5533]" />,
       desc: "Test purchase impact before spending",
     },
     {
@@ -99,7 +99,7 @@ export function Header() {
                 <span>Dashboard</span>
               </Link>
 
-              {/* Black Circular User Avatar Pill */}
+              {/* User Avatar Pill */}
               <button
                 type="button"
                 onClick={() => setIsProfileModalOpen(true)}
@@ -133,41 +133,41 @@ export function Header() {
           {/* Mobile Hamburger Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-gray-700 dark:text-foreground hover:text-gray-900 rounded-xl border border-gray-200 dark:border-border bg-card focus:outline-hidden"
+            className="md:hidden p-2 text-foreground hover:text-foreground/80 rounded-xl border border-border bg-card focus:outline-hidden cursor-pointer"
             aria-label="Toggle Menu"
           >
-            {mobileMenuOpen ? <X className="w-4 h-4 text-[#00A859]" /> : <Menu className="w-4 h-4" />}
+            {mobileMenuOpen ? <X className="w-4 h-4 text-[#FF5533]" /> : <Menu className="w-4 h-4" />}
           </button>
         </div>
       </Container>
 
       {/* Mobile Dropdown Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-100 dark:border-border bg-white/98 dark:bg-background/98 backdrop-blur-2xl px-4 py-4 space-y-3 animate-fadeIn shadow-xl">
+        <div className="md:hidden border-t border-border bg-card/98 backdrop-blur-2xl px-4 py-4 space-y-3 animate-fadeIn shadow-xl">
           <div className="grid grid-cols-1 gap-1">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.label}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-secondary/50 text-gray-900 dark:text-foreground text-xs font-bold transition-all"
+                className="flex items-center justify-between p-3 rounded-xl hover:bg-secondary/60 text-foreground text-xs font-bold transition-all"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-gray-100 dark:bg-card border border-gray-200 dark:border-border text-[#00A859]">
+                  <div className="p-2 rounded-lg bg-secondary border border-border text-[#FF5533]">
                     {link.icon}
                   </div>
                   <span>{link.label}</span>
                 </div>
-                <ArrowRight className="w-4 h-4 text-gray-400" />
+                <ArrowRight className="w-4 h-4 text-muted-foreground" />
               </Link>
             ))}
           </div>
 
-          <div className="pt-3 border-t border-gray-100 dark:border-border flex flex-col gap-2">
+          <div className="pt-3 border-t border-border flex flex-col gap-2">
             <Link
               href={user ? "/app" : "/signup"}
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#00A859] py-2.5 text-xs font-bold text-white shadow-xs"
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] py-2.5 text-xs font-bold text-white shadow-xs"
             >
               <Sparkles className="w-4 h-4" />
               <span>{user ? "Go to App" : t("navGetStarted")}</span>

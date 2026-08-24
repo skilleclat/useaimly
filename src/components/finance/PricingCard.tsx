@@ -1,14 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { PricingPlan } from "@/lib/types/pricing";
 import { useCurrency } from "@/lib/currency/currency-context";
 import { useI18n } from "@/lib/i18n/i18n-context";
 import { CurrencyCode } from "@/lib/types/finance";
-import { Check, Sparkles, Zap, Shield, ArrowRight, TrendingUp } from "lucide-react";
-
-import { useState } from "react";
+import { Check, Sparkles, Zap, Shield, ArrowRight, ShieldCheck } from "lucide-react";
 import { PayPalCheckoutModal } from "./PayPalCheckoutModal";
 import { useAuth } from "@/lib/auth/auth-context";
 
@@ -31,9 +29,9 @@ export function PricingCard({
   const { user, profile } = useAuth();
   const { currency: globalCurrency, format } = useCurrency();
   const { t, language } = useI18n();
+  const isFr = language === "fr";
 
   const activeCurrency = propCurrency || globalCurrency;
-  const isLoggedIn = Boolean(user || (profile && profile.id !== "demo-user-id"));
 
   const basePriceUSD = isYearly
     ? (plan.totalYearlyUSD || plan.priceYearlyUSD * 12)
@@ -51,30 +49,30 @@ export function PricingCard({
   const isCurrentPlan = currentPlanId === plan.id;
   const periodLabel = isYearly ? t("perYear") : t("perMonth");
 
-  const planTagline = language === "fr"
+  const planTagline = isFr
     ? (plan.id === "free" ? t("planFreeTagline") : plan.id === "pro" ? t("planProTagline") : t("planPremiumTagline"))
     : plan.tagline;
 
   const planBadge = plan.badge
-    ? (language === "fr"
+    ? (isFr
         ? (plan.id === "pro" ? t("planProBadge") : t("planPremiumBadge"))
         : plan.badge)
     : undefined;
 
-  const ctaText = language === "fr"
+  const ctaText = isFr
     ? (plan.id === "free" ? t("planFreeCta") : plan.id === "pro" ? t("planProCta") : t("planPremiumCta"))
     : plan.ctaText;
 
   const localizedFeatures = plan.features.map((feat) => {
-    if (language !== "fr") return feat;
+    if (!isFr) return feat;
     const frMap: Record<string, string> = {
       "1 Primary Financial Destination": "1 Destination Financière Principale",
       "Monthly Cashflow & Free Balance Calculator": "Calculateur de Cash-Flow & Solde Libre Mensuel",
       "Basic Purchase Decision Simulation": "Simulation de Décision d'Achat de Base",
       "Interactive Sandbox & Demo Data Mode": "Mode Bac à Sable Interactif & Données Démo",
-      "3-Strategy Decision Impact Studio (Spread, Postpone)": "Studio Décisionnel 3-Stratégies (Échelonner, Reporter)",
+      "3-Strategy Decision Impact Studio (Spread, Postpone)": "Studio Décisionnel 3-Stratégies (Comptant, Échelonner, Reporter)",
       "6 Proactive Insight Alert Rules": "6 Règles d'Alerte & Prévisions Proactives",
-      "Dedicated AI Financial Advisor (Gemini / GPT-4)": "Conseiller Financier IA Dédié (Gemini / GPT-4)",
+      "Dedicated AI Financial Advisor (Gemini / GPT-4)": "Conseiller Financier IA Connecté au Moteur",
       "Unlimited 'What-If' Scenario Laboratory": "Laboratoire de Scénarios 'Et si ?' Illimité",
       "Financial Data Export (CSV & PDF)": "Exportation des Données Financières (CSV & PDF)",
       "Unlimited Financial Destinations": "Destinations Financières Illimitées",
@@ -85,12 +83,12 @@ export function PricingCard({
       "Data Export (CSV & Custom Reports)": "Exportation des Données (CSV & Rapports Sur Mesure)",
       "Priority Email Support": "Support Email Prioritaire",
       "Everything included in Aimly Pro": "Tout ce qui est inclus dans Aimly Pro",
-      "Interactive AI Financial Advisor (Gemini / GPT-4)": "Conseiller IA Financier Interactif (Gemini / GPT-4)",
-      "AI Financial Notepad & Unlimited Rules Engine": "Bloc-Notes IA & Moteur de Règles Illimité",
-      "Custom Debt Elimination Strategies": "Stratégies Sur Mesure d'Élimination des Dettes",
+      "Interactive AI Financial Advisor (Gemini / GPT-4)": "Conseiller IA Financier Interactif",
+      "AI Financial Notepad & Unlimited Rules Engine": "Bloc-Notes IA & Moteur de Règles",
+      "Custom Debt Elimination Strategies": "Stratégies d'Élimination des Dettes",
       "Multi-Account & Currency Aggregation": "Agrégation Multi-Comptes & Multi-Devises",
-      "1-on-1 VIP Strategy Orientation Session": "Session Individuelle de Stratégie VIP 1-sur-1",
-      "24/7 Priority WhatsApp & Email Support": "Support Prioritaire 24/7 WhatsApp & Email",
+      "1-on-1 VIP Strategy Orientation Session": "Session Individuelle de Stratégie",
+      "24/7 Priority WhatsApp & Email Support": "Support Prioritaire",
     };
     return {
       ...feat,
@@ -102,13 +100,13 @@ export function PricingCard({
     <div
       className={`relative flex flex-col justify-between rounded-[2.5rem] p-6 sm:p-8 transition-all duration-300 ${
         plan.isPopular
-          ? "border-2 border-primary bg-gradient-to-b from-primary/10 via-card to-card shadow-2xl shadow-primary/10 scale-102 z-10"
-          : "border border-border/80 bg-card hover:border-primary/40 hover:shadow-xl"
+          ? "border-2 border-[#FF5533] bg-gradient-to-b from-[#FF5533]/8 via-card to-card shadow-2xl shadow-orange-500/10 scale-[1.02] z-10"
+          : "border border-border/80 bg-card hover:border-[#FF5533]/40 hover:shadow-xl"
       }`}
     >
       {/* Popular Badge */}
       {planBadge && (
-        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-orange-500 px-4 py-1 text-[11px] font-bold tracking-wider text-primary-foreground uppercase shadow-md">
+        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] px-4 py-1 text-[11px] font-extrabold tracking-wider text-white uppercase shadow-md">
           <Sparkles className="w-3 h-3" />
           <span>{planBadge}</span>
         </div>
@@ -118,7 +116,7 @@ export function PricingCard({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-extrabold text-foreground tracking-tight">{plan.name}</h3>
-          {plan.id === "pro" && <Zap className="w-5 h-5 text-primary" />}
+          {plan.id === "pro" && <Zap className="w-5 h-5 text-[#FF5533]" />}
           {plan.id === "premium" && <Shield className="w-5 h-5 text-amber-500" />}
         </div>
         <p className="text-xs text-muted-foreground leading-relaxed min-h-[36px]">
@@ -136,19 +134,19 @@ export function PricingCard({
             )}
           </div>
           {isYearly && basePriceUSD > 0 && (
-            <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
+            <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 font-mono">
               {t("billedAnnuallyEquiv").replace("{price}", formattedMonthlyEquiv)}
             </p>
           )}
 
-          {/* MUSK ROI ANCHOR BADGE */}
+          {/* Value Assurance Badge */}
           {plan.id !== "free" && (
-            <div className="mt-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-2 text-[11px] font-bold text-amber-700 dark:text-amber-400">
-              <TrendingUp className="w-4 h-4 text-amber-500 shrink-0" />
+            <div className="mt-3 p-2.5 rounded-xl bg-secondary/80 border border-border/80 flex items-center gap-2 text-[11px] font-medium text-muted-foreground">
+              <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
               <span>
-                {language === "fr"
-                  ? "Rendement x266 : Évite 1 erreur moyenne de 2 400 $+."
-                  : "266x ROI: Avoids $2,400+ average decision error."}
+                {isFr
+                  ? "Modélisation proactive de vos liquidités, dettes et dates cibles."
+                  : "Continuous proactive modeling of cash reserves, debt, and life goals."}
               </span>
             </div>
           )}
@@ -166,8 +164,8 @@ export function PricingCard({
                   className={`mt-0.5 rounded-full p-0.5 shrink-0 ${
                     feat.included
                       ? feat.highlight
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-emerald-500/15 text-emerald-500"
+                        ? "bg-[#FF5533] text-white"
+                        : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
                       : "bg-muted text-muted-foreground opacity-40"
                   }`}
                 >
@@ -190,7 +188,7 @@ export function PricingCard({
         </div>
       </div>
 
-      {/* CTA Button & Supported Methods */}
+      {/* CTA Button */}
       <div className="pt-8 space-y-2.5">
         {isCurrentPlan ? (
           <div className="w-full rounded-2xl bg-secondary py-3 text-center text-xs font-bold text-muted-foreground border border-border">
@@ -208,8 +206,8 @@ export function PricingCard({
             }}
             className={`w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 text-xs font-extrabold shadow-md transition-all cursor-pointer ${
               plan.isPopular
-                ? "bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white hover:opacity-95 shadow-orange-500/20 hover:scale-[1.02]"
-                : "bg-primary text-primary-foreground hover:opacity-95"
+                ? "bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white hover:opacity-95 shadow-orange-500/20 hover:scale-[1.01]"
+                : "bg-foreground text-background hover:opacity-90"
             }`}
           >
             <span>{ctaText}</span>
