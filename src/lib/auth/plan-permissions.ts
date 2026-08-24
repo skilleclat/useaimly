@@ -3,12 +3,8 @@ import { SOLE_OWNER_EMAIL } from "@/lib/auth/admin-check";
 
 /**
  * Single source of truth for Feature Gating & Subscription Permissions
+ * Two-Tier Model: FREE vs PRO (with owner override)
  */
-export function isUserEliteOrOwner(tier?: PlanTier | string | null, email?: string | null): boolean {
-  if (email && email.trim().toLowerCase() === SOLE_OWNER_EMAIL.toLowerCase()) return true;
-  return tier === "premium";
-}
-
 export function isUserProOrHigher(tier?: PlanTier | string | null, email?: string | null): boolean {
   if (email && email.trim().toLowerCase() === SOLE_OWNER_EMAIL.toLowerCase()) return true;
   return tier === "pro" || tier === "premium";
@@ -17,7 +13,7 @@ export function isUserProOrHigher(tier?: PlanTier | string | null, email?: strin
 /**
  * 1. Financial Destinations / Goals Limits
  * - Free: Max 1 Goal
- * - Pro & Premium: Unlimited Goals
+ * - Pro: Unlimited Goals
  */
 export function canAccessMultipleGoals(tier?: PlanTier | string | null, email?: string | null): boolean {
   return isUserProOrHigher(tier, email);
@@ -29,55 +25,55 @@ export function getMaxGoalsAllowed(tier?: PlanTier | string | null, email?: stri
 }
 
 /**
- * 2. 3-Strategy Decision Studio (Spread / Postpone)
- * - Free: Cash Only (1 strategy)
- * - Pro & Premium: 3 Strategies (Cash, Spread 3-mo, Postpone)
+ * 2. Decision Studio Strategy Comparison
+ * - Free: Basic 1 strategy
+ * - Pro: Full multi-scenario alternatives (Cash, Spread, Postpone, Budget Alternative)
  */
 export function canAccessAllDecisionStrategies(tier?: PlanTier | string | null, email?: string | null): boolean {
   return isUserProOrHigher(tier, email);
 }
 
 /**
- * 3. Proactive Insights Engine (6 Foresight Rules)
- * - Free: Basic Cash Buffer only
- * - Pro & Premium: 6 Proactive Rules
+ * 3. Proactive Insights Engine
+ * - Free: Basic Cash Buffer alert
+ * - Pro: 6 Proactive Decision Rules
  */
 export function canAccessProactiveInsights(tier?: PlanTier | string | null, email?: string | null): boolean {
   return isUserProOrHigher(tier, email);
 }
 
 /**
- * 4. AI Strategic Notepad & Rules Engine
+ * 4. Strategic Rules & Decision Notes
  * - Free: Read-only preview
- * - Pro & Premium: Full custom constraint rules & synchronization
+ * - Pro: Full custom constraint rules & synchronization
  */
 export function canAccessAiNotes(tier?: PlanTier | string | null, email?: string | null): boolean {
   return isUserProOrHigher(tier, email);
 }
 
 /**
- * 5. Data Export (CSV & Trajectory Reports)
- * - Free: Locked
- * - Pro & Premium: Unlocked
+ * 5. Data Export (CSV & PDF Reports)
+ * - Free: Basic
+ * - Pro: Full custom executive exports
  */
 export function canAccessDataExport(tier?: PlanTier | string | null, email?: string | null): boolean {
   return isUserProOrHigher(tier, email);
 }
 
 /**
- * 6. "What-If" Scenario Simulation Laboratory
- * - Free & Pro: Locked (Preview only)
- * - Premium / Elite: Full sandbox with unlimited hypotheses
+ * 6. "What-If" Scenario Laboratory Sandbox
+ * - Free: Preview
+ * - Pro: Full sandbox with unlimited hypotheses
  */
 export function canAccessWhatIfLab(tier?: PlanTier | string | null, email?: string | null): boolean {
-  return isUserEliteOrOwner(tier, email);
+  return isUserProOrHigher(tier, email);
 }
 
 /**
- * 7. Dedicated AI Financial Advisor / Chat (Gemini / GPT-4)
- * - Free & Pro: Locked
- * - Premium / Elite: Unlimited interactive AI consultation
+ * 7. Ask Aimly Decision Strategy Consultations
+ * - Free: Gated after initial trials
+ * - Pro: Unlimited decision intelligence consultation
  */
 export function canAccessAiAdvisor(tier?: PlanTier | string | null, email?: string | null): boolean {
-  return isUserEliteOrOwner(tier, email);
+  return isUserProOrHigher(tier, email);
 }

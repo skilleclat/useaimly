@@ -175,16 +175,22 @@ export default function DecisionMemoryPage() {
                   <span
                     className={`px-3.5 py-1.5 rounded-full font-extrabold text-xs tracking-wide flex items-center gap-1.5 border ${
                       record.executiveDecision === "GO"
-                        ? "bg-emerald-500/10 text-[#00A859] border-emerald-500/30"
+                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
                         : record.executiveDecision === "ADJUST"
                         ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
                         : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30"
                     }`}
                   >
-                    {record.executiveDecision === "GO" && <CheckCircle2 className="w-4 h-4" />}
-                    {record.executiveDecision === "ADJUST" && <AlertTriangle className="w-4 h-4" />}
-                    {record.executiveDecision === "WAIT" && <XCircle className="w-4 h-4" />}
-                    <span>{record.executiveDecision}</span>
+                    {record.executiveDecision === "GO" && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                    {record.executiveDecision === "ADJUST" && <AlertTriangle className="w-4 h-4 text-amber-500" />}
+                    {record.executiveDecision === "WAIT" && <XCircle className="w-4 h-4 text-rose-500" />}
+                    <span>
+                      {record.executiveDecision === "GO"
+                        ? (isFr ? "RECOMMANDÉ" : "RECOMMENDED")
+                        : record.executiveDecision === "ADJUST"
+                        ? (isFr ? "PROCÉDER AVEC PRUDENCE" : "PROCEED WITH CAUTION")
+                        : (isFr ? "NON RECOMMANDÉ" : "NOT RECOMMENDED")}
+                    </span>
                   </span>
                 </div>
               </div>

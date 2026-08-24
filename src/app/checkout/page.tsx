@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   Lock,
   ArrowRight,
-  CreditCard,
   Sparkles,
   ArrowLeft,
   Zap,
@@ -24,29 +23,23 @@ import { PayPalCheckoutModal } from "@/components/finance/PayPalCheckoutModal";
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
-  const rawPlan = searchParams.get("plan");
-  const planId = rawPlan === "premium" ? "premium" : "pro";
-  const plan = PRICING_PLANS.find((p) => p.id === planId) || PRICING_PLANS[1];
+  const plan = PRICING_PLANS.find((p) => p.id === "pro") || PRICING_PLANS[1];
 
   const [isYearly, setIsYearly] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const { currency, format } = useCurrency();
+  const { format } = useCurrency();
   const { language } = useI18n();
+  const isFr = language === "fr";
 
-  const baseUSD = isYearly
-    ? (plan?.totalYearlyUSD || (plan?.priceYearlyUSD ? plan.priceYearlyUSD * 12 : 39.99))
-    : (plan?.priceMonthlyUSD || 5.00);
+  const baseUSD = isYearly ? 39.00 : 4.99;
+  const amountKES = isYearly ? 5000 : 650;
 
-  const amountKES = plan?.id === "premium"
-    ? (isYearly ? (MPESA_CONFIG?.premiumYearlyKES || 10400) : (MPESA_CONFIG?.premiumMonthlyKES || 1300))
-    : (isYearly ? (MPESA_CONFIG?.proYearlyKES || 5200) : (MPESA_CONFIG?.proMonthlyKES || 650));
-
-  const formattedPriceUSD = typeof format === "function" ? format(baseUSD, { fromCurrency: "USD", showDecimals: true }) : `$${Number(baseUSD || 0).toFixed(2)}`;
-  const formattedPriceKES = `KES ${Number(amountKES || 0).toLocaleString()}`;
+  const formattedPriceUSD = typeof format === "function" ? format(baseUSD, { fromCurrency: "USD", showDecimals: true }) : `$${baseUSD.toFixed(2)}`;
+  const formattedPriceKES = `KES ${amountKES.toLocaleString()}`;
 
   const handleCopy = (text: string, fieldKey: string) => {
-    if (typeof navigator !== "undefined") {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(text);
       setCopiedField(fieldKey);
       setTimeout(() => setCopiedField(null), 2500);
@@ -54,7 +47,7 @@ function CheckoutContent() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background text-foreground py-12 px-4 sm:px-6 lg:px-8 font-sans antialiased text-left">
       <div className="max-w-3xl mx-auto space-y-8 animate-fadeIn">
         {/* Top Back Link */}
         <div className="flex items-center justify-between">
@@ -63,11 +56,11 @@ function CheckoutContent() {
             className="inline-flex items-center gap-2 text-xs font-mono font-bold text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>{language === "fr" ? "Retour aux tarifs" : "Back to pricing"}</span>
+            <span>{isFr ? "Retour aux tarifs" : "Back to pricing"}</span>
           </Link>
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-mono font-bold text-emerald-500">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
             <Lock className="w-3.5 h-3.5" />
-            <span>{language === "fr" ? "Paiement Sécurisé SSL" : "256-Bit SSL Secure"}</span>
+            <span>{isFr ? "Paiement Sécurisé SSL" : "256-Bit SSL Secure"}</span>
           </div>
         </div>
 
@@ -75,13 +68,15 @@ function CheckoutContent() {
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-mono font-bold text-primary">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Guichet de Souscription Sécurisé</span>
+            <span>{isFr ? "Guichet de Souscription Sécurisé" : "Secure Checkout Gate"}</span>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-black font-editorial tracking-tight text-foreground">
-            Activer votre formule {plan.name}
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-foreground">
+            {isFr ? "Activer UseAimly Pro" : "Activate UseAimly Pro"}
           </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
-            Accédez immédiatement au moteur déterministe et au studio de décision prédictif.
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto font-medium">
+            {isFr
+              ? "Accédez immédiatement au moteur déterministe complet et aux simulations illimitées."
+              : "Unlock continuous access to the personalized decision engine with unlimited analyses."}
           </p>
         </div>
 
@@ -98,7 +93,7 @@ function CheckoutContent() {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Facturation Mensuelle
+              {isFr ? "Facturation Mensuelle ($4.99/m)" : "Monthly ($4.99/mo)"}
             </button>
             <button
               type="button"
@@ -109,9 +104,9 @@ function CheckoutContent() {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <span>Facturation Annuelle</span>
-              <span className="rounded-full bg-emerald-500/20 text-emerald-500 text-[10px] px-2 py-0.5 font-extrabold uppercase">
-                -20%
+              <span>{isFr ? "Facturation Annuelle ($39/an)" : "Annual ($39/yr)"}</span>
+              <span className="rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] px-2 py-0.5 font-black uppercase">
+                {isFr ? "-35% ÉCONOMIE" : "SAVE 35%"}
               </span>
             </button>
           </div>
@@ -122,21 +117,23 @@ function CheckoutContent() {
               <div>
                 <h3 className="text-lg font-extrabold text-foreground flex items-center gap-2">
                   <Zap className="w-5 h-5 text-primary" />
-                  <span>{plan.name} Plan</span>
+                  <span>UseAimly Pro</span>
                 </h3>
                 <p className="text-xs text-muted-foreground font-mono">
-                  {isYearly ? "Facturation Annuelle (-20% de réduction)" : "Facturation Mensuelle sans engagement"}
+                  {isYearly
+                    ? (isFr ? "Facturation Annuelle (3.25 $/mois équiv.)" : "Annual Billing ($3.25/mo equiv.)")
+                    : (isFr ? "Facturation Mensuelle sans engagement" : "Monthly Billing, cancel anytime")}
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-3xl font-black font-editorial text-foreground">
-                  {formattedPriceKES}
+                <div className="text-3xl font-black text-foreground font-mono">
+                  {formattedPriceUSD}
                 </div>
                 <span className="text-[11px] font-mono text-muted-foreground block">
-                  ≈ {formattedPriceUSD}
+                  ≈ {formattedPriceKES}
                 </span>
-                <span className="text-[10px] font-mono text-emerald-500 font-bold">
-                  {isYearly ? "Facturé en 1 fois" : "Résiliable à tout moment"}
+                <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                  {isYearly ? (isFr ? "Facturé en 1 fois ($39)" : "Billed once annually ($39)") : (isFr ? "Résiliable à tout moment" : "Cancel anytime")}
                 </span>
               </div>
             </div>
@@ -144,20 +141,20 @@ function CheckoutContent() {
             {/* Inclusions */}
             <div className="pt-4 border-t border-border/60 space-y-2 text-xs font-mono">
               <div className="flex items-center justify-between text-muted-foreground">
-                <span>Accès Moteur Déterministe 10 Ans</span>
+                <span>{isFr ? "Analyses de décisions illimitées" : "Unlimited Decision Analyses"}</span>
                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
               </div>
               <div className="flex items-center justify-between text-muted-foreground">
-                <span>Studio 3-Stratégies & Alertes IA Proactives</span>
+                <span>{isFr ? "Objectifs financiers illimités" : "Unlimited Financial Goals & Destinations"}</span>
                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
               </div>
-              <div className="flex items-center justify-between pt-2 text-foreground font-bold text-xs">
-                <span>M-Pesa Business No. (Paybill) :</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-mono font-extrabold">{MPESA_CONFIG.businessNumber}</span>
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>{isFr ? "Studio 3-stratégies & alternatives calculées" : "3-Strategy Studio & Calculated Alternatives"}</span>
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
               </div>
-              <div className="flex items-center justify-between text-foreground font-bold text-xs">
-                <span>M-Pesa Account No. :</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-mono font-extrabold">{MPESA_CONFIG.accountNumber}</span>
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>{isFr ? "Analyse de risque d'urgence & trajectoires" : "Emergency Risk Analysis & Trajectories"}</span>
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
               </div>
             </div>
           </div>
@@ -166,7 +163,7 @@ function CheckoutContent() {
           <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 space-y-3">
             <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400">
               <Smartphone className="w-4 h-4" />
-              <span>Paiement Rapide Lipa na M-Pesa (Paybill)</span>
+              <span>{isFr ? "Paiement Rapide Lipa na M-Pesa (Paybill)" : "Quick M-Pesa Paybill Checkout"}</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
               <div className="p-2.5 rounded-xl bg-card border border-border/80 flex items-center justify-between">
@@ -202,25 +199,14 @@ function CheckoutContent() {
           {/* Payment Actions */}
           <div className="space-y-3 pt-2">
             <label className="text-xs font-mono font-bold uppercase text-muted-foreground block text-center">
-              Choisissez votre méthode pour finaliser
+              {isFr ? "Choisissez votre méthode pour finaliser" : "Choose your payment method to complete"}
             </label>
 
-            {/* 1. M-Pesa Paybill / Validation Button */}
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(true)}
-              className="w-full rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm py-4 px-6 shadow-lg shadow-emerald-600/20 transition-all cursor-pointer flex items-center justify-center gap-3 group min-h-[52px]"
-            >
-              <Smartphone className="w-5 h-5" />
-              <span>Valider via M-Pesa Paybill ({formattedPriceKES})</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-
-            {/* 2. Official PayPal Checkout Button */}
+            {/* 1. Official PayPal Checkout Button */}
             <a
               href={`https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=${encodeURIComponent(
                 "herimaliyabwana@gmail.com"
-              )}&item_name=${encodeURIComponent(`UseAimly ${plan?.name || "Pro"} (${isYearly ? "Annual" : "Monthly"})`)}&amount=${Number(baseUSD || 5).toFixed(2)}&currency_code=USD`}
+              )}&item_name=${encodeURIComponent(`UseAimly Pro (${isYearly ? "Annual" : "Monthly"})`)}&amount=${baseUSD.toFixed(2)}&currency_code=USD`}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setIsModalOpen(true)}
@@ -228,25 +214,26 @@ function CheckoutContent() {
             >
               <span className="italic font-serif font-black text-lg text-[#003087]">PayPal</span>
               <span className="font-extrabold text-xs text-[#003087]">
-                Payer avec PayPal ou Carte ({formattedPriceUSD}) →
+                {isFr ? `Payer avec PayPal ou Carte (${formattedPriceUSD}) →` : `Pay with Card / PayPal (${formattedPriceUSD}) →`}
               </span>
             </a>
 
-            {/* 3. Free Trial Button */}
+            {/* 2. M-Pesa Paybill / Validation Button */}
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className="w-full rounded-2xl border border-border/80 bg-secondary/40 hover:bg-secondary text-foreground font-bold text-xs py-3 px-6 transition-all cursor-pointer flex items-center justify-center gap-2"
+              className="w-full rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm py-3.5 px-6 shadow-lg shadow-emerald-600/20 transition-all cursor-pointer flex items-center justify-center gap-3 group min-h-[48px]"
             >
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span>Démarrer l&apos;Essai Gratuit de 14 Jours (Sans prélèvement immédiat)</span>
+              <Smartphone className="w-4 h-4" />
+              <span>{isFr ? `Valider via M-Pesa Paybill (${formattedPriceKES})` : `Verify M-Pesa Payment (${formattedPriceKES})`}</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
 
           {/* Guarantee Footnote */}
           <div className="flex items-center justify-center gap-2 text-xs font-mono text-muted-foreground pt-4 border-t border-border/60">
             <ShieldCheck className="w-4 h-4 text-emerald-500" />
-            <span>Garantie de Remboursement 14 Jours &bull; M-Pesa &amp; PayPal Sécurisés</span>
+            <span>{isFr ? "Garantie Tranquillité & Clarté Totale • M-Pesa & PayPal Sécurisés" : "14-Day Money-Back Guarantee • SSL 256-Bit Encrypted"}</span>
           </div>
         </div>
       </div>
@@ -264,7 +251,7 @@ function CheckoutContent() {
 
 export default function CheckoutPage() {
   return (
-    <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center text-xs font-mono text-muted-foreground">Chargement du guichet de paiement...</div>}>
+    <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center text-xs font-mono text-muted-foreground">Loading checkout...</div>}>
       <CheckoutContent />
     </React.Suspense>
   );

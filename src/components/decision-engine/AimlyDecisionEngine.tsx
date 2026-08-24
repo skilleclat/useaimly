@@ -277,6 +277,14 @@ export function AimlyDecisionEngine({
 
   // Why this verdict calculation explanation
   const whyVerdictExplanation = useMemo(() => {
+    const isExceedingCash = !effectiveRecurring && extractedAmount > activeBaseline.liquidSavings;
+
+    if (isExceedingCash) {
+      return isFr
+        ? `Cette dépense (${format(extractedAmount, { fromCurrency: "KES" })}) dépasse vos liquidités immédiatement mobilisables (${format(activeBaseline.liquidSavings, { fromCurrency: "KES" })}). Elle nécessiterait un endettement ou un report pour préserver votre stabilité.`
+        : `This purchase (${format(extractedAmount, { fromCurrency: "KES" })}) exceeds your immediately accessible cash reserves (${format(activeBaseline.liquidSavings, { fromCurrency: "KES" })}). Committing today would cause an immediate cash deficit.`;
+    }
+
     if (verdict.type === "RECOMMENDED") {
       return isFr
         ? `Vos liquidités disponibles (${format(activeBaseline.liquidSavings, { fromCurrency: "KES" })}) absorbent confortablement cet achat. Votre matelas d'urgence reste supérieur à 3 mois.`
@@ -287,10 +295,10 @@ export function AimlyDecisionEngine({
         : `This purchase is affordable, but it reduces your financial buffer below your preferred safety level (${emergencyRunwayMonths} mos) and delays your most important goal by ${goalDelayDays} days.`;
     } else {
       return isFr
-        ? `Cette dépense dépasse vos liquidités immédiatement mobilisables ou crée une pression mensuelle excessive sur vos charges obligatoires.`
-        : `This expenditure either exceeds available cash or creates excessive ongoing cash flow pressure against your fixed living obligations.`;
+        ? `Cette dépense fragilise excessivement vos réserves liquides ou crée une pression mensuelle excessive sur vos charges fixes.`
+        : `This expenditure either severely depletes your emergency buffer or creates excessive ongoing cash flow pressure against your fixed living obligations.`;
     }
-  }, [verdict, activeBaseline.liquidSavings, emergencyRunwayMonths, goalDelayDays, format, isFr]);
+  }, [verdict, extractedAmount, effectiveRecurring, activeBaseline.liquidSavings, emergencyRunwayMonths, goalDelayDays, format, isFr]);
 
   // Real Calculated Alternatives
   const calculatedAlternatives = useMemo(() => {
