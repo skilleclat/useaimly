@@ -13,6 +13,7 @@ import {
   Layers,
   HelpCircle,
   ArrowRight,
+  ArrowLeft,
   CheckCircle2,
   AlertTriangle,
   XCircle,
@@ -31,6 +32,11 @@ import {
   MessageSquare,
   BarChart3,
   Check,
+  FileDown,
+  Lock,
+  Compass,
+  Target,
+  Wallet,
 } from "lucide-react";
 import { useCurrency } from "@/lib/currency/currency-context";
 import { useI18n } from "@/lib/i18n/i18n-context";
@@ -39,12 +45,15 @@ import {
   simulateDecision,
   BaselineFinancialProfile,
   saveDecisionRecord,
-  getSavedDecisions,
 } from "@/lib/finance";
 import { calculateFreedomClock } from "@/lib/finance/health/freedom-clock";
 import { formatCurrency } from "@/lib/utils/currency";
-import { VerifiedDecisionReportModal } from "./VerifiedDecisionReportModal";
-import { VerifiedDecisionData } from "@/lib/decision-engine/decision-validator";
+import {
+  VerifiedDecisionData,
+  runAimlyCoherenceCheck,
+} from "@/lib/decision-engine/decision-validator";
+import { generateVerifiedDecisionReportPDF } from "@/lib/decision-engine/verified-report-generator";
+import { saveDecisionReportToVault } from "@/lib/decision-engine/report-vault";
 
 export type DecisionCategory =
   | "BUY_SOMETHING"
@@ -56,10 +65,18 @@ export type DecisionCategory =
   | "PAY_OFF_DEBT"
   | "OTHER";
 
+export type UserDecisionPriority =
+  | "PROTECT_CASH"
+  | "REACH_GOALS"
+  | "LOW_MONTHLY"
+  | "AVOID_DEBT"
+  | "BUY_SOONER";
+
 export interface AimlyDecisionEngineProps {
   baselineProfile?: BaselineFinancialProfile;
   initialQuery?: string;
   initialCategory?: DecisionCategory;
+  initialStep?: number;
   onSaved?: () => void;
   compact?: boolean;
 }
@@ -68,37 +85,43 @@ export function AimlyDecisionEngine({
   baselineProfile,
   initialQuery = "I'm thinking about buying a $2,000 laptop for my business.",
   initialCategory = "BUY_SOMETHING",
+  initialStep = 1,
   onSaved,
-  compact = false,
 }: AimlyDecisionEngineProps) {
   const router = useRouter();
   const { currency, format } = useCurrency();
   const { language } = useI18n();
   const isFr = language === "fr";
+  const isSw = language === "sw";
 
-  // Step 1: Decision Intent
+  // Active Journey Step: 1 to 7
+  const [currentStep, setCurrentStep] = useState<number>(initialStep);
+
+  // STEP 1: Decision Intake
   const [queryInput, setQueryInput] = useState(initialQuery);
   const [selectedCategory, setSelectedCategory] = useState<DecisionCategory>(initialCategory);
-  
-  // Step 2: Progressive Details Drawer & Assumptions
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
+  // STEP 2: Decision Details
   const [customAmount, setCustomAmount] = useState<number | null>(null);
   const [customDownPayment, setCustomDownPayment] = useState<number | null>(null);
   const [customMonthlyPayment, setCustomMonthlyPayment] = useState<number | null>(null);
   const [isRecurringExpense, setIsRecurringExpense] = useState(false);
   const [decisionTiming, setDecisionTiming] = useState<"TODAY" | "30_DAYS" | "90_DAYS">("TODAY");
 
-  // Profile Overrides (if user wants to tweak current baseline)
-  const [isProfileTweakOpen, setIsProfileTweakOpen] = useState(false);
+  // STEP 3: Financial Context Overrides
   const [overrideSavings, setOverrideSavings] = useState<number | null>(null);
   const [overrideIncome, setOverrideIncome] = useState<number | null>(null);
   const [overrideExpenses, setOverrideExpenses] = useState<number | null>(null);
+  const [overrideDebt, setOverrideDebt] = useState<number | null>(null);
+  const [isEditingContext, setIsEditingContext] = useState(false);
 
-  // UI States
+  // STEP 4: Goals & Priorities
+  const [selectedPriority, setSelectedPriority] = useState<UserDecisionPriority>("PROTECT_CASH");
+  const [selectedGoalId, setSelectedGoalId] = useState<string>("primary-goal");
+
+  // STEP 5 & 7: UI & Report states
   const [isSaved, setIsSaved] = useState(false);
-  const [activeAlternativeTab, setActiveAlternativeTab] = useState<"BUY_NOW" | "WAIT" | "CHEAPER">("BUY_NOW");
-  const [showSideBySideModal, setShowSideBySideModal] = useState(false);
-  const [showReportModal, setShowReportModal] = useState(false);
+  const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
   // Active Baseline Profile
@@ -116,8 +139,8 @@ export function AimlyDecisionEngine({
       commitments: [],
       goals: [
         {
-          id: "business-goal",
-          title: isFr ? "Objectif Lancement Entreprise" : "Business Launch Goal",
+          id: "primary-goal",
+          title: isFr ? "Lancement Entreprise & Projets" : isSw ? "Kuanzisha Biashara" : "Business Launch & Life Goal",
           targetAmount: 25000,
           currentAmount: 12000,
           targetDate: "2027-12-31",
@@ -126,6 +149,8 @@ export function AimlyDecisionEngine({
         },
       ],
     };
+
+    const monthlyDebtDefault = base.debts.reduce((acc, d) => acc + d.monthlyPayment, 0);
 
     return {
       ...base,
@@ -136,62 +161,65 @@ export function AimlyDecisionEngine({
       expenses: overrideExpenses !== null
         ? [{ name: "Living Expenses", amount: overrideExpenses, frequency: "MONTHLY", isFixed: true }]
         : base.expenses,
+      debts: overrideDebt !== null
+        ? [{ id: "debt-ovr", name: "Existing Debt", totalAmount: overrideDebt * 24, monthlyPayment: overrideDebt, interestRate: 0.1, category: "OTHER" as any, isSecured: false }]
+        : base.debts,
     };
-  }, [baselineProfile, overrideSavings, overrideIncome, overrideExpenses, isFr]);
+  }, [baselineProfile, overrideSavings, overrideIncome, overrideExpenses, overrideDebt, isFr, isSw]);
 
   // Categories definitions
   const CATEGORIES: { id: DecisionCategory; label: string; icon: React.ReactNode; defaultPrompt: string }[] = useMemo(
     () => [
       {
         id: "BUY_SOMETHING",
-        label: isFr ? "ACHAT MATÉRIEL" : "BUY SOMETHING",
-        icon: <ShoppingBag className="w-3.5 h-3.5" />,
+        label: isFr ? "ACHAT MATÉRIEL" : isSw ? "NUNUA KITU" : "BUY SOMETHING",
+        icon: <ShoppingBag className="w-4 h-4" />,
         defaultPrompt: isFr ? "J'envisage d'acheter un ordinateur à 2 000 $ pour mon activité." : "I'm thinking about buying a $2,000 laptop for my business.",
       },
       {
         id: "TAKE_A_LOAN",
-        label: isFr ? "SOUSCRIRE UN CRÉDIT" : "TAKE A LOAN",
-        icon: <CreditCard className="w-3.5 h-3.5" />,
+        label: isFr ? "SOUSCRIRE UN CRÉDIT" : isSw ? "CHUKUA MKOPO" : "TAKE A LOAN",
+        icon: <CreditCard className="w-4 h-4" />,
         defaultPrompt: isFr ? "Que se passe-t-il si je souscris un prêt de 10 000 $ avec 300 $/mois ?" : "What happens if I take a $10,000 loan with $300/mo payment?",
       },
       {
         id: "BUY_A_CAR",
-        label: isFr ? "ACHETER UNE VOITURE" : "BUY A CAR",
-        icon: <Car className="w-3.5 h-3.5" />,
+        label: isFr ? "ACHETER UNE VOITURE" : isSw ? "NUNUA GARI" : "BUY A VEHICLE",
+        icon: <Car className="w-4 h-4" />,
         defaultPrompt: isFr ? "Puis-je acheter une voiture à 15 000 $ avec 3 000 $ d'apport ?" : "Can I buy a $15,000 car with $3,000 down payment?",
       },
       {
         id: "MOVE_HOME",
-        label: isFr ? "DÉMÉNAGER / APPORT" : "MOVE HOME",
-        icon: <Home className="w-3.5 h-3.5" />,
-        defaultPrompt: isFr ? "Puis-je financer un apport immobilier de 30 000 $ ?" : "Can I afford a $30,000 home deposit?",
+        label: isFr ? "DÉMÉNAGEMENT / LOYER" : isSw ? "HAMIA NYUMBA" : "MOVE HOME",
+        icon: <Home className="w-4 h-4" />,
+        defaultPrompt: isFr ? "Puis-je emménager dans un logement à 1 800 $/mois ?" : "Can I move to an apartment with $1,800/mo rent?",
       },
       {
         id: "INVEST",
-        label: isFr ? "INVESTIR" : "INVEST",
-        icon: <TrendingUp className="w-3.5 h-3.5" />,
-        defaultPrompt: isFr ? "Que se passe-t-il si j'investis 5 000 $ dans un nouveau projet ?" : "What happens if I invest $5,000 into a new fund?",
+        label: isFr ? "INVESTIR DU CAPITAL" : isSw ? "WEKEZA FEDHA" : "INVEST MONEY",
+        icon: <TrendingUp className="w-4 h-4" />,
+        defaultPrompt: isFr ? "Quel impact si j'investis 5 000 $ dans un fonds indiciel ?" : "What happens if I invest $5,000 in an index fund?",
       },
       {
         id: "BUSINESS_EXPENSE",
-        label: isFr ? "DÉPENSE PRO" : "BUSINESS EXPENSE",
-        icon: <Briefcase className="w-3.5 h-3.5" />,
-        defaultPrompt: isFr ? "Puis-je engager une dépense logicielle ou recrutement de 1 200 $/mois ?" : "Can I afford a $1,200/mo software subscription or contractor?",
+        label: isFr ? "DÉPENSE PRO" : isSw ? "GHARAMA YA BIASHARA" : "BUSINESS EXPENSE",
+        icon: <Briefcase className="w-4 h-4" />,
+        defaultPrompt: isFr ? "Je prévois 3 000 $ de budget marketing pour mon lancement." : "I am planning $3,000 for product marketing.",
       },
       {
         id: "PAY_OFF_DEBT",
-        label: isFr ? "SOLDAGE DE DETTE" : "PAY OFF DEBT",
+        label: isFr ? "SOLDAGE DE DETTE" : isSw ? "LIPA DENI" : "PAY OFF DEBT",
         icon: <Layers className="w-3.5 h-3.5" />,
         defaultPrompt: isFr ? "Est-ce judicieux de solder 4 000 $ de dette immédiatement ?" : "Should I pay off $4,000 of debt in one lump sum?",
       },
       {
         id: "OTHER",
-        label: isFr ? "AUTRE DÉCISION" : "OTHER",
+        label: isFr ? "AUTRE PROJET" : isSw ? "UAMUZI MWINGINE" : "OTHER",
         icon: <HelpCircle className="w-3.5 h-3.5" />,
         defaultPrompt: isFr ? "Je prévois un voyage à 3 500 $." : "I am planning a $3,500 vacation.",
       },
     ],
-    [isFr]
+    [isFr, isSw]
   );
 
   // NLP Parser
@@ -208,8 +236,8 @@ export function AimlyDecisionEngine({
 
   const extractedTitle = useMemo(() => {
     if (parsed.isValid && parsed.extractedTitle) return parsed.extractedTitle;
-    return isFr ? "Achat Laptop Professionnel" : "Business Laptop Purchase";
-  }, [parsed, isFr]);
+    return isFr ? "Achat / Projet Financier" : isSw ? "Uamuzi wa Kifedha" : "Financial Decision Project";
+  }, [parsed, isFr, isSw]);
 
   const effectiveRecurring = isRecurringExpense || parsed.isRecurring;
 
@@ -223,14 +251,13 @@ export function AimlyDecisionEngine({
     });
   }, [activeBaseline, extractedTitle, extractedAmount, effectiveRecurring, currency]);
 
-  // Freedom Clock
-  const freedomClock = useMemo(() => {
-    return calculateFreedomClock(activeBaseline, extractedAmount, isFr);
-  }, [activeBaseline, extractedAmount, isFr]);
-
   // Derived 4 Key Metrics
   const monthlyExpenses = activeBaseline.expenses.reduce((acc, e) => acc + e.amount, 0);
-  const postDecisionCash = Math.max(0, activeBaseline.liquidSavings - (effectiveRecurring ? 0 : extractedAmount));
+  const monthlyDebt = activeBaseline.debts.reduce((acc, d) => acc + d.monthlyPayment, 0);
+  const monthlyInflow = activeBaseline.incomes.reduce((acc, i) => acc + i.amount, 0);
+  const netFreeCashFlow = Math.max(0, monthlyInflow - (monthlyExpenses + monthlyDebt));
+
+  const postDecisionCash = Math.max(0, activeBaseline.liquidSavings - (effectiveRecurring ? 0 : (customDownPayment || extractedAmount)));
   const emergencyRunwayMonths = monthlyExpenses > 0 ? (postDecisionCash / monthlyExpenses).toFixed(1) : "3.0";
   const goalDelayDays = simulation.delta.delayInDays || (extractedAmount >= 2000 ? 43 : Math.round(extractedAmount / 50));
   const monthlyPressurePercent = monthlyExpenses > 0
@@ -245,63 +272,71 @@ export function AimlyDecisionEngine({
     if (isSafe) {
       return {
         type: "RECOMMENDED",
-        label: isFr ? "RECOMMANDÉ" : "RECOMMENDED",
+        label: isFr ? "RECOMMANDÉ" : isSw ? "INASHAURIWA" : "RECOMMENDED",
         badgeStyle: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
         borderStyle: "border-emerald-500/40 ring-1 ring-emerald-500/20",
         icon: <CheckCircle2 className="w-5 h-5 text-emerald-500" />,
         headline: isFr
           ? "Cet engagement respecte parfaitement votre matelas de sécurité et vos objectifs."
-          : "This decision keeps your safety runway intact and preserves your life goals.",
+          : isSw
+          ? "Uamuzi huu unalinda akiba yako ya dharura na malengo yako makuu."
+          : "This commitment safely protects your emergency runway and life goals.",
       };
-    } else if (isCaution) {
+    }
+
+    if (isCaution) {
       return {
         type: "PROCEED_WITH_CAUTION",
-        label: isFr ? "PROCÉDER AVEC PRUDENCE" : "PROCEED WITH CAUTION",
+        label: isFr ? "PROCÉDER AVEC PRUDENCE" : isSw ? "ENDELEA KWA TAHADHARI" : "PROCEED WITH CAUTION",
         badgeStyle: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30",
         borderStyle: "border-amber-500/40 ring-1 ring-amber-500/20",
         icon: <AlertTriangle className="w-5 h-5 text-amber-500" />,
         headline: isFr
-          ? `Acheter ceci aujourd'hui retarde votre Objectif Entreprise de ${goalDelayDays} jours.`
-          : `Buying this today delays your Business Goal by ${goalDelayDays} days.`,
-      };
-    } else {
-      return {
-        type: "NOT_RECOMMENDED",
-        label: isFr ? "NON RECOMMANDÉ" : "NOT RECOMMENDED",
-        badgeStyle: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30",
-        borderStyle: "border-rose-500/40 ring-1 ring-rose-500/20",
-        icon: <XCircle className="w-5 h-5 text-rose-500" />,
-        headline: isFr
-          ? "Cette dépense fragilise excessivement votre réserve de sécurité immédiate."
-          : "This outlay drains your cash buffer below acceptable emergency thresholds.",
+          ? `L'achat est faisable immédiatement, mais il décale votre objectif de ${goalDelayDays} jours.`
+          : isSw
+          ? `Unaweza kununua leo, lakini inasogeza mbele lengo lako kwa siku ${goalDelayDays}.`
+          : `Buying this today delays your primary goal by ${goalDelayDays} days.`,
       };
     }
-  }, [simulation, postDecisionCash, monthlyExpenses, goalDelayDays, isFr]);
 
-  // Why this verdict calculation explanation
+    return {
+      type: "NOT_RECOMMENDED",
+      label: isFr ? "NON RECOMMANDÉ" : isSw ? "HAISHAURIWI" : "NOT RECOMMENDED",
+      badgeStyle: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30",
+      borderStyle: "border-rose-500/40 ring-1 ring-rose-500/20",
+      icon: <XCircle className="w-5 h-5 text-rose-500" />,
+      headline: isFr
+        ? "Cet engagement fragilise votre matelas de sécurité en dessous du seuil critique."
+        : isSw
+        ? "Uamuzi huu unashusha akiba yako ya dharura chini ya kiwango cha usalama."
+        : "This commitment puts your liquid safety buffer below critical safety levels.",
+    };
+  }, [simulation.executiveDecision, postDecisionCash, monthlyExpenses, goalDelayDays, isFr, isSw]);
+
+  // Why Verdict Explanation
   const whyVerdictExplanation = useMemo(() => {
-    const isExceedingCash = !effectiveRecurring && extractedAmount > activeBaseline.liquidSavings;
-
-    if (isExceedingCash) {
-      return isFr
-        ? `Cette dépense (${format(extractedAmount, { fromCurrency: "KES" })}) dépasse vos liquidités immédiatement mobilisables (${format(activeBaseline.liquidSavings, { fromCurrency: "KES" })}). Elle nécessiterait un endettement ou un report pour préserver votre stabilité.`
-        : `This purchase (${format(extractedAmount, { fromCurrency: "KES" })}) exceeds your immediately accessible cash reserves (${format(activeBaseline.liquidSavings, { fromCurrency: "KES" })}). Committing today would cause an immediate cash deficit.`;
-    }
-
     if (verdict.type === "RECOMMENDED") {
       return isFr
-        ? `Vos liquidités disponibles (${format(activeBaseline.liquidSavings, { fromCurrency: "KES" })}) absorbent confortablement cet achat. Votre matelas d'urgence reste supérieur à 3 mois.`
-        : `Your liquid savings comfortably cover this outlay. Your emergency runway remains safely above 3.0 months, keeping all life milestones on schedule.`;
-    } else if (verdict.type === "PROCEED_WITH_CAUTION") {
-      return isFr
-        ? `Cet achat est finançable, mais il réduit votre réserve d'urgence à ${emergencyRunwayMonths} mois et décale l'échéance de votre objectif principal de ${goalDelayDays} jours.`
-        : `This purchase is affordable, but it reduces your financial buffer below your preferred safety level (${emergencyRunwayMonths} mos) and delays your most important goal by ${goalDelayDays} days.`;
-    } else {
-      return isFr
-        ? `Cette dépense fragilise excessivement vos réserves liquides ou crée une pression mensuelle excessive sur vos charges fixes.`
-        : `This expenditure either severely depletes your emergency buffer or creates excessive ongoing cash flow pressure against your fixed living obligations.`;
+        ? `L'analyse déterministe confirme que même après déduction de ${format(extractedAmount, { fromCurrency: "KES" })}, vos réserves liquides s'élèvent à ${format(postDecisionCash, { fromCurrency: "KES" })}, soit ${emergencyRunwayMonths} mois de charges courantes protégées.`
+        : isSw
+        ? `Uchambuzi unathibitisha kuwa hata baada ya kutoa ${format(extractedAmount, { fromCurrency: "KES" })}, unabaki na ${format(postDecisionCash, { fromCurrency: "KES" })}, sawa na miezi ${emergencyRunwayMonths} ya matumizi ya lazima.`
+        : `Deterministic analysis verifies that after allocating ${format(extractedAmount, { fromCurrency: "KES" })}, you retain ${format(postDecisionCash, { fromCurrency: "KES" })} in liquid cash (${emergencyRunwayMonths} months of living runway protected).`;
     }
-  }, [verdict, extractedAmount, effectiveRecurring, activeBaseline.liquidSavings, emergencyRunwayMonths, goalDelayDays, format, isFr]);
+
+    if (verdict.type === "PROCEED_WITH_CAUTION") {
+      return isFr
+        ? `Vous possédez les liquidités nécessaires, mais cette dépense consomme ${format(extractedAmount, { fromCurrency: "KES" })} de votre épargne active, décalant l'atteinte de votre objectif principal de ${goalDelayDays} jours.`
+        : isSw
+        ? `Pesa unayo, lakini ununuzi huu unatumia ${format(extractedAmount, { fromCurrency: "KES" })} ya akiba yako, ukichelewesha lengo lako kwa siku ${goalDelayDays}.`
+        : `Cash availability permits this transaction, but it absorbs ${format(extractedAmount, { fromCurrency: "KES" })} of capital, shifting your primary destination arrival by ${goalDelayDays} days.`;
+    }
+
+    return isFr
+      ? `Cette décision absorberait une part excessive de vos réserves disponibles, abaissant votre matelas de résilience à ${emergencyRunwayMonths} mois (en dessous du seuil de sécurité recommandé de 3.0 mois).`
+      : isSw
+      ? `Uamuzi huu unamaliza akiba yako na kuacha miezi ${emergencyRunwayMonths} tu ya dharura (chini ya kiwango salama cha miezi 3.0).`
+      : `This commitment would severely deplete your available reserves, reducing your runway to ${emergencyRunwayMonths} months (below the mandatory 3.0-month safety threshold).`;
+  }, [verdict.type, extractedAmount, postDecisionCash, emergencyRunwayMonths, goalDelayDays, format, isFr, isSw]);
 
   // Real Calculated Alternatives
   const calculatedAlternatives = useMemo(() => {
@@ -312,39 +347,36 @@ export function AimlyDecisionEngine({
     return [
       {
         id: "BUY_NOW",
-        title: isFr ? "OPTION A : ACHETER AUJOURD'HUI" : "OPTION A: BUY NOW",
-        badge: isFr ? "Immédiat" : "Immediate",
-        delayLabel: `+${goalDelayDays} ${isFr ? "jours de retard" : "days delay"}`,
+        title: isFr ? "OPTION A : ACHETER AUJOURD'HUI" : isSw ? "CHAGUO A: NUNUA LEO" : "OPTION A: BUY TODAY",
+        badge: isFr ? "Immédiat" : isSw ? "Papo Hapo" : "Immediate",
+        delayLabel: `+${goalDelayDays} ${isFr ? "jours de retard" : isSw ? "siku za kuchelewa" : "days delay"}`,
         cashRemaining: format(postDecisionCash, { fromCurrency: "KES" }),
         runway: `${emergencyRunwayMonths} ${isFr ? "mois" : "mos"}`,
-        highlight: false,
+        highlight: selectedPriority === "BUY_SOONER",
       },
       {
         id: "WAIT",
-        title: isFr ? `OPTION B : ATTENDRE ${waitDays} JOURS` : `OPTION B: WAIT ${waitDays} DAYS`,
-        badge: isFr ? "Recommandé" : "Best Strategy",
-        delayLabel: isFr ? "0 jour de retard (Trajectoire préservée)" : "0 days delay (Stays on track)",
+        title: isFr ? `OPTION B : ATTENDRE ${waitDays} JOURS & ÉPARGNER` : isSw ? `CHAGUO B: SUBIRI SIKU ${waitDays} KISHA NUNUA` : `OPTION B: WAIT ${waitDays} DAYS & SAVE`,
+        badge: isFr ? "Recommandé" : isSw ? "Bora Zaidi" : "Aimly Best Option",
+        delayLabel: isFr ? "0 jour de retard (Trajectoire préservée)" : isSw ? "0 siku (Malengo salama)" : "0 days delay (Stays on track)",
         cashRemaining: format(activeBaseline.liquidSavings, { fromCurrency: "KES" }),
         runway: `${(activeBaseline.liquidSavings / Math.max(1, monthlyExpenses)).toFixed(1)} ${isFr ? "mois" : "mos"}`,
-        highlight: true,
+        highlight: selectedPriority !== "BUY_SOONER",
       },
       {
         id: "CHEAPER",
-        title: isFr ? `OPTION C : MODÈLE À ${format(cheaperAmount, { fromCurrency: "KES" })}` : `OPTION C: BUY THE ${format(cheaperAmount, { fromCurrency: "KES" })} OPTION`,
-        badge: isFr ? "Budget Optimisé" : "Budget Alternative",
+        title: isFr ? `OPTION C : MODÈLE OPTIMISÉ À ${format(cheaperAmount, { fromCurrency: "KES" })}` : isSw ? `CHAGUO C: CHUKUA YA BEI NAFUU YA ${format(cheaperAmount, { fromCurrency: "KES" })}` : `OPTION C: BUY THE ${format(cheaperAmount, { fromCurrency: "KES" })} OPTION`,
+        badge: isFr ? "Budget Optimisé" : isSw ? "Bajeti Nzuri" : "Budget Alternative",
         delayLabel: `+${cheaperDelayDays} ${isFr ? "jours de retard" : "days delay"}`,
         cashRemaining: format(Math.max(0, activeBaseline.liquidSavings - cheaperAmount), { fromCurrency: "KES" }),
         runway: `${(Math.max(0, activeBaseline.liquidSavings - cheaperAmount) / Math.max(1, monthlyExpenses)).toFixed(1)} ${isFr ? "mois" : "mos"}`,
         highlight: false,
       },
     ];
-  }, [extractedAmount, goalDelayDays, postDecisionCash, activeBaseline.liquidSavings, monthlyExpenses, format, isFr]);
+  }, [extractedAmount, goalDelayDays, postDecisionCash, activeBaseline.liquidSavings, monthlyExpenses, selectedPriority, format, isFr, isSw]);
 
+  // Structured Verified Data Contract
   const verifiedReportData: VerifiedDecisionData = useMemo(() => {
-    const monthlyIncome = activeBaseline.incomes.reduce((acc, i) => acc + i.amount, 0);
-    const monthlyDebt = activeBaseline.debts.reduce((acc, d) => acc + d.monthlyPayment, 0);
-    const netFCF = Math.max(0, monthlyIncome - (monthlyExpenses + monthlyDebt));
-
     return {
       decisionId: `dec-${Date.now()}`,
       reportId: `RPT-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -359,14 +391,14 @@ export function AimlyDecisionEngine({
       timestamp: new Date().toISOString(),
       baseline: {
         liquidSavings: activeBaseline.liquidSavings,
-        monthlyIncome,
+        monthlyIncome: monthlyInflow,
         monthlyExpenses,
         monthlyDebtService: monthlyDebt,
-        netFreeCashFlow: netFCF,
+        netFreeCashFlow,
         emergencyRunwayMonths: Number(emergencyRunwayMonths),
         primaryGoalTitle: activeBaseline.goals[0]?.title || "Business Goal",
-        primaryGoalTarget: activeBaseline.goals[0]?.targetAmount || 500000,
-        primaryGoalCurrent: activeBaseline.goals[0]?.currentAmount || 180000,
+        primaryGoalTarget: activeBaseline.goals[0]?.targetAmount || 25000,
+        primaryGoalCurrent: activeBaseline.goals[0]?.currentAmount || 12000,
         primaryGoalTargetDate: activeBaseline.goals[0]?.targetDate || "2027-12-31",
       },
       calculatedImpact: {
@@ -405,7 +437,7 @@ export function AimlyDecisionEngine({
       narrative: {
         executiveSummary: whyVerdictExplanation,
         whyThisVerdict: whyVerdictExplanation,
-        recommendedPath: isFr ? "Option B (Attendre ou étaler pour préserver le capital)" : "Option B (Wait or Budget Alternative to protect baseline capital)",
+        recommendedPath: isFr ? "Option B (Attendre ou étaler pour préserver le capital)" : isSw ? "Chaguo B (Subiri na uweke akiba kwanza)" : "Option B (Wait or Budget Alternative to protect baseline capital)",
         tradeoffsSummary: isFr ? `Arbitrage : Liquidité immédiate vs date d'arrivée de "${activeBaseline.goals[0]?.title || "Objectif"}"` : `Trade-off: Immediate liquidity vs "${activeBaseline.goals[0]?.title || "Goal"}" arrival timeline`,
       },
       assumptions: [
@@ -423,7 +455,10 @@ export function AimlyDecisionEngine({
     effectiveRecurring,
     currency,
     activeBaseline,
+    monthlyInflow,
     monthlyExpenses,
+    monthlyDebt,
+    netFreeCashFlow,
     emergencyRunwayMonths,
     postDecisionCash,
     goalDelayDays,
@@ -432,12 +467,49 @@ export function AimlyDecisionEngine({
     whyVerdictExplanation,
     calculatedAlternatives,
     isFr,
+    isSw,
   ]);
 
-  const handleSave = () => {
+  // The Aimly Coherence Check
+  const verification = useMemo(() => {
+    return runAimlyCoherenceCheck(verifiedReportData);
+  }, [verifiedReportData]);
+
+  // Handlers
+  const handleNextStep = () => {
+    if (currentStep < 7) {
+      setCurrentStep((prev) => prev + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep((prev) => prev - 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handleSaveDecision = () => {
     saveDecisionRecord(activeBaseline, extractedTitle, extractedAmount, effectiveRecurring);
+    saveDecisionReportToVault(verifiedReportData, verification);
     setIsSaved(true);
     if (onSaved) onSaved();
+  };
+
+  const handleDownloadPDF = () => {
+    setIsDownloadingPDF(true);
+    try {
+      const doc = generateVerifiedDecisionReportPDF(verifiedReportData, verification, language as any);
+      doc.save(`UseAimly_Report_${extractedTitle.replace(/\s+/g, "_")}_${verifiedReportData.reportId}.pdf`);
+      saveDecisionReportToVault(verifiedReportData, verification);
+      setIsSaved(true);
+      if (onSaved) onSaved();
+    } catch (e) {
+      console.error("PDF generation failed:", e);
+    } finally {
+      setIsDownloadingPDF(false);
+    }
   };
 
   const handleShare = () => {
@@ -448,582 +520,957 @@ export function AimlyDecisionEngine({
     }
   };
 
+  // Step Labels for Header
+  const STEP_TITLES = [
+    { num: 1, label: isFr ? "Définir" : isSw ? "Tambulisha" : "Define" },
+    { num: 2, label: isFr ? "Détails" : isSw ? "Maelezo" : "Details" },
+    { num: 3, label: isFr ? "Contexte" : isSw ? "Wasifu" : "Context" },
+    { num: 4, label: isFr ? "Priorités" : isSw ? "Vipaumbele" : "Priorities" },
+    { num: 5, label: isFr ? "Analyser" : isSw ? "Chambua" : "Analyze" },
+    { num: 6, label: isFr ? "Vérifier" : isSw ? "Thibitisha" : "Verify" },
+    { num: 7, label: isFr ? "Rapport" : isSw ? "Ripoti" : "Report" },
+  ];
+
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-8 font-sans antialiased animate-fadeIn">
+    <div className="w-full max-w-4xl mx-auto space-y-6 font-sans antialiased text-left animate-fadeIn">
       
       {/* ─────────────────────────────────────────────────────────────
-          STEP 1 — WHAT ARE YOU CONSIDERING?
+          PROGRESS NAVIGATION BAR (ELEGANT 7-STEP DOCK)
       ───────────────────────────────────────────────────────────── */}
-      <section className="rounded-3xl border border-border/80 bg-card p-6 sm:p-8 space-y-6 shadow-sm text-left">
-        <div className="space-y-1.5">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-mono font-bold uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{isFr ? "ÉTAPE 1 — QUE PROJETEZ-VOUS ?" : "STEP 1 — WHAT ARE YOU CONSIDERING?"}</span>
+      <div className="rounded-3xl border border-border/80 bg-card p-4 sm:p-5 shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-mono font-bold uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>
+                {isFr
+                  ? `ÉTAPE ${currentStep} SUR 7`
+                  : isSw
+                  ? `HATUA YA ${currentStep} KATI YA 7`
+                  : `STEP ${currentStep} OF 7`}
+              </span>
+            </span>
+            <span className="text-xs font-bold text-foreground hidden sm:inline">
+              {STEP_TITLES[currentStep - 1]?.label}
+            </span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">
-            {isFr ? "Quelle décision financière envisagez-vous ?" : "What financial decision are you thinking about?"}
-          </h2>
-          <p className="text-xs text-muted-foreground font-medium">
-            {isFr
-              ? "Décrivez votre achat, emprunt ou investissement en langage naturel."
-              : "Describe your proposed purchase, loan, or investment in plain language."}
-          </p>
+
+          <div className="flex items-center gap-2">
+            {currentStep > 1 && (
+              <button
+                type="button"
+                onClick={handlePrevStep}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-border/80 bg-secondary/60 hover:bg-secondary text-xs font-semibold text-foreground transition-all cursor-pointer min-h-[36px]"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>{isFr ? "Précédent" : isSw ? "Nyuma" : "Back"}</span>
+              </button>
+            )}
+
+            <span className="text-[11px] font-mono text-muted-foreground">
+              {Math.round((currentStep / 7) * 100)}%
+            </span>
+          </div>
         </div>
 
-        {/* Quick Category Chips Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-          {CATEGORIES.map((cat) => {
-            const isSelected = selectedCategory === cat.id;
+        {/* Visual Progress Bar */}
+        <div className="w-full bg-secondary h-2 rounded-full overflow-hidden flex">
+          <div
+            className="bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] h-full transition-all duration-300 rounded-full"
+            style={{ width: `${(currentStep / 7) * 100}%` }}
+          />
+        </div>
+
+        {/* Desktop Step Nav Pill Row */}
+        <div className="hidden sm:grid sm:grid-cols-7 gap-1 pt-1">
+          {STEP_TITLES.map((st) => {
+            const isCompleted = st.num < currentStep;
+            const isCurrent = st.num === currentStep;
+
             return (
               <button
-                key={cat.id}
+                key={st.num}
                 type="button"
-                onClick={() => {
-                  setSelectedCategory(cat.id);
-                  setQueryInput(cat.defaultPrompt);
-                }}
-                className={`p-3 rounded-2xl border text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                  isSelected
-                    ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                    : "bg-secondary/40 border-border/70 text-muted-foreground hover:text-foreground hover:bg-secondary"
+                onClick={() => setCurrentStep(st.num)}
+                className={`py-1.5 px-2 rounded-xl text-[11px] font-bold text-center transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                  isCurrent
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : isCompleted
+                    ? "bg-secondary text-foreground hover:bg-secondary/80"
+                    : "text-muted-foreground hover:text-foreground opacity-60"
                 }`}
               >
-                {cat.icon}
-                <span className="truncate text-[11px]">{cat.label}</span>
+                {isCompleted ? <Check className="w-3 h-3 text-emerald-500" /> : <span>{st.num}.</span>}
+                <span className="truncate">{st.label}</span>
               </button>
             );
           })}
         </div>
+      </div>
 
-        {/* Main Input Box */}
-        <div className="space-y-2 pt-1">
-          <div className="relative">
-            <input
-              type="text"
+
+      {/* ─────────────────────────────────────────────────────────────
+          STEP 1 OF 7 — DEFINE THE DECISION
+      ───────────────────────────────────────────────────────────── */}
+      {currentStep === 1 && (
+        <section className="rounded-3xl border border-border/80 bg-card p-6 sm:p-9 space-y-6 shadow-sm animate-fadeIn">
+          <div className="space-y-1.5">
+            <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+              {isFr
+                ? "Quelle décision financière envisagez-vous ?"
+                : isSw
+                ? "Ni uamuzi gani wa kifedha unaofikiria?"
+                : "What financial decision are you considering?"}
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+              {isFr
+                ? "Décrivez votre achat, investissement, crédit ou projet de vie en langage naturel."
+                : isSw
+                ? "Andika uamuzi wako wa kifedha kwa lugha rahisi unavyofikiria."
+                : "Describe your proposed purchase, loan, or investment in natural language."}
+            </p>
+          </div>
+
+          {/* Quick Category Chips Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+            {CATEGORIES.map((cat) => {
+              const isSelected = selectedCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory(cat.id);
+                    setQueryInput(cat.defaultPrompt);
+                  }}
+                  className={`p-3.5 rounded-2xl border text-xs font-bold transition-all flex items-center gap-2.5 cursor-pointer min-h-[48px] ${
+                    isSelected
+                      ? "bg-primary text-primary-foreground border-primary shadow-xs scale-[1.01]"
+                      : "bg-secondary/40 border-border/70 text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  }`}
+                >
+                  {cat.icon}
+                  <span className="truncate text-xs font-bold">{cat.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Main Input Box */}
+          <div className="space-y-2 pt-1">
+            <textarea
+              rows={3}
               value={queryInput}
               onChange={(e) => setQueryInput(e.target.value)}
               placeholder={
                 isFr
                   ? "Exemple : J'envisage d'acheter un ordinateur à 2 000 $ pour mon activité."
+                  : isSw
+                  ? "Mfano: Ninafikiria kununua kompyuta ya KSh 150,000 kwa ajili ya kazi yangu."
                   : "Example: I'm thinking about buying a $2,000 laptop for my business."
               }
-              className="w-full rounded-2xl border border-border/90 bg-background px-4 py-3.5 text-sm sm:text-base font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-xs"
+              className="w-full rounded-2xl border border-border/90 bg-background p-4 text-sm sm:text-base font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-xs resize-none"
             />
+
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>{isFr ? "Montant détecté :" : isSw ? "Kiasi kilichotambuliwa:" : "Extracted amount:"} <strong className="text-foreground font-mono">{format(extractedAmount, { fromCurrency: "KES" })}</strong></span>
+              <span className="font-mono text-[11px]">{extractedTitle}</span>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+          {/* Primary Action */}
+          <div className="pt-4 border-t border-border/60 flex justify-end">
             <button
               type="button"
-              onClick={() => setIsDetailsOpen(!isDetailsOpen)}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline cursor-pointer"
+              onClick={handleNextStep}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
             >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>{isDetailsOpen ? (isFr ? "Masquer les détails" : "Hide fine details") : (isFr ? "+ Préciser des détails (Acompte, mensualités)" : "+ Fine-tune details (Down payment, monthly timing)")}</span>
+              <span>{isFr ? "Continuer vers les Détails" : isSw ? "Endelea kwa Maelezo" : "Continue to Details"}</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
-
-            <span className="text-[11px] font-mono text-muted-foreground">
-              {isFr ? "Montant extrait :" : "Extracted amount:"} <strong className="text-foreground">{format(extractedAmount, { fromCurrency: "KES" })}</strong>
-            </span>
           </div>
-        </div>
-
-        {/* Progressive Disclosure: Decision Details Drawer */}
-        {isDetailsOpen && (
-          <div className="p-4 sm:p-5 rounded-2xl bg-secondary/30 border border-border/70 space-y-4 text-xs animate-fadeIn">
-            <span className="font-bold text-foreground block">
-              {isFr ? "Paramètres avancés de la décision :" : "Fine-tune scenario parameters:"}
-            </span>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="text-[11px] font-medium text-muted-foreground block mb-1">
-                  {isFr ? "Montant Total / Prix" : "Purchase Price / Total Outlay"}
-                </label>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  value={customAmount ?? extractedAmount}
-                  onChange={(e) => setCustomAmount(Number(e.target.value) || null)}
-                  className="w-full rounded-xl bg-background border border-border px-3.5 py-2.5 text-xs font-mono font-bold text-foreground focus:outline-none focus:border-primary min-h-[44px]"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-medium text-muted-foreground block mb-1">
-                  {isFr ? "Acompte / Apport Immédiat" : "Down Payment (if financing)"}
-                </label>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  placeholder="0"
-                  value={customDownPayment ?? ""}
-                  onChange={(e) => setCustomDownPayment(Number(e.target.value) || null)}
-                  className="w-full rounded-xl bg-background border border-border px-3.5 py-2.5 text-xs font-mono text-foreground focus:outline-none focus:border-primary min-h-[44px]"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-medium text-muted-foreground block mb-1">
-                  {isFr ? "Mensualité (si crédit / récurrent)" : "Monthly Obligation (if loan)"}
-                </label>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  placeholder="0"
-                  value={customMonthlyPayment ?? ""}
-                  onChange={(e) => setCustomMonthlyPayment(Number(e.target.value) || null)}
-                  className="w-full rounded-xl bg-background border border-border px-3.5 py-2.5 text-xs font-mono text-foreground focus:outline-none focus:border-primary min-h-[44px]"
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border/50">
-              <label className="inline-flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isRecurringExpense}
-                  onChange={(e) => setIsRecurringExpense(e.target.checked)}
-                  className="rounded text-primary focus:ring-primary"
-                />
-                <span className="text-xs font-semibold text-foreground">
-                  {isFr ? "Il s'agit d'une dépense récurrente mensuelle" : "This is a recurring monthly obligation"}
-                </span>
-              </label>
-
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] text-muted-foreground font-medium">{isFr ? "Échéance :" : "Timing:"}</span>
-                {(["TODAY", "30_DAYS", "90_DAYS"] as const).map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setDecisionTiming(t)}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all ${
-                      decisionTiming === t
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {t === "TODAY" ? (isFr ? "Aujourd'hui" : "Today") : t === "30_DAYS" ? "+30j" : "+90j"}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Existing Profile Assumption Transparency Bar */}
-        <div className="p-3.5 rounded-2xl bg-secondary/40 border border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-            <span className="text-muted-foreground font-medium">
-              {isFr ? "Basé sur votre profil financier actuel :" : "Using your current financial profile:"}{" "}
-              <strong className="text-foreground">{format(activeBaseline.liquidSavings, { fromCurrency: "KES" })}</strong> {isFr ? "épargne" : "savings"} •{" "}
-              <strong className="text-foreground">{format(activeBaseline.incomes[0]?.amount || 4500, { fromCurrency: "KES" })}/mo</strong> {isFr ? "revenu" : "income"}
-            </span>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setIsProfileTweakOpen(!isProfileTweakOpen)}
-            className="text-primary font-bold hover:underline self-start sm:self-auto cursor-pointer"
-          >
-            {isProfileTweakOpen ? (isFr ? "Fermer" : "Close") : (isFr ? "Vérifier les hypothèses" : "Review assumptions")}
-          </button>
-        </div>
-
-        {/* Profile Assumption Editor Drawer */}
-        {isProfileTweakOpen && (
-          <div className="p-4 rounded-2xl bg-secondary/20 border border-border/60 space-y-3 text-xs animate-fadeIn">
-            <span className="font-bold text-foreground block">
-              {isFr ? "Ajuster temporairement vos données de base :" : "Adjust baseline inputs for this calculation:"}
-            </span>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="text-[11px] text-muted-foreground block mb-1">
-                  {isFr ? "Réserves liquides" : "Liquid Savings"}
-                </label>
-                <input
-                  type="number"
-                  value={overrideSavings ?? activeBaseline.liquidSavings}
-                  onChange={(e) => setOverrideSavings(Number(e.target.value) || null)}
-                  className="w-full rounded-xl bg-background border border-border px-3 py-2 text-xs font-mono text-foreground"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] text-muted-foreground block mb-1">
-                  {isFr ? "Revenu Mensuel" : "Monthly Income"}
-                </label>
-                <input
-                  type="number"
-                  value={overrideIncome ?? activeBaseline.incomes[0]?.amount}
-                  onChange={(e) => setOverrideIncome(Number(e.target.value) || null)}
-                  className="w-full rounded-xl bg-background border border-border px-3 py-2 text-xs font-mono text-foreground"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] text-muted-foreground block mb-1">
-                  {isFr ? "Dépenses Mensuelles" : "Monthly Living Outflows"}
-                </label>
-                <input
-                  type="number"
-                  value={overrideExpenses ?? monthlyExpenses}
-                  onChange={(e) => setOverrideExpenses(Number(e.target.value) || null)}
-                  className="w-full rounded-xl bg-background border border-border px-3 py-2 text-xs font-mono text-foreground"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-      </section>
+        </section>
+      )}
 
 
       {/* ─────────────────────────────────────────────────────────────
-          STEP 4 — SIGNATURE DECISION RESULT SCREEN (SCREENSHOT-WORTHY)
+          STEP 2 OF 7 — DECISION DETAILS
       ───────────────────────────────────────────────────────────── */}
-      <section className={`rounded-3xl border ${verdict.borderStyle} bg-card p-6 sm:p-9 space-y-8 shadow-xl text-left transition-all relative overflow-hidden`}>
-        
-        {/* Top Verdict Header */}
-        <div className="space-y-3 border-b border-border/60 pb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full font-mono font-extrabold text-xs tracking-wider border ${verdict.badgeStyle}`}>
-              {verdict.icon}
-              <span>{verdict.label}</span>
-            </span>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleShare}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border/80 bg-secondary/50 hover:bg-secondary text-xs font-semibold text-foreground transition-all cursor-pointer"
-                title="Share Result"
-              >
-                {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5" />}
-                <span>{copiedLink ? (isFr ? "Lien copié" : "Copied!") : (isFr ? "Partager" : "Share")}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleSave}
-                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
-                  isSaved
-                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-                    : "bg-secondary/50 border-border/80 text-foreground hover:bg-secondary"
-                }`}
-              >
-                <Bookmark className={`w-3.5 h-3.5 ${isSaved ? "fill-emerald-500 text-emerald-500" : ""}`} />
-                <span>{isSaved ? (isFr ? "Enregistré" : "Saved") : (isFr ? "Enregistrer" : "Save")}</span>
-              </button>
-            </div>
-          </div>
-
-          <h3 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight leading-snug">
-            {verdict.headline}
-          </h3>
-        </div>
-
-        {/* 4 HIGH-VALUE METRICS */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {/* Metric 1: Cash After Decision */}
-          <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
-            <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-              {isFr ? "CASH APRÈS DÉCISION" : "CASH AFTER DECISION"}
-            </span>
-            <span className="text-xl sm:text-2xl font-black text-foreground font-mono block">
-              {format(postDecisionCash, { fromCurrency: "KES" })}
-            </span>
-            <span className="text-[11px] text-muted-foreground font-medium block">
-              -{format(extractedAmount, { fromCurrency: "KES" })} {isFr ? "déduit" : "outflow"}
-            </span>
-          </div>
-
-          {/* Metric 2: Emergency Runway */}
-          <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
-            <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-              {isFr ? "MATELAS D'URGENCE" : "EMERGENCY RUNWAY"}
-            </span>
-            <span className="text-xl sm:text-2xl font-black text-foreground font-mono block">
-              {emergencyRunwayMonths} {isFr ? "mois" : "months"}
-            </span>
-            <span className="text-[11px] text-amber-600 dark:text-amber-400 font-bold block">
-              {Number(emergencyRunwayMonths) < 3.0 ? (isFr ? "Sous le seuil de 3 mois" : "Below 3.0 mo target") : (isFr ? "Zone sécurisée" : "Safe buffer")}
-            </span>
-          </div>
-
-          {/* Metric 3: Goal Impact */}
-          <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 space-y-1">
-            <span className="text-[10px] font-mono uppercase text-rose-600 dark:text-rose-400 font-bold block">
-              {isFr ? "IMPACT SUR L'OBJECTIF" : "GOAL IMPACT"}
-            </span>
-            <span className="text-xl sm:text-2xl font-black text-rose-600 dark:text-rose-400 font-mono block">
-              -{goalDelayDays} {isFr ? "jours" : "days"}
-            </span>
-            <span className="text-[11px] text-rose-600/80 dark:text-rose-400/80 font-medium block truncate">
-              {activeBaseline.goals[0]?.title || "Business Goal"}
-            </span>
-          </div>
-
-          {/* Metric 4: Monthly Financial Pressure */}
-          <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
-            <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-              {isFr ? "PRESSION MENSUELLE" : "MONTHLY PRESSURE"}
-            </span>
-            <span className="text-xl sm:text-2xl font-black text-foreground font-mono block">
-              +{monthlyPressurePercent}%
-            </span>
-            <span className="text-[11px] text-muted-foreground font-medium block">
-              {isFr ? "sur le cash-flow libre" : "free cash flow shift"}
-            </span>
-          </div>
-        </div>
-
-        {/* WHY THIS VERDICT? */}
-        <div className="p-5 rounded-2xl bg-secondary/30 border border-border/70 space-y-2 text-left">
-          <span className="text-xs font-mono uppercase tracking-wider text-primary font-bold block">
-            {isFr ? "POURQUOI CE VERDICT ?" : "WHY THIS VERDICT?"}
-          </span>
-          <p className="text-sm font-medium text-foreground leading-relaxed">
-            {whyVerdictExplanation}
-          </p>
-        </div>
-
-        {/* AIMLY'S BETTER ALTERNATIVES */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono uppercase tracking-wider text-primary font-bold">
-              {isFr ? "LES MEILLEURES ALTERNATIVES D'AIMLY" : "AIMLY'S BETTER ALTERNATIVES"}
-            </span>
-            <button
-              type="button"
-              onClick={() => setShowSideBySideModal(true)}
-              className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline cursor-pointer"
-            >
-              <BarChart3 className="w-3.5 h-3.5" />
-              <span>{isFr ? "Comparer côte à côte" : "Compare Options"}</span>
-            </button>
+      {currentStep === 2 && (
+        <section className="rounded-3xl border border-border/80 bg-card p-6 sm:p-9 space-y-6 shadow-sm animate-fadeIn">
+          <div className="space-y-1.5">
+            <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+              {isFr ? "Précisez les paramètres de la décision" : isSw ? "Weka maelezo kamili ya uamuzi" : "Tell us about the decision"}
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+              {isFr
+                ? "Ajustez les montants réels, les échéances et les modalités de paiement."
+                : isSw
+                ? "Weka kiasi halisi, njia ya malipo na muda unaopanga kutumia."
+                : "Fine-tune purchase price, down payments, and proposed execution timing."}
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {calculatedAlternatives.map((alt) => (
-              <div
-                key={alt.id}
-                className={`p-5 rounded-2xl border flex flex-col justify-between space-y-3 transition-all ${
-                  alt.highlight
-                    ? "bg-emerald-500/10 border-emerald-500/40 ring-1 ring-emerald-500/30"
-                    : "bg-secondary/30 border-border/70"
-                }`}
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
+            <div className="space-y-1.5">
+              <label className="text-xs font-mono font-bold text-foreground block">
+                {isFr ? "Montant Total / Prix" : isSw ? "Kiasi Kamili / Bei" : "Purchase Price / Total Outlay"}
+              </label>
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                value={customAmount ?? extractedAmount}
+                onChange={(e) => setCustomAmount(Number(e.target.value) || null)}
+                className="w-full rounded-2xl bg-background border border-border px-4 py-3 text-sm font-mono font-bold text-foreground focus:outline-none focus:border-primary min-h-[46px]"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-mono font-bold text-foreground block">
+                {isFr ? "Acompte / Apport Immédiat" : isSw ? "Pesa ya Awali (Kama ipo)" : "Down Payment (if financing)"}
+              </label>
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                placeholder="0"
+                value={customDownPayment ?? ""}
+                onChange={(e) => setCustomDownPayment(Number(e.target.value) || null)}
+                className="w-full rounded-2xl bg-background border border-border px-4 py-3 text-sm font-mono text-foreground focus:outline-none focus:border-primary min-h-[46px]"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-mono font-bold text-foreground block">
+                {isFr ? "Mensualité (si crédit)" : isSw ? "Malipo ya Kila Mwezi" : "Monthly Payment (if loan/recurring)"}
+              </label>
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                placeholder="0"
+                value={customMonthlyPayment ?? ""}
+                onChange={(e) => setCustomMonthlyPayment(Number(e.target.value) || null)}
+                className="w-full rounded-2xl bg-background border border-border px-4 py-3 text-sm font-mono text-foreground focus:outline-none focus:border-primary min-h-[46px]"
+              />
+            </div>
+          </div>
+
+          {/* Timing Selector */}
+          <div className="p-4 rounded-2xl bg-secondary/30 border border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <span className="font-bold text-foreground">
+              {isFr ? "Date envisagée pour l'engagement :" : isSw ? "Unapanga kutekeleza lini:" : "Proposed Execution Timing:"}
+            </span>
+
+            <div className="flex items-center gap-2">
+              {(["TODAY", "30_DAYS", "90_DAYS"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setDecisionTiming(t)}
+                  className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer min-h-[38px] ${
+                    decisionTiming === t
+                      ? "bg-primary text-primary-foreground shadow-xs"
+                      : "bg-secondary text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t === "TODAY" ? (isFr ? "Aujourd'hui" : isSw ? "Leo" : "Today") : t === "30_DAYS" ? "+30j" : "+90j"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Recurring Toggle */}
+          <label className="flex items-center gap-3 p-4 rounded-2xl bg-secondary/30 border border-border/60 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isRecurringExpense}
+              onChange={(e) => setIsRecurringExpense(e.target.checked)}
+              className="w-4 h-4 rounded text-primary focus:ring-primary accent-[#FF5533]"
+            />
+            <span className="text-xs font-bold text-foreground">
+              {isFr
+                ? "Il s'agit d'une dépense ou charge récurrente mensuelle"
+                : isSw
+                ? "Huu ni mzigo wa mara kwa mara kila mwezi (recurring)"
+                : "This is a recurring monthly obligation / expense"}
+            </span>
+          </label>
+
+          {/* Actions */}
+          <div className="pt-4 border-t border-border/60 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={handlePrevStep}
+              className="inline-flex items-center gap-1 px-4 py-3 rounded-xl bg-secondary text-xs font-bold text-foreground cursor-pointer min-h-[44px]"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>{isFr ? "Retour" : isSw ? "Nyuma" : "Back"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNextStep}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
+            >
+              <span>{isFr ? "Valider & Vérifier le Contexte" : isSw ? "Thibitisha Wasifu" : "Confirm & Check Context"}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </section>
+      )}
+
+
+      {/* ─────────────────────────────────────────────────────────────
+          STEP 3 OF 7 — FINANCIAL CONTEXT
+      ───────────────────────────────────────────────────────────── */}
+      {currentStep === 3 && (
+        <section className="rounded-3xl border border-border/80 bg-card p-6 sm:p-9 space-y-6 shadow-sm animate-fadeIn">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-1">
+              <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+                {isFr ? "Vérifions votre contexte financier" : isSw ? "Huu ndio wasifu wako wa kifedha" : "Let's check your financial context"}
+              </h2>
+              <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+                {isFr
+                  ? "Voici les données réelles qu'UseAimly utilisera pour modéliser l'impact."
+                  : isSw
+                  ? "Takwimu hizi zitatumika kuhesabu uamuzi wako kwa usahihi wa hali ya juu."
+                  : "Review the financial baseline data UseAimly will use for calculation."}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsEditingContext(!isEditingContext)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-secondary/60 text-xs font-bold text-primary hover:underline cursor-pointer"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>{isEditingContext ? (isFr ? "Terminer l'édition" : "Done Editing") : (isFr ? "Modifier ces chiffres" : "Edit Numbers")}</span>
+            </button>
+          </div>
+
+          {/* 6 Key Baseline Indicators Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 text-xs">
+            <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
+              <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
+                {isFr ? "LIQUIDITÉS DISPONIBLES" : isSw ? "AKIBA YA PAPO HAPO" : "AVAILABLE CASH"}
+              </span>
+              {isEditingContext ? (
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={overrideSavings ?? activeBaseline.liquidSavings}
+                  onChange={(e) => setOverrideSavings(Number(e.target.value) || null)}
+                  className="w-full rounded-xl bg-background border px-2 py-1 font-mono font-bold"
+                />
+              ) : (
+                <span className="text-lg font-black text-foreground font-mono block">
+                  {format(activeBaseline.liquidSavings, { fromCurrency: "KES" })}
+                </span>
+              )}
+              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold block">
+                ✓ {isFr ? "Donnée Confirmée" : "Confirmed Baseline"}
+              </span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
+              <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
+                {isFr ? "REVENU MENSUEL" : isSw ? "MAPATO YA MWEZI" : "MONTHLY INFLOW"}
+              </span>
+              {isEditingContext ? (
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={overrideIncome ?? monthlyInflow}
+                  onChange={(e) => setOverrideIncome(Number(e.target.value) || null)}
+                  className="w-full rounded-xl bg-background border px-2 py-1 font-mono font-bold"
+                />
+              ) : (
+                <span className="text-lg font-black text-foreground font-mono block">
+                  +{format(monthlyInflow, { fromCurrency: "KES" })}
+                </span>
+              )}
+              <span className="text-[10px] text-muted-foreground block">
+                {isFr ? "Entrées nettes" : "Net regular inflows"}
+              </span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
+              <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
+                {isFr ? "DÉPENSES FIXES" : isSw ? "GHARAMA ZA LAZIMA" : "FIXED EXPENSES"}
+              </span>
+              {isEditingContext ? (
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={overrideExpenses ?? monthlyExpenses}
+                  onChange={(e) => setOverrideExpenses(Number(e.target.value) || null)}
+                  className="w-full rounded-xl bg-background border px-2 py-1 font-mono font-bold"
+                />
+              ) : (
+                <span className="text-lg font-black text-foreground font-mono block">
+                  {format(monthlyExpenses, { fromCurrency: "KES" })}
+                </span>
+              )}
+              <span className="text-[10px] text-muted-foreground block">
+                {isFr ? "Loyer & Factures" : "Rent & living costs"}
+              </span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
+              <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
+                {isFr ? "REMBOURSEMENT DETTES" : isSw ? "MALIPO YA MADENI" : "DEBT SERVICE"}
+              </span>
+              {isEditingContext ? (
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={overrideDebt ?? monthlyDebt}
+                  onChange={(e) => setOverrideDebt(Number(e.target.value) || null)}
+                  className="w-full rounded-xl bg-background border px-2 py-1 font-mono font-bold"
+                />
+              ) : (
+                <span className="text-lg font-black text-foreground font-mono block">
+                  {format(monthlyDebt, { fromCurrency: "KES" })}/mo
+                </span>
+              )}
+              <span className="text-[10px] text-muted-foreground block">
+                {monthlyDebt > 0 ? (isFr ? "Passifs en cours" : "Active obligations") : isFr ? "Aucune dette active" : "Zero active debt"}
+              </span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
+              <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
+                {isFr ? "CASH-FLOW LIBRE NET" : isSw ? "PESA HURU YA MWEZI" : "NET FREE CASH FLOW"}
+              </span>
+              <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono block">
+                +{format(netFreeCashFlow, { fromCurrency: "KES" })}
+              </span>
+              <span className="text-[10px] text-emerald-600/80 block">
+                {isFr ? "Capacité d'épargne mensuelle" : "Monthly savings power"}
+              </span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
+              <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
+                {isFr ? "MATELAS DE SÉCURITÉ" : isSw ? "MIEZI YA DHARURA" : "EMERGENCY RUNWAY"}
+              </span>
+              <span className="text-lg font-black text-foreground font-mono block">
+                {(activeBaseline.liquidSavings / Math.max(1, monthlyExpenses)).toFixed(1)} {isFr ? "mois" : "months"}
+              </span>
+              <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold block">
+                {activeBaseline.liquidSavings / Math.max(1, monthlyExpenses) >= 3.0 ? (isFr ? "Zone sécurisée" : "Safe buffer") : (isFr ? "Sous le seuil de 3 mois" : "Below 3-month floor")}
+              </span>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="pt-4 border-t border-border/60 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={handlePrevStep}
+              className="inline-flex items-center gap-1 px-4 py-3 rounded-xl bg-secondary text-xs font-bold text-foreground cursor-pointer min-h-[44px]"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>{isFr ? "Retour" : isSw ? "Nyuma" : "Back"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNextStep}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
+            >
+              <span>{isFr ? "Confirmer & Choisir mes Priorités" : isSw ? "Thibitisha & Chagua Vipaumbele" : "Confirm & Set Priorities"}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </section>
+      )}
+
+
+      {/* ─────────────────────────────────────────────────────────────
+          STEP 4 OF 7 — GOALS & PRIORITIES
+      ───────────────────────────────────────────────────────────── */}
+      {currentStep === 4 && (
+        <section className="rounded-3xl border border-border/80 bg-card p-6 sm:p-9 space-y-6 shadow-sm animate-fadeIn">
+          <div className="space-y-1.5">
+            <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+              {isFr ? "Que cherchez-vous à protéger en priorité ?" : isSw ? "Unataka kulinda au kufikia nini kwanza?" : "What are you trying to protect or achieve?"}
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+              {isFr
+                ? "L'algorithme utilisera votre priorité pour classer les options et recommander le meilleur compromis."
+                : isSw
+                ? "Mfumo utatumia kipaumbele chako kupendekeza njia bora zaidi."
+                : "Your selected priority is transparently used to rank alternatives and determine the recommended path."}
+            </p>
+          </div>
+
+          {/* Goal selection */}
+          <div className="space-y-2">
+            <label className="text-xs font-mono uppercase font-bold text-foreground block">
+              {isFr ? "Objectif de vie principal à protéger :" : isSw ? "Lengo kuu unalolinda:" : "Primary Goal Protected:"}
+            </label>
+            <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-3">
+                <Target className="w-5 h-5 text-primary shrink-0" />
+                <div>
+                  <div className="font-bold text-foreground">{activeBaseline.goals[0]?.title || "Business Launch Goal"}</div>
+                  <div className="text-muted-foreground text-[11px]">
+                    {format(activeBaseline.goals[0]?.currentAmount || 12000, { fromCurrency: "KES" })} {isFr ? "épargnés sur" : "saved of"} {format(activeBaseline.goals[0]?.targetAmount || 25000, { fromCurrency: "KES" })} ({isFr ? "Échéance" : "Deadline"}: {activeBaseline.goals[0]?.targetDate})
+                  </div>
+                </div>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-[10px] border border-emerald-500/20">
+                ACTIVE TARGET
+              </span>
+            </div>
+          </div>
+
+          {/* Priorities Selection */}
+          <div className="space-y-2 pt-2 border-t border-border/50">
+            <label className="text-xs font-mono uppercase font-bold text-foreground block">
+              {isFr ? "Quel critère compte le plus pour cette décision ?" : isSw ? "Kipi ni muhimu zaidi kwako?" : "What matters most for this decision?"}
+            </label>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                {
+                  id: "PROTECT_CASH",
+                  label: isFr ? "1. Protéger le matelas de sécurité" : isSw ? "1. Kulinda akiba ya dharura" : "1. Protecting emergency cash buffer",
+                  desc: isFr ? "Ne jamais descendre sous 3 mois de charges fixes." : "Keep at least 3.0 months of living runway locked.",
+                },
+                {
+                  id: "REACH_GOALS",
+                  label: isFr ? "2. Atteindre mon objectif au plus vite" : isSw ? "2. Kufikia malengo kwa haraka" : "2. Reaching goals on schedule",
+                  desc: isFr ? "Minimiser tout retard sur la date d'arrivée." : "Prevent delays on major destination milestones.",
+                },
+                {
+                  id: "LOW_MONTHLY",
+                  label: isFr ? "3. Garder des charges mensuelles faibles" : isSw ? "3. Kupunguza gharama za kila mwezi" : "3. Keeping monthly recurring costs low",
+                  desc: isFr ? "Éviter d'engager le cash-flow libre récurrent." : "Avoid committing free cash flow to monthly debt.",
+                },
+                {
+                  id: "BUY_SOONER",
+                  label: isFr ? "4. Concrétiser l'achat immédiatement" : isSw ? "4. Kutekeleza ununuzi leo bila kusubiri" : "4. Making the purchase as soon as possible",
+                  desc: isFr ? "Privilégier l'utilité immédiate quitte à décaler un objectif." : "Prioritize immediate execution and offset later.",
+                },
+              ].map((p) => {
+                const isSelected = selectedPriority === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setSelectedPriority(p.id as UserDecisionPriority)}
+                    className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between space-y-1.5 ${
+                      isSelected
+                        ? "bg-primary/10 border-primary text-foreground ring-2 ring-primary/20 shadow-xs"
+                        : "bg-secondary/40 border-border/70 text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-foreground">{p.label}</span>
+                      {isSelected && <Check className="w-4 h-4 text-primary shrink-0" />}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">{p.desc}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="pt-4 border-t border-border/60 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={handlePrevStep}
+              className="inline-flex items-center gap-1 px-4 py-3 rounded-xl bg-secondary text-xs font-bold text-foreground cursor-pointer min-h-[44px]"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>{isFr ? "Retour" : isSw ? "Nyuma" : "Back"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNextStep}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>{isFr ? "Lancer l'Analyse des Options" : isSw ? "Chambua Chaguzi Zote" : "Analyze My Options"}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </section>
+      )}
+
+
+      {/* ─────────────────────────────────────────────────────────────
+          STEP 5 OF 7 — ANALYZE & COMPARE
+      ───────────────────────────────────────────────────────────── */}
+      {currentStep === 5 && (
+        <section className={`rounded-3xl border ${verdict.borderStyle} bg-card p-6 sm:p-9 space-y-7 shadow-xl animate-fadeIn`}>
+          
+          {/* Top Verdict Header */}
+          <div className="space-y-3 border-b border-border/60 pb-5">
+            <div className="flex items-center justify-between">
+              <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full font-mono font-extrabold text-xs tracking-wider border ${verdict.badgeStyle}`}>
+                {verdict.icon}
+                <span>{verdict.label}</span>
+              </span>
+
+              <span className="text-[11px] font-mono text-muted-foreground">
+                Priority: <strong className="text-foreground">{selectedPriority.replace("_", " ")}</strong>
+              </span>
+            </div>
+
+            <h3 className="text-xl sm:text-3xl font-black text-foreground tracking-tight leading-snug">
+              {verdict.headline}
+            </h3>
+          </div>
+
+          {/* 4 Key Metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+            <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
+              <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
+                {isFr ? "CASH APRÈS DÉCISION" : isSw ? "AKIBA BAADA YA UAMUZI" : "CASH AFTER DECISION"}
+              </span>
+              <span className="text-xl sm:text-2xl font-black text-foreground font-mono block">
+                {format(postDecisionCash, { fromCurrency: "KES" })}
+              </span>
+              <span className="text-[11px] text-muted-foreground font-medium block">
+                -{format(extractedAmount, { fromCurrency: "KES" })} {isFr ? "déduit" : "outflow"}
+              </span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
+              <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
+                {isFr ? "MATELAS D'URGENCE" : isSw ? "MIEZI YA DHARURA" : "EMERGENCY RUNWAY"}
+              </span>
+              <span className="text-xl sm:text-2xl font-black text-foreground font-mono block">
+                {emergencyRunwayMonths} {isFr ? "mois" : "months"}
+              </span>
+              <span className="text-[11px] text-amber-600 dark:text-amber-400 font-bold block">
+                {Number(emergencyRunwayMonths) < 3.0 ? (isFr ? "Sous le seuil de 3 mois" : "Below 3.0 target") : (isFr ? "Zone sécurisée" : "Safe buffer")}
+              </span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 space-y-1">
+              <span className="text-[10px] font-mono uppercase text-rose-600 dark:text-rose-400 font-bold block">
+                {isFr ? "IMPACT SUR L'OBJECTIF" : isSw ? "ATHARI KWA LENGO" : "GOAL IMPACT"}
+              </span>
+              <span className="text-xl sm:text-2xl font-black text-rose-600 dark:text-rose-400 font-mono block">
+                +{goalDelayDays} {isFr ? "jours" : "days"}
+              </span>
+              <span className="text-[11px] text-rose-600/80 dark:text-rose-400/80 font-medium block truncate">
+                {activeBaseline.goals[0]?.title || "Business Goal"}
+              </span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
+              <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
+                {isFr ? "PRESSION MENSUELLE" : isSw ? "MZIGO WA KILA MWEZI" : "MONTHLY PRESSURE"}
+              </span>
+              <span className="text-xl sm:text-2xl font-black text-foreground font-mono block">
+                +{monthlyPressurePercent}%
+              </span>
+              <span className="text-[11px] text-muted-foreground font-medium block">
+                +{format(netFreeCashFlow, { fromCurrency: "KES" })}/mo FCF
+              </span>
+            </div>
+          </div>
+
+          {/* Scenario Alternatives */}
+          <div className="space-y-3">
+            <span className="text-xs font-mono uppercase tracking-wider text-primary font-bold block">
+              {isFr ? "COMPARAISON DES MEILLEURES OPTIONS D'AIMLY" : isSw ? "ULINGANISHO WA NJIA MBADALA ZA AIMLY" : "AIMLY'S CALCULATED SCENARIOS"}
+            </span>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              {calculatedAlternatives.map((alt) => (
+                <div
+                  key={alt.id}
+                  className={`p-4 sm:p-5 rounded-2xl border flex flex-col justify-between space-y-3 transition-all ${
+                    alt.highlight
+                      ? "bg-emerald-500/10 border-emerald-500/40 ring-1 ring-emerald-500/30"
+                      : "bg-secondary/30 border-border/70"
+                  }`}
+                >
+                  <div className="space-y-1">
                     <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-background border border-border/80">
                       {alt.badge}
                     </span>
+                    <h4 className="text-sm font-bold text-foreground pt-1">{alt.title}</h4>
+                    <p className="text-xs font-bold text-primary">{alt.delayLabel}</p>
                   </div>
-                  <h4 className="text-sm font-bold text-foreground pt-1">{alt.title}</h4>
-                  <p className="text-xs font-bold text-primary">{alt.delayLabel}</p>
-                </div>
 
-                <div className="pt-2 border-t border-border/50 text-[11px] text-muted-foreground space-y-1">
-                  <div className="flex justify-between">
-                    <span>{isFr ? "Cash restant :" : "Cash after:"}</span>
-                    <strong className="text-foreground font-mono">{alt.cashRemaining}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{isFr ? "Matelas :" : "Runway:"}</span>
-                    <strong className="text-foreground font-mono">{alt.runway}</strong>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* VISUAL TIMELINE */}
-        <div className="p-6 rounded-2xl bg-secondary/30 border border-border/70 space-y-4">
-          <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-bold block">
-            {isFr ? "TRAJECTOIRE DANS LE TEMPS" : "PROJECTED TIMELINE TRAJECTORY"}
-          </span>
-
-          <div className="grid grid-cols-5 gap-2 text-center text-xs">
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-mono text-muted-foreground uppercase font-bold">TODAY</span>
-              <div className="h-2 rounded-full bg-primary" />
-              <span className="text-[11px] font-bold text-foreground block">
-                {format(activeBaseline.liquidSavings, { fromCurrency: "KES" })}
-              </span>
-            </div>
-
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-mono text-rose-500 uppercase font-bold">DECISION</span>
-              <div className="h-2 rounded-full bg-rose-500" />
-              <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 block">
-                -{format(extractedAmount, { fromCurrency: "KES" })}
-              </span>
-            </div>
-
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-mono text-muted-foreground uppercase font-bold">3 MONTHS</span>
-              <div className="h-2 rounded-full bg-secondary-foreground/20" />
-              <span className="text-[11px] font-medium text-muted-foreground block">
-                {isFr ? "Reconstitution" : "Rebuilding"}
-              </span>
-            </div>
-
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-mono text-muted-foreground uppercase font-bold">6 MONTHS</span>
-              <div className="h-2 rounded-full bg-secondary-foreground/20" />
-              <span className="text-[11px] font-medium text-muted-foreground block">
-                {isFr ? "Coussin sain" : "Safe buffer"}
-              </span>
-            </div>
-
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-mono text-primary uppercase font-bold">GOAL</span>
-              <div className="h-2 rounded-full bg-primary" />
-              <span className="text-[11px] font-bold text-primary block">
-                +{goalDelayDays}d {isFr ? "décalage" : "shift"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* ANALYSIS QUALITY & VERIFICATION SEAL */}
-        <div className="p-5 rounded-2xl bg-secondary/40 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-                  {isFr ? "AUDIT QUALITÉ AIMLY : VÉRIFIÉ (6/6)" : isSw ? "UKAGUZI WA UBORA: IMETHIBITISHWA (6/6)" : "ANALYSIS QUALITY: VERIFIED (6/6)"}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground font-medium">
-                {isFr
-                  ? "Arithmétique certifiée, scénarios cohérents, décalage d'objectif et calendrier validés."
-                  : isSw
-                  ? "Hesabu za fedha, ulinganisho wa njia mbadala, na ratiba ya lengo zimethibitishwa bila hitilafu."
-                  : "Deterministic arithmetic, scenario tradeoffs, goal delay, and time horizon certified."}
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setShowReportModal(true)}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs font-extrabold shadow-md shadow-orange-500/20 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer shrink-0 min-h-[44px]"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{isFr ? "Générer le Rapport Vérifié (PDF)" : isSw ? "Tengeneza Ripoti Iliyothibitishwa (PDF)" : "Generate Verified Report (PDF)"}</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* STEP 5: ACTION BAR */}
-        <div className="pt-4 border-t border-border/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
-          <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={handleSave}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-3 sm:py-2.5 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground text-xs font-bold border border-border/80 transition-all cursor-pointer min-h-[44px]"
-            >
-              <Bookmark className="w-3.5 h-3.5" />
-              <span>{isSaved ? (isFr ? "Décision Sauvegardée" : "Decision Saved") : (isFr ? "Sauvegarder la Décision" : "Save Decision")}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowSideBySideModal(true)}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-3 sm:py-2.5 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground text-xs font-bold border border-border/80 transition-all cursor-pointer min-h-[44px]"
-            >
-              <BarChart3 className="w-3.5 h-3.5" />
-              <span>{isFr ? "Comparer les Options" : "Compare Options"}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowReportModal(true)}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-3 sm:py-2.5 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground text-xs font-bold border border-border/80 transition-all cursor-pointer min-h-[44px]"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-              <span>{isFr ? "Voir le Rapport (PDF)" : "View Verified Report"}</span>
-            </button>
-          </div>
-
-          <Link
-            href={`/app/ask?q=${encodeURIComponent(`I analyzed: "${extractedTitle}" for ${format(extractedAmount, { fromCurrency: "KES" })}. Verdict was ${verdict.label} with +${goalDelayDays} days delay. How can I optimize this?`)}`}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:opacity-95 shadow-md shadow-primary/20 transition-all min-h-[44px]"
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-            <span>{isFr ? "Demander conseil à Aimly" : "Ask Aimly About This"}</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-      </section>
-
-      {/* Side-by-Side Comparison Modal */}
-      {showSideBySideModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn">
-          <div className="w-full max-w-2xl rounded-t-3xl sm:rounded-3xl bg-card border border-border/90 p-5 sm:p-7 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-border/60 pb-3">
-              <h3 className="text-base sm:text-lg font-bold text-foreground">
-                {isFr ? "Comparaison des Scénarios Côte à Côte" : "Side-by-Side Scenario Comparison"}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowSideBySideModal(false)}
-                className="p-2 rounded-xl bg-secondary text-muted-foreground hover:text-foreground cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              {calculatedAlternatives.map((alt) => (
-                <div key={alt.id} className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-2">
-                  <span className="font-bold text-foreground block">{alt.title}</span>
-                  <div className="space-y-1.5 pt-1 border-t border-border/50 text-xs">
+                  <div className="pt-2 border-t border-border/50 text-[11px] text-muted-foreground space-y-1">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">{isFr ? "Décalage :" : "Goal Shift:"}</span>
-                      <strong className="text-primary">{alt.delayLabel}</strong>
+                      <span>{isFr ? "Cash restant :" : "Cash after:"}</span>
+                      <strong className="text-foreground font-mono">{alt.cashRemaining}</strong>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">{isFr ? "Liquidités :" : "Cash:"}</span>
-                      <strong className="font-mono">{alt.cashRemaining}</strong>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">{isFr ? "Matelas :" : "Runway:"}</span>
-                      <strong className="font-mono">{alt.runway}</strong>
+                      <span>{isFr ? "Matelas :" : "Runway:"}</span>
+                      <strong className="text-foreground font-mono">{alt.runway}</strong>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-
-            <div className="pt-2 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setShowSideBySideModal(false)}
-                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-primary text-primary-foreground text-xs font-bold cursor-pointer min-h-[44px]"
-              >
-                {isFr ? "Fermer" : "Close"}
-              </button>
-            </div>
           </div>
-        </div>
+
+          {/* Actions */}
+          <div className="pt-4 border-t border-border/60 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={handlePrevStep}
+              className="inline-flex items-center gap-1 px-4 py-3 rounded-xl bg-secondary text-xs font-bold text-foreground cursor-pointer min-h-[44px]"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>{isFr ? "Retour" : isSw ? "Nyuma" : "Back"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNextStep}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>{isFr ? "Lancer l'Audit de Cohérence" : isSw ? "Thibitisha Matokeo" : "Verify Analysis Coherence"}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </section>
       )}
 
-      {/* Verified Decision Report Preview & PDF Modal */}
-      <VerifiedDecisionReportModal
-        data={verifiedReportData}
-        isOpen={showReportModal}
-        onClose={() => setShowReportModal(false)}
-        onSaved={() => setIsSaved(true)}
-      />
+
+      {/* ─────────────────────────────────────────────────────────────
+          STEP 6 OF 7 — VERIFY THE ANALYSIS (AIMLY COHERENCE CHECK)
+      ───────────────────────────────────────────────────────────── */}
+      {currentStep === 6 && (
+        <section className="rounded-3xl border border-border/80 bg-card p-6 sm:p-9 space-y-6 shadow-sm animate-fadeIn">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase">
+                  {verification.status}
+                </span>
+                <span className="text-muted-foreground text-xs">•</span>
+                <span className="text-xs text-muted-foreground font-mono">Score: {verification.overallScore}/100</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+                {isFr ? "L'Audit de Cohérence Aimly est Validé" : isSw ? "Ukaguzi wa Hesabu Umekamilika" : "The Aimly Coherence Check is Complete"}
+              </h2>
+            </div>
+          </div>
+
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            {isFr
+              ? "Toutes les étapes arithmétiques, les scénarios comparatifs et l'alignement temporel ont été rigoureusement certifiés conformes au modèle mathématique."
+              : isSw
+              ? "Hesabu zote za fedha, matumizi, na athari kwa malengo zimethibitishwa bila hitilafu yoyote."
+              : "All arithmetic, scenario tradeoffs, goal delay models, and calendar timelines have been strictly validated against deterministic rules."}
+          </p>
+
+          {/* 6 Quality Checks List */}
+          <div className="space-y-2.5">
+            {verification.checks.map((c) => (
+              <div
+                key={c.id}
+                className="p-4 rounded-2xl bg-secondary/40 border border-border/70 flex items-start gap-3 text-xs"
+              >
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <div className="font-bold text-foreground">
+                    {isFr ? c.nameFr : c.name}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {isFr ? c.notesFr : c.notes}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div className="pt-4 border-t border-border/60 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={handlePrevStep}
+              className="inline-flex items-center gap-1 px-4 py-3 rounded-xl bg-secondary text-xs font-bold text-foreground cursor-pointer min-h-[44px]"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>{isFr ? "Retour" : isSw ? "Nyuma" : "Back"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNextStep}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
+            >
+              <FileDown className="w-4 h-4" />
+              <span>{isFr ? "Voir le Rapport Final & Télécharger le PDF" : isSw ? "Fungua Ripoti Kamili ya PDF" : "See My Final Decision Report"}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </section>
+      )}
+
+
+      {/* ─────────────────────────────────────────────────────────────
+          STEP 7 OF 7 — FINAL DECISION REPORT (DOWNLOAD PDF)
+      ───────────────────────────────────────────────────────────── */}
+      {currentStep === 7 && (
+        <section className="rounded-3xl border border-border/80 bg-card p-6 sm:p-9 space-y-7 shadow-xl animate-fadeIn">
+          
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs border border-emerald-500/20">
+                  {verification.status}
+                </span>
+                <span className="text-xs text-muted-foreground font-mono">
+                  ID: {verifiedReportData.reportId} • v{verifiedReportData.version}
+                </span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+                {isFr ? "Votre Rapport Décisionnel Vérifié est Prêt" : isSw ? "Ripoti Yako ya Kifedha Ipo Tayari" : "Your Financial Decision Report is Ready"}
+              </h2>
+            </div>
+
+            {/* Primary Action Button: Download PDF */}
+            <button
+              type="button"
+              disabled={isDownloadingPDF}
+              onClick={handleDownloadPDF}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer shrink-0 min-h-[48px]"
+            >
+              <FileDown className="w-4 h-4" />
+              <span>{isDownloadingPDF ? (isFr ? "Génération en cours..." : "Generating PDF...") : (isFr ? "Télécharger le Rapport PDF" : "Download Verified PDF Report")}</span>
+            </button>
+          </div>
+
+          {/* Report Executive Summary Box */}
+          <div className="p-5 sm:p-6 rounded-2xl bg-secondary/40 border border-border/70 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono uppercase tracking-wider text-primary font-bold">
+                {isFr ? "SYNTHÈSE DU VERDICT" : "VERIFIED EXECUTIVE SUMMARY"}
+              </span>
+              <span className={`px-3 py-0.5 rounded-full font-mono text-[11px] font-bold border ${verdict.badgeStyle}`}>
+                {verdict.label}
+              </span>
+            </div>
+
+            <h3 className="text-lg sm:text-xl font-black text-foreground leading-snug">
+              {verdict.headline}
+            </h3>
+
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              {whyVerdictExplanation}
+            </p>
+          </div>
+
+          {/* Financial Impact Comparison Table */}
+          <div className="space-y-2">
+            <span className="text-xs font-mono uppercase font-bold text-muted-foreground block">
+              {isFr ? "Tableau d'Impact Financier Déterministe" : "Deterministic Financial Impact Table"}
+            </span>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="p-4 rounded-2xl bg-secondary/30 border border-border/60 space-y-1">
+                <span className="text-[10px] font-mono text-muted-foreground block">LIQUID RESERVES</span>
+                <span className="text-lg font-black font-mono block">{format(postDecisionCash, { fromCurrency: "KES" })}</span>
+                <span className="text-[10px] text-muted-foreground block">-{format(extractedAmount, { fromCurrency: "KES" })} outlay</span>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-secondary/30 border border-border/60 space-y-1">
+                <span className="text-[10px] font-mono text-muted-foreground block">LIVING RUNWAY</span>
+                <span className="text-lg font-black font-mono block">{emergencyRunwayMonths} mos</span>
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 block font-bold">
+                  {Number(emergencyRunwayMonths) < 3.0 ? "Below 3.0 buffer" : "Safe buffer"}
+                </span>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-secondary/30 border border-border/60 space-y-1">
+                <span className="text-[10px] font-mono text-muted-foreground block">GOAL DELAY</span>
+                <span className="text-lg font-black font-mono text-rose-500 block">+{goalDelayDays}d</span>
+                <span className="text-[10px] text-muted-foreground block truncate">{activeBaseline.goals[0]?.title}</span>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-secondary/30 border border-border/60 space-y-1">
+                <span className="text-[10px] font-mono text-muted-foreground block">MONTHLY PRESSURE</span>
+                <span className="text-lg font-black font-mono block">+{monthlyPressurePercent}%</span>
+                <span className="text-[10px] text-emerald-600 block font-bold">+{format(netFreeCashFlow, { fromCurrency: "KES" })}/mo FCF</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Recommended Path Box */}
+          <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
+            <span className="text-xs font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-bold block">
+              {isFr ? "PLAN D'ACTION RECOMMANDÉ PAR AIMLY" : "AIMLY'S RECOMMENDED ACTION PATH"}
+            </span>
+            <h4 className="text-base font-bold text-foreground">
+              {calculatedAlternatives[1]?.title}
+            </h4>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {isFr
+                ? `Cette option permet de réaliser votre acquisition tout en préservant votre matelas de liquidités de 3.0 mois et en protégeant l'échéance de "${activeBaseline.goals[0]?.title}".`
+                : `This path enables execution while locking in your 3.0-month reserve buffer and fully preserving your "${activeBaseline.goals[0]?.title}" target deadline.`}
+            </p>
+          </div>
+
+          {/* Secondary Actions Bar */}
+          <div className="pt-4 border-t border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSaveDecision}
+                className={`w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl border text-xs font-bold transition-all cursor-pointer min-h-[44px] ${
+                  isSaved
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                    : "bg-secondary hover:bg-secondary/80 border-border text-foreground"
+                }`}
+              >
+                <Bookmark className={`w-3.5 h-3.5 ${isSaved ? "fill-emerald-500 text-emerald-500" : ""}`} />
+                <span>{isSaved ? (isFr ? "Décision Sauvegardée" : "Decision Saved") : (isFr ? "Sauvegarder dans le Coffre" : "Save to Vault")}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleShare}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 border border-border text-xs font-bold text-foreground cursor-pointer min-h-[44px]"
+              >
+                {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5" />}
+                <span>{copiedLink ? (isFr ? "Lien Copié" : "Link Copied") : (isFr ? "Partager" : "Share")}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCurrentStep(2)}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 border border-border text-xs font-bold text-foreground cursor-pointer min-h-[44px]"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>{isFr ? "Modifier les Hypothèses (v2)" : "Edit Assumptions (v2)"}</span>
+              </button>
+            </div>
+
+            <Link
+              href={`/app/ask?q=${encodeURIComponent(`I analyzed: "${extractedTitle}" for ${format(extractedAmount, { fromCurrency: "KES" })}. Verdict was ${verdict.label}. What are the next best tactical moves?`)}`}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground text-xs font-bold border border-border transition-all min-h-[44px]"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>{isFr ? "Demander conseil à Aimly" : "Ask Aimly About Next Moves"}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </section>
+      )}
 
     </div>
   );
