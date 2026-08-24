@@ -338,6 +338,8 @@ export function AimlyDecisionEngine({
         highlight: false,
       },
     ];
+  }, [extractedAmount, goalDelayDays, postDecisionCash, activeBaseline.liquidSavings, monthlyExpenses, format, isFr]);
+
   const verifiedReportData: VerifiedDecisionData = useMemo(() => {
     const monthlyIncome = activeBaseline.incomes.reduce((acc, i) => acc + i.amount, 0);
     const monthlyDebt = activeBaseline.debts.reduce((acc, d) => acc + d.monthlyPayment, 0);
