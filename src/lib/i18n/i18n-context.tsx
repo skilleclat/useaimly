@@ -26,7 +26,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     setMounted(true);
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY) as LanguageCode | null;
-      if (stored && (stored === "en" || stored === "fr" || stored === "sw")) {
+      if (stored && (stored === "en" || stored === "fr" || stored === "es")) {
         setLanguageState(stored);
       } else {
         const geo = detectGeoDefaults();

@@ -97,13 +97,33 @@ export function detectGeoDefaults(): GeoLocalizationProfile {
     };
   }
 
+  // Spain & Spanish-speaking regions
+  if (
+    tz.includes("Madrid") ||
+    tz.includes("Mexico") ||
+    tz.includes("Bogota") ||
+    tz.includes("Buenos_Aires") ||
+    tz.includes("Santiago") ||
+    tz.includes("Lima") ||
+    browserLang.startsWith("es")
+  ) {
+    const isSpain = tz.includes("Madrid");
+    return {
+      suggestedLanguage: "es",
+      suggestedCurrency: isSpain ? "EUR" : "USD",
+      detectedCountryName: isSpain ? "España" : "Hispanoamérica",
+      detectedCountryCode: isSpain ? "ES" : "ES",
+      detectedCountryFlag: "🇪🇸",
+      confidence: "high",
+    };
+  }
+
   // 6. France & Eurozone
   if (
     tz.includes("Paris") ||
     tz.includes("Brussels") ||
     tz.includes("Berlin") ||
     tz.includes("Rome") ||
-    tz.includes("Madrid") ||
     tz.includes("Amsterdam")
   ) {
     const isFr = tz.includes("Paris") || tz.includes("Brussels") || browserLang.startsWith("fr");

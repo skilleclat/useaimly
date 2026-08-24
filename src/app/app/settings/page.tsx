@@ -371,7 +371,7 @@ export default function SettingsPage() {
               {[
                 { code: "en", label: "English", badge: "EN" },
                 { code: "fr", label: "Français", badge: "FR" },
-                { code: "sw", label: "Kiswahili", badge: "SW" },
+                { code: "es", label: "Español", badge: "ES" },
               ].map((l) => {
                 const isSelected = language === l.code;
                 return (

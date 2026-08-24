@@ -18,7 +18,7 @@ interface LanguageOption {
 const LANGUAGES: LanguageOption[] = [
   { code: "en", label: "English", nativeLabel: "English", badge: "EN" },
   { code: "fr", label: "French", nativeLabel: "Français", badge: "FR" },
-  { code: "sw", label: "Swahili", nativeLabel: "Kiswahili", badge: "SW" },
+  { code: "es", label: "Spanish", nativeLabel: "Español", badge: "ES" },
 ];
 
 export function LanguageCurrencySelector() {
@@ -28,6 +28,7 @@ export function LanguageCurrencySelector() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const isFr = language === "fr";
+  const isEs = language === "es";
 
   // Close on outside click
   useEffect(() => {
@@ -91,17 +92,17 @@ export function LanguageCurrencySelector() {
           <div className="flex items-center justify-between border-b border-border/80 pb-2.5">
             <span className="text-xs font-bold text-foreground tracking-tight flex items-center gap-1.5">
               <Globe className="w-3.5 h-3.5 text-[#FF5533]" />
-              <span>{isFr ? "Langue & Devise" : "Language & Currency"}</span>
+              <span>{isEs ? "Idioma y Moneda" : isFr ? "Langue & Devise" : "Language & Currency"}</span>
             </span>
             <span className="text-[10px] font-mono font-medium text-muted-foreground uppercase">
-              Preferences
+              {isEs ? "Preferencias" : isFr ? "Préférences" : "Preferences"}
             </span>
           </div>
 
           {/* 1. Language Selection Grid */}
           <div className="space-y-2">
             <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-muted-foreground block">
-              {isFr ? "Langue d'affichage" : "Display Language"}
+              {isEs ? "Idioma de la interfaz" : isFr ? "Langue d'affichage" : "Display Language"}
             </span>
             <div className="grid grid-cols-3 gap-1.5">
               {LANGUAGES.map((l) => {
@@ -133,10 +134,10 @@ export function LanguageCurrencySelector() {
           <div className="space-y-2 border-t border-border/80 pt-3">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-muted-foreground block">
-                {isFr ? "Devise de calcul" : "Calculation Currency"}
+                {isEs ? "Moneda de cálculo" : isFr ? "Devise de calcul" : "Calculation Currency"}
               </span>
               <span className="text-[10px] font-mono text-muted-foreground">
-                {SUPPORTED_CURRENCIES.length} {isFr ? "devises" : "available"}
+                {SUPPORTED_CURRENCIES.length} {isEs ? "monedas" : isFr ? "devises" : "available"}
               </span>
             </div>
 
@@ -179,7 +180,13 @@ export function LanguageCurrencySelector() {
 
           {/* Footer Note */}
           <div className="pt-2 border-t border-border/80 text-[10px] font-mono text-muted-foreground text-center">
-            <span>{isFr ? "Conversion déterministe en temps réel" : "Deterministic real-time conversion"}</span>
+            <span>
+              {isEs
+                ? "Conversión determinista en tiempo real"
+                : isFr
+                ? "Conversion déterministe en temps réel"
+                : "Deterministic real-time conversion"}
+            </span>
           </div>
 
         </div>
