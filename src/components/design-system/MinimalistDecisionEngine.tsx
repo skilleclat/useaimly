@@ -388,16 +388,17 @@ export function MinimalistDecisionEngine({
     setActiveCardId(card.id);
     setQueryInput(card.defaultQuery);
     if (redirectOnSelect) {
-      router.push(`/app/decide?q=${encodeURIComponent(card.defaultQuery)}`);
+      router.push(`/onboarding?q=${encodeURIComponent(card.defaultQuery)}&preset=${card.id}`);
     }
   };
 
   const handleQuickAction = (text: string) => {
     setQueryInput(text);
     if (redirectOnSelect) {
-      router.push(`/app/decide?q=${encodeURIComponent(text)}`);
+      router.push(`/onboarding?q=${encodeURIComponent(text)}`);
     }
   };
+
 
 
   return (
@@ -522,12 +523,13 @@ export function MinimalistDecisionEngine({
             type="button"
             onClick={() => {
               if (redirectOnSelect) {
-                router.push(`/app/decide?q=${encodeURIComponent(queryInput)}`);
+                router.push(`/onboarding?q=${encodeURIComponent(queryInput)}`);
               } else {
                 const el = document.getElementById("verdict-result-section");
                 el?.scrollIntoView({ behavior: "smooth" });
               }
             }}
+
             className="w-full inline-flex items-center justify-center gap-3 rounded-2xl bg-[#00A859] hover:bg-[#00964F] text-white font-bold text-base py-4 px-6 shadow-lg shadow-[#00A859]/30 transition-all cursor-pointer"
           >
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition, useMemo, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { StepIndicator } from "./components/StepIndicator";
 import { Step1Destination } from "./components/Step1Destination";
 import { Step2Income } from "./components/Step2Income";
@@ -17,15 +17,57 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { useCurrency } from "@/lib/currency/currency-context";
 import { CurrencyCode } from "@/lib/types/finance";
 import { addMonths, formatDateToISO } from "@/lib/utils/date";
+import { parseDecisionQuery } from "@/lib/nlp/decision-query-parser";
+import { DESTINATION_PRESETS } from "@/lib/onboarding/onboarding-presets";
 import { AlertCircle } from "lucide-react";
 
 export default function OnboardingWizardPage() {
   const { profile, refreshProfile } = useAuth();
   const { currency } = useCurrency();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isPending, startTransition] = useTransition();
   const [serverError, setServerError] = useState<string | null>(null);
+
+  // Read query params q and preset to populate Step 1 Destination
+  useEffect(() => {
+    const qParam = searchParams.get("q");
+    const presetParam = searchParams.get("preset");
+
+    if (qParam || presetParam) {
+      if (qParam) {
+        const parsed = parseDecisionQuery(qParam, currency);
+        const titleText = parsed.isValid && parsed.extractedTitle ? parsed.extractedTitle : qParam;
+        const amountVal = parsed.isValid && parsed.extractedAmount > 0 ? parsed.extractedAmount : 500000;
+
+        setOnboardingState((prev) => ({
+          ...prev,
+          destination: {
+            ...prev.destination,
+            title: titleText,
+            targetAmount: amountVal,
+            presetKey: presetParam || "custom",
+          },
+        }));
+      } else if (presetParam) {
+        const matchedPreset = DESTINATION_PRESETS.find((p) => p.key === presetParam);
+        if (matchedPreset) {
+          setOnboardingState((prev) => ({
+            ...prev,
+            destination: {
+              ...prev.destination,
+              presetKey: matchedPreset.key,
+              title: matchedPreset.title,
+              targetAmount: matchedPreset.defaultAmount,
+              category: matchedPreset.category,
+            },
+          }));
+        }
+      }
+    }
+  }, [searchParams, currency]);
+
 
   // Smooth scroll to top whenever step changes on mobile/desktop
   useEffect(() => {
