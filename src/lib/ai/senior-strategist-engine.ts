@@ -8,8 +8,10 @@
 import { formatCurrency } from "../utils/currency";
 import { formatMonthYear } from "../utils/date";
 import { CurrencyCode, ExecutiveDecision, ConfidenceLevel } from "../types/finance";
+import { LanguageCode } from "../i18n/translations";
 
 export interface StrategistProfileContext {
+  language?: LanguageCode;
   currency: CurrencyCode;
   monthlyInflow: number;
   monthlyOutflow: number;
@@ -57,6 +59,7 @@ export function generateSeniorStrategistAssessment(
   context: StrategistProfileContext
 ): SeniorStrategistOutput {
   const {
+    language = "en",
     currency,
     monthlyInflow,
     monthlyOutflow,
@@ -73,6 +76,8 @@ export function generateSeniorStrategistAssessment(
     reserveTargetMonths = 3.0,
     decisionContext,
   } = context;
+
+  const isFr = language === "fr";
 
   const livingBufferMonths =
     monthlyOutflow > 0
@@ -107,13 +112,29 @@ export function generateSeniorStrategistAssessment(
         ? Number((totalLiquidSavings / monthlyBurn).toFixed(1))
         : 0;
 
-    const headlineVerdict = "Executive Decision: WAIT — Structural Deficit (Burn Rate Detected)";
-    const whatYouCanDo = `Halt discretionary spending immediately to stabilize monthly cash flow and stop the -${fcfStr}/mo liquid drawdown.`;
-    const whatItChanges = `Goal allocations for "${destinationTitle}" are paused while liquid reserves (${liquidStr}) cover fixed living obligations.`;
-    const toStayOnTrack = `Reclaim +${fcfStr}/mo through spending reduction or income expansion to restore baseline equilibrium.`;
-    const strategicRead = `Liquid reserves of ${liquidStr} provide approximately ${burnRunwayMonths} months of operating runway under current net monthly outflow.`;
+    const headlineVerdict = isFr
+      ? "Décision Exécutive : ATTENDRE — Déficit Structurel (Taux de Brûlage Détecté)"
+      : "Executive Decision: WAIT — Structural Deficit (Burn Rate Detected)";
 
-    const masterStrategyParagraph = `From a 30-year wealth architecture perspective, your primary objective right now is not aggressive capital accumulation, but structural cash-flow stabilization. Your current monthly mandatory outflows (${outflowStr}) exceed your monthly gross inflows (${inflowStr}), resulting in a net monthly capital contraction of -${fcfStr}/mo. While your current liquid reserve of ${liquidStr} provides an estimated ${burnRunwayMonths}-month operational cushion, continuing at this burn rate without intervention will systematically erode the foundation needed to achieve your "Emergency fund" (${targetAmtStr}). First, execute a line-item audit on living obligations to recover at least +${fcfStr}/mo. Second, insulate 3.0 to 6.0 months of essential living costs into liquid reserves. Third, once net free cash flow turns positive, initiate automated capital allocations toward "${destinationTitle}".`;
+    const whatYouCanDo = isFr
+      ? `Stoppez immédiatement les dépenses discrétionnaires pour stabiliser le cash-flow et stopper la baisse de -${fcfStr}/mois.`
+      : `Halt discretionary spending immediately to stabilize monthly cash flow and stop the -${fcfStr}/mo liquid drawdown.`;
+
+    const whatItChanges = isFr
+      ? `Les allocations pour "${destinationTitle}" sont suspendues pendant que vos réserves (${liquidStr}) couvrent vos charges fixes.`
+      : `Goal allocations for "${destinationTitle}" are paused while liquid reserves (${liquidStr}) cover fixed living obligations.`;
+
+    const toStayOnTrack = isFr
+      ? `Récupérez +${fcfStr}/mois par la réduction de vos charges ou le développement de vos revenus.`
+      : `Reclaim +${fcfStr}/mo through spending reduction or income expansion to restore baseline equilibrium.`;
+
+    const strategicRead = isFr
+      ? `Vos réserves liquides de ${liquidStr} procurent environ ${burnRunwayMonths} mois de couverture de survie sous le rythme actuel.`
+      : `Liquid reserves of ${liquidStr} provide approximately ${burnRunwayMonths} months of operating runway under current net monthly outflow.`;
+
+    const masterStrategyParagraph = isFr
+      ? `Du point de vue de l'architecture patrimoniale à 30 ans, votre objectif prioritaire actuel n'est pas l'accumulation de capital mais la stabilisation structurelle du cash-flow. Vos charges fixes mensuelles (${outflowStr}) dépassent vos revenus bruts (${inflowStr}), entraînant une contraction nette de -${fcfStr}/mois. Vos réserves actuelles (${liquidStr}) offrent environ ${burnRunwayMonths} mois de protection. Étape 1 : auditez vos postes de dépenses pour récupérer au moins +${fcfStr}/mois. Étape 2 : sécurisez 3,0 à 6,0 mois de charges essentielles en trésorerie liquide. Étape 3 : réactivez vos allocations vers "${destinationTitle}".`
+      : `From a 30-year wealth architecture perspective, your primary objective right now is not aggressive capital accumulation, but structural cash-flow stabilization. Your current monthly mandatory outflows (${outflowStr}) exceed your monthly gross inflows (${inflowStr}), resulting in a net monthly capital contraction of -${fcfStr}/mo. While your current liquid reserve of ${liquidStr} provides an estimated ${burnRunwayMonths}-month operational cushion, continuing at this burn rate without intervention will systematically erode the foundation needed to achieve your "Emergency fund" (${targetAmtStr}). First, execute a line-item audit on living obligations to recover at least +${fcfStr}/mo. Second, insulate 3.0 to 6.0 months of essential living costs into liquid reserves. Third, once net free cash flow turns positive, initiate automated capital allocations toward "${destinationTitle}".`;
 
     return {
       archetype: "DEFICIT_BURN_RATE",
@@ -140,13 +161,29 @@ export function generateSeniorStrategistAssessment(
     const postBufferMonths = monthlyOutflow > 0 ? Number((remainingCash / monthlyOutflow).toFixed(1)) : 12;
 
     if (decision === "GO") {
-      const headlineVerdict = "Executive Decision: GO — Plan & Buffer Intact";
-      const whatYouCanDo = `You can fund this ${decAmtStr} allocation directly from liquid cash while retaining ${remainingCashStr} (${postBufferMonths} months) in reserves.`;
-      const whatItChanges = `Your "${destinationTitle}" arrival remains projected on schedule for ${projDateStr}.`;
-      const toStayOnTrack = `Maintain current automated monthly goal allocation of ${fcfStr}/mo.`;
-      const strategicRead = `Post-purchase liquid buffer retains ${postBufferMonths} months of essential living defense, satisfying your ${reserveTargetMonths.toFixed(1)}-month target.`;
+      const headlineVerdict = isFr
+        ? "Décision Exécutive : ACCORDÉ (GO) — Plan & Matelas Intacts"
+        : "Executive Decision: GO — Plan & Buffer Intact";
 
-      const masterStrategyParagraph = `Financial calculations confirm that your monthly free cash flow (${fcfStr}/mo) and liquid reserves (${liquidStr}) can absorb this ${decAmtStr} outlay without breaching your 3.0-month emergency reserve target or delaying "${destinationTitle}" (${targetAmtStr}). Post-purchase liquid reserves (${remainingCashStr}) maintain ${postBufferMonths} months of essential living defense. Safe to proceed as planned.`;
+      const whatYouCanDo = isFr
+        ? `Vous pouvez financer cet achat de ${decAmtStr} directement depuis vos liquidités tout en conservant ${remainingCashStr} (${postBufferMonths} mois) en réserve.`
+        : `You can fund this ${decAmtStr} allocation directly from liquid cash while retaining ${remainingCashStr} (${postBufferMonths} months) in reserves.`;
+
+      const whatItChanges = isFr
+        ? `L'arrivée de votre objectif "${destinationTitle}" reste maintenue au ${projDateStr}.`
+        : `Your "${destinationTitle}" arrival remains projected on schedule for ${projDateStr}.`;
+
+      const toStayOnTrack = isFr
+        ? `Maintenez votre allocation mensuelle automatique de ${fcfStr}/mois.`
+        : `Maintain current automated monthly goal allocation of ${fcfStr}/mo.`;
+
+      const strategicRead = isFr
+        ? `Votre matelas de sécurité après achat conserve ${postBufferMonths} mois de charges essentielles, respectant votre cible de ${reserveTargetMonths.toFixed(1)} mois.`
+        : `Post-purchase liquid buffer retains ${postBufferMonths} months of essential living defense, satisfying your ${reserveTargetMonths.toFixed(1)}-month target.`;
+
+      const masterStrategyParagraph = isFr
+        ? `Les calculs financiers confirment que votre cash-flow libre mensuel (${fcfStr}/mois) et vos réserves liquides (${liquidStr}) absorbent cette dépense de ${decAmtStr} sans enfreindre votre réserve d'urgence de 3,0 mois ni décaler votre objectif "${destinationTitle}" (${targetAmtStr}). Vos réserves après achat (${remainingCashStr}) maintiennent ${postBufferMonths} mois de sécurité. Safe pour continuer.`
+        : `Financial calculations confirm that your monthly free cash flow (${fcfStr}/mo) and liquid reserves (${liquidStr}) can absorb this ${decAmtStr} outlay without breaching your 3.0-month emergency reserve target or delaying "${destinationTitle}" (${targetAmtStr}). Post-purchase liquid reserves (${remainingCashStr}) maintain ${postBufferMonths} months of essential living defense. Safe to proceed as planned.`;
 
       return {
         archetype: "DECISION_PURCHASE_IMPACT",
@@ -161,19 +198,37 @@ export function generateSeniorStrategistAssessment(
         confidenceLevel,
       };
     } else if (decision === "ADJUST") {
-      const headlineVerdict = `Executive Decision: ADJUST — ${delayInDays > 0 ? `+${delayInDays} Days Delay` : "Reserve Floor Breached"}`;
-      const whatYouCanDo = postBufferMonths < reserveTargetMonths
-        ? `Physical cash is available, but executing this outlay reduces liquid reserves to ${postBufferMonths} months (below your ${reserveTargetMonths.toFixed(1)}-month target).`
-        : `Executing this outlay shifts completion of "${destinationTitle}" back by approximately +${delayInDays} days.`;
-      
-      const whatItChanges = `Projected arrival moves to ${projDateStr} (+${delayInDays} days delay).`;
-      const toStayOnTrack = postBufferMonths < reserveTargetMonths
-        ? `Reduce purchase budget or delay purchase by ${Math.ceil((monthlyOutflow * reserveTargetMonths - remainingCash) / Math.max(1, monthlyFreeCashFlow))} months to preserve your 3.0-month reserve floor.`
-        : `Increase monthly goal allocation by +${formatCurrency(requiredMonthlySavings, currency)}/mo to neutralize the timeline shift.`;
-      
-      const strategicRead = `Cash availability does not equal plan availability; reserve floor or timeline protection requires adjustment.`;
+      const headlineVerdict = isFr
+        ? `Décision Exécutive : À AJUSTER — ${delayInDays > 0 ? `+${delayInDays} Jours de Décalage` : "Seuil de Réserve Franchi"}`
+        : `Executive Decision: ADJUST — ${delayInDays > 0 ? `+${delayInDays} Days Delay` : "Reserve Floor Breached"}`;
 
-      const masterStrategyParagraph = `Evaluating this ${decAmtStr} allocation against your active financial baseline reveals that cash availability does not equal plan availability. Post-purchase reserves (${remainingCashStr}) provide ${postBufferMonths} months of mandatory living buffer. Executing the expenditure shifts "${destinationTitle}" by +${delayInDays} days (Projected: ${projDateStr}). Recommendation: Adjust the purchase budget or save in advance to protect reserve stability.`;
+      const whatYouCanDo = isFr
+        ? (postBufferMonths < reserveTargetMonths
+            ? `Les liquidités sont disponibles, mais exécuter cette dépense réduit vos réserves à ${postBufferMonths} mois (en dessous de votre cible de ${reserveTargetMonths.toFixed(1)} mois).`
+            : `Exécuter cette dépense décale la réalisation de "${destinationTitle}" d'environ +${delayInDays} jours.`)
+        : (postBufferMonths < reserveTargetMonths
+            ? `Physical cash is available, but executing this outlay reduces liquid reserves to ${postBufferMonths} months (below your ${reserveTargetMonths.toFixed(1)}-month target).`
+            : `Executing this outlay shifts completion of "${destinationTitle}" back by approximately +${delayInDays} days.`);
+
+      const whatItChanges = isFr
+        ? `La date d'arrivée projetée glisse au ${projDateStr} (+${delayInDays} jours).`
+        : `Projected arrival moves to ${projDateStr} (+${delayInDays} days delay).`;
+
+      const toStayOnTrack = isFr
+        ? (postBufferMonths < reserveTargetMonths
+            ? `Réduisez le budget d'achat ou différez de ${Math.ceil((monthlyOutflow * reserveTargetMonths - remainingCash) / Math.max(1, monthlyFreeCashFlow))} mois pour protéger votre réserve.`
+            : `Augmentez votre épargne mensuelle de +${formatCurrency(requiredMonthlySavings, currency)}/mois pour neutraliser le retard.`)
+        : (postBufferMonths < reserveTargetMonths
+            ? `Reduce purchase budget or delay purchase by ${Math.ceil((monthlyOutflow * reserveTargetMonths - remainingCash) / Math.max(1, monthlyFreeCashFlow))} months to preserve your 3.0-month reserve floor.`
+            : `Increase monthly goal allocation by +${formatCurrency(requiredMonthlySavings, currency)}/mo to neutralize the timeline shift.`);
+
+      const strategicRead = isFr
+        ? `Avoir du cash disponible ne signifie pas que le plan peut l'absorber sans ajustement.`
+        : `Cash availability does not equal plan availability; reserve floor or timeline protection requires adjustment.`;
+
+      const masterStrategyParagraph = isFr
+        ? `L'évaluation de cette dépense de ${decAmtStr} par rapport à vos chiffres montre que la disponibilité du cash ne garantit pas la tenue du plan. Vos réserves après achat (${remainingCashStr}) assurent ${postBufferMonths} mois de couverture. L'exécution décale "${destinationTitle}" de +${delayInDays} jours (Projeté : ${projDateStr}). Recommandation : Ajustez le budget ou prévoyez une épargne préalable.`
+        : `Evaluating this ${decAmtStr} allocation against your active financial baseline reveals that cash availability does not equal plan availability. Post-purchase reserves (${remainingCashStr}) provide ${postBufferMonths} months of mandatory living buffer. Executing the expenditure shifts "${destinationTitle}" by +${delayInDays} days (Projected: ${projDateStr}). Recommendation: Adjust the purchase budget or save in advance to protect reserve stability.`;
 
       return {
         archetype: "DECISION_PURCHASE_IMPACT",
@@ -188,13 +243,29 @@ export function generateSeniorStrategistAssessment(
         confidenceLevel,
       };
     } else {
-      const headlineVerdict = "Executive Decision: WAIT — Unacceptable Reserve Risk";
-      const whatYouCanDo = `Pause this ${decAmtStr} purchase until dedicated savings are accumulated separately from emergency reserves.`;
-      const whatItChanges = `Executing now depletes emergency reserves below safe operating thresholds or creates a monthly deficit.`;
-      const toStayOnTrack = `Build dedicated goal funds to ${decAmtStr} while maintaining a full 3.0-month emergency reserve.`;
-      const strategicRead = `Liquid reserves are insufficient to absorb this expenditure without creating vulnerability.`;
+      const headlineVerdict = isFr
+        ? "Décision Exécutive : ATTENDRE — Risque Inacceptable sur les Réserves"
+        : "Executive Decision: WAIT — Unacceptable Reserve Risk";
 
-      const masterStrategyParagraph = `Quantitative evaluation indicates that executing this ${decAmtStr} expenditure presents significant liquidity risk. Post-purchase reserves would drop to ${postBufferMonths} months of mandatory expenses, leaving inadequate protection against income disruption. Recommendation: Wait until dedicated funds are accumulated, preserving your emergency buffer.`;
+      const whatYouCanDo = isFr
+        ? `Mettez en pause cet achat de ${decAmtStr} jusqu'à constituer une épargne dédiée séparée de vos réserves d'urgence.`
+        : `Pause this ${decAmtStr} purchase until dedicated savings are accumulated separately from emergency reserves.`;
+
+      const whatItChanges = isFr
+        ? `Exécuter maintenant réduirait vos réserves d'urgence sous le seuil de sécurité ou créerait un déficit.`
+        : `Executing now depletes emergency reserves below safe operating thresholds or creates a monthly deficit.`;
+
+      const toStayOnTrack = isFr
+        ? `Constituez un fonds dédié pour réunir ${decAmtStr} tout en conservant 3,0 mois de réserve de sécurité.`
+        : `Build dedicated goal funds to ${decAmtStr} while maintaining a full 3.0-month emergency reserve.`;
+
+      const strategicRead = isFr
+        ? `Vos réserves actuelles sont insuffisantes pour absorber cette dépense sans créer de vulnérabilité.`
+        : `Liquid reserves are insufficient to absorb this expenditure without creating vulnerability.`;
+
+      const masterStrategyParagraph = isFr
+        ? `L'évaluation quantitative indique qu'exécuter cette dépense de ${decAmtStr} présente un risque de liquidité important. Vos réserves tomberaient à ${postBufferMonths} mois de charges, laissant une protection insuffisante. Recommandation : Attendez d'avoir accumulé des fonds dédiés.`
+        : `Quantitative evaluation indicates that executing this ${decAmtStr} expenditure presents significant liquidity risk. Post-purchase reserves would drop to ${postBufferMonths} months of mandatory expenses, leaving inadequate protection against income disruption. Recommendation: Wait until dedicated funds are accumulated, preserving your emergency buffer.`;
 
       return {
         archetype: "DECISION_PURCHASE_IMPACT",
@@ -217,23 +288,45 @@ export function generateSeniorStrategistAssessment(
   const isPaceShortfall = monthlyFreeCashFlow < requiredMonthlySavings;
   const archetype = isPaceShortfall ? "TIGHT_MARGIN_SHORTFALL" : "BALANCED_ACCUMULATION";
 
-  const headlineVerdict = isPaceShortfall
-    ? "Pace Adjustment Recommended: Timeline Velocity Shortfall"
-    : decision === "GO"
-    ? "Executive Decision: GO — On Track for Target Date"
-    : decision === "ADJUST"
-    ? "Executive Decision: ADJUST — Pace Shortfall Detected"
-    : "Executive Decision: WAIT — Reserve Buffer Below Target";
+  const headlineVerdict = isFr
+    ? (isPaceShortfall
+        ? "Ajustement de Rythme Recommandé : Écart de Vitesse d'Épargne"
+        : decision === "GO"
+        ? "Décision Exécutive : ACCORDÉ (GO) — Dans les Temps pour la Date Cible"
+        : decision === "ADJUST"
+        ? "Décision Exécutive : À AJUSTER — Écart de Rythme Détecté"
+        : "Décision Exécutive : ATTENDRE — Réserve Sous la Cible")
+    : (isPaceShortfall
+        ? "Pace Adjustment Recommended: Timeline Velocity Shortfall"
+        : decision === "GO"
+        ? "Executive Decision: GO — On Track for Target Date"
+        : decision === "ADJUST"
+        ? "Executive Decision: ADJUST — Pace Shortfall Detected"
+        : "Executive Decision: WAIT — Reserve Buffer Below Target");
 
-  const whatYouCanDo = `Allocate ${fcfStr}/mo toward "${destinationTitle}" (${targetAmtStr}).`;
-  const whatItChanges = `Current projected completion is ${projDateStr}.`;
-  const toStayOnTrack = isPaceShortfall
-    ? `Bridge the monthly pace gap of ${formatCurrency(Math.max(0, requiredMonthlySavings - monthlyFreeCashFlow), currency)}/mo.`
-    : `Maintain current automated savings rate of ${fcfStr}/mo.`;
-  
-  const strategicRead = `Baseline living cushion provides ${livingBufferMonths} months of mandatory expense protection.`;
+  const whatYouCanDo = isFr
+    ? `Allouez ${fcfStr}/mois vers "${destinationTitle}" (${targetAmtStr}).`
+    : `Allocate ${fcfStr}/mo toward "${destinationTitle}" (${targetAmtStr}).`;
 
-  const masterStrategyParagraph = `A comprehensive review reveals a baseline with an actionable velocity gap. You generate ${fcfStr}/mo free cash flow against ${outflowStr} mandatory outlays. Achieving "${destinationTitle}" (${targetAmtStr}) by ${targetDateStr} requires ${reqStr}/mo—leaving a current pacing variance gap. Initiate trajectory acceleration to bridge the shortfall.`;
+  const whatItChanges = isFr
+    ? `L'arrivée actuellement projetée est fixée au ${projDateStr}.`
+    : `Current projected completion is ${projDateStr}.`;
+
+  const toStayOnTrack = isFr
+    ? (isPaceShortfall
+        ? `Comblez l'écart d'épargne mensuel de ${formatCurrency(Math.max(0, requiredMonthlySavings - monthlyFreeCashFlow), currency)}/mois.`
+        : `Maintenez votre taux d'épargne mensuel automatique de ${fcfStr}/mois.`)
+    : (isPaceShortfall
+        ? `Bridge the monthly pace gap of ${formatCurrency(Math.max(0, requiredMonthlySavings - monthlyFreeCashFlow), currency)}/mo.`
+        : `Maintain current automated savings rate of ${fcfStr}/mo.`);
+
+  const strategicRead = isFr
+    ? `Votre coussin de trésorerie de base assure ${livingBufferMonths} mois de couverture de charges obligatoires.`
+    : `Baseline living cushion provides ${livingBufferMonths} months of mandatory expense protection.`;
+
+  const masterStrategyParagraph = isFr
+    ? `L'analyse complète montre une trésorerie saine avec un léger ajustement de vitesse à prévoir. Vous dégagez ${fcfStr}/mois de cash-flow libre face à ${outflowStr} de charges. Atteindre "${destinationTitle}" (${targetAmtStr}) pour le ${targetDateStr} requiert ${reqStr}/mois. Accélérez votre rythme d'épargne pour sécuriser la date.`
+    : `A comprehensive review reveals a baseline with an actionable velocity gap. You generate ${fcfStr}/mo free cash flow against ${outflowStr} mandatory outlays. Achieving "${destinationTitle}" (${targetAmtStr}) by ${targetDateStr} requires ${reqStr}/mo—leaving a current pacing variance gap. Initiate trajectory acceleration to bridge the shortfall.`;
 
   return {
     archetype,
@@ -247,5 +340,5 @@ export function generateSeniorStrategistAssessment(
     executiveDecision: decision,
     confidenceLevel,
   };
-
 }
+

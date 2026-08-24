@@ -24,6 +24,8 @@ import {
 
 import { generateSeniorStrategistAssessment } from "@/lib/ai/senior-strategist-engine";
 
+import { useI18n } from "@/lib/i18n/i18n-context";
+
 interface Step7TrajectoryRevealProps {
   state: OnboardingState;
   calculatedPath: OnboardingCalculatedPath;
@@ -41,11 +43,13 @@ export function Step7TrajectoryReveal({
   onEditStep,
   isPending,
 }: Step7TrajectoryRevealProps) {
+  const { language } = useI18n();
   const { currency, destination } = state;
 
   const monthlyOutflow = calculatedPath.monthlyEssentialExpenses + calculatedPath.monthlyDebtPayments + calculatedPath.monthlyCommitmentsAmortized;
 
   const strategistOutput = generateSeniorStrategistAssessment({
+    language,
     currency,
     monthlyInflow: calculatedPath.monthlyGrossIncome,
     monthlyOutflow,
@@ -53,14 +57,15 @@ export function Step7TrajectoryReveal({
     totalLiquidSavings: calculatedPath.totalLiquidSavings,
     targetAmount: destination.targetAmount,
     targetDate: destination.targetDate,
-    destinationTitle: destination.title || "Primary Goal",
+    destinationTitle: destination.title || (language === "fr" ? "Objectif Principal" : "Primary Goal"),
     projectedDate: formatMonthYear(calculatedPath.projectedCompletionDate),
     delayInDays: calculatedPath.monthlyFreeCashFlow <= 0 ? 0 : Math.max(0, (calculatedPath.projectedMonthsToCompletion - 24) * 30),
     requiredMonthlySavings: calculatedPath.requiredMonthlySavings,
   });
 
   const pdfData: PDFReportData = {
-    destinationTitle: destination.title || "Primary Goal",
+    language,
+    destinationTitle: destination.title || (language === "fr" ? "Objectif Principal" : "Primary Goal"),
     targetAmount: destination.targetAmount,
     currentAmount: destination.currentAmount,
     targetDate: formatMonthYear(destination.targetDate),
@@ -80,6 +85,7 @@ export function Step7TrajectoryReveal({
     masterStrategyParagraph: strategistOutput.masterStrategyParagraph,
     burnRateRunwayMonths: strategistOutput.burnRateRunwayMonths,
   };
+
 
   return (
     <div className="space-y-8 animate-fadeIn">

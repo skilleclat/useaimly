@@ -1,16 +1,18 @@
 import { jsPDF } from "jspdf";
 import { formatCurrency } from "./currency";
 import { CurrencyCode, ExecutiveDecision, ConfidenceLevel } from "@/lib/types/finance";
+import { LanguageCode } from "@/lib/i18n/translations";
 import { USEAIMLY_LOGO_BASE64 } from "@/lib/brand/logo-base64";
 
 export interface PDFReportData {
+  language?: LanguageCode;
   title?: string;
   userName?: string;
   currency: CurrencyCode;
   destinationTitle: string;
   targetAmount: number;
   currentAmount: number;
-  remainingGap: number;
+  remainingGap?: number;
   targetDate: string;
   projectedDate: string;
   delayInDays: number;
@@ -18,10 +20,10 @@ export interface PDFReportData {
   monthlyOutflow: number;
   availableForGoals: number;
   liquidSavings: number;
-  executiveDecision: ExecutiveDecision;
-  confidenceLevel: ConfidenceLevel;
+  executiveDecision?: ExecutiveDecision;
+  confidenceLevel?: ConfidenceLevel;
   confidenceReasons?: string[];
-  reserveStatus: "SATISFIED" | "BELOW_TARGET" | "VIOLATED";
+  reserveStatus?: "SATISFIED" | "BELOW_TARGET" | "VIOLATED";
   status: "SAFE" | "MANAGEABLE" | "HIGH_IMPACT" | "OFF_TRACK";
   headlineVerdict: string;
   whatYouCanDo: string;
@@ -35,6 +37,7 @@ export interface PDFReportData {
 }
 
 export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
+  const isFr = data.language === "fr";
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",
@@ -68,17 +71,12 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   try {
     doc.addImage(USEAIMLY_LOGO_BASE64, "PNG", logoX, 6.5, 42, 22);
   } catch (e) {
-    doc.setDrawColor(255, 77, 38);
-    doc.setLineWidth(1.1);
-    doc.circle(logoX + 5, 17, 6.5, "S");
-    doc.setFillColor(255, 77, 38);
-    doc.triangle(logoX + 3, 19.5, logoX + 7, 19.5, logoX + 5, 14, "F");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.setTextColor(23, 23, 23);
-    doc.text("Use", logoX + 14, 19);
+    doc.text("Use", logoX, 19);
     doc.setTextColor(255, 77, 38);
-    doc.text("Aimly", logoX + 14 + doc.getTextWidth("Use"), 19);
+    doc.text("Aimly", logoX + doc.getTextWidth("Use"), 19);
   }
 
   const sepX = logoX + 46;
@@ -89,15 +87,23 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
   doc.setTextColor(255, 77, 38);
-  doc.text("EXECUTIVE FINANCIAL TRAJECTORY REPORT", sepX + 5, 14.5);
+  doc.text(
+    isFr ? "RAPPORT TRAJECTOIRE FINANCIÈRE EXÉCUTIF" : "EXECUTIVE FINANCIAL TRAJECTORY REPORT",
+    sepX + 5,
+    14.5
+  );
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(100, 100, 100);
-  doc.text("Goal-Aware Deterministic Decision Intelligence", sepX + 5, 20);
+  doc.text(
+    isFr ? "Intelligence Décisionnelle Déterministe d'Objectif" : "Goal-Aware Deterministic Decision Intelligence",
+    sepX + 5,
+    20
+  );
 
-  const nowStr = new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-  doc.text(`DATE: ${nowStr}`, pageWidth - margin, 14, { align: "right" });
+  const nowStr = new Date().toLocaleDateString(isFr ? "fr-FR" : "en-US", { year: "numeric", month: "short", day: "numeric" });
+  doc.text(isFr ? `DATE : ${nowStr}` : `DATE: ${nowStr}`, pageWidth - margin, 14, { align: "right" });
   doc.text(`REF: UAM-${Math.floor(100000 + Math.random() * 900000)}`, pageWidth - margin, 20, { align: "right" });
 
   y = 42;
@@ -106,13 +112,19 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.text(data.destinationTitle || "Financial Trajectory Analysis", margin, y);
+  doc.text(data.destinationTitle || (isFr ? "Analyse de Trajectoire Financière" : "Financial Trajectory Analysis"), margin, y);
   y += 7;
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
-  doc.text(`Prepared for: ${data.userName || "Valued Strategist"}  |  Currency: ${data.currency}`, margin, y);
+  doc.text(
+    isFr
+      ? `Préparé pour : ${data.userName || "Décideur Stratège"}  |  Devise : ${data.currency}`
+      : `Prepared for: ${data.userName || "Valued Strategist"}  |  Currency: ${data.currency}`,
+    margin,
+    y
+  );
   y += 10;
 
   // 3. EXECUTIVE VERDICT CARD (GO / WAIT / ADJUST)
@@ -120,30 +132,32 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setDrawColor(cardBorder[0], cardBorder[1], cardBorder[2]);
   doc.roundedRect(margin, y, contentWidth, 30, 3, 3, "FD");
 
+  const execDec = data.executiveDecision || (data.status === "SAFE" ? "GO" : data.status === "OFF_TRACK" ? "WAIT" : "ADJUST");
+
   // Decision Badge Color
   let badgeColor = [22, 163, 74]; // GO (Green)
-  if (data.executiveDecision === "ADJUST") badgeColor = [217, 119, 6]; // Amber
-  if (data.executiveDecision === "WAIT") badgeColor = [225, 29, 72]; // Red
+  if (execDec === "ADJUST") badgeColor = [217, 119, 6]; // Amber
+  if (execDec === "WAIT") badgeColor = [225, 29, 72]; // Red
 
   doc.setFillColor(badgeColor[0], badgeColor[1], badgeColor[2]);
   doc.roundedRect(margin + 5, y + 5, 24, 6.5, 1.5, 1.5, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
-  doc.text(data.executiveDecision, margin + 17, y + 9.5, { align: "center" });
+  doc.text(execDec, margin + 17, y + 9.5, { align: "center" });
 
   // Confidence Badge
   doc.setFillColor(230, 230, 230);
-  doc.roundedRect(margin + 32, y + 5, 36, 6.5, 1.5, 1.5, "F");
+  doc.roundedRect(margin + 32, y + 5, 38, 6.5, 1.5, 1.5, "F");
   doc.setTextColor(50, 50, 50);
   doc.setFontSize(7.5);
-  doc.text(`CONFIDENCE: ${data.confidenceLevel}`, margin + 50, y + 9.5, { align: "center" });
+  doc.text(isFr ? "CONFIANCE : ÉLEVÉE" : `CONFIDENCE: ${data.confidenceLevel || "HIGH"}`, margin + 51, y + 9.5, { align: "center" });
 
   // Headline Title
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.setFontSize(11);
+  doc.setFontSize(10.5);
   doc.setFont("helvetica", "bold");
-  doc.text(data.headlineVerdict, margin + 72, y + 9.5);
+  doc.text(data.headlineVerdict, margin + 74, y + 9.5);
 
   // Subtitle Details
   doc.setFontSize(8.5);
@@ -151,11 +165,17 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
   let deltaText = "";
   if (data.availableForGoals < 0) {
-    deltaText = `Monthly Cash Deficit: -${formatCurrency(Math.abs(data.availableForGoals), data.currency)}/mo (Operating Runway: ~${data.burnRateRunwayMonths || 0} mos)`;
+    deltaText = isFr
+      ? `Déficit Mensuel : -${formatCurrency(Math.abs(data.availableForGoals), data.currency)}/mois (Couverture : ~${data.burnRateRunwayMonths || 0} mois)`
+      : `Monthly Cash Deficit: -${formatCurrency(Math.abs(data.availableForGoals), data.currency)}/mo (Operating Runway: ~${data.burnRateRunwayMonths || 0} mos)`;
   } else if (data.delayInDays <= 0) {
-    deltaText = `Projected Arrival: ${data.projectedDate} (On Track with zero trajectory delay)`;
+    deltaText = isFr
+      ? `Arrivée Projetée : ${data.projectedDate} (Dans les temps sans retard)`
+      : `Projected Arrival: ${data.projectedDate} (On Track with zero trajectory delay)`;
   } else {
-    deltaText = `Goal Shift: +${data.delayInDays} days delay (Projected Arrival: ${data.projectedDate})`;
+    deltaText = isFr
+      ? `Décalage d'Objectif : +${data.delayInDays} jours de retard (Arrivée Projetée : ${data.projectedDate})`
+      : `Goal Shift: +${data.delayInDays} days delay (Projected Arrival: ${data.projectedDate})`;
   }
   doc.text(deltaText, margin + 5, y + 18);
 
@@ -163,7 +183,12 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   if (data.singleAction) {
     doc.setFont("helvetica", "bold");
     doc.setTextColor(primaryOrange[0], primaryOrange[1], primaryOrange[2]);
-    doc.text(`RECOMMENDED ACTION: ${data.singleAction}`, margin + 5, y + 25, { maxWidth: contentWidth - 10 });
+    doc.text(
+      isFr ? `ACTION RECOMMANDÉE : ${data.singleAction}` : `RECOMMENDED ACTION: ${data.singleAction}`,
+      margin + 5,
+      y + 25,
+      { maxWidth: contentWidth - 10 }
+    );
   }
 
   y += 38;
@@ -172,7 +197,11 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.text("1. BASELINE FINANCIAL CAPACITY & SAFETY CHECK", margin, y);
+  doc.text(
+    isFr ? "1. CAPACITÉ FINANCIÈRE DE BASE & SÉCURITÉ" : "1. BASELINE FINANCIAL CAPACITY & SAFETY CHECK",
+    margin,
+    y
+  );
   y += 5;
 
   const boxWidth = (contentWidth - 6) / 2;
@@ -185,7 +214,7 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
-  doc.text("MONTHLY INFLOW (GROSS INCOME)", margin + 4, y + 6);
+  doc.text(isFr ? "REVENUS MENSUELS BRUTS" : "MONTHLY INFLOW (GROSS INCOME)", margin + 4, y + 6);
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
@@ -196,7 +225,7 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
-  doc.text("MANDATORY OUTFLOWS (LIVING & DEBT)", margin + boxWidth + 10, y + 6);
+  doc.text(isFr ? "CHARGES OBLIGATOIRES (VIE & DETTES)" : "MANDATORY OUTFLOWS (LIVING & DEBT)", margin + boxWidth + 10, y + 6);
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
@@ -212,7 +241,7 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(225, 29, 72);
-    doc.text("NET CASH BURN RATE (DEFICIT)", margin + 4, y + 6);
+    doc.text(isFr ? "DÉFICIT MENSUEL NET" : "NET CASH BURN RATE (DEFICIT)", margin + 4, y + 6);
     doc.setFontSize(12);
     doc.text(`-${formatCurrency(Math.abs(data.availableForGoals), data.currency)}`, margin + 4, y + 14);
   } else {
@@ -222,15 +251,16 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(primaryOrange[0], primaryOrange[1], primaryOrange[2]);
-    doc.text("FREE CASH FLOW FOR GOALS", margin + 4, y + 6);
+    doc.text(isFr ? "CASH-FLOW LIBRE POUR OBJECTIFS" : "FREE CASH FLOW FOR GOALS", margin + 4, y + 6);
     doc.setFontSize(12);
     doc.text(formatCurrency(data.availableForGoals, data.currency), margin + 4, y + 14);
   }
 
   // Box D: Emergency Reserve & Status
-  const isBelowTarget = data.reserveStatus !== "SATISFIED";
+  const resStatus = data.reserveStatus || "SATISFIED";
+  const isBelowTarget = resStatus !== "SATISFIED";
   if (isBelowTarget) {
-    doc.setFillColor(254, 243, 199); // Amber Warning Tint
+    doc.setFillColor(254, 243, 199);
     doc.setDrawColor(251, 191, 36);
   } else {
     doc.setFillColor(255, 255, 255);
@@ -240,7 +270,11 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(isBelowTarget ? 217 : mutedGray[0], isBelowTarget ? 119 : mutedGray[1], isBelowTarget ? 6 : mutedGray[2]);
-  doc.text(`LIQUID RESERVES (${data.reserveStatus.replace("_", " ")})`, margin + boxWidth + 10, y + 6);
+  doc.text(
+    isFr ? `RÉSERVES LIQUIDES (${resStatus === "SATISFIED" ? "SÉCURISÉES" : "SOUS LA CIBLE"})` : `LIQUID RESERVES (${resStatus.replace("_", " ")})`,
+    margin + boxWidth + 10,
+    y + 6
+  );
   doc.setFontSize(12);
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
   doc.text(formatCurrency(data.liquidSavings, data.currency), margin + boxWidth + 10, y + 14);
@@ -251,7 +285,7 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.text("2. THE NUMBERS THAT DRIVE THE DECISION", margin, y);
+  doc.text(isFr ? "2. CHIFFRES CLÉS DE LA DÉCISION" : "2. THE NUMBERS THAT DRIVE THE DECISION", margin, y);
   y += 5;
 
   doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
@@ -260,10 +294,10 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
-  doc.text("TARGET AMOUNT", margin + 6, y + 7);
-  doc.text("CONFIRMED SAVED", margin + 50, y + 7);
-  doc.text("REMAINING GAP", margin + 98, y + 7);
-  doc.text("PROJECTED ARRIVAL", margin + 142, y + 7);
+  doc.text(isFr ? "MONTANT CIBLE" : "TARGET AMOUNT", margin + 6, y + 7);
+  doc.text(isFr ? "ÉPARGNE CONFIRMÉE" : "CONFIRMED SAVED", margin + 50, y + 7);
+  doc.text(isFr ? "ÉCART RESTANT" : "REMAINING GAP", margin + 98, y + 7);
+  doc.text(isFr ? "ARRIVÉE PROJETÉE" : "PROJECTED ARRIVAL", margin + 142, y + 7);
 
   const remGap = Math.max(0, data.targetAmount - data.currentAmount);
 
@@ -282,7 +316,7 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.text("3. USEAIMLY STRATEGIC ACTION PLAN", margin, y);
+  doc.text(isFr ? "3. PLAN D'ACTION STRATÉGIQUE USEAIMLY" : "3. USEAIMLY STRATEGIC ACTION PLAN", margin, y);
   y += 7;
 
   const renderSynthesisBlock = (label: string, content: string, accentRGB: number[]) => {
@@ -301,16 +335,32 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
     doc.setFontSize(8.2);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-    const splitLines = doc.splitTextToSize(content || "Analysis verified against deterministic engine.", contentWidth - 12);
+    const splitLines = doc.splitTextToSize(content || (isFr ? "Analyse vérifiée par le moteur déterministe." : "Analysis verified against deterministic engine."), contentWidth - 12);
     doc.text(splitLines[0] || "", margin + 6, y + 12);
 
     y += 22;
   };
 
-  renderSynthesisBlock("01 — Immediate Liquidity Action", data.whatYouCanDo, [16, 185, 129]);
-  renderSynthesisBlock("02 — Time & Trajectory Shift", data.whatItChanges, [245, 158, 11]);
-  renderSynthesisBlock("03 — Recommended Catch-up Plan", data.toStayOnTrack, [255, 85, 51]);
-  renderSynthesisBlock("04 — Executive Analysis", data.strategicRead, [79, 70, 229]);
+  renderSynthesisBlock(
+    isFr ? "01 — Action Immédiate sur les Liquidités" : "01 — Immediate Liquidity Action",
+    data.whatYouCanDo,
+    [16, 185, 129]
+  );
+  renderSynthesisBlock(
+    isFr ? "02 — Décalage Temporel & Trajectoire" : "02 — Time & Trajectory Shift",
+    data.whatItChanges,
+    [245, 158, 11]
+  );
+  renderSynthesisBlock(
+    isFr ? "03 — Plan de Rattrapage Recommandé" : "03 — Recommended Catch-up Plan",
+    data.toStayOnTrack,
+    [255, 85, 51]
+  );
+  renderSynthesisBlock(
+    isFr ? "04 — Synthèse Exécutive IA" : "04 — Executive Analysis",
+    data.strategicRead,
+    [79, 70, 229]
+  );
 
   // Page 1 Footer
   doc.setDrawColor(cardBorder[0], cardBorder[1], cardBorder[2]);
@@ -319,8 +369,14 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setFontSize(7.5);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
-  doc.text("Confidential — Generated autonomously by UseAimly Goal-Aware Decision Intelligence Platform.", margin, 285);
-  doc.text("Page 1 of 2", pageWidth - margin, 285, { align: "right" });
+  doc.text(
+    isFr
+      ? "Confidentiel — Généré de manière autonome par la plateforme d'intelligence décisionnelle UseAimly."
+      : "Confidential — Generated autonomously by UseAimly Goal-Aware Decision Intelligence Platform.",
+    margin,
+    285
+  );
+  doc.text(isFr ? "Page 1 sur 2" : "Page 1 of 2", pageWidth - margin, 285, { align: "right" });
 
   // ==============================================================================
   // PAGE 2: SAFETY CHECK & WHAT WE DO NOT KNOW YET
@@ -355,12 +411,20 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setFontSize(8.5);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(255, 77, 38);
-  doc.text("RESILIENCE RADAR & UNCERTAINTY DISCLOSURE", sepX2 + 5, 13.5);
+  doc.text(
+    isFr ? "RADAR DE RÉSILIENCE & DIVULGATION DE RISQUES" : "RESILIENCE RADAR & UNCERTAINTY DISCLOSURE",
+    sepX2 + 5,
+    13.5
+  );
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(100, 100, 100);
-  doc.text("Strategic Decision Briefing — Page 2 of 2", sepX2 + 5, 19);
+  doc.text(
+    isFr ? "Briefing Décisionnel Stratégique — Page 2 sur 2" : "Strategic Decision Briefing — Page 2 of 2",
+    sepX2 + 5,
+    19
+  );
 
   y2 = 36;
 
@@ -368,12 +432,16 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setFontSize(10.5);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.text("1. WHAT WE DO NOT KNOW YET (VARIABLE DISCLOSURES)", margin, y2);
+  doc.text(
+    isFr ? "1. VARIABLES ET DISPOSITIFS DE SÉCURITÉ" : "1. WHAT WE DO NOT KNOW YET (VARIABLE DISCLOSURES)",
+    margin,
+    y2
+  );
   y2 += 5;
 
   const missingList = data.missingVariables && data.missingVariables.length > 0
     ? data.missingVariables
-    : ["No critical data variables missing; calculations reflect confirmed inputs."];
+    : [isFr ? "Aucune donnée critique manquante ; les calculs reflètent des entrées confirmées." : "No critical data variables missing; calculations reflect confirmed inputs."];
 
   doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
   doc.roundedRect(margin, y2, contentWidth, Math.max(20, missingList.length * 6 + 8), 2, 2, "FD");
@@ -391,10 +459,12 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setFontSize(10.5);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.text("2. STRATEGIC MASTER ASSESSMENT", margin, y2);
+  doc.text(isFr ? "2. ÉVALUATION MASTER STRATÉGIQUE" : "2. STRATEGIC MASTER ASSESSMENT", margin, y2);
   y2 += 5;
 
-  const defaultMasterStrategy = `Based on confirmed balance sheet metrics, your available monthly cash flow of ${formatCurrency(data.availableForGoals, data.currency)} supports your primary destination "${data.destinationTitle}" (${formatCurrency(data.targetAmount, data.currency)}) projected for arrival on ${data.projectedDate}. Liquid reserves of ${formatCurrency(data.liquidSavings, data.currency)} provide essential operational buffer against unexpected living outlays. Maintain discipline around discretionary spending to safeguard your goal completion trajectory.`;
+  const defaultMasterStrategy = isFr
+    ? `D'après vos métriques financières confirmées, votre cash-flow mensuel disponible de ${formatCurrency(data.availableForGoals, data.currency)} permet de soutenir votre objectif principal "${data.destinationTitle}" (${formatCurrency(data.targetAmount, data.currency)}) projeté pour le ${data.projectedDate}. Vos réserves liquides de ${formatCurrency(data.liquidSavings, data.currency)} assurent une protection essentielle.`
+    : `Based on confirmed balance sheet metrics, your available monthly cash flow of ${formatCurrency(data.availableForGoals, data.currency)} supports your primary destination "${data.destinationTitle}" (${formatCurrency(data.targetAmount, data.currency)}) projected for arrival on ${data.projectedDate}. Liquid reserves of ${formatCurrency(data.liquidSavings, data.currency)} provide essential operational buffer against unexpected living outlays. Maintain discipline around discretionary spending to safeguard your goal completion trajectory.`;
 
   const strategyText = data.masterStrategyParagraph || defaultMasterStrategy;
   const masterLines = doc.splitTextToSize(strategyText, contentWidth - 12);
@@ -410,7 +480,7 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setFontSize(7.5);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(primaryOrange[0], primaryOrange[1], primaryOrange[2]);
-  doc.text("FINANCIAL TRAJECTORY SYNTHESIS", margin + 6, y2 + 6);
+  doc.text(isFr ? "SYNTHÈSE DE LA TRAJECTOIRE FINANCIÈRE" : "FINANCIAL TRAJECTORY SYNTHESIS", margin + 6, y2 + 6);
 
   doc.setFontSize(7.8);
   doc.setFont("helvetica", "normal");
@@ -423,7 +493,7 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setFontSize(10.5);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.text("3. IMMEDIATE NEXT TACTICAL STEP", margin, y2);
+  doc.text(isFr ? "3. PROCHAINE ÉTAPE TACTIQUE IMMÉDIATE" : "3. IMMEDIATE NEXT TACTICAL STEP", margin, y2);
   y2 += 5;
 
   doc.setFillColor(255, 255, 255);
@@ -433,12 +503,17 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setFontSize(8.5);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(primaryOrange[0], primaryOrange[1], primaryOrange[2]);
-  doc.text("NEXT ACTION:", margin + 4, y2 + 9);
+  doc.text(isFr ? "PROCHAINE ACTION :" : "NEXT ACTION:", margin + 4, y2 + 9);
 
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.text(data.singleAction || "Proceed with current goal allocation schedule.", margin + 30, y2 + 9, { maxWidth: contentWidth - 36 });
+  doc.text(
+    data.singleAction || (isFr ? "Poursuivre le programme d'épargne mensuel automatisé." : "Proceed with current goal allocation schedule."),
+    margin + (isFr ? 34 : 30),
+    y2 + 9,
+    { maxWidth: contentWidth - 38 }
+  );
 
   // Page 2 Footer
   doc.setDrawColor(cardBorder[0], cardBorder[1], cardBorder[2]);
@@ -447,11 +522,18 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setFontSize(7.5);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
-  doc.text("Confidential — UseAimly Executive Briefing & Decision Intelligence.", margin, 285);
-  doc.text("Page 2 of 2", pageWidth - margin, 285, { align: "right" });
+  doc.text(
+    isFr
+      ? "Confidentiel — Briefing Exécutif & Intelligence Décisionnelle UseAimly."
+      : "Confidential — UseAimly Executive Briefing & Decision Intelligence.",
+    margin,
+    285
+  );
+  doc.text(isFr ? "Page 2 sur 2" : "Page 2 of 2", pageWidth - margin, 285, { align: "right" });
 
   return doc;
 }
+
 
 export function downloadPDFReport(data: PDFReportData) {
   const doc = generateExecutivePDFReport(data);
