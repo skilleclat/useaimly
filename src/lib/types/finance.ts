@@ -68,3 +68,62 @@ export interface NetWorthSummary {
   netWorth: number;
   liquidRunwayMonths: number; // liquid cash / monthly total expenses
 }
+
+// ==============================================================================
+// CANONICAL DECISION MODEL & INVARIANTS
+// ==============================================================================
+export type CanonicalDecisionStatus = "GO" | "ADJUST" | "PAUSE";
+export type CanonicalGoalStatus = "ACHIEVED" | "ON_TRACK" | "AT_RISK" | "OFF_TRACK";
+export type CanonicalConfidenceLevel = "HIGH" | "MEDIUM" | "LOW";
+export type CanonicalReserveStatus = "SATISFIED" | "BELOW_TARGET" | "VIOLATED";
+
+export interface CanonicalFinancialDecision {
+  analysisDate: string; // ISO date YYYY-MM-DD
+  currency: CurrencyCode;
+
+  // Baseline Capacity
+  monthlyIncome: number;
+  mandatoryOutflows: number;
+  freeCashFlow: number;
+
+  // Reserve Protection
+  liquidReserves: number;
+  reserveMonths: number;
+  reserveTargetMonths: number;
+  reserveStatus: CanonicalReserveStatus;
+
+  // Primary Goal Metrics (Normalized & Invariant-Checked)
+  destinationTitle: string;
+  targetAmount: number;
+  confirmedSaved: number;
+  remainingGap: number;
+  currentMonthlyAllocation: number;
+  requiredMonthlyAllocation: number;
+
+  // Explicit Canonical Dates
+  targetDate: string; // ISO date YYYY-MM-DD
+  projectedCompletionDate: string; // ISO date YYYY-MM-DD
+  trajectoryDelayMonths: number;
+
+  // Dimension Separation
+  goalStatus: CanonicalGoalStatus;
+  decision: CanonicalDecisionStatus;
+  confidence: CanonicalConfidenceLevel;
+  confidenceReasons: string[];
+
+  // Shortfall & Action Plan (Guaranteed Non-Contradictory)
+  shortfallAmount: number;
+  shortfallReason: string | null;
+
+  recommendedActionType: "REALLOCATE" | "MAINTAIN" | "INCREASE_ALLOCATION" | "REDUCE_OUTFLOWS" | "PAUSE_PURCHASE" | "SAVE_IN_ADVANCE";
+  recommendedAction: string;
+
+  headlineVerdict: string;
+  strategicRead: string;
+  masterStrategyParagraph: string;
+
+  assumptions: string[];
+  missingVariables: string[];
+  warnings: string[];
+}
+

@@ -63,7 +63,7 @@ describe("Senior Wealth Strategist Intelligence Engine (30-Year Advisory Caliber
     });
 
     expect(assessment.archetype).toBe("TIGHT_MARGIN_SHORTFALL");
-    expect(assessment.headlineVerdict).toContain("Pace Adjustment Recommended");
+    expect(assessment.headlineVerdict).toContain("Pace Shortfall Detected");
     expect(assessment.masterStrategyParagraph).toContain("velocity gap");
     expect(assessment.masterStrategyParagraph).toContain("Down Payment");
   });

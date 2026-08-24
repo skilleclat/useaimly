@@ -220,12 +220,25 @@ export default function DecideStudioPage() {
           </p>
 
           <PdfReportDownloadButton
-            decisionTitle={title}
-            amount={amount}
-            currency={currency}
-            verdictStatus={simulation.status}
-            projectedDelayDays={simulation.delta.delayInDays || 45}
-            monthlyRecovery={1875}
+            data={{
+              destinationTitle: title,
+              targetAmount: amount,
+              currentAmount: 0,
+              targetDate: "2027-12-31",
+              projectedDate: simulation.delta.newCompletionDate || "2027-12-31",
+              delayInDays: simulation.delta.delayInDays || 0,
+              currency,
+              monthlyInflow: 180000,
+              monthlyOutflow: 112000,
+              availableForGoals: 68000,
+              liquidSavings: baselineProfile.liquidSavings,
+              status: simulation.status,
+              headlineVerdict: simulation.headlineVerdict,
+              whatYouCanDo: simulation.singleAction,
+              whatItChanges: `Projected completion: ${simulation.delta.newCompletionDate}`,
+              toStayOnTrack: simulation.recommendation,
+              strategicRead: simulation.detailedAnalysis,
+            }}
           />
         </div>
       </section>

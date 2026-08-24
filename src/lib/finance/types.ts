@@ -252,3 +252,12 @@ export interface DecisionSimulationResult {
   recommendation: string;
 }
 
+export type {
+  CanonicalDecisionStatus,
+  CanonicalGoalStatus,
+  CanonicalConfidenceLevel,
+  CanonicalReserveStatus,
+  CanonicalFinancialDecision,
+} from "../types/finance";
+
+

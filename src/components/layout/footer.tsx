@@ -22,6 +22,14 @@ import {
 export function Footer() {
   const pathname = usePathname();
   const isAppView = pathname.startsWith("/app");
+  const isOnboarding = pathname.startsWith("/onboarding");
+  const isDecidePage = pathname.startsWith("/app/decide") || pathname === "/decide" || pathname.startsWith("/app/decisions");
+  const isCheckout = pathname.startsWith("/checkout");
+
+  // Hide footer on mobile screens (< 768px) during onboarding, decision completion, and checkout flows
+  // so mobile users don't get confused or distracted when looking for "Continue" / action buttons.
+  const hideOnMobile = isOnboarding || isDecidePage || isCheckout;
+
   const { t } = useI18n();
   const { currency } = useCurrency();
   const [newsletterEmail, setNewsletterEmail] = useState("");
@@ -43,7 +51,7 @@ export function Footer() {
   // Compact Minimalist Footer for Authenticated App View (/app)
   if (isAppView) {
     return (
-      <footer className="w-full border-t border-border/60 bg-card/60 backdrop-blur-md py-6 mt-16 transition-colors">
+      <footer className={`w-full border-t border-border/60 bg-card/60 backdrop-blur-md py-6 mt-16 transition-colors ${hideOnMobile ? "hidden md:block" : ""}`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono">
           <div className="flex items-center gap-3 text-muted-foreground">
             <UseaimlyLogo size="sm" showTagline={false} />
@@ -84,7 +92,7 @@ export function Footer() {
 
   // Full Executive Landing & Public Footer
   return (
-    <footer className="relative mt-8 sm:mt-16 border-t border-zinc-800/80 bg-[#0B0C10] text-zinc-300 rounded-t-[2.5rem] sm:rounded-t-[3rem] shadow-2xl overflow-hidden font-sans">
+    <footer className={`relative mt-8 sm:mt-16 border-t border-zinc-800/80 bg-[#0B0C10] text-zinc-300 rounded-t-[2.5rem] sm:rounded-t-[3rem] shadow-2xl overflow-hidden font-sans ${hideOnMobile ? "hidden md:block" : ""}`}>
       {/* Top Emerald Gradient Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[120px] bg-gradient-to-b from-emerald-500/15 via-emerald-500/5 to-transparent blur-2xl pointer-events-none" />
 

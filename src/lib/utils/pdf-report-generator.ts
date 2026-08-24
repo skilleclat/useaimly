@@ -1,8 +1,9 @@
 import { jsPDF } from "jspdf";
 import { formatCurrency } from "./currency";
-import { CurrencyCode, ExecutiveDecision, ConfidenceLevel } from "@/lib/types/finance";
+import { CurrencyCode, ExecutiveDecision, ConfidenceLevel, BaselineFinancialProfile } from "@/lib/types/finance";
 import { LanguageCode } from "@/lib/i18n/translations";
 import { USEAIMLY_LOGO_BASE64 } from "@/lib/brand/logo-base64";
+import { generateSeniorStrategistAssessment } from "@/lib/ai/senior-strategist-engine";
 
 export interface PDFReportData {
   language?: LanguageCode;
@@ -164,10 +165,16 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setFont("helvetica", "normal");
   doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
   let deltaText = "";
+  const remainingGapVal = data.remainingGap !== undefined ? data.remainingGap : Math.max(0, data.targetAmount - data.currentAmount);
+
   if (data.availableForGoals < 0) {
     deltaText = isFr
       ? `Déficit Mensuel : -${formatCurrency(Math.abs(data.availableForGoals), data.currency)}/mois (Couverture : ~${data.burnRateRunwayMonths || 0} mois)`
       : `Monthly Cash Deficit: -${formatCurrency(Math.abs(data.availableForGoals), data.currency)}/mo (Operating Runway: ~${data.burnRateRunwayMonths || 0} mos)`;
+  } else if (remainingGapVal === 0) {
+    deltaText = isFr
+      ? `Objectif Totalement Financé — Capital Confirmé : ${formatCurrency(data.currentAmount, data.currency)}`
+      : `Goal Fully Achieved & Funded — Confirmed Saved: ${formatCurrency(data.currentAmount, data.currency)}`;
   } else if (data.delayInDays <= 0) {
     deltaText = isFr
       ? `Arrivée Projetée : ${data.projectedDate} (Dans les temps sans retard)`
@@ -299,16 +306,16 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.text(isFr ? "ÉCART RESTANT" : "REMAINING GAP", margin + 98, y + 7);
   doc.text(isFr ? "ARRIVÉE PROJETÉE" : "PROJECTED ARRIVAL", margin + 142, y + 7);
 
-  const remGap = Math.max(0, data.targetAmount - data.currentAmount);
+  const remGap = remainingGapVal;
 
   doc.setFontSize(9.5);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
   doc.text(formatCurrency(data.targetAmount, data.currency), margin + 6, y + 16);
   doc.text(formatCurrency(data.currentAmount, data.currency), margin + 50, y + 16);
-  doc.text(formatCurrency(remGap, data.currency), margin + 98, y + 16);
+  doc.text(remGap === 0 ? (isFr ? "0 (ATTEINT)" : "KES 0 (ACHIEVED)") : formatCurrency(remGap, data.currency), margin + 98, y + 16);
   doc.setTextColor(primaryOrange[0], primaryOrange[1], primaryOrange[2]);
-  doc.text(data.projectedDate || "Pace Dependent", margin + 142, y + 16);
+  doc.text(remGap === 0 ? (isFr ? "Déjà Financé" : "Fully Funded") : (data.projectedDate || "Pace Dependent"), margin + 142, y + 16);
 
   y += 32;
 
@@ -351,8 +358,17 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
     data.whatItChanges,
     [245, 158, 11]
   );
+
+  // Conditional Label for Block 03
+  let block03Label = isFr ? "03 — Plan de Rattrapage Recommandé" : "03 — Recommended Catch-up Plan";
+  if (remGap === 0) {
+    block03Label = isFr ? "03 — Plan d'Allocation & Réaffectation" : "03 — Allocation & Reallocation Plan";
+  } else if (data.delayInDays <= 0 || data.status === "SAFE") {
+    block03Label = isFr ? "03 — Maintien de l'Élan d'Épargne" : "03 — Goal Momentum & Allocation Plan";
+  }
+
   renderSynthesisBlock(
-    isFr ? "03 — Plan de Rattrapage Recommandé" : "03 — Recommended Catch-up Plan",
+    block03Label,
     data.toStayOnTrack,
     [255, 85, 51]
   );
@@ -534,9 +550,62 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   return doc;
 }
 
-
 export function downloadPDFReport(data: PDFReportData) {
   const doc = generateExecutivePDFReport(data);
   const filename = `UseAimly_Executive_Briefing_${(data.destinationTitle || "Goal").replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
   doc.save(filename);
+}
+
+export function generateExecutiveBriefingPDF(
+  baseline: BaselineFinancialProfile,
+  decisionInput: any = null,
+  currency: CurrencyCode = "KES"
+) {
+  const goal = baseline.goals[0] || {
+    id: "g1",
+    title: "Primary Destination",
+    targetAmount: 500000,
+    currentAmount: 0,
+    targetDate: "2027-12-31",
+  };
+
+  const monthlyInflow = baseline.incomes.reduce((sum, inc) => sum + inc.amount, 0);
+  const monthlyOutflow = baseline.expenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const availableForGoals = monthlyInflow - monthlyOutflow;
+
+  const strategistOutput = generateSeniorStrategistAssessment({
+    currency,
+    monthlyInflow,
+    monthlyOutflow,
+    monthlyFreeCashFlow: availableForGoals,
+    totalLiquidSavings: baseline.liquidSavings,
+    assignedGoalCapital: goal.currentAmount,
+    targetAmount: goal.targetAmount,
+    targetDate: goal.targetDate,
+    destinationTitle: goal.title,
+    projectedDate: "2027-12-31",
+  });
+
+  const pdfData: PDFReportData = {
+    destinationTitle: goal.title,
+    targetAmount: goal.targetAmount,
+    currentAmount: goal.currentAmount,
+    targetDate: goal.targetDate,
+    projectedDate: "2027-12-31",
+    delayInDays: 0,
+    currency,
+    monthlyInflow,
+    monthlyOutflow,
+    availableForGoals,
+    liquidSavings: baseline.liquidSavings,
+    status: "SAFE",
+    headlineVerdict: strategistOutput.headlineVerdict,
+    whatYouCanDo: strategistOutput.whatYouCanDo,
+    whatItChanges: strategistOutput.whatItChanges,
+    toStayOnTrack: strategistOutput.toStayOnTrack,
+    strategicRead: strategistOutput.strategicRead,
+    masterStrategyParagraph: strategistOutput.masterStrategyParagraph,
+  };
+
+  downloadPDFReport(pdfData);
 }

@@ -43,8 +43,13 @@ export * from "./better-alternatives";
 // Decision Stress Testing
 export * from "./stress-test";
 
+// Validation & Invariant Consistency Guards
+export * from "./validation/consistency-guard";
+
+
 // Legacy Specific Helpers & Adapters
 export { calculateNetWorth } from "./calculations/net-worth";
+
 export { calculateCashFlowSummary } from "./calculations/cash-flow";
 export { evaluateGoal } from "./goal-logic/goal-evaluator";
 export { allocateFreeCashFlowToGoals } from "./goal-logic/goal-prioritizer";
