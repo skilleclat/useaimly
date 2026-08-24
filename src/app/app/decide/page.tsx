@@ -1,247 +1,91 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
-import { parseDecisionQuery } from "@/lib/nlp/decision-query-parser";
-import { simulateDecision, BaselineFinancialProfile, saveDecisionRecord } from "@/lib/finance";
-import { formatCurrency } from "@/lib/utils/currency";
-import { MinimalistDecisionEngine } from "@/components/design-system/MinimalistDecisionEngine";
-import { PdfReportDownloadButton } from "@/components/finance/PdfReportDownloadButton";
-import {
-  ArrowLeft,
-  Sparkles,
-  Heart,
-  ChevronDown,
-  ChevronUp,
-  CheckCircle2,
-  AlertTriangle,
-  XCircle,
-  HelpCircle,
-  TrendingUp,
-} from "lucide-react";
-import { useCurrency } from "@/lib/currency/currency-context";
+import { BaselineFinancialProfile } from "@/lib/finance";
+import { AimlyDecisionEngine } from "@/components/decision-engine/AimlyDecisionEngine";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { useI18n } from "@/lib/i18n/i18n-context";
 
 export default function DecideStudioPage() {
-  const { user, profile } = useAuth();
-  const { currency, format } = useCurrency();
-  const { t } = useI18n();
+  const { user } = useAuth();
+  const { language } = useI18n();
+  const isFr = language === "fr";
   const searchParams = useSearchParams();
-  const initialQuery = searchParams.get("q") || "I'm thinking of buying a KES 500,000 car.";
+  const initialQuery =
+    searchParams.get("q") ||
+    (isFr
+      ? "J'envisage d'acheter un ordinateur à 2 000 $ pour mon activité."
+      : "I'm thinking about buying a $2,000 laptop for my business.");
 
-  const [queryInput, setQueryInput] = useState(initialQuery);
-  const [isSaved, setIsSaved] = useState(false);
-  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
-
-  // Baseline Financial Reality
+  // Baseline Financial Profile
   const baselineProfile: BaselineFinancialProfile = useMemo(
     () => ({
-      liquidSavings: 180000,
+      liquidSavings: 4840,
       incomes: [
-        { name: "Primary Income", amount: 180000, frequency: "MONTHLY", reliability: "STABLE", isActive: true },
+        { name: "Primary Income", amount: 4500, frequency: "MONTHLY", reliability: "STABLE", isActive: true },
       ],
       expenses: [
-        { name: "Essential Living", amount: 112000, frequency: "MONTHLY", isFixed: true },
+        { name: "Essential Living", amount: 2300, frequency: "MONTHLY", isFixed: true },
       ],
       debts: [],
-      commitments: [
-        {
-          title: "Motor Insurance",
-          amount: 45000,
-          frequency: "ANNUAL",
-          nextDueDate: "2026-10-05",
-          category: "INSURANCE",
-        },
-      ],
+      commitments: [],
       goals: [
         {
-          id: "primary-goal",
-          title: "Buy a home deposit",
-          targetAmount: 500000,
-          currentAmount: 180000,
+          id: "business-goal",
+          title: isFr ? "Objectif Lancement Entreprise" : "Business Launch Goal",
+          targetAmount: 25000,
+          currentAmount: 12000,
           targetDate: "2027-12-31",
           priority: "HIGH",
           status: "ACTIVE",
         },
       ],
     }),
-    []
+    [isFr]
   );
 
-  const parsed = useMemo(() => {
-    return parseDecisionQuery(queryInput, currency);
-  }, [queryInput, currency]);
-
-  const amount = parsed.isValid && parsed.extractedAmount > 0 ? parsed.extractedAmount : 500000;
-  const title = parsed.isValid && parsed.extractedTitle ? parsed.extractedTitle : "Vehicle Purchase";
-
-  const simulation = useMemo(() => {
-    return simulateDecision(baselineProfile, {
-      decisionTitle: title,
-      amount,
-      isRecurring: parsed.isRecurring,
-    });
-  }, [baselineProfile, title, amount, parsed.isRecurring]);
-
-  const handleSaveDecision = () => {
-    saveDecisionRecord(baselineProfile, title, amount, parsed.isRecurring);
-    setIsSaved(true);
-  };
-
-
-  // Strategy comparison (Layer 4)
-  const strategies = useMemo(() => {
-    const cashRemaining = baselineProfile.liquidSavings - amount;
-    const spreadMonthly = Math.round(amount / 3);
-
-    return [
-      {
-        id: "CASH",
-        title: "1. Pay Cash Today",
-        subtitle: "One-time Cash Outflow",
-        metric: format(Math.max(0, cashRemaining), { fromCurrency: "KES" }),
-        metricLabel: "Cash Reserve Remaining",
-        delayText: `+${simulation.delta.delayInDays || 45} days shift`,
-        badge: "Immediate",
-      },
-      {
-        id: "SPREAD",
-        title: "2. Spread over 3 Months",
-        subtitle: "Monthly Cash Flow",
-        metric: `${format(spreadMonthly, { fromCurrency: "KES" })} / mo`,
-        metricLabel: "Monthly Outflow",
-        delayText: `+${Math.max(0, Math.round((simulation.delta.delayInDays || 45) * 0.7))} days shift`,
-        badge: "Smoothed",
-      },
-      {
-        id: "POSTPONE",
-        title: "3. Save First (60 Days)",
-        subtitle: "Save in Advance",
-        metric: format(0, { fromCurrency: "KES" }),
-        metricLabel: "Immediate Impact",
-        delayText: "0 days shift",
-        badge: "Zero Delay",
-      },
-    ];
-  }, [amount, simulation, baselineProfile.liquidSavings, format]);
-
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-8 animate-fadeIn font-sans">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8 animate-fadeIn font-sans">
+      {/* Studio Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5 text-left">
         <div className="space-y-1">
           <Link
             href="/app"
             className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Return Home</span>
+            <span>{isFr ? "Retour à l'Accueil" : "Return Home"}</span>
           </Link>
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-foreground tracking-tight">
-            Decision Studio
+          <h1 className="text-2xl sm:text-4xl font-black text-foreground tracking-tight">
+            The Aimly Decision Engine
           </h1>
-          <p className="text-xs text-muted-foreground font-medium">
-            Test any big financial decision before you commit.
+          <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+            {isFr
+              ? "Avant de vous engager dans une décision financière, voyez ce qui se passe après."
+              : "Before you commit to a financial decision, see what happens next."}
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleSaveDecision}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
-              isSaved
-                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-                : "bg-card border-border/80 text-foreground hover:border-primary/40"
-            }`}
+          <Link
+            href="/app/decisions"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold border border-border/80 bg-secondary/50 text-foreground hover:bg-secondary transition-all"
           >
-            <Heart className={`w-3.5 h-3.5 ${isSaved ? "fill-emerald-500 text-emerald-500" : ""}`} />
-            <span>{isSaved ? "Decision Saved" : "Save Decision"}</span>
-          </button>
+            <CheckCircle2 className="w-3.5 h-3.5 text-teal-500" />
+            <span>{isFr ? "Mémoire des Décisions" : "Decision Vault"}</span>
+          </Link>
         </div>
-
       </div>
 
-      {/* MINIMALIST 5-SECOND DECISION ENGINE */}
-      <MinimalistDecisionEngine
+      {/* THE SIGNATURE AIMLY DECISION ENGINE EXPERIENCE */}
+      <AimlyDecisionEngine
         baselineProfile={baselineProfile}
-        initialQuery={queryInput}
-        showQuickActions={true}
-        autoExpandAnalysis={true}
-        redirectOnSelect={false}
+        initialQuery={initialQuery}
       />
-
-
-      {/* STRATEGY COMPARISON (LAYER 4 DETAILED OPTIONS) */}
-      <section className="space-y-4 rounded-3xl border border-border/80 bg-card p-6 sm:p-8">
-        <div className="space-y-1">
-          <span className="text-xs font-mono uppercase tracking-wider text-primary font-bold">
-            Strategy Comparison
-          </span>
-          <h2 className="text-xl sm:text-2xl font-bold text-foreground">
-            3 Ways to Handle This Decision
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-          {strategies.map((strat) => (
-            <div
-              key={strat.id}
-              className="p-5 rounded-2xl border border-border/70 bg-secondary/30 space-y-3 flex flex-col justify-between"
-            >
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                    {strat.badge}
-                  </span>
-                  <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400">
-                    {strat.delayText}
-                  </span>
-                </div>
-                <h3 className="text-sm font-bold text-foreground pt-1">{strat.title}</h3>
-                <p className="text-xs text-muted-foreground font-medium">{strat.subtitle}</p>
-              </div>
-
-              <div className="pt-2 border-t border-border/40 space-y-0.5">
-                <span className="text-[10px] font-mono text-muted-foreground uppercase font-bold block">
-                  {strat.metricLabel}
-                </span>
-                <span className="text-base font-bold text-foreground block">{strat.metric}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border/50">
-          <p className="text-xs text-muted-foreground font-medium">
-            Want a downloadable PDF summary of this decision analysis?
-          </p>
-
-          <PdfReportDownloadButton
-            data={{
-              destinationTitle: title,
-              targetAmount: amount,
-              currentAmount: 0,
-              targetDate: "2027-12-31",
-              projectedDate: simulation.delta.newCompletionDate || "2027-12-31",
-              delayInDays: simulation.delta.delayInDays || 0,
-              currency,
-              monthlyInflow: 180000,
-              monthlyOutflow: 112000,
-              availableForGoals: 68000,
-              liquidSavings: baselineProfile.liquidSavings,
-              status: simulation.status,
-              headlineVerdict: simulation.headlineVerdict,
-              whatYouCanDo: simulation.singleAction,
-              whatItChanges: `Projected completion: ${simulation.delta.newCompletionDate}`,
-              toStayOnTrack: simulation.recommendation,
-              strategicRead: simulation.detailedAnalysis,
-            }}
-          />
-        </div>
-      </section>
     </div>
   );
 }
+

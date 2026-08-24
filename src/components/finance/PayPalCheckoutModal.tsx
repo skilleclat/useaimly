@@ -57,19 +57,17 @@ export function PayPalCheckoutModal({
 
   // Calculate Base USD amount
   const baseUSD = isYearly
-    ? (plan?.totalYearlyUSD || (plan?.priceYearlyUSD ? plan.priceYearlyUSD * 12 : 39.99))
-    : (plan?.priceMonthlyUSD || 5.00);
+    ? (plan?.totalYearlyUSD || 39.00)
+    : (plan?.priceMonthlyUSD || 4.99);
 
   // Calculate KES amount
-  const amountKES = plan?.id === "premium"
-    ? (isYearly ? (MPESA_CONFIG?.premiumYearlyKES || 10400) : (MPESA_CONFIG?.premiumMonthlyKES || 1300))
-    : (isYearly ? (MPESA_CONFIG?.proYearlyKES || 5200) : (MPESA_CONFIG?.proMonthlyKES || 650));
+  const amountKES = isYearly ? (MPESA_CONFIG?.proYearlyKES || 5000) : (MPESA_CONFIG?.proMonthlyKES || 650);
 
   const formattedPriceUSD = typeof format === "function" ? format(baseUSD, { fromCurrency: "USD", showDecimals: true }) : `$${Number(baseUSD || 0).toFixed(2)}`;
   const formattedPriceKES = `KES ${Number(amountKES || 0).toLocaleString()}`;
 
   const billingCycleLabel = isYearly
-    ? (language === "fr" ? "Facturation Annuelle (-20% de réduction)" : "Annual Billing (-20% discount)")
+    ? (language === "fr" ? "Facturation Annuelle (-35% d'économie)" : "Annual Billing (-35% Savings)")
     : (language === "fr" ? "Facturation Mensuelle" : "Monthly Billing");
 
   const merchantEmail = "herimaliyabwana@gmail.com";

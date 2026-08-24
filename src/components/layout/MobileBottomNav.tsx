@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Clock, Target, FileText } from "lucide-react";
+import { Home, CheckCircle2, Target, Sparkles } from "lucide-react";
 import { useI18n } from "@/lib/i18n/i18n-context";
 
 export function MobileBottomNav() {
@@ -33,25 +33,25 @@ export function MobileBottomNav() {
     {
       label: isFr ? "Accueil" : "Home",
       href: "/app",
-      icon: <Home className="w-5 h-5" />,
+      icon: <Home className="w-4 h-4" />,
       exact: true,
     },
     {
-      label: isFr ? "Historique" : "History",
+      label: isFr ? "Décisions" : "Decisions",
       href: "/app/decide",
-      icon: <Clock className="w-5 h-5" />,
+      icon: <CheckCircle2 className="w-4 h-4" />,
       exact: false,
     },
     {
       label: isFr ? "Objectifs" : "Goals",
       href: "/app/goals",
-      icon: <Target className="w-5 h-5" />,
+      icon: <Target className="w-4 h-4" />,
       exact: false,
     },
     {
-      label: isFr ? "Insights" : "Insights",
-      href: "/app/insights",
-      icon: <FileText className="w-5 h-5" />,
+      label: isFr ? "Ask Aimly" : "Ask Aimly",
+      href: "/app/ask",
+      icon: <Sparkles className="w-4 h-4" />,
       exact: false,
     },
   ];

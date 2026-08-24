@@ -217,8 +217,8 @@ export function PricingCard({
           </button>
         ) : (
           <Link
-            href="/onboarding"
-            className="w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 text-xs font-extrabold shadow-md transition-all bg-primary text-primary-foreground hover:opacity-95"
+            href={plan.ctaHref || "/app/decide"}
+            className="w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 text-xs font-extrabold shadow-md transition-all bg-secondary text-foreground hover:bg-secondary/80 border border-border"
           >
             <span>{ctaText}</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -227,7 +227,7 @@ export function PricingCard({
 
         {plan.id !== "free" && (
           <div className="text-center text-[10px] font-mono text-muted-foreground">
-            <span>📱 Lipa na M-Pesa &bull; 💳 PayPal / Card</span>
+            <span>💳 Card / PayPal &bull; 📱 M-Pesa Supported</span>
           </div>
         )}
       </div>

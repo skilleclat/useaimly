@@ -231,11 +231,11 @@ export default function AskPage() {
         </div>
 
         <PlanUpgradeGate
-          requiredTier="premium"
-          featureTitle="Interactive AI Financial Advisor & Wealth Strategist"
-          featureTitleFr="Conseiller Financier IA Interactif & Stratège de Patrimoine"
-          featureDescription="Engage in deep, context-aware conversations with our senior wealth mentor powered by Gemini and GPT-4, coupled directly to your deterministic financial engine."
-          featureDescriptionFr="Bénéficiez d'un accompagnement stratégique personnalisé avec notre conseiller financier IA de calibre 30 ans d'expérience, directement connecté à vos chiffres."
+          requiredTier="pro"
+          featureTitle="Decision Strategy & Trade-off Consultations"
+          featureTitleFr="Consultations Stratégiques & Arbitrages Décisionnels"
+          featureDescription="Engage in deep, context-aware scenario evaluations with our senior financial mentor, coupled directly to your deterministic calculation engine."
+          featureDescriptionFr="Bénéficiez d'un accompagnement stratégique personnalisé connecté en direct à vos chiffres réels et à votre trajectoire."
         />
       </div>
     );
@@ -248,13 +248,13 @@ export default function AskPage() {
         <div className="space-y-1 text-left">
           <div className="flex items-center gap-2 text-xs font-mono font-bold text-primary">
             <Sparkles className="w-4 h-4" />
-            <span>Senior Financial Mentor • 30+ Years Experience</span>
+            <span>Decision Intelligence Mentor &bull; Grounded in Your Numbers</span>
           </div>
-          <h1 className="text-2xl sm:text-4xl font-bold font-editorial text-foreground tracking-tight">
-            Ask Aimly AI Mentor
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-foreground tracking-tight">
+            Ask Aimly &mdash; Decision Strategy
           </h1>
-          <p className="text-xs text-muted-foreground">
-            Talk directly with an AI mentor with 30+ years of wealth management, cash flow resilience, and goal trajectory experience.
+          <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+            Test trade-offs, explore alternatives, and evaluate decisions with deep personal financial context.
           </p>
         </div>
 

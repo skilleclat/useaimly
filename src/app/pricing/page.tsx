@@ -2,18 +2,20 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PRICING_PLANS, PRICING_FAQS, PricingPlan } from "@/lib/types/pricing";
 import { PricingCard } from "@/components/finance/PricingCard";
 import { PayPalCheckoutModal } from "@/components/finance/PayPalCheckoutModal";
 import { Container } from "@/components/layout/container";
-import { HelpCircle, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
-
-import { useSearchParams, useRouter } from "next/navigation";
+import { HelpCircle, ArrowRight, ShieldCheck, Sparkles, CheckCircle2, Zap } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/i18n-context";
 
 function PricingContent() {
   const router = useRouter();
   const { user, profile } = useAuth();
+  const { language } = useI18n();
+  const isFr = language === "fr";
   const isLoggedIn = Boolean(user || (profile && profile.id !== "demo-user-id"));
 
   const searchParams = useSearchParams();
@@ -22,64 +24,48 @@ function PricingContent() {
   const [isYearly, setIsYearly] = useState(true);
   const [currency, setCurrency] = useState<"USD" | "KES">("USD");
   const [selectedPlanForCheckout, setSelectedPlanForCheckout] = useState<PricingPlan | null>(() => {
-    if (isLoggedIn && (rawPlan === "pro" || rawPlan === "premium")) {
-      return PRICING_PLANS.find((p) => p.id === rawPlan) || null;
+    if (isLoggedIn && rawPlan === "pro") {
+      return PRICING_PLANS.find((p) => p.id === "pro") || null;
     }
     return null;
   });
 
-  React.useEffect(() => {
-    if (isLoggedIn && (rawPlan === "pro" || rawPlan === "premium")) {
-      const target = PRICING_PLANS.find((p) => p.id === rawPlan);
-      if (target) setSelectedPlanForCheckout(target);
-    }
-  }, [rawPlan, isLoggedIn]);
-
   const handleSelectPlan = (planId: string) => {
     const targetPlan = PRICING_PLANS.find((p) => p.id === planId);
     if (!targetPlan || targetPlan.id === "free") {
-      router.push("/signup?plan=free");
+      router.push("/app/decide");
       return;
     }
 
-    // Open checkout modal directly with Lipa na M-Pesa & PayPal tabs
     setSelectedPlanForCheckout(targetPlan);
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground py-12 px-4 sm:px-6 lg:px-8 space-y-16">
-      <Container className="max-w-6xl mx-auto space-y-16">
+    <div className="min-h-screen bg-background text-foreground py-12 px-4 sm:px-6 lg:px-8 space-y-16 antialiased">
+      <Container className="max-w-5xl mx-auto space-y-16">
+        
         {/* Header Section */}
-        <div className="text-center space-y-4 max-w-3xl mx-auto animate-fadeIn">
+        <div className="text-center space-y-4 max-w-2xl mx-auto animate-fadeIn">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-mono font-bold text-primary">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Transparent Pricing & Zero Commitments</span>
+            <Zap className="w-3.5 h-3.5" />
+            <span>{isFr ? "Accès Continu au Moteur de Décision" : "Continuous Decision Intelligence"}</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-black font-editorial tracking-tight text-foreground">
-            See tomorrow before deciding today.
+          <h1 className="text-3xl sm:text-5xl font-black font-editorial tracking-tight text-foreground">
+            {isFr ? "Tarification Simple & Transparente" : "Simple, Transparent Pricing"}
           </h1>
 
           <p className="text-sm sm:text-base text-muted-foreground font-medium leading-relaxed">
-            Choose the right plan to protect your liquidity, accelerate your destinations, and simulate spending impact.
+            {isFr
+              ? "Nous ne vous facturons pas un simple chatbot d'IA générique. Vous payez pour un moteur déterministe prédictif connecté à votre avenir financier."
+              : "We don't charge for generic AI chat. You pay for a continuous, personalized financial decision engine that calculates exact future consequences before you commit."}
           </p>
 
-          {/* Payment Badges Banner (M-Pesa & PayPal) */}
-          <div className="inline-flex flex-wrap items-center justify-center gap-3 p-2 px-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 text-xs font-mono">
-            <div className="flex items-center gap-1.5 font-bold text-emerald-600 dark:text-emerald-400">
-              <span>📱 Lipa na M-Pesa (Paybill: <strong>247247</strong> &bull; Acc: <strong>0743898803</strong>)</span>
-            </div>
-            <span className="text-muted-foreground hidden sm:inline">&bull;</span>
-            <div className="flex items-center gap-1.5 font-bold text-[#003087] dark:text-sky-400">
-              <span>💳 PayPal &amp; International Cards</span>
-            </div>
-          </div>
-
-          {/* Toggles Bar (Billing Cycle + Currency) */}
-          <div className="pt-4 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
-            {/* Billing Cycle Toggle */}
-            <div className="flex items-center gap-3 rounded-full border border-border/80 bg-card p-1.5 shadow-sm">
+          {/* Billing Cycle Toggle */}
+          <div className="pt-3 flex items-center justify-center">
+            <div className="inline-flex items-center gap-3 rounded-full border border-border/80 bg-card p-1.5 shadow-sm">
               <button
+                type="button"
                 onClick={() => setIsYearly(false)}
                 className={`rounded-full px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
                   !isYearly
@@ -87,47 +73,28 @@ function PricingContent() {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Monthly Billing
+                {isFr ? "Facturation Mensuelle ($4.99/m)" : "Monthly ($4.99/mo)"}
               </button>
               <button
+                type="button"
                 onClick={() => setIsYearly(true)}
-                className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition-all ${
+                className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
                   isYearly
                     ? "bg-primary text-primary-foreground shadow-xs"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <span>Annual Billing</span>
-                <span className="rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 font-extrabold uppercase">
-                  -20%
+                <span>{isFr ? "Annuel ($39/an)" : "Annual ($39/yr)"}</span>
+                <span className="rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] px-2 py-0.5 font-black uppercase">
+                  {isFr ? "-35% ÉCONOMIE" : "SAVE 35%"}
                 </span>
-              </button>
-            </div>
-
-            {/* Currency Switcher */}
-            <div className="flex items-center gap-1 rounded-full border border-border/80 bg-card p-1 text-xs font-mono font-bold">
-              <button
-                onClick={() => setCurrency("USD")}
-                className={`rounded-full px-3 py-1.5 transition-all ${
-                  currency === "USD" ? "bg-secondary text-foreground font-extrabold" : "text-muted-foreground"
-                }`}
-              >
-                USD ($)
-              </button>
-              <button
-                onClick={() => setCurrency("KES")}
-                className={`rounded-full px-3 py-1.5 transition-all ${
-                  currency === "KES" ? "bg-secondary text-foreground font-extrabold" : "text-muted-foreground"
-                }`}
-              >
-                KES (Shillings)
               </button>
             </div>
           </div>
         </div>
 
-        {/* 3-Column Pricing Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch pt-4">
+        {/* 2-Column Pricing Grid (Free & Pro Only) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch max-w-4xl mx-auto pt-2">
           {PRICING_PLANS.map((plan) => (
             <PricingCard
               key={plan.id}
@@ -139,67 +106,73 @@ function PricingContent() {
           ))}
         </div>
 
-        {/* Guarantee Banner */}
-        <div className="rounded-3xl border border-border/80 bg-gradient-to-r from-card via-secondary/30 to-card p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-lg">
-          <div className="flex items-center gap-4">
+        {/* Value Guarantee / Trust Banner */}
+        <div className="rounded-3xl border border-border/80 bg-card p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm max-w-4xl mx-auto">
+          <div className="flex items-center gap-4 text-left">
             <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shrink-0">
               <ShieldCheck className="w-6 h-6" />
             </div>
-            <div>
-              <h4 className="text-sm font-bold text-foreground">14-Day Money-Back Guarantee</h4>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Test Pro and Premium features with total peace of mind. Cancel anytime with a single click.
+            <div className="space-y-0.5">
+              <h4 className="text-sm font-bold text-foreground">
+                {isFr ? "Garantie Tranquillité & Clarté Totale" : "Risk-Free Decision Clarity"}
+              </h4>
+              <p className="text-xs text-muted-foreground leading-relaxed font-medium">
+                {isFr
+                  ? "Testez vos premières décisions gratuitement. Annulez ou modifiez votre abonnement à tout moment en 1 clic."
+                  : "Experience the magic on your first decisions for free. Cancel or switch anytime with a single click."}
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => handleSelectPlan("pro")}
-            className="inline-flex items-center gap-2 rounded-2xl bg-primary text-primary-foreground font-bold text-xs px-6 py-3 shrink-0 shadow-md hover:opacity-90 transition-all cursor-pointer"
+
+          <Link
+            href="/app/decide"
+            className="inline-flex items-center gap-2 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground border border-border font-bold text-xs px-5 py-3 shrink-0 shadow-xs transition-all"
           >
-            <span>Start 14-Day Free Trial</span>
+            <span>{isFr ? "Tester une Décision" : "Try Decision Free"}</span>
             <ArrowRight className="w-4 h-4" />
-          </button>
+          </Link>
         </div>
 
         {/* FAQ Section */}
-        <div className="space-y-8 pt-8">
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-extrabold font-editorial text-foreground">
-              Frequently Asked Questions (FAQ)
+        <div className="space-y-8 pt-4 max-w-4xl mx-auto">
+          <div className="text-center space-y-1">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground">
+              {isFr ? "Questions Fréquentes" : "Frequently Asked Questions"}
             </h2>
-            <p className="text-xs text-muted-foreground">
-              Clear answers to common questions about subscriptions and data security.
+            <p className="text-xs text-muted-foreground font-medium">
+              {isFr ? "Tout ce que vous devez savoir sur notre tarification." : "Everything you need to know about our continuous decision system."}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {PRICING_FAQS.map((faq, idx) => (
-              <div key={idx} className="rounded-2xl border border-border/80 bg-card p-6 space-y-2 shadow-xs">
-                <div className="flex items-start gap-2.5">
+              <div key={idx} className="rounded-2xl border border-border/80 bg-card p-5 space-y-2 text-left shadow-2xs">
+                <div className="flex items-start gap-2">
                   <HelpCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                  <h3 className="text-sm font-bold text-foreground">{faq.question}</h3>
+                  <h3 className="text-xs font-bold text-foreground">{faq.question}</h3>
                 </div>
-                <p className="text-xs text-muted-foreground leading-relaxed pl-6">
+                <p className="text-xs text-muted-foreground leading-relaxed pl-6 font-medium">
                   {faq.answer}
                 </p>
               </div>
             ))}
           </div>
         </div>
+
       </Container>
 
-      {/* PayPal Official Checkout Modal */}
-      <PayPalCheckoutModal
-        isOpen={Boolean(selectedPlanForCheckout)}
-        onClose={() => setSelectedPlanForCheckout(null)}
-        plan={selectedPlanForCheckout}
-        isYearly={isYearly}
-      />
+      {/* PayPal Checkout Modal */}
+      {selectedPlanForCheckout && (
+        <PayPalCheckoutModal
+          isOpen={Boolean(selectedPlanForCheckout)}
+          onClose={() => setSelectedPlanForCheckout(null)}
+          plan={selectedPlanForCheckout}
+          isYearly={isYearly}
+        />
+      )}
     </div>
   );
 }
-
 
 export default function PricingPage() {
   return (

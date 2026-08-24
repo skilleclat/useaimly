@@ -24,7 +24,8 @@ import {
 export function Header() {
   const pathname = usePathname();
   const { user, profile, displayName, signOut } = useAuth();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
+  const isFr = language === "fr";
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
@@ -35,22 +36,22 @@ export function Header() {
 
   const NAV_LINKS = [
     {
-      label: t("navPricing"),
-      href: "/pricing",
-      icon: <Sparkles className="w-4 h-4 text-[#00A859]" />,
-      desc: "Plans & options",
-    },
-    {
-      label: t("navDecide"),
+      label: isFr ? "Moteur de Décision" : "Decision Engine",
       href: "/app/decide",
-      icon: <HelpCircle className="w-4 h-4" />,
+      icon: <HelpCircle className="w-4 h-4 text-primary" />,
       desc: "Test purchase impact before spending",
     },
     {
-      label: t("navDestinations"),
+      label: isFr ? "Objectifs de Vie" : "Life Goals",
       href: "/app/goals",
       icon: <Target className="w-4 h-4" />,
       desc: "Life goals & target timelines",
+    },
+    {
+      label: t("navPricing"),
+      href: "/pricing",
+      icon: <Sparkles className="w-4 h-4 text-[#FF5533]" />,
+      desc: "Plans & options",
     },
   ];
 
@@ -79,17 +80,26 @@ export function Header() {
 
         {/* Right Actions */}
         <div className="flex items-center gap-3">
+          {/* OMNIPRESENT PRIMARY CTA: + Analyze a Decision */}
+          <Link
+            href="/app/decide"
+            className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white px-3.5 py-2 text-xs font-extrabold shadow-md shadow-orange-500/20 hover:opacity-95 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            title="Test a purchase or spending decision"
+          >
+            <span className="text-sm leading-none font-black">+</span>
+            <span>{isFr ? "Analyser une Décision" : "Analyze a Decision"}</span>
+          </Link>
+
           {user ? (
             <div className="flex items-center gap-2.5">
               <Link
                 href="/app"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#00A859] hover:bg-[#00964F] text-white font-bold text-xs px-4 py-2 shadow-sm transition-all"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground border border-border font-bold text-xs px-3 py-2 shadow-2xs transition-all"
               >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Go to App</span>
+                <span>Dashboard</span>
               </Link>
 
-              {/* Black Circular User Avatar Pill (Matching Reference UI) */}
+              {/* Black Circular User Avatar Pill */}
               <button
                 type="button"
                 onClick={() => setIsProfileModalOpen(true)}
@@ -100,7 +110,7 @@ export function Header() {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
               <Link
                 href="/login"
                 className="text-xs font-bold text-gray-600 dark:text-muted-foreground hover:text-gray-900 dark:hover:text-foreground transition-colors px-2.5 py-1.5"
@@ -109,19 +119,10 @@ export function Header() {
               </Link>
               <Link
                 href="/signup"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#00A859] hover:bg-[#00964F] text-white font-bold text-xs px-4 py-2 shadow-sm transition-all"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground border border-border font-bold text-xs px-3.5 py-2 shadow-2xs transition-all"
               >
                 <span>{t("navGetStarted")}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-
-              {/* Black Circular User Account Icon (Matching Reference UI Image) */}
-              <Link
-                href="/login"
-                className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center shadow-md hover:scale-105 transition-transform"
-                title="Account Sign In"
-              >
-                <User className="w-4 h-4 text-white" />
               </Link>
             </div>
           )}

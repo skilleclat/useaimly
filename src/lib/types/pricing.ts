@@ -1,9 +1,10 @@
 /**
- * Useaimly SaaS Pricing & Subscription Tiers
+ * UseAimly SaaS Pricing & Monetization Strategy
+ * Pure Scalable SaaS: Two Plans Only (FREE & PRO)
  * "See tomorrow before deciding today"
  */
 
-export type PlanTier = "free" | "pro" | "premium";
+export type PlanTier = "free" | "pro";
 
 export interface PricingPlan {
   id: PlanTier;
@@ -12,8 +13,8 @@ export interface PricingPlan {
   badge?: string;
   isPopular?: boolean;
   priceMonthlyUSD: number;
-  priceYearlyUSD: number; // monthly equivalent when billed annually
-  totalYearlyUSD: number; // full annual bill amount
+  priceYearlyUSD: number; // monthly equivalent when billed annually ($3.25/mo)
+  totalYearlyUSD: number; // full annual bill amount ($39/yr)
   priceMonthlyKES: number;
   priceYearlyKES: number;
   ctaText: string;
@@ -28,93 +29,72 @@ export interface PricingPlan {
 export const PRICING_PLANS: PricingPlan[] = [
   {
     id: "free",
-    name: "Free",
-    tagline: "Explore decision intelligence and test your baseline trajectory.",
+    name: "Try Before You Trust",
+    tagline: "Experience the decision engine on your initial financial choices.",
     priceMonthlyUSD: 0,
     priceYearlyUSD: 0,
     totalYearlyUSD: 0,
     priceMonthlyKES: 0,
     priceYearlyKES: 0,
-    ctaText: "Get Started Free",
-    ctaHref: "/signup?plan=free",
+    ctaText: "Analyze My First Decision",
+    ctaHref: "/app/decide",
     features: [
-      { text: "1 Primary Financial Destination", included: true },
-      { text: "Monthly Cashflow & Free Balance Calculator", included: true },
-      { text: "Basic Purchase Decision Simulation", included: true },
-      { text: "Interactive Sandbox & Demo Data Mode", included: true },
-      { text: "3-Strategy Decision Impact Studio (Spread, Postpone)", included: false },
-      { text: "6 Proactive Insight Alert Rules", included: false },
-      { text: "Dedicated AI Financial Advisor (Gemini / GPT-4)", included: false },
-      { text: "Unlimited 'What-If' Scenario Laboratory", included: false },
-      { text: "Financial Data Export (CSV & PDF)", included: false },
+      { text: "3 Decision Analyses per month", included: true, highlight: true },
+      { text: "1 Active Financial Goal", included: true },
+      { text: "Basic Decision Verdict (Recommended / Caution / Not Recommended)", included: true },
+      { text: "Buy Now vs Wait comparison", included: true },
+      { text: "Basic financial profile & cash cushion monitor", included: true },
+      { text: "Unlimited Decision Analyses", included: false },
+      { text: "Unlimited Financial Goals", included: false },
+      { text: "Full Financial Impact & Emergency Risk Analysis", included: false },
+      { text: "Multi-Option Comparison & Decision History Vault", included: false },
+      { text: "Monthly Financial Trajectory Review", included: false },
     ],
   },
   {
     id: "pro",
-    name: "Aimly Pro",
-    tagline: "For active decision makers looking to optimize every spend and stay ahead.",
-    badge: "Most Popular",
+    name: "UseAimly Pro",
+    tagline: "Make every major financial decision with clarity.",
+    badge: "Continuous Decision System",
     isPopular: true,
-    priceMonthlyUSD: 5.00,
-    priceYearlyUSD: 3.33,
-    totalYearlyUSD: 39.99,
+    priceMonthlyUSD: 4.99,
+    priceYearlyUSD: 3.25, // $39 / 12 months = $3.25/mo (35% savings)
+    totalYearlyUSD: 39.00,
     priceMonthlyKES: 650,
-    priceYearlyKES: 5200,
-    ctaText: "Upgrade to Aimly Pro ($5/mo)",
+    priceYearlyKES: 5000,
+    ctaText: "Upgrade to Pro",
     ctaHref: "/checkout?plan=pro",
     features: [
-      { text: "Unlimited Financial Destinations", included: true, highlight: true },
-      { text: "Monthly Cashflow & Free Balance Calculator", included: true },
-      { text: "3-Strategy Impact Studio (Cash, Spread, Postpone)", included: true, highlight: true },
-      { text: "6 Proactive Insight Rules (60-Day Foresight)", included: true, highlight: true },
-      { text: "AI Financial Notepad & Strategic Context Sync", included: true, highlight: true },
-      { text: "Full 6 Financial Cash Flow Management", included: true },
-      { text: "Data Export (CSV & Custom Reports)", included: true },
-      { text: "Priority Email Support", included: true },
-      { text: "Dedicated AI Financial Advisor (Gemini / GPT-4)", included: false },
-      { text: "Unlimited 'What-If' Scenario Laboratory", included: false },
-    ],
-  },
-  {
-    id: "premium",
-    name: "Aimly Elite",
-    tagline: "For entrepreneurs, business owners, and high net-worth decision makers.",
-    badge: "Complete Elite Experience",
-    priceMonthlyUSD: 9.99,
-    priceYearlyUSD: 6.67,
-    totalYearlyUSD: 79.99,
-    priceMonthlyKES: 1300,
-    priceYearlyKES: 10400,
-    ctaText: "Unlock Aimly Elite ($10/mo)",
-    ctaHref: "/checkout?plan=premium",
-    features: [
-      { text: "Everything included in Aimly Pro", included: true },
-      { text: "Interactive AI Financial Advisor (Gemini / GPT-4)", included: true, highlight: true },
-      { text: "AI Financial Notepad & Unlimited Rules Engine", included: true, highlight: true },
-      { text: "Unlimited 'What-If' Scenario Laboratory", included: true, highlight: true },
-      { text: "Custom Debt Elimination Strategies", included: true, highlight: true },
-      { text: "Multi-Account & Currency Aggregation", included: true },
-      { text: "1-on-1 VIP Strategy Orientation Session", included: true },
-      { text: "24/7 Priority WhatsApp & Email Support", included: true },
+      { text: "Unlimited Decision Analyses", included: true, highlight: true },
+      { text: "Unlimited Financial Goals & Destinations", included: true, highlight: true },
+      { text: "Full Financial Impact Analysis", included: true, highlight: true },
+      { text: "Compare Multiple Options Side-by-Side", included: true, highlight: true },
+      { text: "Buy vs Wait vs Finance Scenarios", included: true, highlight: true },
+      { text: "Advanced Goal Impact & Exact Timeline Shifts", included: true, highlight: true },
+      { text: "Emergency Runway & Risk Vulnerability Analysis", included: true },
+      { text: "Complete Decision History & Vault Memory", included: true },
+      { text: "Advanced Scenarios & What-If Sandbox", included: true },
+      { text: "Monthly Financial Trajectory Review", included: true },
+      { text: "Saved decision assumptions and comparisons", included: true },
     ],
   },
 ];
 
 export const PRICING_FAQS = [
   {
-    question: "Can I change or upgrade my plan anytime?",
-    answer: "Yes, absolutely. You can upgrade, downgrade, or switch between plans at any time directly from your dashboard settings. Pricing adjustments are prorated.",
+    question: "Why does UseAimly charge for a decision engine rather than AI chat?",
+    answer: "Generic AI chatbots give vague opinions without doing deterministic math. UseAimly is a continuous financial decision engine connected directly to your personal profile, calculating exact delay days and runway impact before you commit.",
   },
   {
-    question: "How does the Pro 14-day free trial work?",
-    answer: "The Pro plan includes a 14-day risk-free trial. No credit card is required to start testing Pro features during your onboarding.",
+    question: "What is included in the Free 'Try Before You Trust' plan?",
+    answer: "Free gives you 3 complete decision analyses per month, 1 active goal, and basic Buy vs Wait comparison so you can experience the clarity of the engine before upgrading.",
+  },
+  {
+    question: "How does the $39/year annual billing work?",
+    answer: "When billed annually at $39/year, you pay the equivalent of just $3.25/month—saving 35% compared to month-to-month billing ($4.99/mo). You can cancel renewal anytime with a single click.",
   },
   {
     question: "Is my financial data secure?",
-    answer: "Yes, 100%. UseAimly does not require bank credentials or sensitive account logins. All calculations are executed deterministically and privately on your end.",
-  },
-  {
-    question: "What is the difference between Pro and Premium?",
-    answer: "The Pro plan provides the complete 3-strategy decision studio and 6 proactive insight rules. Premium adds our interactive AI Advisor (Gemini/OpenAI), unlimited 'What-If' scenario testing, and 1-on-1 VIP support.",
+    answer: "Yes, 100%. UseAimly does not require bank credentials or sensitive account logins. All calculations are executed privately and deterministically.",
   },
 ];
