@@ -24,10 +24,19 @@ export interface DecisionInputParameters {
 }
 
 export interface ScenarioImpactResult {
-  id: string;
+  id: string; // e.g. "OPTION_A", "OPTION_B", "OPTION_C"
+  code: "OPTION_A" | "OPTION_B" | "OPTION_C" | "OPTION_D";
   title: string;
   badge: string;
   description: string;
+  amount: number;
+  downPayment: number;
+  principalFinanced: number;
+  loanTermMonths: number;
+  annualRatePercent: number;
+  monthlyPayment: number;
+  totalInterestPaid: number;
+  totalCostOverTime: number;
   immediateCashOutflow: number;
   postDecisionCash: number;
   deltaCash: number;
@@ -41,11 +50,23 @@ export interface ScenarioImpactResult {
   goalDelayDays: number;
   goalDelayMonths: number;
   goalStatus: "ON_TRACK" | "DELAYED" | "GOAL_FUNDING_PAUSED";
-  totalInterestPaid: number;
-  totalCostOverTime: number;
+  goalExplanation: string;
   isRecommended: boolean;
   rankingScore: number;
   reasons: string[];
+}
+
+export interface FinancingSummary {
+  hasFinancing: boolean;
+  principalBorrowed: number;
+  downPayment: number;
+  annualInterestRatePercent: number;
+  loanTermMonths: number;
+  paymentFrequency: string;
+  monthlyPayment: number;
+  totalInterestPaid: number;
+  totalLifetimeCost: number;
+  isAssumedTerms: boolean;
 }
 
 export interface CanonicalDecisionAnalysis {
@@ -54,7 +75,7 @@ export interface CanonicalDecisionAnalysis {
   currency: CurrencyCode;
   inputs: DecisionInputParameters;
 
-  // Baseline Snapshot
+  // Baseline Financial Snapshot
   baseline: {
     liquidSavings: number;
     monthlyIncome: number;
@@ -74,15 +95,28 @@ export interface CanonicalDecisionAnalysis {
     };
   };
 
-  // Primary Scenario Calculated Impact
+  // Financing Summary
+  financing: FinancingSummary;
+
+  // Primary Impact (Option A - As Proposed)
   primaryImpact: ScenarioImpactResult;
 
   // Compared Scenarios
   scenarios: {
     optionA: ScenarioImpactResult; // Proceed Now
     optionB: ScenarioImpactResult; // Wait & Save
-    optionC: ScenarioImpactResult; // Budget Alternative (25% lower)
-    optionD?: ScenarioImpactResult; // Longer term financing
+    optionC: ScenarioImpactResult; // 25% Budget Alternative
+    optionD?: ScenarioImpactResult; // Extended Term
+  };
+
+  // Exactly ONE Canonical Recommendation
+  recommendation: {
+    recommendedScenarioId: "OPTION_A" | "OPTION_B" | "OPTION_C" | "OPTION_D";
+    recommendedScenarioTitle: string;
+    actionPlanStep1: string;
+    actionPlanStep2: string;
+    actionPlanStep3: string;
+    reasons: string[];
   };
 
   // Verdict
@@ -93,14 +127,13 @@ export interface CanonicalDecisionAnalysis {
     dominantConsequence: string;
   };
 
-  // Explicit Assumptions
+  // Material Assumptions
   assumptions: string[];
   isAssumedLoanTerms: boolean;
 }
 
 /**
- * Standard Amortization Formula (Deterministic PMT)
- * PMT = P * [r(1+r)^n] / [(1+r)^n - 1]
+ * Standard Loan Amortization (Deterministic PMT Formula)
  */
 export function calculateMonthlyLoanPayment(
   principal: number,
@@ -131,8 +164,8 @@ export function calculateMonthlyLoanPayment(
 }
 
 /**
- * DETERMINISTIC CANONICAL DECISION EVALUATOR
- * Single Source of Truth for the entire UseAimly pipeline.
+ * DETERMINISTIC CANONICAL DECISION EVALUATOR (10/10 STANDARD)
+ * Single Source of Truth for the entire UseAimly system.
  */
 export function evaluateCanonicalDecision(
   baselineProfile: BaselineFinancialProfile,
@@ -146,18 +179,18 @@ export function evaluateCanonicalDecision(
     priority = "PROTECT_CASH",
   } = inputs;
 
-  // 1. Reconcile Baseline
+  // 1. Reconcile Baseline Metrics
   const monthlyIncome = baselineProfile.incomes.reduce((acc, i) => acc + i.amount, 0);
   const monthlyLivingExpenses = baselineProfile.expenses.reduce((acc, e) => acc + e.amount, 0);
   const monthlyDebtService = baselineProfile.debts.reduce((acc, d) => acc + d.monthlyPayment, 0);
   const totalMonthlyOutflows = monthlyLivingExpenses + monthlyDebtService;
-  const netFreeCashFlow = Math.max(0, monthlyIncome - totalMonthlyOutflows);
+  const netFreeCashFlow = Math.round(Math.max(0, monthlyIncome - totalMonthlyOutflows) * 100) / 100;
   const emergencyRunwayMonths =
     monthlyLivingExpenses > 0
       ? Math.round((baselineProfile.liquidSavings / monthlyLivingExpenses) * 10) / 10
       : 3.0;
 
-  // Baseline Primary Goal
+  // Primary Goal Baseline
   const primaryGoalRaw = baselineProfile.goals[0] || {
     id: "primary-goal",
     title: "Business Launch & Life Goal",
@@ -167,7 +200,10 @@ export function evaluateCanonicalDecision(
   };
 
   const goalRemaining = Math.max(0, primaryGoalRaw.targetAmount - primaryGoalRaw.currentAmount);
-  const baselineMonthlyGoalAllocation = Math.min(netFreeCashFlow, Math.max(100, Math.round(netFreeCashFlow * 0.5)));
+  const baselineMonthlyGoalAllocation = Math.min(
+    netFreeCashFlow,
+    Math.max(100, Math.round(netFreeCashFlow * 0.45))
+  );
   const baselineMonthsToTarget =
     baselineMonthlyGoalAllocation > 0 ? Math.ceil(goalRemaining / baselineMonthlyGoalAllocation) : 24;
 
@@ -190,7 +226,7 @@ export function evaluateCanonicalDecision(
     },
   };
 
-  // 2. Determine Transaction Archetype
+  // 2. Classify Transaction Archetype
   let decisionType = inputs.decisionType;
   if (!decisionType) {
     if (category === "TAKE_A_LOAN" || title.toLowerCase().includes("loan") || title.toLowerCase().includes("borrow")) {
@@ -208,31 +244,37 @@ export function evaluateCanonicalDecision(
     }
   }
 
-  // Check if assumptions were used for loan parameters
+  // Determine Financing Parameters
   let isAssumedLoanTerms = false;
   let termMonths = inputs.loanTermMonths || 36;
   let annualRate = inputs.annualInterestRatePercent ?? 8.5;
+  const isLoanOrFinanced = decisionType === "LOAN_FACILITY" || decisionType === "FINANCED_PURCHASE";
 
-  if (decisionType === "LOAN_FACILITY" || decisionType === "FINANCED_PURCHASE") {
+  if (isLoanOrFinanced) {
     if (!inputs.loanTermMonths || inputs.annualInterestRatePercent === undefined) {
       isAssumedLoanTerms = true;
     }
   }
 
+  // Material Assumptions List
   const assumptions: string[] = [
-    `Assumes monthly net income remains steady at ${monthlyIncome} ${currency}.`,
-    `Assumes core living expenses remain constant at ${monthlyLivingExpenses} ${currency}/month.`,
+    `Monthly net income remains steady at ${monthlyIncome} ${currency}.`,
+    `Core living costs remain constant at ${monthlyLivingExpenses} ${currency}/month.`,
   ];
 
   if (isAssumedLoanTerms) {
     assumptions.push(
       `Financing terms estimated at ${annualRate}% APR over ${termMonths} months (standard market reference).`
     );
+  } else if (isLoanOrFinanced) {
+    assumptions.push(
+      `Financing terms fixed at ${annualRate}% APR over ${termMonths} months with zero early repayment penalties.`
+    );
   }
 
-  // 3. Helper to Calculate Single Scenario Impact
-  function calculateScenario(
-    scenId: string,
+  // 3. SCENARIO CALCULATION HELPER (Deep Differentiation)
+  function buildScenario(
+    code: "OPTION_A" | "OPTION_B" | "OPTION_C" | "OPTION_D",
     scenTitle: string,
     scenBadge: string,
     scenDesc: string,
@@ -241,54 +283,62 @@ export function evaluateCanonicalDecision(
     scenDownPayment: number,
     scenTermMonths: number,
     scenRatePercent: number,
+    scenAccumulatedCashPreSave = 0,
     scenExplicitMonthly?: number
   ): ScenarioImpactResult {
     let immediateCashOutflow = 0;
-    let newMonthlyObligation = 0;
+    let principalFinanced = 0;
+    let monthlyPayment = 0;
     let totalInterestPaid = 0;
     let totalCostOverTime = scenAmount;
 
     if (scenType === "ONE_OFF_PURCHASE" || scenType === "INVESTMENT" || scenType === "DEBT_PAYOFF") {
       immediateCashOutflow = scenAmount;
-      newMonthlyObligation = 0;
+      principalFinanced = 0;
+      monthlyPayment = 0;
       totalCostOverTime = scenAmount;
     } else if (scenType === "FINANCED_PURCHASE") {
       immediateCashOutflow = scenDownPayment;
-      const financedPrincipal = Math.max(0, scenAmount - scenDownPayment);
+      principalFinanced = Math.max(0, scenAmount - scenDownPayment);
       if (scenExplicitMonthly && scenExplicitMonthly > 0) {
-        newMonthlyObligation = scenExplicitMonthly;
+        monthlyPayment = scenExplicitMonthly;
         totalCostOverTime = scenDownPayment + scenExplicitMonthly * scenTermMonths;
         totalInterestPaid = Math.max(0, totalCostOverTime - scenAmount);
       } else {
-        const loanCalc = calculateMonthlyLoanPayment(financedPrincipal, scenRatePercent, scenTermMonths);
-        newMonthlyObligation = loanCalc.monthlyPayment;
-        totalInterestPaid = loanCalc.totalInterest;
-        totalCostOverTime = scenDownPayment + loanCalc.totalCost;
+        const loan = calculateMonthlyLoanPayment(principalFinanced, scenRatePercent, scenTermMonths);
+        monthlyPayment = loan.monthlyPayment;
+        totalInterestPaid = loan.totalInterest;
+        totalCostOverTime = scenDownPayment + loan.totalCost;
       }
     } else if (scenType === "LOAN_FACILITY") {
+      // If user accumulated extra cash in Option B, down payment absorbs part of borrowing
       immediateCashOutflow = scenDownPayment;
-      const principalBorrowed = Math.max(0, scenAmount - scenDownPayment);
+      principalFinanced = Math.max(0, scenAmount - scenDownPayment);
       if (scenExplicitMonthly && scenExplicitMonthly > 0) {
-        newMonthlyObligation = scenExplicitMonthly;
+        monthlyPayment = scenExplicitMonthly;
         totalCostOverTime = scenDownPayment + scenExplicitMonthly * scenTermMonths;
         totalInterestPaid = Math.max(0, totalCostOverTime - scenAmount);
       } else {
-        const loanCalc = calculateMonthlyLoanPayment(principalBorrowed > 0 ? principalBorrowed : scenAmount, scenRatePercent, scenTermMonths);
-        newMonthlyObligation = loanCalc.monthlyPayment;
-        totalInterestPaid = loanCalc.totalInterest;
-        totalCostOverTime = scenDownPayment + loanCalc.totalCost;
+        const loan = calculateMonthlyLoanPayment(principalFinanced, scenRatePercent, scenTermMonths);
+        monthlyPayment = loan.monthlyPayment;
+        totalInterestPaid = loan.totalInterest;
+        totalCostOverTime = scenDownPayment + loan.totalCost;
       }
     } else if (scenType === "RECURRING_EXPENSE") {
       immediateCashOutflow = scenDownPayment;
-      newMonthlyObligation = scenAmount;
+      principalFinanced = 0;
+      monthlyPayment = scenAmount;
       totalCostOverTime = scenAmount * 12;
     }
 
     // Cash Reconciliation
-    const postDecisionCash = Math.round(Math.max(0, baselineData.liquidSavings - immediateCashOutflow) * 100) / 100;
-    const deltaCash = Math.round((postDecisionCash - baselineData.liquidSavings) * 100) / 100; // strictly -immediateCashOutflow
+    // (If user pre-saved in Option B, accumulated cash offsets the down payment so baseline savings stay intact!)
+    const effectiveCashDrain = Math.max(0, immediateCashOutflow - scenAccumulatedCashPreSave);
+    const postDecisionCash = Math.round(Math.max(0, baselineData.liquidSavings - effectiveCashDrain) * 100) / 100;
+    const deltaCash = Math.round((postDecisionCash - baselineData.liquidSavings) * 100) / 100;
 
     // Monthly Cash Flow Reconciliation
+    const newMonthlyObligation = monthlyPayment;
     const postDecisionMonthlyExpenses = Math.round((baselineData.totalMonthlyOutflows + newMonthlyObligation) * 100) / 100;
     const postDecisionFreeCashFlow = Math.round(Math.max(0, baselineData.monthlyIncome - postDecisionMonthlyExpenses) * 100) / 100;
     const deltaFreeCashFlow = Math.round((postDecisionFreeCashFlow - baselineData.netFreeCashFlow) * 100) / 100;
@@ -304,79 +354,89 @@ export function evaluateCanonicalDecision(
         : 0;
     const deltaRunwayMonths = Math.round((postDecisionRunwayMonths - baselineData.emergencyRunwayMonths) * 10) / 10;
 
-    // Goal Impact Reconciliation (Deterministic)
+    // Goal Impact & Explainability
     let goalDelayDays = 0;
     let goalDelayMonths = 0;
     let goalStatus: ScenarioImpactResult["goalStatus"] = "ON_TRACK";
+    let goalExplanation = "";
 
-    const postDecisionGoalAllocation = Math.max(
-      0,
-      Math.min(postDecisionFreeCashFlow, baselineMonthlyGoalAllocation)
-    );
+    const availableForGoal = Math.max(0, Math.min(postDecisionFreeCashFlow, baselineMonthlyGoalAllocation));
 
-    if (postDecisionGoalAllocation <= 0 && goalRemaining > 0) {
+    if (availableForGoal <= 0 && goalRemaining > 0) {
       goalStatus = "GOAL_FUNDING_PAUSED";
-      goalDelayMonths = 12; // Capped for UI, clearly labeled as paused
+      goalDelayMonths = 12;
       goalDelayDays = 365;
-    } else if (postDecisionGoalAllocation > 0) {
-      const postMonthsToTarget = Math.ceil(goalRemaining / postDecisionGoalAllocation);
-      goalDelayMonths = Math.max(0, postMonthsToTarget - baselineMonthsToTarget);
-      goalDelayDays = goalDelayMonths * 30;
-
-      // Anomaly Clamp: Never allow absurd multi-decade numbers
-      if (goalDelayDays > 1825) {
-        goalDelayDays = 1825; // 5 years cap with explanation
-        goalStatus = "GOAL_FUNDING_PAUSED";
-      } else if (goalDelayDays > 0) {
-        goalStatus = "DELAYED";
-      } else {
-        goalStatus = "ON_TRACK";
-      }
+      goalExplanation = `New monthly obligations absorb 100% of available free cash flow, pausing contributions to "${baselineData.primaryGoal.title}".`;
+    } else if (availableForGoal < baselineMonthlyGoalAllocation) {
+      const postMonths = Math.ceil(goalRemaining / availableForGoal);
+      goalDelayMonths = Math.max(0, postMonths - baselineMonthsToTarget);
+      goalDelayDays = Math.min(730, goalDelayMonths * 30);
+      goalStatus = goalDelayDays > 0 ? "DELAYED" : "ON_TRACK";
+      goalExplanation = `Reduced monthly goal allocation (+${availableForGoal} ${currency}/mo vs baseline +${baselineMonthlyGoalAllocation} ${currency}/mo) shifts goal arrival by ${goalDelayDays} days.`;
+    } else {
+      goalStatus = "ON_TRACK";
+      goalDelayDays = 0;
+      goalDelayMonths = 0;
+      goalExplanation = `Your goal "${baselineData.primaryGoal.title}" remains 100% on schedule because post-decision free cash flow (+${postDecisionFreeCashFlow} ${currency}/mo) fully covers the required monthly contribution (+${baselineMonthlyGoalAllocation} ${currency}/mo).`;
     }
 
-    // Explicit Ranking Score (Transparent)
+    // Ranking Evaluation Score
     let rankingScore = 100;
     const reasons: string[] = [];
 
-    // Critical safety: Runway
-    if (postDecisionRunwayMonths < 1.5) {
-      rankingScore -= 50;
-      reasons.push(`Severely drains emergency buffer to ${postDecisionRunwayMonths} months.`);
+    if (postDecisionRunwayMonths < 2.0) {
+      rankingScore -= 45;
+      reasons.push(`Emergency buffer drops to ${postDecisionRunwayMonths} mos (below 2.0-month safety threshold).`);
     } else if (postDecisionRunwayMonths < 3.0) {
-      rankingScore -= 20;
-      reasons.push(`Reduces emergency runway below the 3.0-month safety target.`);
+      rankingScore -= 15;
+      reasons.push(`Preserves emergency runway at ${postDecisionRunwayMonths} months.`);
     } else {
-      reasons.push(`Protects a safe emergency runway of ${postDecisionRunwayMonths} months.`);
+      rankingScore += 15;
+      reasons.push(`Maintains a robust ${postDecisionRunwayMonths}-month emergency reserve buffer.`);
     }
 
-    // Cash flow
     if (newMonthlyObligation > netFreeCashFlow) {
-      rankingScore -= 40;
-      reasons.push(`Monthly obligation (${newMonthlyObligation} ${currency}) exceeds available free cash flow.`);
+      rankingScore -= 50;
+      reasons.push(`Monthly installment (${newMonthlyObligation} ${currency}) exceeds free cash flow.`);
     } else if (newMonthlyObligation > 0) {
-      reasons.push(`Monthly payment of ${newMonthlyObligation} ${currency}/mo is covered by cash flow.`);
+      reasons.push(`Monthly obligation of ${newMonthlyObligation} ${currency}/mo is safely covered by cash flow.`);
     }
 
-    // Goal
+    if (totalInterestPaid > 0) {
+      reasons.push(`Total borrowing interest cost: ${totalInterestPaid} ${currency}.`);
+      if (code === "OPTION_B" || code === "OPTION_C") {
+        rankingScore += 15;
+      }
+    }
+
     if (goalDelayDays === 0) {
       rankingScore += 20;
-      reasons.push(`Leaves primary goal "${baselineData.primaryGoal.title}" 100% on schedule.`);
+      reasons.push(`Keeps "${baselineData.primaryGoal.title}" 100% on schedule with 0 days delay.`);
     } else {
-      rankingScore -= Math.min(30, Math.round(goalDelayDays / 15));
-      reasons.push(`Shifts goal arrival by approximately ${goalDelayDays} days.`);
+      rankingScore -= Math.min(25, Math.round(goalDelayDays / 15));
+      reasons.push(`Shifts goal timeline by ${goalDelayDays} days.`);
     }
 
-    // User priority adjustment
-    if (priority === "PROTECT_CASH" && postDecisionRunwayMonths >= 3.0) rankingScore += 15;
-    if (priority === "LOW_MONTHLY" && newMonthlyObligation === 0) rankingScore += 15;
-    if (priority === "REACH_GOALS" && goalDelayDays === 0) rankingScore += 20;
-    if (priority === "BUY_SOONER" && scenId === "OPTION_A") rankingScore += 15;
+    // Priority adjustments
+    if (priority === "PROTECT_CASH" && (code === "OPTION_B" || postDecisionRunwayMonths >= 3.0)) rankingScore += 20;
+    if (priority === "LOW_MONTHLY" && monthlyPayment < 200) rankingScore += 20;
+    if (priority === "AVOID_DEBT" && totalInterestPaid < 800) rankingScore += 25;
+    if (priority === "BUY_SOONER" && code === "OPTION_A") rankingScore += 30;
 
     return {
-      id: scenId,
+      id: code,
+      code,
       title: scenTitle,
       badge: scenBadge,
       description: scenDesc,
+      amount: scenAmount,
+      downPayment: scenDownPayment,
+      principalFinanced,
+      loanTermMonths: scenTermMonths,
+      annualRatePercent: scenRatePercent,
+      monthlyPayment,
+      totalInterestPaid,
+      totalCostOverTime,
       immediateCashOutflow,
       postDecisionCash,
       deltaCash,
@@ -390,66 +450,78 @@ export function evaluateCanonicalDecision(
       goalDelayDays,
       goalDelayMonths,
       goalStatus,
-      totalInterestPaid,
-      totalCostOverTime,
+      goalExplanation,
       isRecommended: false,
       rankingScore,
       reasons,
     };
   }
 
-  // 4. Generate Scenarios
+  // 4. GENERATE ECONOMICALLY DIFFERENTIATED SCENARIOS
   const downPayment = inputs.downPayment || 0;
   const explicitMonthly = inputs.customMonthlyPayment;
 
-  // Option A: Primary Decision
-  const optionA = calculateScenario(
+  // OPTION A: Proceed Now (As Configured)
+  const optionA = buildScenario(
     "OPTION_A",
-    decisionType === "LOAN_FACILITY"
+    isLoanOrFinanced
       ? `Option A: Proceed with Borrowing (${totalAmount} ${currency})`
-      : decisionType === "FINANCED_PURCHASE"
-      ? `Option A: Finance with ${downPayment} ${currency} Down`
-      : `Option A: Proceed Today (${totalAmount} ${currency})`,
+      : `Option A: Proceed with Purchase (${totalAmount} ${currency})`,
     "Immediate Execution",
-    "Executes the decision immediately under current terms.",
+    "Executes the full transaction immediately under standard terms.",
     decisionType,
     totalAmount,
     downPayment,
     termMonths,
     annualRate,
+    0,
     explicitMonthly
   );
 
-  // Option B: Wait and Save
-  const requiredWaitSavings =
-    decisionType === "ONE_OFF_PURCHASE" || decisionType === "INVESTMENT"
-      ? totalAmount
-      : Math.max(downPayment, Math.round(totalAmount * 0.3));
-  const monthsToSave =
-    netFreeCashFlow > 0 ? Math.max(1, Math.ceil(requiredWaitSavings / netFreeCashFlow)) : 3;
-  const waitDays = Math.min(90, Math.max(30, monthsToSave * 30));
+  // OPTION B: Wait 60 Days & Accumulate Down Payment (Real Economic Model)
+  // During 60 days, user saves 2 months of Net FCF (e.g. 2 x 2,200 = 4,400)
+  // For a loan: User puts this 4,400 as down payment, borrowing only (10,000 - 4,400) = 5,600!
+  const waitMonths = 2;
+  const waitDays = waitMonths * 30;
+  const accumulatedSavingsDuringWait = Math.round(netFreeCashFlow * waitMonths * 0.75); // 75% of FCF saved
 
-  const optionB = calculateScenario(
+  let optionBAmount = totalAmount;
+  let optionBDownPayment = downPayment;
+  let optionBAccumulated = 0;
+
+  if (isLoanOrFinanced) {
+    optionBDownPayment = Math.min(totalAmount * 0.6, Math.max(downPayment + 1500, accumulatedSavingsDuringWait));
+    optionBAccumulated = optionBDownPayment;
+  } else {
+    optionBDownPayment = totalAmount;
+    optionBAccumulated = totalAmount;
+  }
+
+  const optionB = buildScenario(
     "OPTION_B",
-    `Option B: Wait ${waitDays} Days & Accumulate Reserves`,
+    isLoanOrFinanced
+      ? `Option B: Wait ${waitDays} Days & Borrow ${totalAmount - optionBDownPayment} ${currency}`
+      : `Option B: Wait ${waitDays} Days & Save ${totalAmount} ${currency}`,
     "Aimly Recommended",
-    `Saves ${requiredWaitSavings} ${currency} from monthly cash flow before committing.`,
-    "ONE_OFF_PURCHASE",
-    0, // zero upfront impact today
-    0,
-    0,
-    0,
-    0
+    isLoanOrFinanced
+      ? `Saves ${optionBDownPayment} ${currency} from cash flow to reduce borrowed principal and cut interest.`
+      : `Saves full purchase price from monthly cash flow before executing.`,
+    isLoanOrFinanced ? "LOAN_FACILITY" : "ONE_OFF_PURCHASE",
+    optionBAmount,
+    optionBDownPayment,
+    termMonths,
+    annualRate,
+    optionBAccumulated
   );
 
-  // Option C: 25% Budget Alternative
+  // OPTION C: 25% Budget Alternative
   const cheaperAmount = Math.round(totalAmount * 0.75);
   const cheaperDown = Math.round(downPayment * 0.75);
-  const optionC = calculateScenario(
+  const optionC = buildScenario(
     "OPTION_C",
     `Option C: Optimized ${cheaperAmount} ${currency} Alternative`,
     "Budget Alternative",
-    "Selects a 25% lower-cost alternative to minimize capital depletion.",
+    "Selects a 25% lower-cost option to minimize recurring obligations and interest.",
     decisionType,
     cheaperAmount,
     cheaperDown,
@@ -457,15 +529,72 @@ export function evaluateCanonicalDecision(
     annualRate
   );
 
-  // Mark Recommended Alternative based on Ranking Score
-  const allScenarios = [optionA, optionB, optionC];
-  allScenarios.sort((a, b) => b.rankingScore - a.rankingScore);
-  allScenarios[0].isRecommended = true;
+  // OPTION D: Extended Term (48 Months)
+  const optionD = buildScenario(
+    "OPTION_D",
+    `Option D: 48-Month Extended Financing`,
+    "Lower Monthly Payment",
+    "Extends repayment over 48 months to reduce monthly pressure.",
+    decisionType,
+    totalAmount,
+    downPayment,
+    48,
+    annualRate
+  );
 
-  // Primary Impact (Option A as Baseline Decision)
+  // 5. DETERMINISTIC RANKING ENGINE (EXACTLY ONE BEST SCENARIO)
+  const candidateScenarios = [optionA, optionB, optionC, optionD];
+  candidateScenarios.sort((a, b) => b.rankingScore - a.rankingScore);
+
+  // Exactly one winner
+  const winningScenario = candidateScenarios[0];
+  optionA.isRecommended = winningScenario.code === "OPTION_A";
+  optionB.isRecommended = winningScenario.code === "OPTION_B";
+  optionC.isRecommended = winningScenario.code === "OPTION_C";
+  optionD.isRecommended = winningScenario.code === "OPTION_D";
+
+  // Build Action Plan strictly linked to winning scenario
+  let actionStep1 = "";
+  if (winningScenario.code === "OPTION_B") {
+    actionStep1 = isLoanOrFinanced
+      ? `1. Execute Option B: Wait ${waitDays} days to accumulate ${optionBDownPayment} ${currency} in cash flow down payment, reducing borrowed principal to ${totalAmount - optionBDownPayment} ${currency} and saving ${Math.round(optionA.totalInterestPaid - optionB.totalInterestPaid)} ${currency} in interest.`
+      : `1. Execute Option B: Wait ${waitDays} days to save the full ${totalAmount} ${currency} from monthly cash flow, completely avoiding debt.`;
+  } else if (winningScenario.code === "OPTION_C") {
+    actionStep1 = `1. Execute Option C: Choose the optimized ${cheaperAmount} ${currency} alternative to reduce monthly payment to ${optionC.monthlyPayment} ${currency}/mo and lower lifetime cost by ${Math.round(optionA.totalCostOverTime - optionC.totalCostOverTime)} ${currency}.`;
+  } else {
+    actionStep1 = `1. Execute Option A: Proceed today as configured, maintaining strict budget controls over the ${termMonths}-month amortization schedule.`;
+  }
+
+  const actionStep2 = `2. Maintain steady monthly contributions of +${baselineMonthlyGoalAllocation} ${currency}/month toward "${baselineData.primaryGoal.title}" to secure target timeline.`;
+  const actionStep3 = `3. Re-evaluate this decision if additional liquidity becomes available or if financing terms can be negotiated below ${annualRate}% APR.`;
+
+  const recommendation = {
+    recommendedScenarioId: winningScenario.code,
+    recommendedScenarioTitle: winningScenario.title,
+    actionPlanStep1: actionStep1,
+    actionPlanStep2: actionStep2,
+    actionPlanStep3: actionStep3,
+    reasons: winningScenario.reasons,
+  };
+
+  // Primary Impact (Option A - As Proposed)
   const primaryImpact = optionA;
 
-  // 5. Build Verdict
+  // 6. Financing Summary
+  const financing: FinancingSummary = {
+    hasFinancing: isLoanOrFinanced,
+    principalBorrowed: primaryImpact.principalFinanced,
+    downPayment: primaryImpact.downPayment,
+    annualInterestRatePercent: annualRate,
+    loanTermMonths: termMonths,
+    paymentFrequency: "Monthly",
+    monthlyPayment: primaryImpact.monthlyPayment,
+    totalInterestPaid: primaryImpact.totalInterestPaid,
+    totalLifetimeCost: primaryImpact.totalCostOverTime,
+    isAssumedTerms: isAssumedLoanTerms,
+  };
+
+  // 7. BUILD DETERMINISTIC VERDICT
   let verdictType: CanonicalDecisionAnalysis["verdict"]["decision"] = "RECOMMENDED";
   let headline = "";
   let primaryReason = "";
@@ -476,7 +605,7 @@ export function evaluateCanonicalDecision(
     headline = "This commitment puts your financial resilience below critical safety thresholds.";
     primaryReason =
       primaryImpact.newMonthlyObligation > netFreeCashFlow
-        ? `Monthly payment of ${primaryImpact.newMonthlyObligation} ${currency} exceeds your available free cash flow (${netFreeCashFlow} ${currency}/mo).`
+        ? `Monthly payment of ${primaryImpact.newMonthlyObligation} ${currency}/mo exceeds your available free cash flow (${netFreeCashFlow} ${currency}/mo).`
         : `Leaves only ${primaryImpact.postDecisionRunwayMonths} months of emergency living runway (below mandatory 2.0-month floor).`;
     dominantConsequence = `Executing this today risks cash deficit and severely reduces your safety cushion.`;
   } else if (
@@ -486,15 +615,15 @@ export function evaluateCanonicalDecision(
   ) {
     verdictType = "PROCEED_WITH_CAUTION";
     if (primaryImpact.goalDelayDays > 0) {
-      headline = `Executable today, but shifts your "${baselineData.primaryGoal.title}" by ${primaryImpact.goalDelayDays} days.`;
+      headline = `Executable today, but shifts "${baselineData.primaryGoal.title}" by ${primaryImpact.goalDelayDays} days.`;
       dominantConsequence = `Shifts your primary goal arrival by ${primaryImpact.goalDelayDays} days.`;
     } else {
-      headline = `Executable today, but reduces your living buffer to ${primaryImpact.postDecisionRunwayMonths} months.`;
-      dominantConsequence = `Reduces emergency buffer to ${primaryImpact.postDecisionRunwayMonths} months of fixed living costs.`;
+      headline = `Executable today, but reduces your monthly free cash flow by ${primaryImpact.fcfPercentageShift}%.`;
+      dominantConsequence = `Adds a monthly obligation of ${primaryImpact.monthlyPayment} ${currency}/mo, absorbing ${primaryImpact.fcfPercentageShift}% of your free cash flow.`;
     }
     primaryReason =
       primaryImpact.newMonthlyObligation > 0
-        ? `Adds a monthly obligation of ${primaryImpact.newMonthlyObligation} ${currency}/mo, absorbing ${primaryImpact.fcfPercentageShift}% of your free cash flow.`
+        ? `Adds a monthly obligation of ${primaryImpact.monthlyPayment} ${currency}/mo, absorbing ${primaryImpact.fcfPercentageShift}% of your free cash flow.`
         : `Consumes ${primaryImpact.immediateCashOutflow} ${currency} of liquid reserves, leaving ${primaryImpact.postDecisionCash} ${currency} in available cash.`;
   } else {
     verdictType = "RECOMMENDED";
@@ -509,12 +638,15 @@ export function evaluateCanonicalDecision(
     currency,
     inputs,
     baseline: baselineData,
+    financing,
     primaryImpact,
     scenarios: {
       optionA,
       optionB,
       optionC,
+      optionD,
     },
+    recommendation,
     verdict: {
       decision: verdictType,
       headline,

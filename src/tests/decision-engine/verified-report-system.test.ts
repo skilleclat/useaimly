@@ -35,6 +35,14 @@ describe("Verified Financial Decision Report System", () => {
       primaryGoalCurrent: 24000,
       primaryGoalTargetDate: "2028-06-30",
     },
+    recommendation: {
+      recommendedScenarioId: "OPTION_B",
+      recommendedScenarioTitle: "Option B: Wait 2 Months & Save First",
+      actionPlanStep1: "1. Execute OPTION B: Wait 60 days to accumulate funds from cash flow.",
+      actionPlanStep2: "2. Maintain monthly goal savings.",
+      actionPlanStep3: "3. Re-evaluate if terms change.",
+      reasons: ["Preserves 3.6 months runway", "Minimizes borrowing"],
+    },
     calculatedImpact: {
       immediateCashOutflow: 8000,
       postDecisionCash: 6000, // 14,000 - 8,000 = 6,000
@@ -55,30 +63,39 @@ describe("Verified Financial Decision Report System", () => {
     },
     alternatives: {
       optionA: {
+        code: "OPTION_A",
         title: "Option A: Buy Vehicle Today",
         badge: "Immediate",
         delayDays: 150,
         cashRemaining: 6000,
         runway: 2.0,
         monthlyObligation: 0,
+        totalInterest: 0,
+        totalCost: 8000,
         isRecommended: false,
       },
       optionB: {
+        code: "OPTION_B",
         title: "Option B: Wait 2 Months & Save First",
         badge: "Aimly Best",
         delayDays: 30,
         cashRemaining: 11000,
         runway: 3.6,
         monthlyObligation: 0,
+        totalInterest: 0,
+        totalCost: 8000,
         isRecommended: true,
       },
       optionC: {
+        code: "OPTION_C",
         title: "Option C: Choose $6,000 Used Model",
         badge: "Budget",
         delayDays: 60,
         cashRemaining: 8000,
         runway: 2.6,
         monthlyObligation: 0,
+        totalInterest: 0,
+        totalCost: 6000,
         isRecommended: false,
       },
     },
@@ -87,7 +104,7 @@ describe("Verified Financial Decision Report System", () => {
         "Evaluating this $8,000 expenditure reveals that cash availability ($14,000) permits execution, but reduces living buffer to 2.0 months and shifts your Home Goal by 150 days.",
       whyThisVerdict:
         "The decision is executable but triggers a reserve warning by dipping below the 3.0-month target floor.",
-      recommendedPath: "Option B: Wait 2 Months & Save First",
+      recommendedPath: "1. Execute OPTION B: Wait 60 days to accumulate funds from cash flow.",
       tradeoffsSummary: "Immediate vehicle utility vs 5 months delay on Home Goal arrival timeline.",
     },
     assumptions: [
@@ -102,7 +119,7 @@ describe("Verified Financial Decision Report System", () => {
     const verification = runAimlyCoherenceCheck(mockValidDecisionData);
     expect(verification.status).toBe("VERIFIED WITH ASSUMPTIONS");
     expect(verification.overallScore).toBe(100);
-    expect(verification.checks.length).toBe(7);
+    expect(verification.checks.length).toBe(8);
     expect(verification.checks.every((c) => c.passed)).toBe(true);
     expect(verification.inconsistencies.length).toBe(0);
   });
@@ -141,7 +158,7 @@ describe("Verified Financial Decision Report System", () => {
     expect(verdictCheck?.passed).toBe(false);
   });
 
-  // 4. PDF GENERATION: Generates audit-grade PDF with all 10 sections
+  // 4. PDF GENERATION: Generates audit-grade PDF with all sections
   it("generates a professional multi-page Verified Decision PDF report", () => {
     const verification = runAimlyCoherenceCheck(mockValidDecisionData);
     const pdfDoc = generateVerifiedDecisionReportPDF(mockValidDecisionData, verification, "en");

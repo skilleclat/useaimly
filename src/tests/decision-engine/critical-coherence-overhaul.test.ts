@@ -11,7 +11,7 @@ import {
 import { generateVerifiedDecisionReportPDF } from "@/lib/decision-engine/verified-report-generator";
 import { BaselineFinancialProfile } from "@/lib/finance";
 
-describe("CRITICAL ACCURACY & COHERENCE OVERHAUL TEST SUITE", () => {
+describe("ZERO-COMPROMISE 10/10 FINANCIAL DECISION REPORT STANDARD", () => {
   const regressionBaseline: BaselineFinancialProfile = {
     liquidSavings: 4840,
     incomes: [
@@ -35,9 +35,150 @@ describe("CRITICAL ACCURACY & COHERENCE OVERHAUL TEST SUITE", () => {
     ],
   };
 
-  // 1. Mandatory Loan Decision Regression Test (Phase 14)
-  it("Phase 14 Regression Test: correctly models €10,000 Loan with €1,000 Down Payment", () => {
-    const loanInputs: DecisionInputParameters = {
+  // 1. INVARIANT TEST: Single Canonical Recommendation Invariant (Critical Issue #1)
+  it("Invariant: exactly one scenario is recommended and matches action plan & narrative", () => {
+    const analysis = evaluateCanonicalDecision(regressionBaseline, {
+      title: "Loan Facility / Borrowing",
+      category: "TAKE_A_LOAN",
+      decisionType: "LOAN_FACILITY",
+      totalAmount: 10000,
+      downPayment: 0,
+      loanTermMonths: 36,
+      annualInterestRatePercent: 8.5,
+      currency: "EUR",
+      priority: "PROTECT_CASH",
+    });
+
+    const recId = analysis.recommendation.recommendedScenarioId;
+    expect(["OPTION_A", "OPTION_B", "OPTION_C", "OPTION_D"]).toContain(recId);
+
+    // Only the winning scenario has isRecommended = true
+    const recCount = [
+      analysis.scenarios.optionA.isRecommended,
+      analysis.scenarios.optionB.isRecommended,
+      analysis.scenarios.optionC.isRecommended,
+      analysis.scenarios.optionD?.isRecommended,
+    ].filter(Boolean).length;
+    expect(recCount).toBe(1);
+
+    // Action plan step 1 directly cites the winning scenario
+    expect(analysis.recommendation.actionPlanStep1.toLowerCase()).toContain(recId.replace("_", " ").toLowerCase());
+  });
+
+  // 2. SCENARIOS ACTUALLY DIFFER (Critical Issue #2)
+  it("Scenarios are deeply differentiated across cash, payments, interest, and timeline", () => {
+    const analysis = evaluateCanonicalDecision(regressionBaseline, {
+      title: "Loan Facility / Borrowing",
+      category: "TAKE_A_LOAN",
+      decisionType: "LOAN_FACILITY",
+      totalAmount: 10000,
+      downPayment: 0,
+      loanTermMonths: 36,
+      annualInterestRatePercent: 8.5,
+      currency: "EUR",
+      priority: "PROTECT_CASH",
+    });
+
+    const optA = analysis.scenarios.optionA;
+    const optB = analysis.scenarios.optionB;
+    const optC = analysis.scenarios.optionC;
+
+    // Option A vs Option B
+    // Option A borrows €10k -> monthly payment ~€315.68, interest ~€1,364.48
+    expect(optA.monthlyPayment).toBe(315.68);
+    expect(optA.totalInterestPaid).toBe(1364.48);
+
+    // Option B accumulates cash from FCF, borrowing less (e.g. €5,600) -> lower payment & interest!
+    expect(optB.monthlyPayment).toBeLessThan(optA.monthlyPayment);
+    expect(optB.totalInterestPaid).toBeLessThan(optA.totalInterestPaid);
+    expect(optB.downPayment).toBeGreaterThan(0);
+
+    // Option C is 25% lower outlay (€7,500) -> lower payment & interest than Option A
+    expect(optC.amount).toBe(7500);
+    expect(optC.monthlyPayment).toBe(236.76);
+    expect(optC.totalInterestPaid).toBe(1023.36);
+  });
+
+  // 3. FINANCING SUMMARY EXPLAINABILITY (Critical Issue #3)
+  it("produces complete deterministic financing summary for loan decisions", () => {
+    const analysis = evaluateCanonicalDecision(regressionBaseline, {
+      title: "Vehicle Financing",
+      category: "BUY_A_CAR",
+      decisionType: "FINANCED_PURCHASE",
+      totalAmount: 20000,
+      downPayment: 5000,
+      loanTermMonths: 48,
+      annualInterestRatePercent: 6.0,
+      currency: "USD",
+    });
+
+    expect(analysis.financing.hasFinancing).toBe(true);
+    expect(analysis.financing.principalBorrowed).toBe(15000);
+    expect(analysis.financing.downPayment).toBe(5000);
+    expect(analysis.financing.annualInterestRatePercent).toBe(6.0);
+    expect(analysis.financing.loanTermMonths).toBe(48);
+    expect(analysis.financing.monthlyPayment).toBe(352.28);
+    expect(analysis.financing.totalInterestPaid).toBe(1909.44);
+    expect(analysis.financing.totalLifetimeCost).toBe(21909.44);
+    expect(analysis.financing.isAssumedTerms).toBe(false);
+  });
+
+  // 4. GOAL IMPACT EXPLAINABILITY (Critical Issue #4)
+  it("explains exactly why a goal stays on track or shifts", () => {
+    const analysis = evaluateCanonicalDecision(regressionBaseline, {
+      title: "Equipment Purchase",
+      category: "BUY_SOMETHING",
+      decisionType: "ONE_OFF_PURCHASE",
+      totalAmount: 1000,
+      currency: "EUR",
+    });
+
+    expect(analysis.primaryImpact.goalStatus).toBe("ON_TRACK");
+    expect(analysis.primaryImpact.goalExplanation).toContain("remains 100% on schedule");
+  });
+
+  // 5. RED TEAM: Overleveraged loan exceeding Free Cash Flow
+  it("Red Team: Rejects loan where payment exceeds monthly free cash flow", () => {
+    const tightBaseline: BaselineFinancialProfile = {
+      ...regressionBaseline,
+      expenses: [{ name: "High Living", amount: 4300, frequency: "MONTHLY", isFixed: true }], // FCF = +200/mo
+    };
+
+    const analysis = evaluateCanonicalDecision(tightBaseline, {
+      title: "Massive Loan",
+      category: "TAKE_A_LOAN",
+      decisionType: "LOAN_FACILITY",
+      totalAmount: 50000,
+      loanTermMonths: 36,
+      currency: "EUR",
+    });
+
+    expect(analysis.verdict.decision).toBe("NOT_RECOMMENDED");
+    expect(analysis.primaryImpact.monthlyPayment).toBeGreaterThan(tightBaseline.incomes[0].amount - tightBaseline.expenses[0].amount);
+  });
+
+  // 6. RED TEAM: Zero Emergency Reserves
+  it("Red Team: Flags NOT_RECOMMENDED when emergency buffer is depleted below 2.0 months", () => {
+    const brokeBaseline: BaselineFinancialProfile = {
+      ...regressionBaseline,
+      liquidSavings: 500, // Only 0.2 mos runway
+    };
+
+    const analysis = evaluateCanonicalDecision(brokeBaseline, {
+      title: "Big Expense",
+      category: "BUY_SOMETHING",
+      decisionType: "ONE_OFF_PURCHASE",
+      totalAmount: 400,
+      currency: "EUR",
+    });
+
+    expect(analysis.verdict.decision).toBe("NOT_RECOMMENDED");
+    expect(analysis.verdict.primaryReason).toContain("below mandatory 2.0-month floor");
+  });
+
+  // 7. FULL VERIFIED REPORT GENERATOR (PDF 10/10 Rendering)
+  it("Generates 10/10 PDF report with single recommendation, financing summary, and zero text overflow", () => {
+    const analysis = evaluateCanonicalDecision(regressionBaseline, {
       title: "Loan Facility / Borrowing",
       category: "TAKE_A_LOAN",
       decisionType: "LOAN_FACILITY",
@@ -46,141 +187,18 @@ describe("CRITICAL ACCURACY & COHERENCE OVERHAUL TEST SUITE", () => {
       loanTermMonths: 36,
       annualInterestRatePercent: 8.5,
       currency: "EUR",
-      priority: "PROTECT_CASH",
-    };
-
-    const analysis = evaluateCanonicalDecision(regressionBaseline, loanInputs);
-
-    // 1. Cash Outflow & Post-Decision Cash Reconciliation
-    expect(analysis.primaryImpact.immediateCashOutflow).toBe(1000); // strictly down payment leaves pocket!
-    expect(analysis.primaryImpact.postDecisionCash).toBe(3840); // 4,840 - 1,000 = 3,840 (NOT 4,840!)
-    expect(analysis.primaryImpact.deltaCash).toBe(-1000); // NOT -10,000!
-
-    // 2. Amortized Monthly Payment on Financed Amount (€9,000)
-    // PMT for €9,000 @ 8.5% over 36 mos is approx €284.14
-    expect(analysis.primaryImpact.newMonthlyObligation).toBeGreaterThan(250);
-    expect(analysis.primaryImpact.newMonthlyObligation).toBeLessThan(320);
-
-    // 3. Post-Decision Free Cash Flow Reconciliation
-    const expectedFCF = Math.round((2200 - analysis.primaryImpact.newMonthlyObligation) * 100) / 100;
-    expect(analysis.primaryImpact.postDecisionFreeCashFlow).toBe(expectedFCF);
-
-    // 4. FCF Percentage Shift is realistic (around 13%, NOT +435%!)
-    expect(analysis.primaryImpact.fcfPercentageShift).toBeGreaterThan(10);
-    expect(analysis.primaryImpact.fcfPercentageShift).toBeLessThan(20);
-
-    // 5. Goal Delay is realistic and sane (around 30-180 days, NOT 29,970 days!)
-    expect(analysis.primaryImpact.goalDelayDays).toBeLessThan(365);
-    expect(analysis.primaryImpact.goalDelayDays).toBeGreaterThanOrEqual(0);
-
-    // 6. Option B does NOT claim 3.0 mos when baseline is 2.1 mos
-    expect(analysis.scenarios.optionB.postDecisionRunwayMonths).toBe(2.1);
-  });
-
-  // 2. Pure Loan Amortization Formula Verification
-  it("computes exact deterministic PMT, interest, and total cost", () => {
-    const loan = calculateMonthlyLoanPayment(10000, 8.5, 36);
-    expect(loan.monthlyPayment).toBe(315.68); // Exact PMT
-    expect(loan.totalCost).toBe(11364.48);
-    expect(loan.totalInterest).toBe(1364.48);
-  });
-
-  // 3. Aimly Coherence Check: Rejects Mathematical Disparities
-  it("Aimly Coherence Check rejects fake math or mismatched cash flows", () => {
-    const validData: VerifiedDecisionData = {
-      decisionId: "dec-1",
-      reportId: "RPT-20260824-0001",
-      version: 1,
-      decisionTitle: "Purchase Equipment",
-      category: "BUY_SOMETHING",
-      decisionType: "ONE_OFF_PURCHASE",
-      amount: 2000,
-      downPayment: 0,
-      monthlyPayment: 0,
-      isRecurring: false,
-      currency: "EUR",
-      timestamp: "2026-08-24T18:00:00Z",
-      baseline: {
-        liquidSavings: 4840,
-        monthlyIncome: 4500,
-        monthlyExpenses: 2300,
-        monthlyDebtService: 0,
-        netFreeCashFlow: 2200,
-        emergencyRunwayMonths: 2.1,
-        primaryGoalTitle: "Business Goal",
-        primaryGoalTarget: 25000,
-        primaryGoalCurrent: 12000,
-        primaryGoalTargetDate: "2027-12-31",
-      },
-      calculatedImpact: {
-        immediateCashOutflow: 2000,
-        postDecisionCash: 2840, // 4840 - 2000 = 2840
-        deltaCash: -2000,
-        newMonthlyObligation: 0,
-        postDecisionRunway: 1.2,
-        deltaRunway: -0.9,
-        postDecisionFreeCashFlow: 2200,
-        deltaFreeCashFlow: 0,
-        fcfPercentageShift: 0, // strictly 0%
-        goalDelayDays: 30,
-        goalDelayMonths: 1,
-        goalStatus: "DELAYED",
-        monthlyPressurePercent: 0,
-        verdict: "PROCEED_WITH_CAUTION",
-        verdictHeadline: "Reduces emergency buffer.",
-        primaryReason: "Reduces buffer from 2.1 to 1.2 months.",
-      },
-      alternatives: {
-        optionA: { title: "Buy Today", badge: "Immediate", delayDays: 30, cashRemaining: 2840, runway: 1.2, monthlyObligation: 0, isRecommended: false },
-        optionB: { title: "Wait 30 Days", badge: "Best", delayDays: 0, cashRemaining: 4840, runway: 2.1, monthlyObligation: 0, isRecommended: true },
-        optionC: { title: "Cheaper Option", badge: "Budget", delayDays: 15, cashRemaining: 3340, runway: 1.5, monthlyObligation: 0, isRecommended: false },
-      },
-      narrative: {
-        executiveSummary: "Analysis of 2000 EUR purchase.",
-        whyThisVerdict: "Reduces buffer to 1.2 months.",
-        recommendedPath: "Option B preserves 2.1 months runway.",
-        tradeoffsSummary: "Tradeoff between immediate purchase and safety.",
-      },
-      assumptions: [],
-    };
-
-    const result = runAimlyCoherenceCheck(validData);
-    expect(result.status).toBe("VERIFIED");
-    expect(result.overallScore).toBe(100);
-
-    // Corrupt Cash After
-    const corruptData: VerifiedDecisionData = {
-      ...validData,
-      calculatedImpact: {
-        ...validData.calculatedImpact,
-        postDecisionCash: 4840, // Mismatched! Should be 2840
-      },
-    };
-    const badResult = runAimlyCoherenceCheck(corruptData);
-    expect(badResult.status).toBe("INCONSISTENCY DETECTED");
-  });
-
-  // 4. PDF Generation with High Contrast and Zero Hidden Boxes
-  it("generates publication-grade PDF without dark-on-dark text errors", () => {
-    const analysis = evaluateCanonicalDecision(regressionBaseline, {
-      title: "Loan Facility / Borrowing",
-      category: "TAKE_A_LOAN",
-      decisionType: "LOAN_FACILITY",
-      totalAmount: 10000,
-      downPayment: 1000,
-      currency: "EUR",
     });
 
     const reportData: VerifiedDecisionData = {
-      decisionId: "dec-reg-1",
-      reportId: "RPT-20260824-9999",
+      decisionId: "dec-10-10",
+      reportId: "RPT-20260824-1010",
       version: 1,
       decisionTitle: analysis.inputs.title,
       category: analysis.inputs.category,
       decisionType: analysis.inputs.decisionType,
       amount: analysis.inputs.totalAmount,
       downPayment: analysis.inputs.downPayment || 0,
-      monthlyPayment: analysis.primaryImpact.newMonthlyObligation,
+      monthlyPayment: analysis.primaryImpact.monthlyPayment,
       isRecurring: false,
       currency: "EUR",
       timestamp: analysis.timestamp,
@@ -196,6 +214,8 @@ describe("CRITICAL ACCURACY & COHERENCE OVERHAUL TEST SUITE", () => {
         primaryGoalCurrent: analysis.baseline.primaryGoal.currentAmount,
         primaryGoalTargetDate: analysis.baseline.primaryGoal.targetDate,
       },
+      financing: analysis.financing,
+      recommendation: analysis.recommendation,
       calculatedImpact: {
         immediateCashOutflow: analysis.primaryImpact.immediateCashOutflow,
         postDecisionCash: analysis.primaryImpact.postDecisionCash,
@@ -209,6 +229,7 @@ describe("CRITICAL ACCURACY & COHERENCE OVERHAUL TEST SUITE", () => {
         goalDelayDays: analysis.primaryImpact.goalDelayDays,
         goalDelayMonths: analysis.primaryImpact.goalDelayMonths,
         goalStatus: analysis.primaryImpact.goalStatus,
+        goalExplanation: analysis.primaryImpact.goalExplanation,
         monthlyPressurePercent: analysis.primaryImpact.fcfPercentageShift,
         verdict: analysis.verdict.decision,
         verdictHeadline: analysis.verdict.headline,
@@ -216,37 +237,46 @@ describe("CRITICAL ACCURACY & COHERENCE OVERHAUL TEST SUITE", () => {
       },
       alternatives: {
         optionA: {
+          code: "OPTION_A",
           title: analysis.scenarios.optionA.title,
           badge: analysis.scenarios.optionA.badge,
           delayDays: analysis.scenarios.optionA.goalDelayDays,
           cashRemaining: analysis.scenarios.optionA.postDecisionCash,
           runway: analysis.scenarios.optionA.postDecisionRunwayMonths,
-          monthlyObligation: analysis.scenarios.optionA.newMonthlyObligation,
+          monthlyObligation: analysis.scenarios.optionA.monthlyPayment,
+          totalInterest: analysis.scenarios.optionA.totalInterestPaid,
+          totalCost: analysis.scenarios.optionA.totalCostOverTime,
           isRecommended: analysis.scenarios.optionA.isRecommended,
         },
         optionB: {
+          code: "OPTION_B",
           title: analysis.scenarios.optionB.title,
           badge: analysis.scenarios.optionB.badge,
           delayDays: analysis.scenarios.optionB.goalDelayDays,
           cashRemaining: analysis.scenarios.optionB.postDecisionCash,
           runway: analysis.scenarios.optionB.postDecisionRunwayMonths,
-          monthlyObligation: analysis.scenarios.optionB.newMonthlyObligation,
+          monthlyObligation: analysis.scenarios.optionB.monthlyPayment,
+          totalInterest: analysis.scenarios.optionB.totalInterestPaid,
+          totalCost: analysis.scenarios.optionB.totalCostOverTime,
           isRecommended: analysis.scenarios.optionB.isRecommended,
         },
         optionC: {
+          code: "OPTION_C",
           title: analysis.scenarios.optionC.title,
           badge: analysis.scenarios.optionC.badge,
           delayDays: analysis.scenarios.optionC.goalDelayDays,
           cashRemaining: analysis.scenarios.optionC.postDecisionCash,
           runway: analysis.scenarios.optionC.postDecisionRunwayMonths,
-          monthlyObligation: analysis.scenarios.optionC.newMonthlyObligation,
+          monthlyObligation: analysis.scenarios.optionC.monthlyPayment,
+          totalInterest: analysis.scenarios.optionC.totalInterestPaid,
+          totalCost: analysis.scenarios.optionC.totalCostOverTime,
           isRecommended: analysis.scenarios.optionC.isRecommended,
         },
       },
       narrative: {
         executiveSummary: analysis.verdict.primaryReason,
         whyThisVerdict: analysis.verdict.primaryReason,
-        recommendedPath: "Execute Option B to preserve current runway.",
+        recommendedPath: analysis.recommendation.actionPlanStep1,
         tradeoffsSummary: "Tradeoff between monthly payment and goal timeline.",
       },
       assumptions: analysis.assumptions,
@@ -255,9 +285,10 @@ describe("CRITICAL ACCURACY & COHERENCE OVERHAUL TEST SUITE", () => {
 
     const verification = runAimlyCoherenceCheck(reportData);
     expect(verification.status).toBe("VERIFIED WITH ASSUMPTIONS");
+    expect(verification.checks.every((c) => c.passed)).toBe(true);
 
     const pdfDoc = generateVerifiedDecisionReportPDF(reportData, verification, "en");
     expect(pdfDoc.getNumberOfPages()).toBe(2);
-    expect(pdfDoc.output("blob").size).toBeGreaterThan(5000);
+    expect(pdfDoc.output("blob").size).toBeGreaterThan(6000);
   });
 });

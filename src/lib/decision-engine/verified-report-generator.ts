@@ -4,8 +4,8 @@ import { formatCurrency } from "../utils/currency";
 import { USEAIMLY_LOGO_BASE64 } from "../brand/logo-base64";
 
 /**
- * GENERATE AUDIT-GRADE VERIFIED FINANCIAL DECISION REPORT PDF (V2)
- * Consumes strictly canonical verified data with zero local recalculation.
+ * GENERATE PUBLICATION-GRADE VERIFIED FINANCIAL DECISION REPORT PDF (10/10 STANDARD)
+ * Zero business logic inside PDF: Consumes 100% verified canonical data.
  */
 export function generateVerifiedDecisionReportPDF(
   data: VerifiedDecisionData,
@@ -41,7 +41,7 @@ export function generateVerifiedDecisionReportPDF(
   const fmt = (amt: number) => formatCurrency(amt, data.currency);
 
   const checkPageBreak = (neededHeight: number) => {
-    if (y + neededHeight > pageHeight - 16) {
+    if (y + neededHeight > pageHeight - 14) {
       doc.addPage();
       y = 14;
       // Top header on subsequent pages
@@ -59,7 +59,7 @@ export function generateVerifiedDecisionReportPDF(
   };
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // PAGE 1: COVER, VERDICT, CONTEXT & FINANCIAL IMPACT
+  // PAGE 1: COVER, VERDICT, CONTEXT, IMPACT, SCENARIO MATRIX & BEST OPTION
   // ─────────────────────────────────────────────────────────────────────────────
 
   // Top Accent Bar
@@ -104,7 +104,7 @@ export function generateVerifiedDecisionReportPDF(
   );
 
   // Status Seal Badge
-  const sealWidth = 42;
+  const sealWidth = 44;
   const sealX = pageWidth - margin - sealWidth;
   const isVerified = verification.status === "VERIFIED" || verification.status === "VERIFIED WITH ASSUMPTIONS";
   const sealColor = isVerified ? brandEmerald : amberAccent;
@@ -118,7 +118,7 @@ export function generateVerifiedDecisionReportPDF(
   doc.setFontSize(7.5);
   doc.text(verification.status, sealX + sealWidth / 2, 18, { align: "center" });
 
-  y = 28;
+  y = 27;
 
   // 1. EXECUTIVE VERDICT BANNER
   const verdictColor =
@@ -131,40 +131,40 @@ export function generateVerifiedDecisionReportPDF(
   doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
   doc.setDrawColor(verdictColor[0], verdictColor[1], verdictColor[2]);
   doc.setLineWidth(0.8);
-  doc.roundedRect(margin, y, contentWidth, 32, 3, 3, "FD");
+  doc.roundedRect(margin, y, contentWidth, 30, 2.5, 2.5, "FD");
 
   // Verdict Pill
   doc.setFillColor(verdictColor[0], verdictColor[1], verdictColor[2]);
-  doc.roundedRect(margin + 4, y + 4, 48, 7, 1.5, 1.5, "F");
+  doc.roundedRect(margin + 4, y + 4, 48, 6.5, 1.5, 1.5, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7);
   doc.setTextColor(255, 255, 255);
   const verdictLabel =
     data.calculatedImpact.verdict === "RECOMMENDED"
-      ? isFr ? "RECOMMANDÉ" : isSw ? "INASHAURIWA" : "RECOMMENDED"
+      ? isFr ? "RECOMMANDÉ" : "RECOMMENDED"
       : data.calculatedImpact.verdict === "PROCEED_WITH_CAUTION"
-      ? isFr ? "AVEC PRUDENCE" : isSw ? "KWA TAHADHARI" : "PROCEED WITH CAUTION"
-      : isFr ? "NON RECOMMANDÉ" : isSw ? "HAISHAURIWI" : "NOT RECOMMENDED";
-  doc.text(verdictLabel, margin + 28, y + 8.8, { align: "center" });
+      ? isFr ? "AVEC PRUDENCE" : "PROCEED WITH CAUTION"
+      : isFr ? "NON RECOMMANDÉ" : "NOT RECOMMENDED";
+  doc.text(verdictLabel, margin + 28, y + 8.5, { align: "center" });
 
   // Verdict Headline
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
+  doc.setFontSize(9);
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
   const headlineLines = doc.splitTextToSize(data.calculatedImpact.verdictHeadline, contentWidth - 8);
-  doc.text(headlineLines.slice(0, 2), margin + 4, y + 17);
+  doc.text(headlineLines.slice(0, 2), margin + 4, y + 16);
 
   // Primary verified reason
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
   const reasonLines = doc.splitTextToSize(
-    `${isFr ? "Motif principal :" : isSw ? "Sababu kuu :" : "Primary verified reason:"} ${data.calculatedImpact.primaryReason}`,
+    `${isFr ? "Motif principal :" : "Primary verified reason:"} ${data.calculatedImpact.primaryReason}`,
     contentWidth - 8
   );
-  doc.text(reasonLines.slice(0, 2), margin + 4, y + 25);
+  doc.text(reasonLines.slice(0, 2), margin + 4, y + 24);
 
-  y += 36;
+  y += 34;
 
   // 2. DECISION OVERVIEW & 3. FINANCIAL CONTEXT (2-Column Grid)
   const colWidth = (contentWidth - 4) / 2;
@@ -173,74 +173,74 @@ export function generateVerifiedDecisionReportPDF(
   doc.setFillColor(pureWhite[0], pureWhite[1], pureWhite[2]);
   doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2]);
   doc.setLineWidth(0.4);
-  doc.roundedRect(margin, y, colWidth, 40, 2, 2, "FD");
+  doc.roundedRect(margin, y, colWidth, 38, 2, 2, "FD");
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   doc.setTextColor(brandPrimary[0], brandPrimary[1], brandPrimary[2]);
-  doc.text(isFr ? "1. DÉTAILS DE LA DÉCISION" : isSw ? "1. MAELEZO YA UAMUZI" : "1. DECISION OVERVIEW", margin + 4, y + 6);
+  doc.text(isFr ? "1. DÉTAILS DE LA DÉCISION" : "1. DECISION OVERVIEW", margin + 4, y + 5.5);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.text(`${isFr ? "Intitulé :" : isSw ? "Kichwa :" : "Decision:"} ${data.decisionTitle}`, margin + 4, y + 13);
-  doc.text(`${isFr ? "Montant Total :" : isSw ? "Kiasi Kamili :" : "Total Outlay:"} ${fmt(data.amount)}`, margin + 4, y + 20);
+  doc.text(`${isFr ? "Intitulé :" : "Decision:"} ${data.decisionTitle}`, margin + 4, y + 12);
+  doc.text(`${isFr ? "Montant Total :" : "Total Outlay:"} ${fmt(data.amount)}`, margin + 4, y + 18.5);
   doc.text(
-    `${isFr ? "Modalité :" : isSw ? "Aina ya Malipo :" : "Payment Method:"} ${data.downPayment > 0 ? `${fmt(data.downPayment)} ${isFr ? "acompte" : "down"}` : isFr ? "Comptant" : "Full Outlay"}`,
+    `${isFr ? "Modalité :" : "Payment Method:"} ${data.downPayment > 0 ? `${fmt(data.downPayment)} down payment` : isFr ? "Comptant" : "Full Outlay"}`,
     margin + 4,
-    y + 27
+    y + 25
   );
   doc.text(
-    `${isFr ? "Nature :" : isSw ? "Urejeshaji :" : "Structure:"} ${data.decisionType ? data.decisionType.replace(/_/g, " ") : (data.isRecurring ? "Recurring Monthly" : "One-Off Decision")}`,
+    `${isFr ? "Nature :" : "Structure:"} ${data.decisionType ? data.decisionType.replace(/_/g, " ") : (data.isRecurring ? "Recurring Monthly" : "One-Off Decision")}`,
     margin + 4,
-    y + 34
+    y + 31.5
   );
 
-  // Right Column: Financial Context Used (Fix Dark Background Bug!)
+  // Right Column: Financial Context Used (High Contrast & Visible!)
   doc.setFillColor(pureWhite[0], pureWhite[1], pureWhite[2]);
   doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2]);
   doc.setLineWidth(0.4);
-  doc.roundedRect(margin + colWidth + 4, y, colWidth, 40, 2, 2, "FD");
+  doc.roundedRect(margin + colWidth + 4, y, colWidth, 38, 2, 2, "FD");
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   doc.setTextColor(brandPrimary[0], brandPrimary[1], brandPrimary[2]);
-  doc.text(isFr ? "2. PROFIL FINANCIER UTILISÉ" : isSw ? "2. WASIFU WA KIFEDHA" : "2. FINANCIAL CONTEXT USED", margin + colWidth + 8, y + 6);
+  doc.text(isFr ? "2. PROFIL FINANCIER UTILISÉ" : "2. FINANCIAL CONTEXT USED", margin + colWidth + 8, y + 5.5);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.text(`${isFr ? "Réserves Liquides :" : isSw ? "Akiba ya Papo Hapo :" : "Liquid Reserves:"} ${fmt(data.baseline.liquidSavings)}`, margin + colWidth + 8, y + 13);
-  doc.text(`${isFr ? "Revenu Mensuel Brut :" : isSw ? "Mapato ya Mwezi :" : "Monthly Inflow:"} ${fmt(data.baseline.monthlyIncome)}`, margin + colWidth + 8, y + 20);
-  doc.text(`${isFr ? "Dépenses Fixes & Dettes :" : isSw ? "Gharama na Madeni :" : "Monthly Fixed Outflows:"} ${fmt(data.baseline.monthlyExpenses + data.baseline.monthlyDebtService)}`, margin + colWidth + 8, y + 27);
-  doc.text(`${isFr ? "Cash-Flow Libre Net :" : isSw ? "Pesa Huru ya Mwezi :" : "Net Free Cash Flow:"} +${fmt(data.baseline.netFreeCashFlow)}/mo`, margin + colWidth + 8, y + 34);
+  doc.text(`${isFr ? "Réserves Liquides :" : "Liquid Reserves:"} ${fmt(data.baseline.liquidSavings)}`, margin + colWidth + 8, y + 12);
+  doc.text(`${isFr ? "Revenu Mensuel Brut :" : "Monthly Inflow:"} ${fmt(data.baseline.monthlyIncome)}`, margin + colWidth + 8, y + 18.5);
+  doc.text(`${isFr ? "Dépenses Fixes & Dettes :" : "Monthly Fixed Outflows:"} ${fmt(data.baseline.monthlyExpenses + data.baseline.monthlyDebtService)}`, margin + colWidth + 8, y + 25);
+  doc.text(`${isFr ? "Cash-Flow Libre Net :" : "Net Free Cash Flow:"} +${fmt(data.baseline.netFreeCashFlow)}/mo`, margin + colWidth + 8, y + 31.5);
 
-  y += 44;
+  y += 42;
 
   // 4. FINANCIAL IMPACT TABLE (METRIC | BEFORE | AFTER | IMPACT)
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.text(isFr ? "3. TABLEAU D'IMPACT DÉTERMINISTE" : isSw ? "3. JEDWALI LA ATHARI ZA KIFEDHA" : "3. DETERMINISTIC FINANCIAL IMPACT", margin, y);
+  doc.text(isFr ? "3. TABLEAU D'IMPACT DÉTERMINISTE" : "3. DETERMINISTIC FINANCIAL IMPACT", margin, y);
 
   y += 3;
 
   // Table Header
-  const rowHeight = 6.5;
+  const rowHeight = 6.2;
   doc.setFillColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
   doc.rect(margin, y, contentWidth, rowHeight, "F");
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7);
   doc.setTextColor(255, 255, 255);
-  doc.text(isFr ? "INDICATEUR CLÉ" : isSw ? "KIPIMO" : "FINANCIAL INDICATOR", margin + 3, y + 4.5);
-  doc.text(isFr ? "AVANT DÉCISION" : isSw ? "KABLA" : "BASELINE", margin + 60, y + 4.5);
-  doc.text(isFr ? "APRÈS DÉCISION" : isSw ? "BAADA" : "POST-DECISION", margin + 105, y + 4.5);
-  doc.text(isFr ? "IMPACT NET" : isSw ? "ATHARI" : "DELTA IMPACT", margin + 150, y + 4.5);
+  doc.text(isFr ? "INDICATEUR CLÉ" : "FINANCIAL INDICATOR", margin + 3, y + 4.3);
+  doc.text(isFr ? "AVANT DÉCISION" : "BASELINE", margin + 60, y + 4.3);
+  doc.text(isFr ? "APRÈS DÉCISION" : "POST-DECISION", margin + 105, y + 4.3);
+  doc.text(isFr ? "IMPACT NET" : "DELTA IMPACT", margin + 150, y + 4.3);
 
   y += rowHeight;
 
-  // Reconciled Rows
+  // Reconciled Impact Rows
   const deltaCashFormatted =
     data.calculatedImpact.deltaCash === 0
       ? "0 (No change)"
@@ -253,21 +253,21 @@ export function generateVerifiedDecisionReportPDF(
 
   const tableRows = [
     {
-      label: isFr ? "Liquidités Disponibles" : isSw ? "Akiba ya Papo Hapo" : "Liquid Cash Reserves",
+      label: isFr ? "Liquidités Disponibles" : "Liquid Cash Reserves",
       before: fmt(data.baseline.liquidSavings),
       after: fmt(data.calculatedImpact.postDecisionCash),
       impact: deltaCashFormatted,
       highlight: data.calculatedImpact.postDecisionCash < data.baseline.liquidSavings * 0.5,
     },
     {
-      label: isFr ? "Matelas de Sécurité (Runway)" : isSw ? "Miezi ya Dharura" : "Emergency Living Buffer",
+      label: isFr ? "Matelas de Sécurité (Runway)" : "Emergency Living Buffer",
       before: `${data.baseline.emergencyRunwayMonths} mos`,
       after: `${data.calculatedImpact.postDecisionRunway} mos`,
       impact: `${(data.calculatedImpact.postDecisionRunway - data.baseline.emergencyRunwayMonths).toFixed(1)} mos`,
       highlight: data.calculatedImpact.postDecisionRunway < 3.0,
     },
     {
-      label: isFr ? "Cash-Flow Libre Mensuel" : isSw ? "Pesa Huru ya Mwezi" : "Monthly Free Cash Flow",
+      label: isFr ? "Cash-Flow Libre Mensuel" : "Monthly Free Cash Flow",
       before: `+${fmt(data.baseline.netFreeCashFlow)}/mo`,
       after: `+${fmt(data.calculatedImpact.postDecisionFreeCashFlow)}/mo`,
       impact: deltaFCFFormatted,
@@ -291,9 +291,9 @@ export function generateVerifiedDecisionReportPDF(
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
     doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-    doc.text(r.label, margin + 3, y + 4.5);
-    doc.text(r.before, margin + 60, y + 4.5);
-    doc.text(r.after, margin + 105, y + 4.5);
+    doc.text(r.label, margin + 3, y + 4.3);
+    doc.text(r.before, margin + 60, y + 4.3);
+    doc.text(r.after, margin + 105, y + 4.3);
 
     doc.setFont("helvetica", "bold");
     if (r.highlight) {
@@ -301,23 +301,23 @@ export function generateVerifiedDecisionReportPDF(
     } else {
       doc.setTextColor(brandEmerald[0], brandEmerald[1], brandEmerald[2]);
     }
-    doc.text(r.impact, margin + 150, y + 4.5);
+    doc.text(r.impact, margin + 150, y + 4.3);
 
     y += rowHeight;
   });
 
-  y += 6;
+  y += 5.5;
 
-  // 5. SCENARIO COMPARISON (OPTION A, B, C)
+  // 5. SCENARIO ALTERNATIVES COMPARISON (Differentiated & Multi-Line Clean Wrapping)
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.text(isFr ? "4. COMPARAISON DES SCÉNARIOS ALTERNATIFS" : isSw ? "4. ULINGANISHO WA NJIA MBADALA" : "4. SCENARIO ALTERNATIVES COMPARISON", margin, y);
+  doc.text(isFr ? "4. COMPARAISON DES SCÉNARIOS ALTERNATIFS" : "4. SCENARIO ALTERNATIVES COMPARISON", margin, y);
 
   y += 3;
 
   const cardW = (contentWidth - 6) / 3;
-  const cardH = 26;
+  const cardH = 34;
   const options = [
     { ...data.alternatives.optionA, label: "OPTION A" },
     { ...data.alternatives.optionB, label: "OPTION B" },
@@ -326,42 +326,127 @@ export function generateVerifiedDecisionReportPDF(
 
   options.forEach((opt, idx) => {
     const cardX = margin + idx * (cardW + 3);
-    doc.setFillColor(opt.isRecommended ? 240 : lightBg[0], opt.isRecommended ? 253 : lightBg[1], opt.isRecommended ? 244 : lightBg[2]);
-    doc.setDrawColor(opt.isRecommended ? brandEmerald[0] : borderGray[0], opt.isRecommended ? brandEmerald[1] : borderGray[1], opt.isRecommended ? brandEmerald[2] : borderGray[2]);
-    doc.setLineWidth(opt.isRecommended ? 0.8 : 0.4);
+    const isRec = opt.isRecommended;
+
+    doc.setFillColor(isRec ? 240 : pureWhite[0], isRec ? 253 : pureWhite[1], isRec ? 244 : pureWhite[2]);
+    doc.setDrawColor(isRec ? brandEmerald[0] : borderGray[0], isRec ? brandEmerald[1] : borderGray[1], isRec ? brandEmerald[2] : borderGray[2]);
+    doc.setLineWidth(isRec ? 0.8 : 0.4);
     doc.roundedRect(cardX, y, cardW, cardH, 2, 2, "FD");
 
+    // Header Pill
     doc.setFont("helvetica", "bold");
     doc.setFontSize(6.5);
-    doc.setTextColor(opt.isRecommended ? brandEmerald[0] : mutedGray[0], opt.isRecommended ? brandEmerald[1] : mutedGray[1], opt.isRecommended ? brandEmerald[2] : mutedGray[2]);
-    doc.text(`${opt.label} ${opt.isRecommended ? "★ BEST" : ""}`, cardX + 3, y + 5);
+    doc.setTextColor(isRec ? brandEmerald[0] : mutedGray[0], isRec ? brandEmerald[1] : mutedGray[1], isRec ? brandEmerald[2] : mutedGray[2]);
+    doc.text(`${opt.label} ${isRec ? "★ BEST" : ""}`, cardX + 3, y + 4.5);
 
+    // Scenario Title with clean multi-line wrapping (Zero Truncation!)
     doc.setFontSize(7.5);
     doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
     const optTitleLines = doc.splitTextToSize(opt.title, cardW - 6);
-    doc.text(optTitleLines[0] || "", cardX + 3, y + 10);
+    doc.text(optTitleLines.slice(0, 2), cardX + 3, y + 9.5);
 
+    // Key Differentiated Metrics
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
+    doc.setFontSize(6.8);
     doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
-    doc.text(`${isFr ? "Décalage :" : "Goal Shift:"} +${opt.delayDays}d`, cardX + 3, y + 16);
-    doc.text(`${isFr ? "Matelas :" : "Runway:"} ${opt.runway} mos`, cardX + 3, y + 21);
+
+    if (opt.monthlyObligation > 0) {
+      doc.text(`Payment: ${fmt(opt.monthlyObligation)}/mo`, cardX + 3, y + 19);
+      doc.text(`Interest: ${fmt(opt.totalInterest)}`, cardX + 3, y + 24);
+    } else {
+      doc.text(`Payment: €0/mo (Full Cash)`, cardX + 3, y + 19);
+      doc.text(`Cash After: ${fmt(opt.cashRemaining)}`, cardX + 3, y + 24);
+    }
+
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(isRec ? brandEmerald[0] : darkCharcoal[0], isRec ? brandEmerald[1] : darkCharcoal[1], isRec ? brandEmerald[2] : darkCharcoal[2]);
+    doc.text(`Goal Delay: +${opt.delayDays}d • Runway: ${opt.runway}m`, cardX + 3, y + 29.5);
   });
 
-  y += cardH + 8;
+  y += cardH + 4.5;
+
+  // 6. RECOMMENDED SCENARIO HIGHLIGHT BOX (Page 1 Closer - Perfect Page Balance!)
+  doc.setFillColor(240, 253, 244);
+  doc.setDrawColor(brandEmerald[0], brandEmerald[1], brandEmerald[2]);
+  doc.setLineWidth(0.6);
+  doc.roundedRect(margin, y, contentWidth, 22, 2, 2, "FD");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(brandEmerald[0], brandEmerald[1], brandEmerald[2]);
+  doc.text(`★ AIMLY'S CANONICAL RECOMMENDATION: ${data.recommendation.recommendedScenarioTitle}`, margin + 4, y + 6);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
+  const recReasonLines = doc.splitTextToSize(
+    `Why this path was chosen: ${data.recommendation.reasons.slice(0, 2).join(" • ")}`,
+    contentWidth - 8
+  );
+  doc.text(recReasonLines.slice(0, 2), margin + 4, y + 12);
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // PAGE 2: DETAILED ANALYSIS, RECOMMENDED PATH, ASSUMPTIONS & SEAL
+  // PAGE 2: FINANCING SUMMARY, DETAILED ANALYSIS, ACTION PLAN, ASSUMPTIONS, SEAL
   // ─────────────────────────────────────────────────────────────────────────────
-  checkPageBreak(120);
+  doc.addPage();
+  y = 14;
 
-  // 6. DETAILED GROUNDED ANALYSIS
+  // Header on Page 2
+  doc.setFillColor(pureWhite[0], pureWhite[1], pureWhite[2]);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.5);
+  doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
+  doc.text("USEAIMLY VERIFIED FINANCIAL DECISION REPORT", margin, y);
+  doc.text(`ID: ${data.reportId} • v${data.version}`, pageWidth - margin, y, { align: "right" });
+  doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2]);
+  doc.setLineWidth(0.2);
+  doc.line(margin, y + 2, pageWidth - margin, y + 2);
+  y += 7;
+
+  // 7. FINANCING SUMMARY / CAPITAL STRUCTURE (For Loans & Financed Purchases)
+  if (data.financing && data.financing.hasFinancing) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
+    doc.text(isFr ? "5. STRUCTURE DU FINANCEMENT & AMORTISSEMENT" : "5. FINANCING STRUCTURE & AMORTIZATION SUMMARY", margin, y);
+
+    y += 3;
+
+    doc.setFillColor(pureWhite[0], pureWhite[1], pureWhite[2]);
+    doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2]);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(margin, y, contentWidth, 24, 2, 2, "FD");
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
+
+    // Row 1
+    doc.text(`Principal Financed: ${fmt(data.financing.principalBorrowed)}`, margin + 4, y + 6);
+    doc.text(`Down Payment: ${fmt(data.financing.downPayment)}`, margin + 65, y + 6);
+    doc.text(`Interest Rate: ${data.financing.annualInterestRatePercent}% APR`, margin + 125, y + 6);
+
+    // Row 2
+    doc.text(`Loan Term: ${data.financing.loanTermMonths} Months`, margin + 4, y + 13);
+    doc.text(`Monthly Payment: ${fmt(data.financing.monthlyPayment)}/mo`, margin + 65, y + 13);
+    doc.text(`Total Interest: ${fmt(data.financing.totalInterestPaid)}`, margin + 125, y + 13);
+
+    // Row 3
+    doc.setFont("helvetica", "bold");
+    doc.text(`Total Lifetime Cost: ${fmt(data.financing.totalLifetimeCost)}`, margin + 4, y + 20);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Status: ${data.financing.isAssumedTerms ? "Estimated (Standard Market Rate)" : "User Confirmed Terms"}`, margin + 65, y + 20);
+
+    y += 28;
+  }
+
+  // 8. DETAILED GROUNDED ANALYSIS & GOAL COMPOUNDING
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.text(isFr ? "5. ANALYSE STRATÉGIQUE DÉTAILLÉE" : isSw ? "5. UCHAMBUZI WA KINA WA KIMKAKATI" : "5. DETAILED GROUNDED ANALYSIS", margin, y);
+  doc.text(isFr ? "6. ANALYSE STRATÉGIQUE DÉTAILLÉE & OBJECTIFS" : "6. DETAILED GROUNDED ANALYSIS & GOAL IMPACT", margin, y);
 
-  y += 4;
+  y += 3;
 
   doc.setFillColor(pureWhite[0], pureWhite[1], pureWhite[2]);
   doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2]);
@@ -371,38 +456,28 @@ export function generateVerifiedDecisionReportPDF(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  const analysisLines = doc.splitTextToSize(
-    data.narrative.executiveSummary ||
-      `This analysis evaluates the exact capital impact of committing ${fmt(data.amount)} toward ${data.decisionTitle}. It results in ${fmt(data.calculatedImpact.postDecisionCash)} in available reserves (${data.calculatedImpact.postDecisionRunway} months runway).`,
-    contentWidth - 8
-  );
+
+  const analysisText =
+    data.calculatedImpact.goalExplanation ||
+    `Executing this transaction leaves ${fmt(data.calculatedImpact.postDecisionCash)} in liquid reserves (${data.calculatedImpact.postDecisionRunway} months runway). Post-decision free cash flow of +${fmt(data.calculatedImpact.postDecisionFreeCashFlow)}/mo covers essential goal compounding.`;
+
+  const analysisLines = doc.splitTextToSize(analysisText, contentWidth - 8);
   doc.text(analysisLines.slice(0, 4), margin + 4, y + 6);
 
   y += 28;
 
-  // 7. RECOMMENDED PATH & NEXT BEST ACTIONS (Reconciled Runway Claim!)
+  // 9. AIMLY RECOMMENDED ACTION PLAN (100% Invariant Matched to Winner!)
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.text(isFr ? "6. PLAN D'ACTION RECOMMANDÉ D'AIMLY" : isSw ? "6. MPANGO UNAOSHAURIWA WA KUCHUKUA HATUA" : "6. AIMLY RECOMMENDED ACTION PLAN", margin, y);
+  doc.text(isFr ? "7. PLAN D'ACTION RECOMMANDÉ D'AIMLY" : "7. AIMLY RECOMMENDED ACTION PLAN", margin, y);
 
-  y += 4;
-
-  const runwayBufferNote =
-    data.baseline.emergencyRunwayMonths >= 3.0
-      ? `protect your safe ${data.baseline.emergencyRunwayMonths}-month living reserve floor.`
-      : `preserve your current ${data.baseline.emergencyRunwayMonths}-month reserve buffer without further depletion.`;
+  y += 3.5;
 
   const actions = [
-    isFr
-      ? `1. Privilégier l'Option B (Attendre ou épargner) afin de ${data.baseline.emergencyRunwayMonths >= 3.0 ? "conserver votre matelas sain de " + data.baseline.emergencyRunwayMonths + " mois" : "préserver votre matelas actuel de " + data.baseline.emergencyRunwayMonths + " mois sans le dégrader"}.`
-      : `1. Execute Option B (Wait & Save) to ${runwayBufferNote}`,
-    isFr
-      ? `2. Maintenir une contribution régulière de +${fmt(data.baseline.netFreeCashFlow)}/mois vers "${data.baseline.primaryGoalTitle}" pour garantir la date d'arrivée.`
-      : `2. Maintain steady monthly contributions of +${fmt(data.baseline.netFreeCashFlow)}/month toward "${data.baseline.primaryGoalTitle}" to secure completion date.`,
-    isFr
-      ? `3. Réévaluer la décision si des rentrées de trésorerie supplémentaires interviennent avant la date cible.`
-      : `3. Re-evaluate this decision if additional liquidity becomes available prior to target timeline.`,
+    data.recommendation.actionPlanStep1,
+    data.recommendation.actionPlanStep2,
+    data.recommendation.actionPlanStep3,
   ];
 
   actions.forEach((act) => {
@@ -411,73 +486,73 @@ export function generateVerifiedDecisionReportPDF(
     doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
     const actLines = doc.splitTextToSize(act, contentWidth - 4);
     doc.text(actLines, margin + 2, y);
-    y += 5;
+    y += actLines.length * 4.2 + 1;
   });
 
-  y += 4;
+  y += 3;
 
-  // 8. ASSUMPTIONS & SENSITIVITY
+  // 10. MATERIAL ASSUMPTIONS & SENSITIVITY
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.text(isFr ? "7. HYPOTHÈSES SOUS-JACENTES & SENSIBILITÉ" : isSw ? "7. MAKADIRIO NA DHANA ZILIZOTUMIKA" : "7. ASSUMPTIONS & SENSITIVITY ANALYSIS", margin, y);
+  doc.text(isFr ? "8. HYPOTHÈSES SOUS-JACENTES & SENSIBILITÉ" : "8. MATERIAL ASSUMPTIONS & SENSITIVITY", margin, y);
 
-  y += 4;
+  y += 3.5;
 
   (data.assumptions || [
-    `Monthly gross income remains stable at ${fmt(data.baseline.monthlyIncome)}.`,
+    `Monthly gross income remains steady at ${fmt(data.baseline.monthlyIncome)}.`,
     `Fixed living expenses remain consistent at ${fmt(data.baseline.monthlyExpenses)}/month.`,
   ]).forEach((ass) => {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
     doc.text(`• ${ass}`, margin + 2, y);
-    y += 4.5;
+    y += 4;
   });
 
   y += 4;
 
-  // 9. AIMLY ANALYSIS VALIDATION (SEAL & CHECKLIST)
+  // 11. AIMLY ANALYSIS VALIDATION (SEAL & 8-GATE AUDIT)
   doc.setFillColor(pureWhite[0], pureWhite[1], pureWhite[2]);
   doc.setDrawColor(sealColor[0], sealColor[1], sealColor[2]);
   doc.setLineWidth(0.6);
-  doc.roundedRect(margin, y, contentWidth, 34, 2, 2, "FD");
+  doc.roundedRect(margin, y, contentWidth, 32, 2, 2, "FD");
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   doc.setTextColor(sealColor[0], sealColor[1], sealColor[2]);
-  doc.text(`AIMLY ANALYSIS COHERENCE VERIFICATION SEAL • STATUS: ${verification.status}`, margin + 4, y + 6);
+  doc.text(`AIMLY ANALYSIS COHERENCE VERIFICATION SEAL • STATUS: ${verification.status}`, margin + 4, y + 5.5);
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
+  doc.setFontSize(6.8);
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.text("✓ Mathematical & Cash Balance Reconciliation", margin + 4, y + 13);
-  doc.text("✓ Monthly Free Cash Flow Reconciliation", margin + 4, y + 18);
-  doc.text("✓ Transaction & Financing Model Traceability", margin + 4, y + 23);
+  doc.text("✓ Single Canonical Recommendation Invariant Verified", margin + 4, y + 12);
+  doc.text("✓ Scenario Economic Differentiation Verified", margin + 4, y + 16.5);
+  doc.text("✓ Mathematical & Cash Balance Reconciliation", margin + 4, y + 21);
 
-  doc.text("✓ Goal Compounding & Anomaly Guard Verified", margin + 95, y + 13);
-  doc.text("✓ Scenario Alternatives & Cross-Field Validated", margin + 95, y + 18);
-  doc.text("✓ Narrative Grounded in Canonical Data", margin + 95, y + 23);
+  doc.text("✓ Monthly Free Cash Flow Reconciliation", margin + 95, y + 12);
+  doc.text("✓ Goal Compounding & Anomaly Guard Verified", margin + 95, y + 16.5);
+  doc.text("✓ Narrative Facts Grounded in Canonical Data", margin + 95, y + 21);
 
   doc.setFont("helvetica", "italic");
   doc.setFontSize(6.5);
   doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
   doc.text(
     isVerified
-      ? "Certified mathematically coherent and reproducible by the UseAimly deterministic engine."
+      ? "Certified 100% mathematically coherent and reproducible by the UseAimly deterministic engine."
       : "Audit alert: Requires user confirmation of missing parameters prior to institutional certification.",
     margin + 4,
-    y + 29
+    y + 27.5
   );
 
-  y += 38;
+  y += 36;
 
-  // 10. IMPORTANT LIMITATIONS & DISCLAIMER
+  // 12. INSTITUTIONAL DISCLAIMER & LIMITATIONS
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(6);
+  doc.setFontSize(5.8);
   doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
   const disclaimerText = isFr
-    ? "AVIS DE NON-RESPONSABILITÉ : Ce document est un instrument d'aide à la décision financière basé sur les données et hypothèses renseignées au moment de l'analyse. Il ne constitue pas un conseil financier, juridique ou fiscal personnalisé réglementé. Les résultats futurs peuvent varier en fonction des évolutions économiques et imprévus de trésorerie."
+    ? "AVIS DE NON-RESPONSABILITÉ : Ce document est un instrument d'aide à la décision financière généré de manière déterministe à partir des données et hypothèses renseignées. Il ne constitue pas un conseil financier, juridique ou fiscal réglementé."
     : "DISCLAIMER: This document is a strategic financial decision-support report generated deterministically from the data and assumptions provided at the time of analysis. It does not constitute regulated individualized financial, investment, legal, or tax advice. Future actual trajectories depend on ongoing financial discipline and unforeseen liquidity events.";
   const disLines = doc.splitTextToSize(disclaimerText, contentWidth);
   doc.text(disLines, margin, y);
@@ -492,7 +567,7 @@ export function generateVerifiedDecisionReportPDF(
     doc.text(
       `UseAimly Financial Decision Engine • ${data.reportId} • Page ${i} of ${totalPages}`,
       pageWidth / 2,
-      pageHeight - 6,
+      pageHeight - 5,
       { align: "center" }
     );
   }

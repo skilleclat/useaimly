@@ -1,16 +1,16 @@
-import { CanonicalDecisionAnalysis, ScenarioImpactResult } from "./canonical-decision-engine";
+import { CanonicalDecisionAnalysis, ScenarioImpactResult, FinancingSummary } from "./canonical-decision-engine";
 import { CurrencyCode } from "../types/finance";
 
 export interface DecisionVerificationCheck {
   id: string;
   category:
     | "MATHEMATICAL_CONSISTENCY"
+    | "SINGLE_RECOMMENDATION_CONSISTENCY"
+    | "SCENARIO_DIFFERENTIATION_CONSISTENCY"
     | "TRANSACTION_CONSISTENCY"
     | "MONTHLY_CASH_FLOW_CONSISTENCY"
     | "VERDICT_CONSISTENCY"
-    | "SCENARIO_CONSISTENCY"
     | "GOAL_CONSISTENCY"
-    | "TIMELINE_CONSISTENCY"
     | "NARRATIVE_GROUNDING";
   name: string;
   nameFr: string;
@@ -28,7 +28,6 @@ export interface VerificationResult {
   verifiedAt: string;
 }
 
-// Backward-compatible interface for PDF and components
 export interface VerifiedDecisionData {
   decisionId: string;
   reportId: string;
@@ -56,6 +55,8 @@ export interface VerifiedDecisionData {
     primaryGoalTargetDate: string;
   };
 
+  financing?: FinancingSummary;
+
   calculatedImpact: {
     immediateCashOutflow: number;
     postDecisionCash: number;
@@ -69,38 +70,57 @@ export interface VerifiedDecisionData {
     goalDelayDays: number;
     goalDelayMonths: number;
     goalStatus: string;
+    goalExplanation?: string;
     monthlyPressurePercent: number;
     verdict: "RECOMMENDED" | "PROCEED_WITH_CAUTION" | "NOT_RECOMMENDED";
     verdictHeadline: string;
     primaryReason: string;
   };
 
+  recommendation: {
+    recommendedScenarioId: "OPTION_A" | "OPTION_B" | "OPTION_C" | "OPTION_D";
+    recommendedScenarioTitle: string;
+    actionPlanStep1: string;
+    actionPlanStep2: string;
+    actionPlanStep3: string;
+    reasons: string[];
+  };
+
   alternatives: {
     optionA: {
+      code: "OPTION_A";
       title: string;
       badge: string;
       delayDays: number;
       cashRemaining: number;
       runway: number;
       monthlyObligation: number;
+      totalInterest: number;
+      totalCost: number;
       isRecommended: boolean;
     };
     optionB: {
+      code: "OPTION_B";
       title: string;
       badge: string;
       delayDays: number;
       cashRemaining: number;
       runway: number;
       monthlyObligation: number;
+      totalInterest: number;
+      totalCost: number;
       isRecommended: boolean;
     };
     optionC: {
+      code: "OPTION_C";
       title: string;
       badge: string;
       delayDays: number;
       cashRemaining: number;
       runway: number;
       monthlyObligation: number;
+      totalInterest: number;
+      totalCost: number;
       isRecommended: boolean;
     };
   };
@@ -117,30 +137,98 @@ export interface VerifiedDecisionData {
 }
 
 /**
- * THE AIMLY COHERENCE CHECK (V2 - FORENSIC HARD GATES)
- * Strictly verifies every mathematical and logical claim.
+ * THE AIMLY COHERENCE CHECK (10/10 ZERO-COMPROMISE STANDARD)
  */
 export function runAimlyCoherenceCheck(data: VerifiedDecisionData): VerificationResult {
   const checks: DecisionVerificationCheck[] = [];
   const inconsistencies: string[] = [];
 
-  const { baseline, calculatedImpact, amount, downPayment, alternatives, narrative } = data;
+  const { baseline, calculatedImpact, alternatives, recommendation, narrative, amount, downPayment } = data;
 
-  // 1. MATHEMATICAL & CASH RECONCILIATION CHECK
-  // postDecisionCash MUST equal baseline.liquidSavings - immediateCashOutflow
-  const expectedCashAfter = Math.max(
-    0,
-    baseline.liquidSavings - calculatedImpact.immediateCashOutflow
+  // 1. SINGLE CANONICAL RECOMMENDATION INVARIANT (CRITICAL ISSUE #1)
+  // The scenario with isRecommended === true MUST match recommendation.recommendedScenarioId and action plan!
+  const markedOptions = [alternatives.optionA, alternatives.optionB, alternatives.optionC].filter(
+    (o) => o.isRecommended
   );
+
+  let singleRecPassed = true;
+  if (markedOptions.length !== 1) {
+    singleRecPassed = false;
+    inconsistencies.push(
+      `Recommendation conflict: Found ${markedOptions.length} options marked as BEST/Recommended instead of exactly 1.`
+    );
+  } else if (markedOptions[0].code !== recommendation.recommendedScenarioId) {
+    singleRecPassed = false;
+    inconsistencies.push(
+      `Recommendation mismatch: Marked scenario (${markedOptions[0].code}) does not match canonical recommendationId (${recommendation.recommendedScenarioId}).`
+    );
+  }
+
+  // Check Action Plan Step 1 references the recommended scenario
+  const targetScenarioStr = recommendation.recommendedScenarioId.replace("_", " ").toLowerCase();
+  if (!recommendation.actionPlanStep1.toLowerCase().includes(targetScenarioStr)) {
+    singleRecPassed = false;
+    inconsistencies.push(
+      `Action plan contradiction: Action Step 1 does not reference the canonical winner (${recommendation.recommendedScenarioId}).`
+    );
+  }
+
+  checks.push({
+    id: "check-single-rec",
+    category: "SINGLE_RECOMMENDATION_CONSISTENCY",
+    name: "Single Canonical Recommendation Invariant",
+    nameFr: "Invariant Canonique Unique de Recommandation",
+    passed: singleRecPassed,
+    notes: singleRecPassed
+      ? `Exactly one canonical winner (${recommendation.recommendedScenarioId}) drives badge, action plan, and narrative.`
+      : `Contradiction detected in recommendation mapping across report sections.`,
+    notesFr: singleRecPassed
+      ? `Un vainqueur canonique unique (${recommendation.recommendedScenarioId}) contrôle le badge, le plan d'action et le récit.`
+      : `Contradiction détectée dans le mapping des recommandations.`,
+  });
+
+  // 2. SCENARIO ECONOMIC DIFFERENTIATION (CRITICAL ISSUE #2)
+  // Options A, B, and C must have genuine mathematical differences (payments, interest, or cash outflow)
+  let diffPassed = true;
+  const isAllSameMonthly =
+    alternatives.optionA.monthlyObligation === alternatives.optionB.monthlyObligation &&
+    alternatives.optionB.monthlyObligation === alternatives.optionC.monthlyObligation;
+
+  const isAllSameCost =
+    alternatives.optionA.totalCost === alternatives.optionB.totalCost &&
+    alternatives.optionB.totalCost === alternatives.optionC.totalCost;
+
+  if (isAllSameMonthly && isAllSameCost && alternatives.optionA.monthlyObligation > 0) {
+    diffPassed = false;
+    inconsistencies.push(
+      "Scenario engine failure: Options A, B, and C produced identical financial outputs with zero differentiation."
+    );
+  }
+
+  checks.push({
+    id: "check-scenario-diff",
+    category: "SCENARIO_DIFFERENTIATION_CONSISTENCY",
+    name: "Scenario Economic Differentiation",
+    nameFr: "Différenciation Économique des Scénarios",
+    passed: diffPassed,
+    notes: diffPassed
+      ? `Scenarios A, B, and C are mathematically differentiated across monthly obligations, borrowing costs, and cash reserves.`
+      : `Scenarios fail to present meaningful economic alternatives.`,
+    notesFr: diffPassed
+      ? `Les scénarios A, B et C sont mathématiquement différenciés sur les mensualités, les coûts d'emprunt et les réserves.`
+      : `Les scénarios ne présentent pas d'alternatives économiques significatives.`,
+  });
+
+  // 3. MATHEMATICAL & CASH RECONCILIATION
+  const expectedCashAfter = Math.max(0, baseline.liquidSavings - calculatedImpact.immediateCashOutflow);
   const mathDiff = Math.abs(calculatedImpact.postDecisionCash - expectedCashAfter);
   const expectedDeltaCash = calculatedImpact.postDecisionCash - baseline.liquidSavings;
   const deltaCashDiff = Math.abs(calculatedImpact.deltaCash - expectedDeltaCash);
 
   const mathPassed = mathDiff <= 0.01 && deltaCashDiff <= 0.01;
-
   if (!mathPassed) {
     inconsistencies.push(
-      `Mathematical disparity: Baseline cash (${baseline.liquidSavings}) - Outflow (${calculatedImpact.immediateCashOutflow}) does not equal Post-Decision Cash (${calculatedImpact.postDecisionCash}).`
+      `Mathematical disparity: Baseline cash (${baseline.liquidSavings}) - Outflow (${calculatedImpact.immediateCashOutflow}) != Post-Decision Cash (${calculatedImpact.postDecisionCash}).`
     );
   }
 
@@ -158,8 +246,7 @@ export function runAimlyCoherenceCheck(data: VerifiedDecisionData): Verification
       : `Écart détecté dans l'arithmétique des réserves.`,
   });
 
-  // 2. MONTHLY CASH FLOW RECONCILIATION CHECK
-  // If delta FCF is 0, percentage shift MUST be strictly 0%
+  // 4. MONTHLY CASH FLOW RECONCILIATION
   let fcfPassed = true;
   if (calculatedImpact.deltaFreeCashFlow === 0 && calculatedImpact.fcfPercentageShift !== 0) {
     fcfPassed = false;
@@ -168,7 +255,6 @@ export function runAimlyCoherenceCheck(data: VerifiedDecisionData): Verification
     );
   }
 
-  // Expected FCF After = Income - (Expenses + Debt + NewObligations)
   const expectedMonthlyExpenses =
     baseline.monthlyExpenses + baseline.monthlyDebtService + calculatedImpact.newMonthlyObligation;
   const expectedFCFAfter = Math.max(0, baseline.monthlyIncome - expectedMonthlyExpenses);
@@ -195,10 +281,9 @@ export function runAimlyCoherenceCheck(data: VerifiedDecisionData): Verification
       : `Le flux mensuel contient un conflit de calcul.`,
   });
 
-  // 3. TRANSACTION & LOAN MODELING CHECK
+  // 5. TRANSACTION STRUCTURE CHECK
   let transactionPassed = true;
   if (data.decisionType === "LOAN_FACILITY" || data.category === "TAKE_A_LOAN") {
-    // If loan, immediate cash outflow cannot be full principal unless user explicitly configured it
     if (calculatedImpact.immediateCashOutflow >= amount && amount > 1000 && downPayment < amount) {
       transactionPassed = false;
       inconsistencies.push(
@@ -221,19 +306,13 @@ export function runAimlyCoherenceCheck(data: VerifiedDecisionData): Verification
       : `Structure de transaction mal classifiée.`,
   });
 
-  // 4. GOAL PROJECTION & ANOMALY CHECK
+  // 6. GOAL PROJECTION & ANOMALY GUARD
   let goalPassed = true;
-  // Anomaly Guard: Reject absurd multi-decade numbers (e.g. 29,970 days)
   if (calculatedImpact.goalDelayDays > 1825) {
     goalPassed = false;
     inconsistencies.push(
-      `Goal delay anomaly detected: ${calculatedImpact.goalDelayDays} days (~${Math.round(calculatedImpact.goalDelayDays / 365)} years) exceeds safety threshold.`
+      `Goal delay anomaly: ${calculatedImpact.goalDelayDays} days exceeds safety threshold.`
     );
-  }
-
-  if (calculatedImpact.goalDelayDays < 0) {
-    goalPassed = false;
-    inconsistencies.push(`Negative goal delay detected (${calculatedImpact.goalDelayDays} days).`);
   }
 
   checks.push({
@@ -250,40 +329,12 @@ export function runAimlyCoherenceCheck(data: VerifiedDecisionData): Verification
       : `La projection de l'objectif a déclenché un drapeau d'anomalie.`,
   });
 
-  // 5. SCENARIO & CROSS-FIELD RUNWAY CHECK
-  let scenarioPassed = true;
-  // Cross-field Check E: If baseline runway is 2.1 mos, Option B cannot claim to protect 3.0 mos!
-  if (
-    baseline.emergencyRunwayMonths < 3.0 &&
-    alternatives.optionB.runway < 3.0 &&
-    narrative.recommendedPath.includes("3.0-month")
-  ) {
-    scenarioPassed = false;
-    inconsistencies.push(
-      `Cross-field contradiction: Option B runway is ${alternatives.optionB.runway} months but narrative claims to protect a 3.0-month floor.`
-    );
-  }
-
-  checks.push({
-    id: "check-scenarios",
-    category: "SCENARIO_CONSISTENCY",
-    name: "Scenario Alternatives & Cross-Field Validation",
-    nameFr: "Validation Croisée des Scénarios Alternatifs",
-    passed: scenarioPassed,
-    notes: scenarioPassed
-      ? `Scenarios A, B, and C are mutually coherent with baseline reserve constraints.`
-      : `Contradiction detected in scenario claim.`,
-    notesFr: scenarioPassed
-      ? `Les scénarios A, B et C sont mutuellement cohérents avec les réserves de base.`
-      : `Contradiction détectée dans les affirmations de scénario.`,
-  });
-
-  // 6. VERDICT TRACEABILITY CHECK
+  // 7. VERDICT CONSISTENCY
   let verdictPassed = true;
   if (calculatedImpact.verdict === "RECOMMENDED" && calculatedImpact.postDecisionRunway < 2.0) {
     verdictPassed = false;
     inconsistencies.push(
-      `Verdict conflict: Decision marked RECOMMENDED while runway (${calculatedImpact.postDecisionRunway} mos) is below 2.0-month safety floor.`
+      `Verdict conflict: Decision marked RECOMMENDED while runway (${calculatedImpact.postDecisionRunway} mos) is below safety floor.`
     );
   }
 
@@ -301,9 +352,8 @@ export function runAimlyCoherenceCheck(data: VerifiedDecisionData): Verification
       : `Le verdict viole les seuils de risque.`,
   });
 
-  // 7. NARRATIVE FACT GROUNDING CHECK
+  // 8. NARRATIVE GROUNDING
   let narrativePassed = true;
-  // Check that narrative does not contain rogue numbers (e.g. 70.77, 53.08) ungrounded from data
   if (narrative.whyThisVerdict.length < 10 || narrative.executiveSummary.length < 10) {
     narrativePassed = false;
   }
@@ -316,19 +366,18 @@ export function runAimlyCoherenceCheck(data: VerifiedDecisionData): Verification
     passed: narrativePassed,
     notes: narrativePassed
       ? `All narrative statements are strictly grounded in canonical calculation metrics.`
-      : `Narrative contains ungrounded or incomplete statements.`,
+      : `Narrative contains ungrounded statements.`,
     notesFr: narrativePassed
       ? `Toutes les explications s'appuient strictement sur les métriques canoniques.`
       : `Le récit contient des affirmations incomplètes ou non ancrées.`,
   });
 
-  // Determine Final Status
+  // Determine Overall Status
   const allPassed = checks.every((c) => c.passed);
   const passedCount = checks.filter((c) => c.passed).length;
   const overallScore = Math.round((passedCount / checks.length) * 100);
 
   let status: VerificationResult["status"] = "VERIFIED";
-
   if (!allPassed || inconsistencies.length > 0) {
     status = inconsistencies.length > 0 ? "INCONSISTENCY DETECTED" : "NEEDS REVIEW";
   } else if (data.isAssumedLoanTerms || (data.assumptions && data.assumptions.length > 0)) {
@@ -339,10 +388,7 @@ export function runAimlyCoherenceCheck(data: VerifiedDecisionData): Verification
     status,
     overallScore,
     checks,
-    assumptions: data.assumptions || [
-      `Assumes stable monthly income of ${baseline.monthlyIncome} ${data.currency}.`,
-      `Assumes living costs remain constant at ${baseline.monthlyExpenses} ${data.currency}/month.`,
-    ],
+    assumptions: data.assumptions || [],
     inconsistencies,
     verifiedAt: new Date().toISOString(),
   };

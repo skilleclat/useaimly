@@ -297,6 +297,8 @@ export function AimlyDecisionEngine({
         primaryGoalCurrent: baseline.primaryGoal.currentAmount,
         primaryGoalTargetDate: baseline.primaryGoal.targetDate,
       },
+      financing: canonicalAnalysis.financing,
+      recommendation: canonicalAnalysis.recommendation,
       calculatedImpact: {
         immediateCashOutflow: primaryImpact.immediateCashOutflow,
         postDecisionCash: primaryImpact.postDecisionCash,
@@ -310,6 +312,7 @@ export function AimlyDecisionEngine({
         goalDelayDays: primaryImpact.goalDelayDays,
         goalDelayMonths: primaryImpact.goalDelayMonths,
         goalStatus: primaryImpact.goalStatus,
+        goalExplanation: primaryImpact.goalExplanation,
         monthlyPressurePercent: primaryImpact.fcfPercentageShift,
         verdict: verdict.decision,
         verdictHeadline: verdict.headline,
@@ -317,39 +320,46 @@ export function AimlyDecisionEngine({
       },
       alternatives: {
         optionA: {
+          code: "OPTION_A",
           title: scenarios.optionA.title,
           badge: scenarios.optionA.badge,
           delayDays: scenarios.optionA.goalDelayDays,
           cashRemaining: scenarios.optionA.postDecisionCash,
           runway: scenarios.optionA.postDecisionRunwayMonths,
           monthlyObligation: scenarios.optionA.newMonthlyObligation,
+          totalInterest: scenarios.optionA.totalInterestPaid,
+          totalCost: scenarios.optionA.totalCostOverTime,
           isRecommended: scenarios.optionA.isRecommended,
         },
         optionB: {
+          code: "OPTION_B",
           title: scenarios.optionB.title,
           badge: scenarios.optionB.badge,
           delayDays: scenarios.optionB.goalDelayDays,
           cashRemaining: scenarios.optionB.postDecisionCash,
           runway: scenarios.optionB.postDecisionRunwayMonths,
           monthlyObligation: scenarios.optionB.newMonthlyObligation,
+          totalInterest: scenarios.optionB.totalInterestPaid,
+          totalCost: scenarios.optionB.totalCostOverTime,
           isRecommended: scenarios.optionB.isRecommended,
         },
         optionC: {
+          code: "OPTION_C",
           title: scenarios.optionC.title,
           badge: scenarios.optionC.badge,
           delayDays: scenarios.optionC.goalDelayDays,
           cashRemaining: scenarios.optionC.postDecisionCash,
           runway: scenarios.optionC.postDecisionRunwayMonths,
           monthlyObligation: scenarios.optionC.newMonthlyObligation,
+          totalInterest: scenarios.optionC.totalInterestPaid,
+          totalCost: scenarios.optionC.totalCostOverTime,
           isRecommended: scenarios.optionC.isRecommended,
         },
       },
       narrative: {
         executiveSummary: verdict.primaryReason,
         whyThisVerdict: verdict.primaryReason,
-        recommendedPath: isFr
-          ? `Privilégier l'Option B pour préserver votre matelas actuel de ${baseline.emergencyRunwayMonths} mois.`
-          : `Execute Option B to preserve your current ${baseline.emergencyRunwayMonths}-month reserve buffer without further drop.`,
+        recommendedPath: canonicalAnalysis.recommendation.actionPlanStep1,
         tradeoffsSummary: isFr
           ? `Arbitrage : Impact de trésorerie immédiat (${primaryImpact.immediateCashOutflow} ${currency}) vs préservation de "${baseline.primaryGoal.title}".`
           : `Trade-off: Immediate cash outflow (${primaryImpact.immediateCashOutflow} ${currency}) vs arrival timeline for "${baseline.primaryGoal.title}".`,
@@ -1347,17 +1357,16 @@ export function AimlyDecisionEngine({
           </div>
 
           {/* Recommended Path Box */}
+          {/* Recommended Path Box (Strictly Matched to Canonical Winner) */}
           <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
             <span className="text-xs font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-bold block">
               {isFr ? "PLAN D'ACTION RECOMMANDÉ PAR AIMLY" : "AIMLY'S RECOMMENDED ACTION PATH"}
             </span>
             <h4 className="text-base font-bold text-foreground">
-              {canonicalAnalysis.scenarios.optionB.title}
+              {canonicalAnalysis.recommendation.recommendedScenarioTitle}
             </h4>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              {isFr
-                ? `Cette option permet de concrétiser votre projet tout en préservant votre matelas actuel de ${canonicalAnalysis.baseline.emergencyRunwayMonths} mois et sans compromettre l'échéance de "${canonicalAnalysis.baseline.primaryGoal.title}".`
-                : `This path enables execution while locking in your ${canonicalAnalysis.baseline.emergencyRunwayMonths}-month reserve buffer and fully preserving your "${canonicalAnalysis.baseline.primaryGoal.title}" target deadline.`}
+              {canonicalAnalysis.recommendation.actionPlanStep1}
             </p>
           </div>
 
