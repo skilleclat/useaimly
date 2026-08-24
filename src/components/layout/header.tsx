@@ -143,7 +143,7 @@ export function Header() {
 
       {/* Mobile Dropdown Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-border bg-card/98 backdrop-blur-2xl px-4 py-4 space-y-3 animate-fadeIn shadow-xl">
+        <div className="md:hidden border-t border-border bg-white dark:bg-[#141416] px-4 py-4 space-y-3 animate-fadeIn shadow-2xl">
           <div className="grid grid-cols-1 gap-1">
             {NAV_LINKS.map((link) => (
               <Link
