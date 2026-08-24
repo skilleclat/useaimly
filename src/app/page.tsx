@@ -79,7 +79,7 @@ export default function LandingPage() {
                 onClick={() => router.push(`/onboarding?q=${encodeURIComponent(heroQuery)}`)}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] px-8 py-4 text-sm font-bold text-white shadow-xl shadow-orange-500/25 hover:opacity-95 transition-all cursor-pointer"
               >
-                <span>{language === "fr" ? "Essayer une Vraie Décision (Sans inscription)" : "Try a Real Decision  (No account needed)"}</span>
+                <span>{language === "fr" ? "Essayer une Vraie Décision (aucun compte requis)" : "Try a Real Decision (No account needed)"}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -111,7 +111,7 @@ export default function LandingPage() {
                 </div>
                 <span className="font-bold text-foreground">5.0</span>
                 <span>•</span>
-                <span>{language === "fr" ? "Recommandé par +1 000 décideurs avisés" : "Trusted by 1,000+ smart decision makers"}</span>
+                <span>{language === "fr" ? "Approuvé par plus de 1 000 décideurs avisés" : "Trusted by 1,000+ smart decision makers"}</span>
               </div>
             </div>
           </div>
@@ -123,17 +123,17 @@ export default function LandingPage() {
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
                 <div className="flex items-center gap-2 text-xs font-mono font-bold text-gray-300 uppercase tracking-wider">
                   <Compass className="w-4 h-4 text-[#FF5533]" />
-                  <span>{language === "fr" ? "TESTER UNE VRAIE DÉCISION" : "TRY A REAL DECISION"}</span>
+                  <span>{language === "fr" ? "ESSAYEZ DE PRENDRE UNE VRAIE DÉCISION" : "TRY A REAL DECISION"}</span>
                 </div>
                 <span className="px-2.5 py-0.5 rounded-full bg-[#FF5533]/15 border border-[#FF5533]/30 text-[#FF5533] text-[10px] font-mono font-bold uppercase">
-                  LIVE DEMO
+                  {language === "fr" ? "DÉMO EN DIRECT" : "LIVE DEMO"}
                 </span>
               </div>
 
               {/* Input Box */}
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-1">
                 <span className="text-[11px] font-mono text-gray-400 font-medium block">
-                  {language === "fr" ? "Question Décisionnelle" : "Decision Query"}
+                  {language === "fr" ? "Requête de décision" : "Decision Query"}
                 </span>
                 <input
                   type="text"
@@ -151,7 +151,7 @@ export default function LandingPage() {
                   <span>{language === "fr" ? "IMPACT IMMÉDIAT" : "IMMEDIATE IMPACT"}</span>
                 </div>
                 <p className="text-xs font-bold text-gray-200">
-                  {language === "fr" ? "Votre matelas d'urgence diminue de " : "Your emergency cushion decreases by "}
+                  {language === "fr" ? "Votre réserve d'urgence diminue de " : "Your emergency cushion decreases by "}
                   <span className="text-blue-400 font-extrabold">8%</span>
                 </p>
               </div>
@@ -160,11 +160,11 @@ export default function LandingPage() {
               <div className="rounded-2xl border border-[#FF5533]/30 bg-[#FF5533]/5 p-4 space-y-1">
                 <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-[#FF5533] uppercase tracking-wider">
                   <Clock className="w-3.5 h-3.5 text-[#FF5533]" />
-                  <span>{language === "fr" ? "CONSÉQUENCE FUTURE" : "FUTURE CONSEQUENCE"}</span>
+                  <span>{language === "fr" ? "CONSÉQUENCES FUTURES" : "FUTURE CONSEQUENCE"}</span>
                 </div>
                 <p className="text-xs font-bold text-gray-200">
-                  {language === "fr" ? "Votre Objectif Entreprise recule de " : "Your Business Goal moves "}
-                  <span className="text-[#FF5533] font-extrabold">+31 {language === "fr" ? "jours plus tard" : "days later"}</span>
+                  {language === "fr" ? "Votre objectif commercial se déplace de " : "Your Business Goal moves "}
+                  <span className="text-[#FF5533] font-extrabold">31 {language === "fr" ? "jours." : "days later"}</span>
                 </p>
               </div>
 
@@ -172,26 +172,27 @@ export default function LandingPage() {
               <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-1">
                 <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>{language === "fr" ? "GARDER LE CAP" : "STAY ON TRACK"}</span>
+                  <span>{language === "fr" ? "RESTEZ SUR LA BONNE VOIE" : "STAY ON TRACK"}</span>
                 </div>
                 <p className="text-xs font-bold text-gray-200">
-                  {language === "fr" ? "Épargnez un supplément de " : "Save an additional "}
-                  <span className="text-emerald-400 font-extrabold">$ 14 / {language === "fr" ? "mois" : "month"}</span>
+                  {language === "fr" ? "Économisez " : "Save an additional "}
+                  <span className="text-emerald-400 font-extrabold">14 $ {language === "fr" ? "supplémentaires par mois" : "/ month"}</span>
                 </p>
               </div>
 
               {/* Action Button */}
               <button
                 type="button"
-                onClick={() => router.push(`/onboarding?q=${encodeURIComponent(heroQuery)}`)}
+                onClick={() => router.push(`/app/decide?q=${encodeURIComponent(heroQuery)}`)}
                 className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] py-3.5 text-xs font-bold text-white hover:opacity-95 shadow-lg shadow-orange-500/25 transition-all cursor-pointer"
               >
-                <span>{language === "fr" ? "Voir l'Analyse Complète" : "See Full Analysis"}</span>
+                <span>{language === "fr" ? "Voir l'analyse complète" : "See Full Analysis"}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
         </section>
+
 
 
 
