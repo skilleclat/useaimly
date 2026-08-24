@@ -46,6 +46,9 @@ export const metadata: Metadata = {
   ],
   creator: "UseAimly",
   publisher: "UseAimly",
+  other: {
+    google: "notranslate",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -86,10 +89,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      translate="no"
       suppressHydrationWarning
-      className={`${sansFont.variable} ${serifFont.variable} ${monoFont.variable}`}
+      className={`notranslate ${sansFont.variable} ${serifFont.variable} ${monoFont.variable}`}
     >
-      <body className="min-h-screen bg-background font-sans antialiased text-foreground selection:bg-primary/20 selection:text-primary transition-colors duration-200">
+      <body className="notranslate min-h-screen bg-background font-sans antialiased text-foreground selection:bg-primary/20 selection:text-primary transition-colors duration-200">
+
         <AppProviders>
           <div className="relative flex min-h-screen flex-col">
             <Header />
