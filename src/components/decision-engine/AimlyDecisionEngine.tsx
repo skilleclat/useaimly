@@ -444,9 +444,11 @@ export function AimlyDecisionEngine({
                 </label>
                 <input
                   type="number"
+                  inputMode="decimal"
+                  min="0"
                   value={customAmount ?? extractedAmount}
                   onChange={(e) => setCustomAmount(Number(e.target.value) || null)}
-                  className="w-full rounded-xl bg-background border border-border px-3 py-2 text-xs font-mono font-bold text-foreground focus:outline-none focus:border-primary"
+                  className="w-full rounded-xl bg-background border border-border px-3.5 py-2.5 text-xs font-mono font-bold text-foreground focus:outline-none focus:border-primary min-h-[44px]"
                 />
               </div>
 
@@ -456,10 +458,12 @@ export function AimlyDecisionEngine({
                 </label>
                 <input
                   type="number"
+                  inputMode="decimal"
+                  min="0"
                   placeholder="0"
                   value={customDownPayment ?? ""}
                   onChange={(e) => setCustomDownPayment(Number(e.target.value) || null)}
-                  className="w-full rounded-xl bg-background border border-border px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-primary"
+                  className="w-full rounded-xl bg-background border border-border px-3.5 py-2.5 text-xs font-mono text-foreground focus:outline-none focus:border-primary min-h-[44px]"
                 />
               </div>
 
@@ -469,10 +473,12 @@ export function AimlyDecisionEngine({
                 </label>
                 <input
                   type="number"
+                  inputMode="decimal"
+                  min="0"
                   placeholder="0"
                   value={customMonthlyPayment ?? ""}
                   onChange={(e) => setCustomMonthlyPayment(Number(e.target.value) || null)}
-                  className="w-full rounded-xl bg-background border border-border px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-primary"
+                  className="w-full rounded-xl bg-background border border-border px-3.5 py-2.5 text-xs font-mono text-foreground focus:outline-none focus:border-primary min-h-[44px]"
                 />
               </div>
             </div>
@@ -787,12 +793,12 @@ export function AimlyDecisionEngine({
         </div>
 
         {/* STEP 5: ACTION BAR */}
-        <div className="pt-4 border-t border-border/70 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="pt-4 border-t border-border/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+          <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={handleSave}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground text-xs font-bold border border-border/80 transition-all cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-3 sm:py-2.5 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground text-xs font-bold border border-border/80 transition-all cursor-pointer min-h-[44px]"
             >
               <Bookmark className="w-3.5 h-3.5" />
               <span>{isSaved ? (isFr ? "Décision Sauvegardée" : "Decision Saved") : (isFr ? "Sauvegarder la Décision" : "Save Decision")}</span>
@@ -801,7 +807,7 @@ export function AimlyDecisionEngine({
             <button
               type="button"
               onClick={() => setShowSideBySideModal(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground text-xs font-bold border border-border/80 transition-all cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-3 sm:py-2.5 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground text-xs font-bold border border-border/80 transition-all cursor-pointer min-h-[44px]"
             >
               <BarChart3 className="w-3.5 h-3.5" />
               <span>{isFr ? "Comparer les Options" : "Compare Options"}</span>
@@ -810,7 +816,7 @@ export function AimlyDecisionEngine({
             <button
               type="button"
               onClick={() => setIsDetailsOpen(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground text-xs font-bold border border-border/80 transition-all cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-3 sm:py-2.5 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground text-xs font-bold border border-border/80 transition-all cursor-pointer min-h-[44px]"
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
               <span>{isFr ? "Changer les Hypothèses" : "Change Assumptions"}</span>
@@ -819,7 +825,7 @@ export function AimlyDecisionEngine({
 
           <Link
             href={`/app/ask?q=${encodeURIComponent(`I analyzed: "${extractedTitle}" for ${format(extractedAmount, { fromCurrency: "KES" })}. Verdict was ${verdict.label} with +${goalDelayDays} days delay. How can I optimize this?`)}`}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:opacity-95 shadow-md shadow-primary/20 transition-all"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:opacity-95 shadow-md shadow-primary/20 transition-all min-h-[44px]"
           >
             <MessageSquare className="w-3.5 h-3.5" />
             <span>{isFr ? "Demander conseil à Aimly" : "Ask Aimly About This"}</span>
@@ -831,37 +837,37 @@ export function AimlyDecisionEngine({
 
       {/* Side-by-Side Comparison Modal */}
       {showSideBySideModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-2xl rounded-3xl bg-card border border-border/90 p-6 space-y-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn">
+          <div className="w-full max-w-2xl rounded-t-3xl sm:rounded-3xl bg-card border border-border/90 p-5 sm:p-7 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-border/60 pb-3">
-              <h3 className="text-lg font-bold text-foreground">
+              <h3 className="text-base sm:text-lg font-bold text-foreground">
                 {isFr ? "Comparaison des Scénarios Côte à Côte" : "Side-by-Side Scenario Comparison"}
               </h3>
               <button
                 type="button"
                 onClick={() => setShowSideBySideModal(false)}
-                className="p-1.5 rounded-xl bg-secondary text-muted-foreground hover:text-foreground cursor-pointer"
+                className="p-2 rounded-xl bg-secondary text-muted-foreground hover:text-foreground cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center"
               >
                 ✕
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               {calculatedAlternatives.map((alt) => (
                 <div key={alt.id} className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-2">
                   <span className="font-bold text-foreground block">{alt.title}</span>
-                  <div className="space-y-1 pt-1 border-t border-border/50 text-[11px]">
+                  <div className="space-y-1.5 pt-1 border-t border-border/50 text-xs">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">{isFr ? "Décalage :" : "Goal Shift:"}</span>
                       <strong className="text-primary">{alt.delayLabel}</strong>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">{isFr ? "Liquidités :" : "Cash:"}</span>
-                      <strong>{alt.cashRemaining}</strong>
+                      <strong className="font-mono">{alt.cashRemaining}</strong>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">{isFr ? "Matelas :" : "Runway:"}</span>
-                      <strong>{alt.runway}</strong>
+                      <strong className="font-mono">{alt.runway}</strong>
                     </div>
                   </div>
                 </div>
@@ -872,7 +878,7 @@ export function AimlyDecisionEngine({
               <button
                 type="button"
                 onClick={() => setShowSideBySideModal(false)}
-                className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold cursor-pointer"
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-primary text-primary-foreground text-xs font-bold cursor-pointer min-h-[44px]"
               >
                 {isFr ? "Fermer" : "Close"}
               </button>

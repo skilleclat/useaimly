@@ -102,7 +102,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary/15 pb-16 lg:pb-0">
+    <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary/15 pb-28 sm:pb-32 lg:pb-8">
       {/* Top Header Navigation */}
       <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/90 backdrop-blur-md transition-colors duration-200">
         <div className="max-w-6xl mx-auto flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6 lg:px-8">

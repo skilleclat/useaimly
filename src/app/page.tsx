@@ -68,7 +68,7 @@ export default function LandingPage() {
               </div>
 
               {/* Primary Headline */}
-              <h1 className="text-4xl sm:text-6xl font-black text-foreground tracking-tight leading-[1.08]">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-foreground tracking-tight leading-[1.08]">
                 {isFr ? (
                   <>
                     Voyez <span className="text-[#FF5533] italic">demain</span>

@@ -181,7 +181,7 @@ export default function AuthenticatedDashboard() {
         {/* PRIMARY CTA (Above the fold, immediately visible) */}
         <Link
           href="/app/decide"
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] px-5 sm:px-6 py-3.5 text-xs sm:text-sm font-extrabold text-white shadow-lg shadow-orange-500/25 hover:opacity-95 hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] px-6 py-4 text-xs sm:text-sm font-extrabold text-white shadow-lg shadow-orange-500/25 hover:opacity-95 hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0 min-h-[48px]"
         >
           <span className="text-base leading-none font-black">+</span>
           <span>{isFr ? "Analyser une Décision" : "Analyze a Decision"}</span>
