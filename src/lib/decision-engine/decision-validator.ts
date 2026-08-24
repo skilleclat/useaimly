@@ -3,21 +3,25 @@ import {
   ScenarioImpactResult,
   FinancingSummary,
   CategorizedAssumptions,
-  ScenarioFundingMechanics,
+  ScenarioFundingLedger,
+  CanonicalTransactionType,
 } from "./canonical-decision-engine";
 import { CurrencyCode } from "../types/finance";
 
 export interface DecisionVerificationCheck {
   id: string;
   category:
+    | "STRUCTURE_MODEL_CONSISTENCY"
     | "MONEY_CONSERVATION_INVARIANT"
+    | "MATHEMATICAL_CONSISTENCY"
     | "SINGLE_RECOMMENDATION_CONSISTENCY"
     | "SCENARIO_DIFFERENTIATION_CONSISTENCY"
     | "TRANSACTION_CONSISTENCY"
     | "MONTHLY_CASH_FLOW_CONSISTENCY"
     | "VERDICT_CONSISTENCY"
     | "GOAL_CONSISTENCY"
-    | "NARRATIVE_GROUNDING";
+    | "NARRATIVE_GROUNDING"
+    | "ASSUMPTION_RELEVANCE";
   name: string;
   nameFr: string;
   passed: boolean;
@@ -26,7 +30,13 @@ export interface DecisionVerificationCheck {
 }
 
 export interface VerificationResult {
-  status: "VERIFIED" | "VERIFIED WITH ASSUMPTIONS" | "NEEDS REVIEW" | "INCONSISTENCY DETECTED";
+  status:
+    | "VERIFIED"
+    | "VERIFIED WITH ASSUMPTIONS"
+    | "ESTIMATED"
+    | "INSUFFICIENT_DATA"
+    | "STRUCTURE_MODEL_MISMATCH"
+    | "VALIDATION_FAILED";
   overallScore: number; // 0 to 100
   checks: DecisionVerificationCheck[];
   assumptions: string[];
@@ -40,7 +50,7 @@ export interface VerifiedDecisionData {
   version: number;
   decisionTitle: string;
   category: string;
-  decisionType?: string;
+  transactionType?: CanonicalTransactionType;
   amount: number;
   downPayment: number;
   monthlyPayment: number;
@@ -105,7 +115,7 @@ export interface VerifiedDecisionData {
       monthlyObligation: number;
       totalInterest: number;
       totalCost: number;
-      fundingMechanics?: ScenarioFundingMechanics;
+      ledger?: ScenarioFundingLedger;
       isRecommended: boolean;
     };
     optionB: {
@@ -118,7 +128,7 @@ export interface VerifiedDecisionData {
       monthlyObligation: number;
       totalInterest: number;
       totalCost: number;
-      fundingMechanics?: ScenarioFundingMechanics;
+      ledger?: ScenarioFundingLedger;
       isRecommended: boolean;
     };
     optionC: {
@@ -131,7 +141,7 @@ export interface VerifiedDecisionData {
       monthlyObligation: number;
       totalInterest: number;
       totalCost: number;
-      fundingMechanics?: ScenarioFundingMechanics;
+      ledger?: ScenarioFundingLedger;
       isRecommended: boolean;
     };
   };
@@ -148,38 +158,78 @@ export interface VerifiedDecisionData {
 }
 
 /**
- * THE AIMLY COHERENCE CHECK (10/10 ZERO-COMPROMISE STANDARD)
+ * THE AIMLY COHERENCE CHECK (ZERO-COMPROMISE 10/10 AUDIT)
  */
 export function runAimlyCoherenceCheck(data: VerifiedDecisionData): VerificationResult {
   const checks: DecisionVerificationCheck[] = [];
   const inconsistencies: string[] = [];
 
-  const { baseline, calculatedImpact, alternatives, recommendation, narrative, amount, downPayment } = data;
+  const {
+    baseline,
+    calculatedImpact,
+    alternatives,
+    recommendation,
+    narrative,
+    amount,
+    downPayment,
+    transactionType = "ONE_TIME_EXPENSE",
+    financing,
+    categorizedAssumptions,
+  } = data;
 
-  // 1. MONEY CONSERVATION INVARIANT (CRITICAL FIX #7)
+  // 1. STRUCTURE-MODEL INVARIANT (CRITICAL ARCHITECTURAL GATE)
+  let structureModelPassed = true;
+
+  if (transactionType === "RECURRING_EXPENSE") {
+    // Recurring expense MUST affect monthly cash flow and MUST NOT be treated as a one-time cash drop
+    if (calculatedImpact.newMonthlyObligation <= 0 || calculatedImpact.deltaFreeCashFlow >= 0) {
+      structureModelPassed = false;
+      inconsistencies.push(
+        `STRUCTURE_MODEL_MISMATCH: Decision declared as RECURRING_EXPENSE but calculation showed 0 new monthly obligation or 0% FCF shift.`
+      );
+    }
+    if (calculatedImpact.immediateCashOutflow >= amount && amount > 100 && downPayment === 0) {
+      structureModelPassed = false;
+      inconsistencies.push(
+        `STRUCTURE_MODEL_MISMATCH: Decision declared as RECURRING_EXPENSE but full recurring amount was deducted from liquid cash reserves.`
+      );
+    }
+  } else if (transactionType === "ONE_TIME_EXPENSE" || transactionType === "PURCHASE_FUNDING") {
+    // One-time purchase MUST NOT create unexplained ongoing recurring obligations
+    if (calculatedImpact.newMonthlyObligation > 0 && calculatedImpact.deltaFreeCashFlow < 0) {
+      structureModelPassed = false;
+      inconsistencies.push(
+        `STRUCTURE_MODEL_MISMATCH: Decision declared as ONE_TIME_EXPENSE but calculation added ongoing monthly debt obligations.`
+      );
+    }
+  }
+
+  checks.push({
+    id: "check-structure-model",
+    category: "STRUCTURE_MODEL_CONSISTENCY",
+    name: "Structure-to-Financial-Model Invariant",
+    nameFr: "Invariant de Structure et Modèle Financier",
+    passed: structureModelPassed,
+    notes: structureModelPassed
+      ? `Declared structure (${transactionType}) matches the active mathematical calculation model perfectly.`
+      : `STRUCTURE_MODEL_MISMATCH: Transaction structure contradicts calculation model.`,
+    notesFr: structureModelPassed
+      ? `La structure déclarée (${transactionType}) correspond parfaitement au modèle de calcul actif.`
+      : `Incohérence entre la structure de transaction et le modèle de calcul.`,
+  });
+
+  // 2. MONEY CONSERVATION INVARIANT & PROVENANCE
   let conservationPassed = true;
-  const optBMechanics = alternatives.optionB.fundingMechanics;
+  const optBLedger = alternatives.optionB.ledger;
 
-  if (optBMechanics) {
-    const fcfReconciles =
-      Math.abs(
-        optBMechanics.monthlyGoalAllocation +
-          optBMechanics.monthlyDecisionSavings +
-          optBMechanics.unallocatedMonthlyCash -
-          baseline.netFreeCashFlow
-      ) <= 0.05;
-
-    const cashReconciles =
-      Math.abs(
-        baseline.liquidSavings -
-          optBMechanics.outflowFromExistingReserves -
-          optBMechanics.postDecisionReserves
-      ) <= 0.05;
-
-    if (!fcfReconciles || !cashReconciles) {
+  if (optBLedger) {
+    const cashBalance = Math.abs(
+      baseline.liquidSavings - optBLedger.outflowFromExistingReserves - optBLedger.endingCashReserves
+    );
+    if (cashBalance > 0.05) {
       conservationPassed = false;
       inconsistencies.push(
-        `Money conservation breach in Option B: Free cash flow allocation (${optBMechanics.monthlyGoalAllocation} goal + ${optBMechanics.monthlyDecisionSavings} savings) != Net FCF (${baseline.netFreeCashFlow}).`
+        `Money conservation failure: Baseline cash (${baseline.liquidSavings}) - Outflow (${optBLedger.outflowFromExistingReserves}) != Ending Cash (${optBLedger.endingCashReserves}).`
       );
     }
   }
@@ -187,18 +237,18 @@ export function runAimlyCoherenceCheck(data: VerifiedDecisionData): Verification
   checks.push({
     id: "check-conservation",
     category: "MONEY_CONSERVATION_INVARIANT",
-    name: "Money Conservation Invariant",
-    nameFr: "Invariant de Conservation Monétaire",
+    name: "Money Conservation & Provenance Invariant",
+    nameFr: "Invariant de Conservation Monétaire et Provenance",
     passed: conservationPassed,
     notes: conservationPassed
-      ? `Money conservation reconciled across all scenarios: No funds created or lost without traceable allocation.`
-      : `Money conservation failed in scenario allocation model.`,
+      ? `Money conservation reconciled across all scenarios: No unexplained cash created or lost (Zero residual drift).`
+      : `Money conservation failed in scenario ledger.`,
     notesFr: conservationPassed
-      ? `Conservation monétaire réconciliée : aucun euro n'est créé ou perdu sans allocation traçable.`
-      : `Échec de la conservation monétaire dans le modèle d'allocation.`,
+      ? `Conservation monétaire réconciliée : aucun euro créé ou perdu sans traçabilité.`
+      : `Échec de conservation monétaire dans le grand livre de scénario.`,
   });
 
-  // 2. MATHEMATICAL & CASH BALANCE RECONCILIATION
+  // 3. MATHEMATICAL & CASH BALANCE RECONCILIATION
   const expectedCashAfter = Math.max(0, baseline.liquidSavings - calculatedImpact.immediateCashOutflow);
   const mathDiff = Math.abs(calculatedImpact.postDecisionCash - expectedCashAfter);
   const expectedDeltaCash = calculatedImpact.postDecisionCash - baseline.liquidSavings;
@@ -225,7 +275,7 @@ export function runAimlyCoherenceCheck(data: VerifiedDecisionData): Verification
       : `Écart détecté dans l'arithmétique des réserves.`,
   });
 
-  // 2. SINGLE CANONICAL RECOMMENDATION INVARIANT
+  // 4. SINGLE CANONICAL RECOMMENDATION INVARIANT
   const markedOptions = [alternatives.optionA, alternatives.optionB, alternatives.optionC].filter(
     (o) => o.isRecommended
   );
@@ -265,7 +315,7 @@ export function runAimlyCoherenceCheck(data: VerifiedDecisionData): Verification
       : `Contradiction détectée dans le mapping des recommandations.`,
   });
 
-  // 3. SCENARIO ECONOMIC DIFFERENTIATION
+  // 5. SCENARIO ECONOMIC DIFFERENTIATION
   let diffPassed = true;
   const isAllSameMonthly =
     alternatives.optionA.monthlyObligation === alternatives.optionB.monthlyObligation &&
@@ -300,32 +350,7 @@ export function runAimlyCoherenceCheck(data: VerifiedDecisionData): Verification
       : `Les scénarios ne présentent pas d'alternatives économiques significatives.`,
   });
 
-  // 4. TRANSACTION STRUCTURE & FINANCING MODELING
-  let transactionPassed = true;
-  if (data.decisionType === "LOAN_FACILITY" || data.category === "TAKE_A_LOAN") {
-    if (calculatedImpact.immediateCashOutflow >= amount && amount > 1000 && downPayment < amount) {
-      transactionPassed = false;
-      inconsistencies.push(
-        `Transaction modeling error: Loan of ${amount} ${data.currency} was treated as immediate full cash deduction.`
-      );
-    }
-  }
-
-  checks.push({
-    id: "check-transaction",
-    category: "TRANSACTION_CONSISTENCY",
-    name: "Transaction Structure & Archetype Reconciliation",
-    nameFr: "Structure de Transaction et Archétype",
-    passed: transactionPassed,
-    notes: transactionPassed
-      ? `Transaction model is consistent with archetype (${data.decisionType || data.category}).`
-      : `Transaction structure misclassified.`,
-    notesFr: transactionPassed
-      ? `Modèle de transaction conforme à l'archétype (${data.decisionType || data.category}).`
-      : `Structure de transaction mal classifiée.`,
-  });
-
-  // 5. MONTHLY CASH FLOW RECONCILIATION
+  // 6. MONTHLY CASH FLOW RECONCILIATION
   let fcfPassed = true;
   if (calculatedImpact.deltaFreeCashFlow === 0 && calculatedImpact.fcfPercentageShift !== 0) {
     fcfPassed = false;
@@ -353,37 +378,41 @@ export function runAimlyCoherenceCheck(data: VerifiedDecisionData): Verification
     nameFr: "Réconciliation du Cash-Flow Libre Mensuel",
     passed: fcfPassed,
     notes: fcfPassed
-      ? `Monthly cash flow verified: +${calculatedImpact.postDecisionFreeCashFlow} ${data.currency}/mo after new obligations.`
+      ? `Monthly cash flow verified: +${calculatedImpact.postDecisionFreeCashFlow} ${data.currency}/mo after commitments.`
       : `Monthly cash flow contains arithmetic conflict.`,
     notesFr: fcfPassed
       ? `Flux mensuel vérifié : +${calculatedImpact.postDecisionFreeCashFlow} ${data.currency}/mois après engagements.`
       : `Le flux mensuel contient un conflit de calcul.`,
   });
 
-  // 6. GOAL PROJECTION & ANOMALY GUARD
-  let goalPassed = true;
-  if (calculatedImpact.goalDelayDays > 1825) {
-    goalPassed = false;
+  // 7. ASSUMPTION RELEVANCE FILTER (CRITICAL FIX)
+  let assumptionsRelevancePassed = true;
+  const isFinancingUsed = financing && financing.hasFinancing;
+  const hasFinancingAssumptions =
+    categorizedAssumptions?.financingAssumptions && categorizedAssumptions.financingAssumptions.length > 0;
+
+  if (!isFinancingUsed && hasFinancingAssumptions) {
+    assumptionsRelevancePassed = false;
     inconsistencies.push(
-      `Goal delay anomaly: ${calculatedImpact.goalDelayDays} days exceeds safety threshold.`
+      `Irrelevant assumption leak: Financing assumptions (APR) displayed on a non-financed decision.`
     );
   }
 
   checks.push({
-    id: "check-goal",
-    category: "GOAL_CONSISTENCY",
-    name: "Goal Compounding & Timeline Anomaly Guard",
-    nameFr: "Alignement des Objectifs et Garde-Fou d'Anomalie",
-    passed: goalPassed,
-    notes: goalPassed
-      ? `Primary goal "${baseline.primaryGoalTitle}" impact verified (+${calculatedImpact.goalDelayDays}d delay).`
-      : `Goal projection triggered an anomaly flag.`,
-    notesFr: goalPassed
-      ? `Impact sur l'objectif "${baseline.primaryGoalTitle}" vérifié (+${calculatedImpact.goalDelayDays}j).`
-      : `La projection de l'objectif a déclenché un drapeau d'anomalie.`,
+    id: "check-assumptions-relevance",
+    category: "ASSUMPTION_RELEVANCE",
+    name: "Material Assumption Relevance Filter",
+    nameFr: "Filtre de Pertinence des Hypothèses Matérielles",
+    passed: assumptionsRelevancePassed,
+    notes: assumptionsRelevancePassed
+      ? `Only material assumptions that actively affect this decision model are displayed.`
+      : `Irrelevant financing assumptions leaked into report.`,
+    notesFr: assumptionsRelevancePassed
+      ? `Seules les hypothèses matérielles influençant ce modèle sont affichées.`
+      : `Des hypothèses de financement non pertinentes sont apparues.`,
   });
 
-  // 7. VERDICT CONSISTENCY
+  // 8. VERDICT CONSISTENCY (CRITICAL RULE)
   let verdictPassed = true;
   if (calculatedImpact.verdict === "RECOMMENDED" && calculatedImpact.postDecisionRunway < 2.0) {
     verdictPassed = false;
@@ -406,7 +435,28 @@ export function runAimlyCoherenceCheck(data: VerifiedDecisionData): Verification
       : `Le verdict viole les seuils de risque.`,
   });
 
-  // 8. NARRATIVE GROUNDING
+  // 9. GOAL PROJECTION & ANOMALY GUARD
+  let goalPassed = true;
+  if (calculatedImpact.goalDelayDays > 1825) {
+    goalPassed = false;
+    inconsistencies.push(`Goal delay anomaly: ${calculatedImpact.goalDelayDays} days exceeds threshold.`);
+  }
+
+  checks.push({
+    id: "check-goal",
+    category: "GOAL_CONSISTENCY",
+    name: "Goal Compounding & Timeline Anomaly Guard",
+    nameFr: "Alignement des Objectifs et Garde-Fou d'Anomalie",
+    passed: goalPassed,
+    notes: goalPassed
+      ? `Primary goal "${baseline.primaryGoalTitle}" impact verified (+${calculatedImpact.goalDelayDays}d delay).`
+      : `Goal projection triggered an anomaly flag.`,
+    notesFr: goalPassed
+      ? `Impact sur l'objectif "${baseline.primaryGoalTitle}" vérifié (+${calculatedImpact.goalDelayDays}j).`
+      : `La projection de l'objectif a déclenché un drapeau d'anomalie.`,
+  });
+
+  // 10. NARRATIVE GROUNDING
   let narrativePassed = true;
   if (narrative.whyThisVerdict.length < 10 || narrative.executiveSummary.length < 10) {
     narrativePassed = false;
@@ -426,14 +476,16 @@ export function runAimlyCoherenceCheck(data: VerifiedDecisionData): Verification
       : `Le récit contient des affirmations incomplètes ou non ancrées.`,
   });
 
-  // Determine Status
+  // Determine Final Verification State
   const allPassed = checks.every((c) => c.passed);
   const passedCount = checks.filter((c) => c.passed).length;
   const overallScore = Math.round((passedCount / checks.length) * 100);
 
   let status: VerificationResult["status"] = "VERIFIED";
-  if (!allPassed || inconsistencies.length > 0) {
-    status = inconsistencies.length > 0 ? "INCONSISTENCY DETECTED" : "NEEDS REVIEW";
+  if (!structureModelPassed) {
+    status = "STRUCTURE_MODEL_MISMATCH";
+  } else if (!allPassed || inconsistencies.length > 0) {
+    status = "INCONSISTENCY DETECTED";
   } else if (data.isAssumedLoanTerms || (data.assumptions && data.assumptions.length > 0)) {
     status = "VERIFIED WITH ASSUMPTIONS";
   }

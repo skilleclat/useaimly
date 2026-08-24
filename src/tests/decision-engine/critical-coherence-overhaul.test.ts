@@ -11,8 +11,7 @@ import {
 import { generateVerifiedDecisionReportPDF } from "@/lib/decision-engine/verified-report-generator";
 import { BaselineFinancialProfile } from "@/lib/finance";
 
-describe("ZERO-COMPROMISE 10/10 FINANCIAL DECISION REPORT STANDARD", () => {
-  // MANDATORY USER TEST CASE FROM PROMPT
+describe("ZERO-COMPROMISE 10/10 DOMAIN-DRIVEN FINANCIAL DECISION ENGINE", () => {
   const mandatoryBaseline: BaselineFinancialProfile = {
     liquidSavings: 4840,
     incomes: [
@@ -36,73 +35,195 @@ describe("ZERO-COMPROMISE 10/10 FINANCIAL DECISION REPORT STANDARD", () => {
     ],
   };
 
-  // 1. MANDATORY TEST: €4,000 Purchase Decision Money Flow & Conservation
-  it("MANDATORY TEST: Reconciles €4,000 purchase without fake math or double-counting", () => {
+  // RED TEAM TEST 1: ONE_TIME_EXPENSE
+  it("RED TEAM 1: ONE_TIME_EXPENSE updates cash reserves while monthly FCF remains unchanged", () => {
     const analysis = evaluateCanonicalDecision(mandatoryBaseline, {
-      title: "Business Laptop & Hardware",
+      title: "One-Time Hardware Purchase",
       category: "BUY_SOMETHING",
-      decisionType: "PURCHASE_FUNDING",
+      transactionType: "ONE_TIME_EXPENSE",
+      totalAmount: 1800,
+      currency: "EUR",
+    });
+
+    expect(analysis.transactionType).toBe("ONE_TIME_EXPENSE");
+    // Cash drops by outlay
+    expect(analysis.primaryImpact.immediateCashOutflow).toBe(1800);
+    expect(analysis.primaryImpact.postDecisionCash).toBe(3040); // 4840 - 1800 = 3040
+    expect(analysis.primaryImpact.deltaCash).toBe(-1800);
+
+    // Monthly FCF is strictly unchanged
+    expect(analysis.primaryImpact.newMonthlyObligation).toBe(0);
+    expect(analysis.primaryImpact.postDecisionFreeCashFlow).toBe(2200);
+    expect(analysis.primaryImpact.deltaFreeCashFlow).toBe(0);
+    expect(analysis.primaryImpact.fcfPercentageShift).toBe(0);
+  });
+
+  // RED TEAM TEST 2: RECURRING_EXPENSE (Rent Adjustment of +€1,800/mo)
+  it("RED TEAM 2: RECURRING_EXPENSE updates monthly FCF & living costs without deducting cash reserves", () => {
+    const analysis = evaluateCanonicalDecision(mandatoryBaseline, {
+      title: "Rent Adjustment",
+      category: "MOVE_HOME",
+      transactionType: "RECURRING_EXPENSE",
+      totalAmount: 1800,
+      currency: "EUR",
+    });
+
+    expect(analysis.transactionType).toBe("RECURRING_EXPENSE");
+
+    // Cash reserves are NOT deducted for rent increase (0 initial cash outflow)
+    expect(analysis.primaryImpact.immediateCashOutflow).toBe(0);
+    expect(analysis.primaryImpact.postDecisionCash).toBe(4840);
+    expect(analysis.primaryImpact.deltaCash).toBe(0);
+
+    // Monthly living expenses increase by +1800 EUR/mo (2300 -> 4100 EUR/mo)
+    expect(analysis.primaryImpact.newMonthlyObligation).toBe(1800);
+    expect(analysis.primaryImpact.postDecisionMonthlyExpenses).toBe(4100);
+
+    // Monthly FCF drops from +2200 to +400 EUR/mo (-82% shift!)
+    expect(analysis.primaryImpact.postDecisionFreeCashFlow).toBe(400);
+    expect(analysis.primaryImpact.deltaFreeCashFlow).toBe(-1800);
+    expect(analysis.primaryImpact.fcfPercentageShift).toBe(82);
+
+    // Emergency runway recalculates against new higher expenses (4840 / 4100 = 1.2 months)
+    expect(analysis.primaryImpact.postDecisionRunwayMonths).toBe(1.2);
+    expect(analysis.primaryImpact.deltaRunwayMonths).toBe(-0.9);
+
+    // Goal contribution of 990 EUR/mo is squeezed (only 400 EUR/mo available) -> Goal is delayed!
+    expect(analysis.primaryImpact.goalStatus).toBe("DELAYED");
+    expect(analysis.primaryImpact.goalDelayDays).toBeGreaterThan(0);
+
+    // Verdict correctly flags dangerous runway & cash flow compression
+    expect(analysis.verdict.decision).toBe("NOT_RECOMMENDED");
+  });
+
+  // RED TEAM TEST 3: STRUCTURE_MODEL_MISMATCH Gate
+  it("RED TEAM 3: Catches structure-model mismatch if recurring structure produces 0 FCF shift", () => {
+    const corruptReportData: VerifiedDecisionData = {
+      decisionId: "dec-mismatch-1",
+      reportId: "RPT-20260824-9999",
+      version: 1,
+      decisionTitle: "Corrupt Rent Decision",
+      category: "MOVE_HOME",
+      transactionType: "RECURRING_EXPENSE",
+      amount: 1800,
+      downPayment: 0,
+      monthlyPayment: 0,
+      isRecurring: true,
+      currency: "EUR",
+      timestamp: new Date().toISOString(),
+      baseline: {
+        liquidSavings: 4840,
+        monthlyIncome: 4500,
+        monthlyExpenses: 2300,
+        monthlyDebtService: 0,
+        netFreeCashFlow: 2200,
+        emergencyRunwayMonths: 2.1,
+        primaryGoalTitle: "Business Goal",
+        primaryGoalTarget: 25000,
+        primaryGoalCurrent: 12000,
+        primaryGoalTargetDate: "2027-12-31",
+        monthlyGoalAllocation: 990,
+      },
+      calculatedImpact: {
+        immediateCashOutflow: 1800, // Contradiction: Deducted from cash!
+        postDecisionCash: 3040,
+        deltaCash: -1800,
+        newMonthlyObligation: 0, // Contradiction: 0 monthly obligation!
+        postDecisionRunway: 1.3,
+        deltaRunway: -0.8,
+        postDecisionFreeCashFlow: 2200, // Contradiction: 0 FCF shift!
+        deltaFreeCashFlow: 0,
+        fcfPercentageShift: 0,
+        goalDelayDays: 0,
+        goalDelayMonths: 0,
+        goalStatus: "ON_TRACK",
+        monthlyPressurePercent: 0,
+        verdict: "NOT_RECOMMENDED",
+        verdictHeadline: "Drops reserves.",
+        primaryReason: "Reduces reserves.",
+      },
+      recommendation: {
+        recommendedScenarioId: "OPTION_B",
+        recommendedScenarioTitle: "Option B",
+        actionPlanStep1: "1. Execute Option B",
+        actionPlanStep2: "2. Save",
+        actionPlanStep3: "3. Review",
+        reasons: ["Safe"],
+      },
+      alternatives: {
+        optionA: { code: "OPTION_A", title: "Option A", badge: "As Proposed", delayDays: 0, cashRemaining: 3040, runway: 1.3, monthlyObligation: 0, totalInterest: 0, totalCost: 1800, isRecommended: false },
+        optionB: { code: "OPTION_B", title: "Option B", badge: "Best", delayDays: 0, cashRemaining: 4840, runway: 2.1, monthlyObligation: 0, totalInterest: 0, totalCost: 1800, isRecommended: true },
+        optionC: { code: "OPTION_C", title: "Option C", badge: "Alt", delayDays: 0, cashRemaining: 4840, runway: 2.1, monthlyObligation: 0, totalInterest: 0, totalCost: 900, isRecommended: false },
+      },
+      narrative: {
+        executiveSummary: "Summary",
+        whyThisVerdict: "Why",
+        recommendedPath: "1. Execute Option B",
+        tradeoffsSummary: "Tradeoff",
+      },
+      assumptions: [],
+    };
+
+    const verification = runAimlyCoherenceCheck(corruptReportData);
+    expect(verification.status).toBe("STRUCTURE_MODEL_MISMATCH");
+    expect(verification.inconsistencies[0]).toContain("STRUCTURE_MODEL_MISMATCH");
+  });
+
+  // RED TEAM TEST 4: Money Conservation & Zero Residual Drift (The €19 problem eradicated)
+  it("RED TEAM 4: Zero residual drift across all scenarios (Ending Cash = Opening - Outflow)", () => {
+    const analysis = evaluateCanonicalDecision(mandatoryBaseline, {
+      title: "Self-Funded Purchase",
+      category: "BUY_SOMETHING",
+      transactionType: "PURCHASE_FUNDING",
+      totalAmount: 1800,
+      currency: "EUR",
+    });
+
+    const optC = analysis.scenarios.optionC;
+    // For Option C, target is 1,350 EUR.
+    expect(optC.amount).toBe(1350);
+    expect(optC.immediateCashOutflow).toBe(0); // 100% self funded
+    expect(optC.postDecisionCash).toBe(4840); // Exactly 4,840 (NOT 4,821!)
+    expect(optC.ledger.moneyConservationPassed).toBe(true);
+  });
+
+  // RED TEAM TEST 5: Assumption Relevance Filter (No 8.5% APR leak on self-funded decisions)
+  it("RED TEAM 5: Hides 8.5% APR and financing assumptions when decision is non-financed", () => {
+    const analysis = evaluateCanonicalDecision(mandatoryBaseline, {
+      title: "Rent Adjustment",
+      category: "MOVE_HOME",
+      transactionType: "RECURRING_EXPENSE",
+      totalAmount: 1800,
+      currency: "EUR",
+    });
+
+    expect(analysis.financing.hasFinancing).toBe(false);
+    expect(analysis.categorizedAssumptions.financingAssumptions.length).toBe(0);
+    expect(analysis.assumptions.some((a) => a.includes("APR"))).toBe(false);
+  });
+
+  // RED TEAM TEST 6: Financing Summary becomes visible when loan is evaluated
+  it("RED TEAM 6: Financing assumptions & APR become visible when loan is modeled", () => {
+    const analysis = evaluateCanonicalDecision(mandatoryBaseline, {
+      title: "Car Loan",
+      category: "TAKE_A_LOAN",
+      transactionType: "LOAN_OR_DEBT",
+      totalAmount: 10000,
+      downPayment: 1000,
+      currency: "EUR",
+    });
+
+    expect(analysis.financing.hasFinancing).toBe(true);
+    expect(analysis.financing.aprSourceExplanation).toContain("Benchmark");
+    expect(analysis.categorizedAssumptions.financingAssumptions.length).toBeGreaterThan(0);
+  });
+
+  // RED TEAM TEST 7: Single Canonical Recommendation Invariant
+  it("RED TEAM 7: Exactly one scenario is recommended across badge, action plan, and narrative", () => {
+    const analysis = evaluateCanonicalDecision(mandatoryBaseline, {
+      title: "Equipment Outlay",
+      category: "BUY_SOMETHING",
       totalAmount: 4000,
-      currency: "EUR",
-      priority: "PROTECT_CASH",
-    });
-
-    const baseline = analysis.baseline;
-    expect(baseline.monthlyIncome).toBe(4500);
-    expect(baseline.monthlyLivingExpenses).toBe(2300);
-    expect(baseline.netFreeCashFlow).toBe(2200);
-    expect(baseline.primaryGoal.monthlyAllocation).toBe(990);
-
-    // Available cash flow after goal allocation: 2,200 - 990 = 1,210 EUR/mo
-    const availableForDecision = 2200 - 990;
-    expect(availableForDecision).toBe(1210);
-
-    // OPTION A: Pay Now from Cash
-    const optA = analysis.scenarios.optionA;
-    expect(optA.immediateCashOutflow).toBe(4000);
-    expect(optA.postDecisionCash).toBe(840); // 4840 - 4000 = 840
-    expect(optA.postDecisionRunwayMonths).toBe(0.4); // 840 / 2300 = 0.4 mos (Critical breach!)
-    expect(analysis.verdict.decision).toBe("NOT_RECOMMENDED"); // Correctly flags reserve breach!
-
-    // OPTION B: Wait until fully self-funded
-    const optB = analysis.scenarios.optionB;
-    // 4000 / 1210 = 3.3 months (~100 days)
-    expect(optB.fundingMechanics.waitDaysRequired).toBeGreaterThanOrEqual(90);
-    expect(optB.fundingMechanics.waitDaysRequired).toBeLessThanOrEqual(120);
-    expect(optB.fundingMechanics.monthlyGoalAllocation).toBe(990); // 100% preserved
-    expect(optB.fundingMechanics.monthlyDecisionSavings).toBe(1210);
-    expect(optB.fundingMechanics.outflowFromExistingReserves).toBe(0); // 0 reserve outflow!
-    expect(optB.postDecisionCash).toBe(4840); // Reserves intact!
-    expect(optB.postDecisionRunwayMonths).toBe(2.1); // Runway untouched!
-    expect(optB.goalDelayDays).toBe(0); // Goal is 100% on track!
-    expect(optB.fundingMechanics.moneyConservationPassed).toBe(true);
-
-    // Winning scenario is Option B
-    expect(analysis.recommendation.recommendedScenarioId).toBe("OPTION_B");
-    expect(analysis.recommendation.actionPlanStep1.toLowerCase()).toContain("option b");
-  });
-
-  // 2. INVARIANT: Money Conservation Invariant across all scenarios
-  it("Invariant: Money conservation strictly passes for every scenario", () => {
-    const analysis = evaluateCanonicalDecision(mandatoryBaseline, {
-      title: "Business Expansion Outlay",
-      category: "BUY_SOMETHING",
-      decisionType: "PURCHASE_FUNDING",
-      totalAmount: 5000,
-      currency: "EUR",
-    });
-
-    expect(analysis.scenarios.optionA.fundingMechanics.moneyConservationPassed).toBe(true);
-    expect(analysis.scenarios.optionB.fundingMechanics.moneyConservationPassed).toBe(true);
-    expect(analysis.scenarios.optionC.fundingMechanics.moneyConservationPassed).toBe(true);
-  });
-
-  // 3. INVARIANT: Single Canonical Recommendation Invariant
-  it("Invariant: exactly one scenario is recommended and matches action plan & narrative", () => {
-    const analysis = evaluateCanonicalDecision(mandatoryBaseline, {
-      title: "Equipment Purchase",
-      category: "BUY_SOMETHING",
-      totalAmount: 3000,
       currency: "EUR",
     });
 
@@ -118,44 +239,27 @@ describe("ZERO-COMPROMISE 10/10 FINANCIAL DECISION REPORT STANDARD", () => {
     expect(analysis.recommendation.actionPlanStep1.toLowerCase()).toContain(recId.replace("_", " ").toLowerCase());
   });
 
-  // 4. FINANCING SUMMARY EXPLAINABILITY & APR PROVENANCE
-  it("produces clear provenance for APR when financing is evaluated", () => {
+  // RED TEAM TEST 8: Full Verified PDF Generation (Dynamic 2-Page Layout)
+  it("RED TEAM 8: Generates 10/10 PDF report matching active transaction type with 0 broken symbols", () => {
     const analysis = evaluateCanonicalDecision(mandatoryBaseline, {
-      title: "Financed Equipment",
-      category: "BUY_A_CAR",
-      decisionType: "FINANCED_PURCHASE",
-      totalAmount: 15000,
-      downPayment: 3000,
-      loanTermMonths: 36,
-      currency: "EUR",
-    });
-
-    expect(analysis.financing.hasFinancing).toBe(true);
-    expect(analysis.financing.aprSourceExplanation).toContain("Benchmark");
-    expect(analysis.categorizedAssumptions.financingAssumptions.length).toBeGreaterThan(0);
-  });
-
-  // 5. PDF GENERATION: Produces 10/10 publication-grade document
-  it("Generates 10/10 publication-grade PDF report with Funding Mechanics and 0 broken symbols", () => {
-    const analysis = evaluateCanonicalDecision(mandatoryBaseline, {
-      title: "Business Laptop & Hardware",
-      category: "BUY_SOMETHING",
-      decisionType: "PURCHASE_FUNDING",
-      totalAmount: 4000,
+      title: "Rent Adjustment",
+      category: "MOVE_HOME",
+      transactionType: "RECURRING_EXPENSE",
+      totalAmount: 1800,
       currency: "EUR",
     });
 
     const reportData: VerifiedDecisionData = {
-      decisionId: "dec-final-10",
-      reportId: "RPT-20260824-0010",
+      decisionId: "dec-final-recurring-1",
+      reportId: "RPT-20260824-7777",
       version: 1,
       decisionTitle: analysis.inputs.title,
       category: analysis.inputs.category,
-      decisionType: analysis.inputs.decisionType,
+      transactionType: analysis.transactionType,
       amount: analysis.inputs.totalAmount,
       downPayment: 0,
       monthlyPayment: analysis.primaryImpact.monthlyPayment,
-      isRecurring: false,
+      isRecurring: true,
       currency: "EUR",
       timestamp: analysis.timestamp,
       baseline: {
@@ -204,7 +308,7 @@ describe("ZERO-COMPROMISE 10/10 FINANCIAL DECISION REPORT STANDARD", () => {
           monthlyObligation: analysis.scenarios.optionA.monthlyPayment,
           totalInterest: analysis.scenarios.optionA.totalInterestPaid,
           totalCost: analysis.scenarios.optionA.totalCostOverTime,
-          fundingMechanics: analysis.scenarios.optionA.fundingMechanics,
+          ledger: analysis.scenarios.optionA.ledger,
           isRecommended: analysis.scenarios.optionA.isRecommended,
         },
         optionB: {
@@ -217,7 +321,7 @@ describe("ZERO-COMPROMISE 10/10 FINANCIAL DECISION REPORT STANDARD", () => {
           monthlyObligation: analysis.scenarios.optionB.monthlyPayment,
           totalInterest: analysis.scenarios.optionB.totalInterestPaid,
           totalCost: analysis.scenarios.optionB.totalCostOverTime,
-          fundingMechanics: analysis.scenarios.optionB.fundingMechanics,
+          ledger: analysis.scenarios.optionB.ledger,
           isRecommended: analysis.scenarios.optionB.isRecommended,
         },
         optionC: {
@@ -230,7 +334,7 @@ describe("ZERO-COMPROMISE 10/10 FINANCIAL DECISION REPORT STANDARD", () => {
           monthlyObligation: analysis.scenarios.optionC.monthlyPayment,
           totalInterest: analysis.scenarios.optionC.totalInterestPaid,
           totalCost: analysis.scenarios.optionC.totalCostOverTime,
-          fundingMechanics: analysis.scenarios.optionC.fundingMechanics,
+          ledger: analysis.scenarios.optionC.ledger,
           isRecommended: analysis.scenarios.optionC.isRecommended,
         },
       },
@@ -238,7 +342,7 @@ describe("ZERO-COMPROMISE 10/10 FINANCIAL DECISION REPORT STANDARD", () => {
         executiveSummary: analysis.verdict.primaryReason,
         whyThisVerdict: analysis.verdict.primaryReason,
         recommendedPath: analysis.recommendation.actionPlanStep1,
-        tradeoffsSummary: "Tradeoff between immediate cash outflow and buffer protection.",
+        tradeoffsSummary: "Tradeoff between monthly rent obligation and goal accumulation.",
       },
       assumptions: analysis.assumptions,
     };

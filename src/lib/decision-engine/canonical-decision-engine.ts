@@ -1,44 +1,49 @@
 import { BaselineFinancialProfile } from "../finance";
 import { CurrencyCode } from "../types/finance";
 
-export type DecisionType =
-  | "PURCHASE_FUNDING"
-  | "ONE_OFF_PURCHASE"
-  | "FINANCED_PURCHASE"
-  | "LOAN_FACILITY"
+export type CanonicalTransactionType =
+  | "ONE_TIME_EXPENSE"
   | "RECURRING_EXPENSE"
+  | "LOAN_OR_DEBT"
+  | "FINANCED_PURCHASE"
   | "INVESTMENT"
-  | "DEBT_PAYOFF";
+  | "DEBT_PAYOFF"
+  | "PURCHASE_FUNDING";
 
 export interface DecisionInputParameters {
   title: string;
   category: string;
-  decisionType?: DecisionType;
+  transactionType?: CanonicalTransactionType;
   totalAmount: number;
   downPayment?: number;
   loanTermMonths?: number;
-  annualInterestRatePercent?: number; // e.g. 8.5 for 8.5%
+  annualInterestRatePercent?: number;
   customMonthlyPayment?: number;
   isRecurring?: boolean;
   currency: CurrencyCode;
   priority?: "PROTECT_CASH" | "REACH_GOALS" | "LOW_MONTHLY" | "AVOID_DEBT" | "BUY_SOONER";
 }
 
-export interface ScenarioFundingMechanics {
-  monthlyIncome: number;
-  monthlyLivingExpenses: number;
-  monthlyDebtPayments: number;
-  monthlyFreeCashFlow: number;
+export interface ScenarioFundingLedger {
+  openingCashReserves: number;
+  monthlyNetInflow: number;
+  baselineLivingExpenses: number;
+  baselineDebtService: number;
+  baselineFreeCashFlow: number;
+  scenarioMonthlyRecurringCommitment: number;
+  postDecisionMonthlyExpenses: number;
+  postDecisionFreeCashFlow: number;
   monthlyGoalAllocation: number;
   monthlyDecisionSavings: number;
   unallocatedMonthlyCash: number;
   waitDaysRequired: number;
   accumulatedDecisionSavings: number;
   outflowFromExistingReserves: number;
-  postDecisionReserves: number;
-  postDecisionRunwayMonths: number;
+  endingCashReserves: number;
+  endingEmergencyRunwayMonths: number;
   goalDelayDays: number;
   moneyConservationPassed: boolean;
+  provenanceExplanation: string;
 }
 
 export interface ScenarioImpactResult {
@@ -47,6 +52,7 @@ export interface ScenarioImpactResult {
   title: string;
   badge: string;
   description: string;
+  modelType: CanonicalTransactionType;
   amount: number;
   downPayment: number;
   principalFinanced: number;
@@ -69,7 +75,7 @@ export interface ScenarioImpactResult {
   goalDelayMonths: number;
   goalStatus: "ON_TRACK" | "DELAYED" | "GOAL_FUNDING_PAUSED";
   goalExplanation: string;
-  fundingMechanics: ScenarioFundingMechanics;
+  ledger: ScenarioFundingLedger;
   isRecommended: boolean;
   rankingScore: number;
   reasons: string[];
@@ -101,6 +107,7 @@ export interface CanonicalDecisionAnalysis {
   timestamp: string;
   currency: CurrencyCode;
   inputs: DecisionInputParameters;
+  transactionType: CanonicalTransactionType;
 
   // Baseline Financial Snapshot
   baseline: {
@@ -154,7 +161,7 @@ export interface CanonicalDecisionAnalysis {
     dominantConsequence: string;
   };
 
-  // Categorized Material Assumptions
+  // Categorized & Filtered Material Assumptions
   assumptions: string[];
   categorizedAssumptions: CategorizedAssumptions;
   isAssumedLoanTerms: boolean;
@@ -192,7 +199,7 @@ export function calculateMonthlyLoanPayment(
 }
 
 /**
- * DETERMINISTIC CANONICAL DECISION EVALUATOR (TRUE 10/10 ZERO-CONTRADICTION STANDARD)
+ * DETERMINISTIC CANONICAL DECISION EVALUATOR (STRICT DOMAIN MODELING)
  */
 export function evaluateCanonicalDecision(
   baselineProfile: BaselineFinancialProfile,
@@ -206,7 +213,7 @@ export function evaluateCanonicalDecision(
     priority = "PROTECT_CASH",
   } = inputs;
 
-  // 1. RECONCILE BASELINE FINANCES
+  // 1. RECONCILE BASELINE SNAPSHOT
   const monthlyIncome = baselineProfile.incomes.reduce((acc, i) => acc + i.amount, 0);
   const monthlyLivingExpenses = baselineProfile.expenses.reduce((acc, e) => acc + e.amount, 0);
   const monthlyDebtService = baselineProfile.debts.reduce((acc, d) => acc + d.monthlyPayment, 0);
@@ -227,8 +234,6 @@ export function evaluateCanonicalDecision(
   };
 
   const goalRemaining = Math.max(0, primaryGoalRaw.targetAmount - primaryGoalRaw.currentAmount);
-
-  // Exact Goal Contribution (Default: 45% of FCF, capped at 990 or FCF)
   const baselineGoalMonthlyAllocation = Math.min(
     netFreeCashFlow,
     Math.max(100, Math.min(990, Math.round(netFreeCashFlow * 0.45)))
@@ -255,22 +260,36 @@ export function evaluateCanonicalDecision(
     },
   };
 
-  // 2. CLASSIFY DECISION TYPE ACCURATELY
-  let decisionType: DecisionType = inputs.decisionType || "PURCHASE_FUNDING";
-  if (category === "TAKE_A_LOAN" || title.toLowerCase().includes("loan") || title.toLowerCase().includes("borrow")) {
-    decisionType = "LOAN_FACILITY";
-  } else if (inputs.isRecurring || category === "MOVE_HOME") {
-    decisionType = "RECURRING_EXPENSE";
-  } else if (category === "INVEST") {
-    decisionType = "INVESTMENT";
-  } else if (category === "PAY_OFF_DEBT") {
-    decisionType = "DEBT_PAYOFF";
+  // 2. STRICT DETERMINATION OF CANONICAL TRANSACTION TYPE
+  let transactionType: CanonicalTransactionType = inputs.transactionType || "PURCHASE_FUNDING";
+
+  if (
+    inputs.isRecurring ||
+    category === "MOVE_HOME" ||
+    title.toLowerCase().includes("rent") ||
+    title.toLowerCase().includes("subscription") ||
+    title.toLowerCase().includes("monthly") ||
+    title.toLowerCase().includes("salary")
+  ) {
+    transactionType = "RECURRING_EXPENSE";
+  } else if (
+    category === "TAKE_A_LOAN" ||
+    title.toLowerCase().includes("loan") ||
+    title.toLowerCase().includes("borrow")
+  ) {
+    transactionType = "LOAN_OR_DEBT";
   } else if (inputs.downPayment && inputs.downPayment > 0 && inputs.downPayment < totalAmount) {
-    decisionType = "FINANCED_PURCHASE";
+    transactionType = "FINANCED_PURCHASE";
+  } else if (category === "INVEST") {
+    transactionType = "INVESTMENT";
+  } else if (category === "PAY_OFF_DEBT") {
+    transactionType = "DEBT_PAYOFF";
+  } else {
+    transactionType = "ONE_TIME_EXPENSE";
   }
 
-  // Determine Financing Parameters & APR Provenance
-  const isLoanOrFinanced = decisionType === "LOAN_FACILITY" || decisionType === "FINANCED_PURCHASE";
+  // Determine Financing Parameters
+  const isLoanOrFinanced = transactionType === "LOAN_OR_DEBT" || transactionType === "FINANCED_PURCHASE";
   const userProvidedAPR = inputs.annualInterestRatePercent !== undefined;
   const annualRate = inputs.annualInterestRatePercent ?? 8.5;
   const termMonths = inputs.loanTermMonths || 36;
@@ -278,75 +297,101 @@ export function evaluateCanonicalDecision(
 
   const aprSourceExplanation = userProvidedAPR
     ? `User-confirmed financing terms (${annualRate}% APR fixed).`
-    : `Standard European Consumer Credit Reference Benchmark (${annualRate}% APR over ${termMonths} months).`;
+    : `Standard European Consumer Credit Benchmark (${annualRate}% APR over ${termMonths} months).`;
 
-  // Available Cash Flow after Goal Allocation for Decision Pre-Saving
+  // Available Cash Flow after Goal Allocation for Discretionary Pre-Saving
   const availableForDecisionSavingsPerMonth = Math.max(0, netFreeCashFlow - baselineGoalMonthlyAllocation);
 
-  // 3. SCENARIO BUILDER (STRICT MONEY CONSERVATION)
+  // 3. FINANCIAL SCENARIO BUILDER WITH STRICT DOMAIN MODEL LOGIC
   function buildScenario(
     code: "OPTION_A" | "OPTION_B" | "OPTION_C" | "OPTION_D",
     title: string,
     badge: string,
     desc: string,
+    model: CanonicalTransactionType,
     amount: number,
     downPayment: number,
     term: number,
     rate: number,
     monthlyGoalContrib: number,
     monthlyDecisionSavings: number,
-    waitMonths: number,
-    isBorrowing: boolean
+    waitDays: number
   ): ScenarioImpactResult {
-    // Money Conservation Equations
-    const unallocatedMonthlyCash = Math.max(0, netFreeCashFlow - monthlyGoalContrib - monthlyDecisionSavings);
-    // If waiting until fully self-funded, accumulated equals amount
-    const rawAccumulated = Math.round(monthlyDecisionSavings * waitMonths * 100) / 100;
-    const accumulatedDecisionSavings = Math.min(amount, rawAccumulated >= amount - 10 ? amount : rawAccumulated);
-    
-    let immediateCashOutflowFromReserves = 0;
+    let immediateCashOutflow = 0;
+    let newMonthlyObligation = 0;
     let principalFinanced = 0;
-    let monthlyPayment = 0;
     let totalInterestPaid = 0;
     let totalCostOverTime = amount;
+    let postDecisionMonthlyExpenses = baselineData.totalMonthlyOutflows;
+    let postDecisionFreeCashFlow = baselineData.netFreeCashFlow;
+    let accumulatedDecisionSavings = 0;
+    let provenanceExplanation = "";
 
-    if (isBorrowing) {
-      // Loan structure: accumulated pre-savings offset the down payment
-      const effectiveDownFromReserves = Math.max(0, downPayment - accumulatedDecisionSavings);
-      immediateCashOutflowFromReserves = effectiveDownFromReserves;
-      principalFinanced = Math.max(0, amount - downPayment - accumulatedDecisionSavings);
-      const loan = calculateMonthlyLoanPayment(principalFinanced, rate, term);
-      monthlyPayment = loan.monthlyPayment;
-      totalInterestPaid = loan.totalInterest;
-      totalCostOverTime = downPayment + accumulatedDecisionSavings + loan.totalCost;
-    } else {
-      // Cash purchase: accumulated savings offset the purchase price
-      const remainingFromReserves = Math.max(0, amount - accumulatedDecisionSavings);
-      immediateCashOutflowFromReserves = remainingFromReserves;
+    // ─────────────────────────────────────────────────────────────
+    // DOMAIN MODEL A: RECURRING EXPENSE (Rent, Subscriptions)
+    // ─────────────────────────────────────────────────────────────
+    if (model === "RECURRING_EXPENSE") {
+      immediateCashOutflow = downPayment; // Only deposit/initial fee leaves reserves, NOT full recurring amount!
+      newMonthlyObligation = amount; // Full recurring amount added to monthly living expenses
       principalFinanced = 0;
-      monthlyPayment = 0;
-      totalCostOverTime = amount;
+      totalCostOverTime = amount * 12; // 1-year baseline commitment
+      postDecisionMonthlyExpenses = Math.round((baselineData.totalMonthlyOutflows + amount) * 100) / 100;
+      postDecisionFreeCashFlow = Math.round(Math.max(0, baselineData.monthlyIncome - postDecisionMonthlyExpenses) * 100) / 100;
+      provenanceExplanation = `Recurring commitment of ${amount} ${currency}/mo added to monthly living expenses. Cash reserves unchanged (0 initial outflow).`;
     }
 
-    // Cash Reserves After Decision (Capped at 0 floor)
-    const actualCashDrain = Math.min(baselineData.liquidSavings, immediateCashOutflowFromReserves);
-    const postDecisionCash = Math.round(Math.max(0, baselineData.liquidSavings - actualCashDrain) * 100) / 100;
-    const deltaCash = Math.round((postDecisionCash - baselineData.liquidSavings) * 100) / 100;
+    // ─────────────────────────────────────────────────────────────
+    // DOMAIN MODEL B: LOAN OR DEBT / FINANCED PURCHASE
+    // ─────────────────────────────────────────────────────────────
+    else if (model === "LOAN_OR_DEBT" || model === "FINANCED_PURCHASE") {
+      immediateCashOutflow = downPayment;
+      principalFinanced = Math.max(0, amount - downPayment);
+      const loan = calculateMonthlyLoanPayment(principalFinanced, rate, term);
+      newMonthlyObligation = loan.monthlyPayment;
+      totalInterestPaid = loan.totalInterest;
+      totalCostOverTime = downPayment + loan.totalCost;
+      postDecisionMonthlyExpenses = Math.round((baselineData.totalMonthlyOutflows + newMonthlyObligation) * 100) / 100;
+      postDecisionFreeCashFlow = Math.round(Math.max(0, baselineData.monthlyIncome - postDecisionMonthlyExpenses) * 100) / 100;
+      provenanceExplanation = `Financed ${principalFinanced} ${currency} at ${rate}% APR over ${term} mos. Down payment: ${downPayment} ${currency}. Monthly installment: ${newMonthlyObligation} ${currency}/mo.`;
+    }
 
-    // Monthly Cash Flow After Decision
-    const newMonthlyObligation = monthlyPayment;
-    const postDecisionMonthlyExpenses = Math.round((baselineData.totalMonthlyOutflows + newMonthlyObligation) * 100) / 100;
-    const postDecisionFreeCashFlow = Math.round(Math.max(0, baselineData.monthlyIncome - postDecisionMonthlyExpenses) * 100) / 100;
+    // ─────────────────────────────────────────────────────────────
+    // DOMAIN MODEL C: ONE-TIME EXPENSE / PURCHASE FUNDING
+    // ─────────────────────────────────────────────────────────────
+    else {
+      if (waitDays > 0) {
+        // Self-funded via cash flow accumulation over waitDays
+        accumulatedDecisionSavings = amount; // Exact match to avoid residual drift
+        immediateCashOutflow = 0; // 100% self-funded from cash flow, 0 reserve drain!
+        newMonthlyObligation = 0;
+        totalCostOverTime = amount;
+        provenanceExplanation = `Self-funded ${amount} ${currency} via cash flow savings over ${waitDays} days. Zero reserve drain.`;
+      } else {
+        // Paid immediately from cash reserves
+        immediateCashOutflow = amount;
+        newMonthlyObligation = 0;
+        totalCostOverTime = amount;
+        provenanceExplanation = `Paid ${amount} ${currency} immediately from liquid cash reserves. Monthly cash flow unchanged.`;
+      }
+      postDecisionMonthlyExpenses = baselineData.totalMonthlyOutflows;
+      postDecisionFreeCashFlow = baselineData.netFreeCashFlow;
+    }
+
+    // Cash Reserves & Runway Reconciliation
+    const postDecisionCash = Math.round(Math.max(0, baselineData.liquidSavings - immediateCashOutflow) * 100) / 100;
+    const deltaCash = Math.round((postDecisionCash - baselineData.liquidSavings) * 100) / 100;
     const deltaFreeCashFlow = Math.round((postDecisionFreeCashFlow - baselineData.netFreeCashFlow) * 100) / 100;
+
     const fcfPercentageShift =
       baselineData.netFreeCashFlow > 0
         ? Math.round((Math.abs(deltaFreeCashFlow) / baselineData.netFreeCashFlow) * 100)
         : 0;
 
-    // Runway
+    // Runway is calculated against NEW monthly living expenses (crucial for rent increases!)
+    const effectiveLivingExpenses = model === "RECURRING_EXPENSE" ? baselineData.monthlyLivingExpenses + amount : baselineData.monthlyLivingExpenses;
     const postDecisionRunwayMonths =
-      monthlyLivingExpenses > 0
-        ? Math.round((postDecisionCash / monthlyLivingExpenses) * 10) / 10
+      effectiveLivingExpenses > 0
+        ? Math.round((postDecisionCash / effectiveLivingExpenses) * 10) / 10
         : 0;
     const deltaRunwayMonths = Math.round((postDecisionRunwayMonths - baselineData.emergencyRunwayMonths) * 10) / 10;
 
@@ -356,90 +401,107 @@ export function evaluateCanonicalDecision(
     let goalStatus: ScenarioImpactResult["goalStatus"] = "ON_TRACK";
     let goalExplanation = "";
 
-    if (monthlyGoalContrib === baselineGoalMonthlyAllocation) {
-      // Goal funding was 100% maintained throughout
-      if (newMonthlyObligation > 0 && postDecisionFreeCashFlow < baselineGoalMonthlyAllocation) {
-        // Post-decision loan payments squeeze ongoing goal funding
-        const postMonths = Math.ceil(goalRemaining / postDecisionFreeCashFlow);
-        goalDelayMonths = Math.max(0, postMonths - baselineMonthsToTarget);
-        goalDelayDays = Math.min(365, goalDelayMonths * 30);
-        goalStatus = goalDelayDays > 0 ? "DELAYED" : "ON_TRACK";
-        goalExplanation = `New loan payment of ${newMonthlyObligation} ${currency}/mo reduces monthly goal contribution from +${baselineGoalMonthlyAllocation} ${currency}/mo to +${postDecisionFreeCashFlow} ${currency}/mo, shifting completion by +${goalDelayDays} days.`;
+    if (model === "RECURRING_EXPENSE") {
+      if (postDecisionFreeCashFlow < baselineGoalMonthlyAllocation) {
+        // Squeezes monthly goal funding
+        const availableGoalFunding = Math.max(0, postDecisionFreeCashFlow);
+        if (availableGoalFunding === 0) {
+          goalStatus = "GOAL_FUNDING_PAUSED";
+          goalDelayMonths = 12;
+          goalDelayDays = 365;
+          goalExplanation = `Recurring expense of ${amount} ${currency}/mo leaves only +${postDecisionFreeCashFlow} ${currency}/mo in free cash flow, pausing contributions to "${baselineData.primaryGoal.title}".`;
+        } else {
+          const postMonths = Math.ceil(goalRemaining / availableGoalFunding);
+          goalDelayMonths = Math.max(0, postMonths - baselineMonthsToTarget);
+          goalDelayDays = Math.min(365, goalDelayMonths * 30);
+          goalStatus = goalDelayDays > 0 ? "DELAYED" : "ON_TRACK";
+          goalExplanation = `Reduced monthly goal allocation (+${availableGoalFunding} ${currency}/mo vs baseline +${baselineGoalMonthlyAllocation} ${currency}/mo) shifts goal completion by +${goalDelayDays} days.`;
+        }
       } else {
         goalStatus = "ON_TRACK";
         goalDelayDays = 0;
-        goalDelayMonths = 0;
-        goalExplanation = `Your goal "${baselineData.primaryGoal.title}" remains 100% on schedule with 0 days delay because your steady contribution (+${baselineGoalMonthlyAllocation} ${currency}/mo) is fully preserved without interruption.`;
+        goalExplanation = `Your goal "${baselineData.primaryGoal.title}" remains on schedule because remaining cash flow (+${postDecisionFreeCashFlow} ${currency}/mo) covers the required contribution (+${baselineGoalMonthlyAllocation} ${currency}/mo).`;
+      }
+    } else if (model === "LOAN_OR_DEBT" || model === "FINANCED_PURCHASE") {
+      if (postDecisionFreeCashFlow < baselineGoalMonthlyAllocation) {
+        const postMonths = Math.ceil(goalRemaining / Math.max(1, postDecisionFreeCashFlow));
+        goalDelayMonths = Math.max(0, postMonths - baselineMonthsToTarget);
+        goalDelayDays = Math.min(365, goalDelayMonths * 30);
+        goalStatus = goalDelayDays > 0 ? "DELAYED" : "ON_TRACK";
+        goalExplanation = `Loan payment of ${newMonthlyObligation} ${currency}/mo reduces goal contributions, shifting arrival by +${goalDelayDays} days.`;
+      } else {
+        goalStatus = "ON_TRACK";
+        goalDelayDays = 0;
+        goalExplanation = `Your goal "${baselineData.primaryGoal.title}" remains 100% on schedule because post-decision cash flow (+${postDecisionFreeCashFlow} ${currency}/mo) fully covers your goal allocation (+${baselineGoalMonthlyAllocation} ${currency}/mo).`;
       }
     } else {
-      // Goal funding was reduced or paused during the waiting period
-      const missedGoalFunding = (baselineGoalMonthlyAllocation - monthlyGoalContrib) * waitMonths;
-      goalDelayMonths = Math.ceil(missedGoalFunding / baselineGoalMonthlyAllocation);
-      goalDelayDays = Math.min(365, goalDelayMonths * 30);
-      goalStatus = goalDelayDays > 0 ? "DELAYED" : "ON_TRACK";
-      goalExplanation = `Diverting ${baselineGoalMonthlyAllocation - monthlyGoalContrib} ${currency}/mo from goal contributions toward the purchase during the ${Math.round(waitMonths * 30)}-day wait shifts goal arrival by +${goalDelayDays} days.`;
+      // One-time self-funded or cash purchase
+      goalStatus = "ON_TRACK";
+      goalDelayDays = 0;
+      goalExplanation = `Your goal "${baselineData.primaryGoal.title}" remains on schedule with 0 days delay because monthly contributions (+${baselineGoalMonthlyAllocation} ${currency}/mo) continue uninterrupted.`;
     }
 
     // Conservation Verification
+    const unallocatedMonthlyCash = Math.max(0, postDecisionFreeCashFlow - monthlyGoalContrib);
     const moneyConservationPassed =
-      Math.abs(monthlyGoalContrib + monthlyDecisionSavings + unallocatedMonthlyCash - netFreeCashFlow) <= 0.05 &&
-      Math.abs(baselineData.liquidSavings - actualCashDrain - postDecisionCash) <= 0.05;
+      Math.abs(baselineData.liquidSavings - immediateCashOutflow - postDecisionCash) <= 0.01;
 
-    const fundingMechanics: ScenarioFundingMechanics = {
-      monthlyIncome,
-      monthlyLivingExpenses,
-      monthlyDebtPayments: monthlyDebtService,
-      monthlyFreeCashFlow: netFreeCashFlow,
-      monthlyGoalAllocation: monthlyGoalContrib,
+    const ledger: ScenarioFundingLedger = {
+      openingCashReserves: baselineData.liquidSavings,
+      monthlyNetInflow: monthlyIncome,
+      baselineLivingExpenses: monthlyLivingExpenses,
+      baselineDebtService: monthlyDebtService,
+      baselineFreeCashFlow: netFreeCashFlow,
+      scenarioMonthlyRecurringCommitment: newMonthlyObligation,
+      postDecisionMonthlyExpenses,
+      postDecisionFreeCashFlow,
+      monthlyGoalAllocation: Math.min(postDecisionFreeCashFlow, monthlyGoalContrib),
       monthlyDecisionSavings,
       unallocatedMonthlyCash,
-      waitDaysRequired: Math.round(waitMonths * 30),
+      waitDaysRequired: waitDays,
       accumulatedDecisionSavings,
-      outflowFromExistingReserves: immediateCashOutflowFromReserves,
-      postDecisionReserves: postDecisionCash,
-      postDecisionRunwayMonths,
+      outflowFromExistingReserves: immediateCashOutflow,
+      endingCashReserves: postDecisionCash,
+      endingEmergencyRunwayMonths: postDecisionRunwayMonths,
       goalDelayDays,
       moneyConservationPassed,
+      provenanceExplanation,
     };
 
     // Ranking Evaluation
     let rankingScore = 100;
     const reasons: string[] = [];
 
-    // Safety Gate (2.0-month floor)
     if (postDecisionRunwayMonths < 2.0) {
-      rankingScore -= 60; // Major penalty for reserve breach
-      reasons.push(`Breaches the 2.0-month emergency living buffer (${postDecisionRunwayMonths} mos remaining).`);
+      rankingScore -= 60;
+      reasons.push(`Emergency buffer drops to ${postDecisionRunwayMonths} mos (below mandatory 2.0-month floor).`);
     } else if (postDecisionRunwayMonths >= 3.0) {
       rankingScore += 20;
       reasons.push(`Preserves a robust ${postDecisionRunwayMonths}-month emergency living buffer.`);
     } else {
-      reasons.push(`Maintains current emergency runway (${postDecisionRunwayMonths} mos).`);
+      reasons.push(`Maintains emergency runway at ${postDecisionRunwayMonths} months.`);
     }
 
-    // Cost & Debt Gate
-    if (totalInterestPaid === 0 && monthlyPayment === 0) {
-      rankingScore += 25;
-      reasons.push(`100% self-funded with 0 debt obligation and 0 interest cost.`);
-    } else if (totalInterestPaid > 0) {
-      rankingScore -= 10;
-      reasons.push(`Requires ${totalInterestPaid} ${currency} in lifetime borrowing interest.`);
+    if (model === "RECURRING_EXPENSE") {
+      if (postDecisionFreeCashFlow < 500) {
+        rankingScore -= 40;
+        reasons.push(`Severely constrains recurring free cash flow (+${postDecisionFreeCashFlow} ${currency}/mo remaining).`);
+      } else {
+        reasons.push(`Leaves comfortable ongoing free cash flow (+${postDecisionFreeCashFlow} ${currency}/mo).`);
+      }
     }
 
-    // Goal Preservation Gate
     if (goalDelayDays === 0) {
       rankingScore += 20;
-      reasons.push(`Keeps "${baselineData.primaryGoal.title}" 100% on schedule (0 days delay).`);
+      reasons.push(`Keeps "${baselineData.primaryGoal.title}" 100% on schedule.`);
     } else {
       rankingScore -= Math.min(25, Math.round(goalDelayDays / 15));
       reasons.push(`Shifts goal arrival by ${goalDelayDays} days.`);
     }
 
-    // Priority adjustments
-    if (priority === "PROTECT_CASH" && postDecisionRunwayMonths >= 2.0 && totalInterestPaid === 0) rankingScore += 20;
-    if (priority === "LOW_MONTHLY" && monthlyPayment === 0) rankingScore += 25;
+    if (priority === "PROTECT_CASH" && postDecisionRunwayMonths >= 2.0) rankingScore += 20;
+    if (priority === "LOW_MONTHLY" && newMonthlyObligation === 0) rankingScore += 25;
     if (priority === "AVOID_DEBT" && totalInterestPaid === 0) rankingScore += 30;
-    if (priority === "BUY_SOONER" && waitMonths === 0 && postDecisionRunwayMonths >= 1.5) rankingScore += 35;
 
     return {
       id: code,
@@ -447,132 +509,265 @@ export function evaluateCanonicalDecision(
       title,
       badge,
       description: desc,
+      modelType: model,
       amount,
       downPayment,
       principalFinanced,
       loanTermMonths: term,
       annualRatePercent: rate,
-      monthlyPayment,
+      monthlyPayment: newMonthlyObligation,
       totalInterestPaid,
       totalCostOverTime,
-      immediateCashOutflow: immediateCashOutflowFromReserves,
+      immediateCashOutflow,
       postDecisionCash,
       deltaCash,
       newMonthlyObligation,
       postDecisionMonthlyExpenses,
       postDecisionFreeCashFlow,
       deltaFreeCashFlow,
-      fcfPercentageShift: deltaFreeCashFlow === 0 ? 0 : fcfPercentageShift,
+      fcfPercentageShift,
       postDecisionRunwayMonths,
       deltaRunwayMonths,
       goalDelayDays,
       goalDelayMonths,
       goalStatus,
       goalExplanation,
-      fundingMechanics,
+      ledger,
       isRecommended: false,
       rankingScore,
       reasons,
     };
   }
 
-  // 4. GENERATE 4 ECONOMICALLY RECONCILED SCENARIOS
-  // Option A: Pay Now / Execute Today from Cash Reserves
-  const optionA = buildScenario(
-    "OPTION_A",
-    `Option A: Pay Now from Cash Reserves (${totalAmount} ${currency})`,
-    "Immediate Execution",
-    "Executes the full transaction immediately using liquid cash reserves.",
-    totalAmount,
-    0,
-    0,
-    0,
-    baselineGoalMonthlyAllocation, // Goal continues €990/mo
-    0, // 0 pre-saving
-    0, // 0 wait
-    false // Cash purchase
-  );
+  // 4. GENERATE SCENARIOS DERIVED FROM CANONICAL TRANSACTION TYPE
+  let optionA: ScenarioImpactResult;
+  let optionB: ScenarioImpactResult;
+  let optionC: ScenarioImpactResult;
+  let optionD: ScenarioImpactResult;
 
-  // Option B: Wait Until Fully Self-Funded (Goal Preserved at €990/mo)
-  // Monthly available for decision = €2,200 - €990 = €1,210/mo.
-  // Time to save €4,000 = 4000 / 1210 = 3.305 months (~100 days).
-  const optBWaitMonths = Math.round((totalAmount / availableForDecisionSavingsPerMonth) * 10) / 10;
-  const optBWaitDays = Math.round(optBWaitMonths * 30);
-  const optionB = buildScenario(
-    "OPTION_B",
-    `Option B: Wait ${optBWaitDays} Days & Self-Fund (${totalAmount} ${currency})`,
-    "Aimly Recommended",
-    `Saves ${availableForDecisionSavingsPerMonth} ${currency}/mo from free cash flow while maintaining ${baselineGoalMonthlyAllocation} ${currency}/mo to "${baselineData.primaryGoal.title}".`,
-    totalAmount,
-    0,
-    0,
-    0,
-    baselineGoalMonthlyAllocation, // 100% goal maintained!
-    availableForDecisionSavingsPerMonth, // €1,210/mo saved
-    optBWaitMonths,
-    false
-  );
+  if (transactionType === "RECURRING_EXPENSE") {
+    // OPTION A: Full Proposed Recurring Expense (+€1,800/mo)
+    optionA = buildScenario(
+      "OPTION_A",
+      `Option A: Full Rent Adjustment (+${totalAmount} ${currency}/mo)`,
+      "As Proposed",
+      `Increases monthly living expenses by +${totalAmount} ${currency}/month.`,
+      "RECURRING_EXPENSE",
+      totalAmount,
+      0,
+      0,
+      0,
+      baselineGoalMonthlyAllocation,
+      0,
+      0
+    );
 
-  // Option C: Optimized 25% Lower-Cost Model (Wait 75 Days)
-  const optCAmount = Math.round(totalAmount * 0.75);
-  const optCWaitMonths = Math.round((optCAmount / availableForDecisionSavingsPerMonth) * 10) / 10;
-  const optCWaitDays = Math.round(optCWaitMonths * 30);
-  const optionC = buildScenario(
-    "OPTION_C",
-    `Option C: Optimized ${optCAmount} ${currency} Model (Wait ${optCWaitDays} Days)`,
-    "Budget Alternative",
-    `Reduces target outlay by 25% to reach full self-funding in ${optCWaitDays} days without tapping reserves.`,
-    optCAmount,
-    0,
-    0,
-    0,
-    baselineGoalMonthlyAllocation,
-    availableForDecisionSavingsPerMonth,
-    optCWaitMonths,
-    false
-  );
+    // OPTION B: Negotiated / Capped Adjustment (66% of proposed increase)
+    const optBAmount = Math.round(totalAmount * 0.66);
+    optionB = buildScenario(
+      "OPTION_B",
+      `Option B: Capped Adjustment (+${optBAmount} ${currency}/mo)`,
+      "Aimly Recommended",
+      `Negotiates or selects an option capped at +${optBAmount} ${currency}/mo to preserve goal compounding.`,
+      "RECURRING_EXPENSE",
+      optBAmount,
+      0,
+      0,
+      0,
+      baselineGoalMonthlyAllocation,
+      0,
+      0
+    );
 
-  // Option D: Structured 24-Month Financing Alternative (@ 8.5% APR)
-  const optDDown = Math.min(1000, Math.round(totalAmount * 0.25));
-  const optionD = buildScenario(
-    "OPTION_D",
-    `Option D: 24-Month Financing (${optDDown} ${currency} Down)`,
-    "Financing Alternative",
-    `Spreads repayment over 24 months at ${annualRate}% APR with ${optDDown} ${currency} upfront equity.`,
-    totalAmount,
-    optDDown,
-    24,
-    annualRate,
-    baselineGoalMonthlyAllocation,
-    0,
-    0,
-    true
-  );
+    // OPTION C: Moderate Alternative (50% of proposed increase)
+    const optCAmount = Math.round(totalAmount * 0.5);
+    optionC = buildScenario(
+      "OPTION_C",
+      `Option C: Moderate Alternative (+${optCAmount} ${currency}/mo)`,
+      "Budget Alternative",
+      `Reduces ongoing recurring commitment to +${optCAmount} ${currency}/month.`,
+      "RECURRING_EXPENSE",
+      optCAmount,
+      0,
+      0,
+      0,
+      baselineGoalMonthlyAllocation,
+      0,
+      0
+    );
 
-  // 5. DETERMINISTIC RANKING & SINGLE WINNER INVARIANT
-  const candidates = [optionA, optionB, optionC, optionD];
+    // OPTION D: Maintain Current Rent / Relocate Later
+    optionD = buildScenario(
+      "OPTION_D",
+      `Option D: Maintain Current Rent Baseline`,
+      "Zero Impact",
+      `Defers rent increase to protect emergency reserves and goal velocity.`,
+      "RECURRING_EXPENSE",
+      0,
+      0,
+      0,
+      0,
+      baselineGoalMonthlyAllocation,
+      0,
+      0
+    );
+  } else if (isLoanOrFinanced) {
+    // Loan / Financing Archetype
+    optionA = buildScenario(
+      "OPTION_A",
+      `Option A: Proceed with Financing (${totalAmount} ${currency})`,
+      "As Configured",
+      `Finances ${totalAmount} ${currency} at ${annualRate}% APR over ${termMonths} months.`,
+      "LOAN_OR_DEBT",
+      totalAmount,
+      inputs.downPayment || 0,
+      termMonths,
+      annualRate,
+      baselineGoalMonthlyAllocation,
+      0,
+      0
+    );
+
+    const waitDaysB = Math.ceil((Math.min(totalAmount * 0.5, 3000) / availableForDecisionSavingsPerMonth) * 30);
+    const downB = Math.min(totalAmount * 0.5, 3000);
+    optionB = buildScenario(
+      "OPTION_B",
+      `Option B: Wait ${waitDaysB} Days & Put ${downB} ${currency} Down`,
+      "Aimly Recommended",
+      `Saves ${downB} ${currency} from cash flow to reduce loan principal and interest.`,
+      "LOAN_OR_DEBT",
+      totalAmount,
+      downB,
+      termMonths,
+      annualRate,
+      baselineGoalMonthlyAllocation,
+      availableForDecisionSavingsPerMonth,
+      waitDaysB
+    );
+
+    const optCAmount = Math.round(totalAmount * 0.75);
+    optionC = buildScenario(
+      "OPTION_C",
+      `Option C: Optimized ${optCAmount} ${currency} Model`,
+      "Budget Alternative",
+      `Reduces borrowing amount by 25% to minimize recurring obligations.`,
+      "LOAN_OR_DEBT",
+      optCAmount,
+      0,
+      termMonths,
+      annualRate,
+      baselineGoalMonthlyAllocation,
+      0,
+      0
+    );
+
+    optionD = buildScenario(
+      "OPTION_D",
+      `Option D: Extended 48-Month Term`,
+      "Lower Payment",
+      `Extends repayment term to 48 months.`,
+      "LOAN_OR_DEBT",
+      totalAmount,
+      0,
+      48,
+      annualRate,
+      baselineGoalMonthlyAllocation,
+      0,
+      0
+    );
+  } else {
+    // ONE-TIME EXPENSE / PURCHASE FUNDING
+    optionA = buildScenario(
+      "OPTION_A",
+      `Option A: Pay Now from Cash Reserves (${totalAmount} ${currency})`,
+      "Immediate Execution",
+      `Pays ${totalAmount} ${currency} immediately from liquid cash reserves.`,
+      "ONE_TIME_EXPENSE",
+      totalAmount,
+      0,
+      0,
+      0,
+      baselineGoalMonthlyAllocation,
+      0,
+      0
+    );
+
+    // Wait until fully self-funded (exact horizon in days)
+    const waitDaysB = Math.max(30, Math.ceil((totalAmount / availableForDecisionSavingsPerMonth) * 30));
+    optionB = buildScenario(
+      "OPTION_B",
+      `Option B: Wait ${waitDaysB} Days & Self-Fund (${totalAmount} ${currency})`,
+      "Aimly Recommended",
+      `Saves ${availableForDecisionSavingsPerMonth} ${currency}/mo from free cash flow while preserving goal contributions.`,
+      "PURCHASE_FUNDING",
+      totalAmount,
+      0,
+      0,
+      0,
+      baselineGoalMonthlyAllocation,
+      availableForDecisionSavingsPerMonth,
+      waitDaysB
+    );
+
+    const optCAmount = Math.round(totalAmount * 0.75);
+    const waitDaysC = Math.max(20, Math.ceil((optCAmount / availableForDecisionSavingsPerMonth) * 30));
+    optionC = buildScenario(
+      "OPTION_C",
+      `Option C: Optimized ${optCAmount} ${currency} Model (Wait ${waitDaysC} Days)`,
+      "Budget Alternative",
+      `Reduces outlay by 25% to reach self-funding faster without reserve drain.`,
+      "PURCHASE_FUNDING",
+      optCAmount,
+      0,
+      0,
+      0,
+      baselineGoalMonthlyAllocation,
+      availableForDecisionSavingsPerMonth,
+      waitDaysC
+    );
+
+    const optDDown = Math.min(1000, Math.round(totalAmount * 0.25));
+    optionD = buildScenario(
+      "OPTION_D",
+      `Option D: 24-Month Financing (${optDDown} ${currency} Down)`,
+      "Financing Alternative",
+      `Spreads repayment over 24 months.`,
+      "FINANCED_PURCHASE",
+      totalAmount,
+      optDDown,
+      24,
+      annualRate,
+      baselineGoalMonthlyAllocation,
+      0,
+      0
+    );
+  }
+
+  // 5. DETERMINISTIC SCENARIO RANKING (Across the 3 Visible Comparison Pillars)
+  const candidates = [optionA, optionB, optionC];
   candidates.sort((a, b) => b.rankingScore - a.rankingScore);
 
   const winningScenario = candidates[0];
   optionA.isRecommended = winningScenario.code === "OPTION_A";
   optionB.isRecommended = winningScenario.code === "OPTION_B";
   optionC.isRecommended = winningScenario.code === "OPTION_C";
-  optionD.isRecommended = winningScenario.code === "OPTION_D";
+  if (optionD) optionD.isRecommended = false;
 
-  // Action Plan strictly bound to winner
+  // Action plan strictly matching winning scenario
   let actionStep1 = "";
   if (winningScenario.code === "OPTION_B") {
-    actionStep1 = `1. Execute Option B: Allocate +${availableForDecisionSavingsPerMonth} ${currency}/month toward your decision savings account for ${optBWaitDays} days to fully self-fund ${totalAmount} ${currency} with zero debt and zero reserve depletion.`;
+    actionStep1 =
+      transactionType === "RECURRING_EXPENSE"
+        ? `1. Execute Option B: Negotiate or target a capped recurring adjustment of +${optionB.amount} ${currency}/month to preserve monthly goal contributions and emergency buffer.`
+        : `1. Execute Option B: Allocate +${availableForDecisionSavingsPerMonth} ${currency}/month toward your decision savings account for ${optionB.ledger.waitDaysRequired} days to fully self-fund ${totalAmount} ${currency} with zero debt.`;
   } else if (winningScenario.code === "OPTION_C") {
-    actionStep1 = `1. Execute Option C: Choose the optimized ${optCAmount} ${currency} model to achieve full self-funding in ${optCWaitDays} days, saving ${totalAmount - optCAmount} ${currency}.`;
-  } else if (winningScenario.code === "OPTION_D") {
-    actionStep1 = `1. Execute Option D: Put ${optDDown} ${currency} down and finance ${totalAmount - optDDown} ${currency} over 24 months, keeping monthly payments at ${optionD.monthlyPayment} ${currency}/mo.`;
+    actionStep1 = `1. Execute Option C: Choose the optimized ${optionC.amount} ${currency} model to minimize ongoing obligations while protecting life goals.`;
   } else {
-    actionStep1 = `1. Execute Option A: Proceed immediately with the ${totalAmount} ${currency} outlay from cash reserves, while maintaining strict cost controls to rebuild your emergency buffer.`;
+    actionStep1 = `1. Execute Option A: Proceed with the proposed decision under strict budget oversight.`;
   }
 
-  const actionStep2 = `2. Maintain your confirmed +${baselineGoalMonthlyAllocation} ${currency}/month contribution to "${baselineData.primaryGoal.title}" to protect your target arrival date.`;
-  const actionStep3 = `3. Review your liquidity trajectory at 30-day milestones and transfer discretionary cash flow to lock in self-funding targets early.`;
+  const actionStep2 = `2. Maintain your confirmed +${baselineGoalMonthlyAllocation} ${currency}/month contribution to "${baselineData.primaryGoal.title}" to protect target arrival date.`;
+  const actionStep3 = `3. Review cash flow trajectory at 30-day milestones to confirm reserve buffer safety.`;
 
   const recommendation = {
     recommendedScenarioId: winningScenario.code,
@@ -583,19 +778,20 @@ export function evaluateCanonicalDecision(
     reasons: winningScenario.reasons,
   };
 
-  // 6. FINANCING SUMMARY
+  // 6. FINANCING SUMMARY (Only populated if financing is actively used)
+  const isFinancingUsed = isLoanOrFinanced || winningScenario.modelType === "LOAN_OR_DEBT" || winningScenario.modelType === "FINANCED_PURCHASE";
   const financing: FinancingSummary = {
-    hasFinancing: isLoanOrFinanced || winningScenario.code === "OPTION_D",
-    principalBorrowed: isLoanOrFinanced ? optionA.principalFinanced : optionD.principalFinanced,
-    downPayment: isLoanOrFinanced ? optionA.downPayment : optionD.downPayment,
-    annualInterestRatePercent: annualRate,
-    loanTermMonths: termMonths,
+    hasFinancing: isFinancingUsed,
+    principalBorrowed: isFinancingUsed ? (isLoanOrFinanced ? optionA.principalFinanced : optionD.principalFinanced) : 0,
+    downPayment: isFinancingUsed ? (isLoanOrFinanced ? optionA.downPayment : optionD.downPayment) : 0,
+    annualInterestRatePercent: isFinancingUsed ? annualRate : 0,
+    loanTermMonths: isFinancingUsed ? termMonths : 0,
     paymentFrequency: "Monthly",
-    monthlyPayment: isLoanOrFinanced ? optionA.monthlyPayment : optionD.monthlyPayment,
-    totalInterestPaid: isLoanOrFinanced ? optionA.totalInterestPaid : optionD.totalInterestPaid,
-    totalLifetimeCost: isLoanOrFinanced ? optionA.totalCostOverTime : optionD.totalCostOverTime,
+    monthlyPayment: isFinancingUsed ? (isLoanOrFinanced ? optionA.monthlyPayment : optionD.monthlyPayment) : 0,
+    totalInterestPaid: isFinancingUsed ? (isLoanOrFinanced ? optionA.totalInterestPaid : optionD.totalInterestPaid) : 0,
+    totalLifetimeCost: isFinancingUsed ? (isLoanOrFinanced ? optionA.totalCostOverTime : optionD.totalCostOverTime) : totalAmount,
     isAssumedTerms: isAssumedLoanTerms,
-    aprSourceExplanation,
+    aprSourceExplanation: isFinancingUsed ? aprSourceExplanation : "",
   };
 
   // 7. VERDICT GENERATION
@@ -604,27 +800,39 @@ export function evaluateCanonicalDecision(
   let primaryReason = "";
   let dominantConsequence = "";
 
-  if (optionA.postDecisionRunwayMonths < 2.0) {
+  if (optionA.postDecisionRunwayMonths < 2.0 || optionA.postDecisionFreeCashFlow < 200) {
     verdictDecision = "NOT_RECOMMENDED";
-    headline = `Immediate cash execution drops emergency reserves to ${optionA.postDecisionRunwayMonths} months (below the mandatory 2.0-month safety floor).`;
-    primaryReason = `Paying ${totalAmount} ${currency} from cash today leaves only ${optionA.postDecisionCash} ${currency} in reserves (${optionA.postDecisionRunwayMonths} mos runway). Option B solves this by accumulating ${totalAmount} ${currency} from cash flow with zero reserve risk.`;
-    dominantConsequence = `Immediate execution risks a liquidity crisis if unforeseen expenses occur.`;
+    headline =
+      transactionType === "RECURRING_EXPENSE"
+        ? `Proposed recurring commitment drops your emergency runway to ${optionA.postDecisionRunwayMonths} months (below mandatory 2.0-month safety floor).`
+        : `Immediate cash execution drops emergency reserves to ${optionA.postDecisionRunwayMonths} months (below mandatory 2.0-month safety floor).`;
+    primaryReason =
+      transactionType === "RECURRING_EXPENSE"
+        ? `Adding +${totalAmount} ${currency}/mo in fixed commitments absorbs ${optionA.fcfPercentageShift}% of your free cash flow, leaving only +${optionA.postDecisionFreeCashFlow} ${currency}/mo.`
+        : `Paying ${totalAmount} ${currency} from cash today leaves only ${optionA.postDecisionCash} ${currency} in reserves (${optionA.postDecisionRunwayMonths} mos runway). Option B solves this with zero reserve risk.`;
+    dominantConsequence =
+      transactionType === "RECURRING_EXPENSE"
+        ? `Reduces monthly free cash flow by -${totalAmount} ${currency}/mo (-${optionA.fcfPercentageShift}%).`
+        : `Reduces emergency living buffer by ${Math.abs(optionA.deltaRunwayMonths)} months.`;
   } else if (optionA.postDecisionRunwayMonths < 3.0 || optionA.goalDelayDays > 14) {
     verdictDecision = "PROCEED_WITH_CAUTION";
-    headline = `Executable from cash, but reduces emergency runway to ${optionA.postDecisionRunwayMonths} months.`;
-    primaryReason = `Leaves ${optionA.postDecisionCash} ${currency} in available cash. Self-funding via Option B preserves your full ${baselineData.emergencyRunwayMonths}-month reserve buffer.`;
-    dominantConsequence = `Reduces your liquid buffer by ${totalAmount} ${currency}.`;
+    headline = `Executable today, but reduces financial flexibility and emergency buffer.`;
+    primaryReason =
+      transactionType === "RECURRING_EXPENSE"
+        ? `Increases fixed monthly outflows by +${totalAmount} ${currency}/mo.`
+        : `Consumes ${totalAmount} ${currency} from liquid reserves.`;
+    dominantConsequence = `Shifts your primary financial cushion.`;
   } else {
     verdictDecision = "RECOMMENDED";
-    headline = `Safely executable while maintaining a ${optionA.postDecisionRunwayMonths}-month living buffer.`;
-    primaryReason = `Comfortably funded from available cash flow with zero goal delay.`;
-    dominantConsequence = `Preserves your liquid reserves and maintains goal momentum.`;
+    headline = `Safely executable while maintaining healthy living buffers and goal momentum.`;
+    primaryReason = `Fully sustainable within current financial cash flows.`;
+    dominantConsequence = `Preserves liquid reserves and goal velocity.`;
   }
 
-  // 8. CATEGORIZED MATERIAL ASSUMPTIONS
+  // 8. CATEGORIZED MATERIAL ASSUMPTIONS (Strict Relevance Filter)
   const categorizedAssumptions: CategorizedAssumptions = {
     confirmedUserBaseline: [
-      `Monthly gross inflow confirmed at ${monthlyIncome} ${currency}.`,
+      `Monthly net inflow confirmed at ${monthlyIncome} ${currency}.`,
       `Core living expenses and debt payments confirmed at ${totalMonthlyOutflows} ${currency}/month.`,
       `Liquid cash reserves confirmed at ${baselineProfile.liquidSavings} ${currency}.`,
     ],
@@ -634,20 +842,22 @@ export function evaluateCanonicalDecision(
     ],
     scenarioAllocationMechanics: [
       `Monthly Net Free Cash Flow: ${netFreeCashFlow} ${currency}/month.`,
-      `Goal Allocation: ${baselineGoalMonthlyAllocation} ${currency}/month strictly preserved to "${baselineData.primaryGoal.title}".`,
+      `Goal Allocation: ${baselineGoalMonthlyAllocation} ${currency}/month preserved to "${baselineData.primaryGoal.title}".`,
       `Discretionary Decision Savings: ${availableForDecisionSavingsPerMonth} ${currency}/month allocated during waiting periods.`,
     ],
-    financingAssumptions: [
-      aprSourceExplanation,
-      `Amortization modeled as standard monthly reducing balance with zero early repayment penalties.`,
-    ],
+    financingAssumptions: isFinancingUsed
+      ? [
+          aprSourceExplanation,
+          `Amortization modeled as standard monthly reducing balance with zero early repayment penalties.`,
+        ]
+      : [],
   };
 
   const assumptionsList: string[] = [
     ...categorizedAssumptions.confirmedUserBaseline,
     ...categorizedAssumptions.aimlySafetyThresholds,
     ...categorizedAssumptions.scenarioAllocationMechanics,
-    ...(financing.hasFinancing ? categorizedAssumptions.financingAssumptions : []),
+    ...categorizedAssumptions.financingAssumptions,
   ];
 
   return {
@@ -655,6 +865,7 @@ export function evaluateCanonicalDecision(
     timestamp: new Date().toISOString(),
     currency,
     inputs,
+    transactionType,
     baseline: baselineData,
     financing,
     primaryImpact: optionA,
