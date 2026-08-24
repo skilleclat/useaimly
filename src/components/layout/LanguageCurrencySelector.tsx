@@ -1,27 +1,54 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useI18n } from "@/lib/i18n/i18n-context";
 import { LanguageCode } from "@/lib/i18n/translations";
 import { useCurrency } from "@/lib/currency/currency-context";
 import { CurrencyCode } from "@/lib/types/finance";
 import { SUPPORTED_CURRENCIES } from "@/lib/utils/currency";
-import { Globe, ChevronDown, Check } from "lucide-react";
+import { Globe, ChevronDown, Check, Sparkles } from "lucide-react";
+
+interface LanguageOption {
+  code: LanguageCode;
+  label: string;
+  nativeLabel: string;
+  badge: string;
+}
+
+const LANGUAGES: LanguageOption[] = [
+  { code: "en", label: "English", nativeLabel: "English", badge: "EN" },
+  { code: "fr", label: "French", nativeLabel: "Français", badge: "FR" },
+  { code: "sw", label: "Swahili", nativeLabel: "Kiswahili", badge: "SW" },
+];
 
 export function LanguageCurrencySelector() {
   const { language, setLanguage } = useI18n();
   const { currency, setCurrency } = useCurrency();
   const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const LANGUAGES: { code: LanguageCode; label: string; flag: string }[] = [
-    { code: "en", label: "English", flag: "🇬🇧" },
-    { code: "fr", label: "Français", flag: "🇫🇷" },
-    { code: "sw", label: "Kiswahili", flag: "🇰🇪" },
-  ];
+  const isFr = language === "fr";
+
+  // Close on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const currentLang = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
+  const currentCur = SUPPORTED_CURRENCIES.find((c) => c.code === currency) || SUPPORTED_CURRENCIES[0];
 
   function handleLanguageSelect(lang: LanguageCode) {
     setLanguage(lang);
-    setIsOpen(false);
   }
 
   function handleCurrencySelect(cur: CurrencyCode) {
@@ -30,80 +57,132 @@ export function LanguageCurrencySelector() {
   }
 
   return (
-    <div className="relative inline-block text-left font-sans">
+    <div className="relative inline-block text-left font-sans" ref={dropdownRef}>
       {/* Trigger Button */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/80 bg-card text-xs font-bold text-foreground hover:border-primary/40 transition-all shadow-xs cursor-pointer min-h-[36px]"
+        aria-expanded={isOpen}
+        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border/80 bg-card hover:border-[#FF5533]/50 text-xs font-semibold text-foreground transition-all shadow-xs cursor-pointer min-h-[38px]"
       >
-        <Globe className="w-3.5 h-3.5 text-primary" />
-        <span className="uppercase font-mono">{language}</span>
-        <span className="text-muted-foreground">•</span>
-        <span className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
-          {currency}
+        <Globe className="w-3.5 h-3.5 text-[#FF5533] shrink-0" />
+        <span className="font-mono font-bold tracking-wide uppercase text-foreground">
+          {currentLang.badge}
         </span>
-        <ChevronDown className="w-3 h-3 text-muted-foreground ml-0.5" />
+        <span className="text-muted-foreground/60 text-[10px]">•</span>
+        <span className="font-mono font-bold text-foreground">
+          {currentCur.code}
+        </span>
+        <span className="font-mono text-[11px] text-muted-foreground">
+          {currentCur.symbol}
+        </span>
+        <ChevronDown
+          className={`w-3 h-3 text-muted-foreground transition-transform duration-200 ${
+            isOpen ? "rotate-180 text-foreground" : ""
+          }`}
+        />
       </button>
 
-      {/* Dropdown Modal & Outside Click Backdrop */}
+      {/* Dropdown Menu */}
       {isOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40 bg-transparent"
-            onClick={() => setIsOpen(false)}
-          />
+        <div className="absolute right-0 mt-2 w-80 rounded-2xl border border-border/90 bg-card/98 backdrop-blur-2xl p-4 shadow-2xl z-50 animate-fadeIn space-y-4 text-left">
+          
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
+            <span className="text-xs font-bold text-foreground tracking-tight flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5 text-[#FF5533]" />
+              <span>{isFr ? "Langue & Devise" : "Language & Currency"}</span>
+            </span>
+            <span className="text-[10px] font-mono font-medium text-muted-foreground uppercase">
+              Preferences
+            </span>
+          </div>
 
-          <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-border/80 bg-card p-3 shadow-2xl z-50 animate-fadeIn space-y-3 font-sans text-left">
-            {/* Language Selector */}
-            <div className="space-y-1">
-              <span className="text-[10px] font-mono uppercase font-bold text-muted-foreground block px-2">
-                Language / Lugha
-              </span>
-              <div className="grid grid-cols-1 gap-1">
-                {LANGUAGES.map((l) => (
+          {/* 1. Language Selection Grid */}
+          <div className="space-y-2">
+            <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-muted-foreground block">
+              {isFr ? "Langue d'affichage" : "Display Language"}
+            </span>
+            <div className="grid grid-cols-3 gap-1.5">
+              {LANGUAGES.map((l) => {
+                const isSelected = language === l.code;
+                return (
                   <button
                     key={l.code}
                     type="button"
                     onClick={() => handleLanguageSelect(l.code)}
-                    className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                      language === l.code
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary/40 text-foreground hover:bg-secondary"
+                    className={`flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all cursor-pointer ${
+                      isSelected
+                        ? "bg-[#FF5533]/10 border-[#FF5533] text-foreground font-bold shadow-xs"
+                        : "bg-secondary/40 hover:bg-secondary border-border/70 text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    <span>{l.flag} {l.label}</span>
-                    {language === l.code && <Check className="w-3.5 h-3.5" />}
+                    <span className="text-[11px] font-mono font-black block text-[#FF5533]">
+                      {l.badge}
+                    </span>
+                    <span className="text-xs font-medium block truncate w-full mt-0.5">
+                      {l.nativeLabel}
+                    </span>
                   </button>
-                ))}
-              </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 2. Currency Selection List */}
+          <div className="space-y-2 border-t border-border/60 pt-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-muted-foreground block">
+                {isFr ? "Devise de calcul" : "Calculation Currency"}
+              </span>
+              <span className="text-[10px] font-mono text-muted-foreground">
+                {SUPPORTED_CURRENCIES.length} {isFr ? "devises" : "available"}
+              </span>
             </div>
 
-            {/* Currency Selector */}
-            <div className="space-y-1 border-t border-border/60 pt-2">
-              <span className="text-[10px] font-mono uppercase font-bold text-muted-foreground block px-2">
-                Preferred Currency / Sarafu
-              </span>
-              <div className="max-h-48 overflow-y-auto space-y-1 pr-1 font-mono">
-                {SUPPORTED_CURRENCIES.map((c) => (
+            <div className="max-h-56 overflow-y-auto space-y-1 pr-1 overscroll-contain">
+              {SUPPORTED_CURRENCIES.map((c) => {
+                const isSelected = currency === c.code;
+                return (
                   <button
                     key={c.code}
                     type="button"
                     onClick={() => handleCurrencySelect(c.code)}
-                    className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                      currency === c.code
-                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/30"
-                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all cursor-pointer ${
+                      isSelected
+                        ? "bg-[#FF5533]/10 border border-[#FF5533]/40 text-foreground font-bold shadow-xs"
+                        : "hover:bg-secondary/70 text-muted-foreground hover:text-foreground border border-transparent"
                     }`}
                   >
-                    <span>{c.flag} {c.code} - {c.name}</span>
-                    <span className="font-extrabold">{c.symbol}</span>
+                    <div className="flex items-center gap-2.5">
+                      <span className="font-mono font-black text-foreground text-xs w-8 text-left">
+                        {c.code}
+                      </span>
+                      <span className="text-xs font-medium truncate max-w-[140px] text-foreground/90">
+                        {c.name}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="font-mono text-xs font-bold text-muted-foreground bg-secondary/80 px-2 py-0.5 rounded-md">
+                        {c.symbol}
+                      </span>
+                      {isSelected && (
+                        <Check className="w-3.5 h-3.5 text-[#FF5533]" />
+                      )}
+                    </div>
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
           </div>
-        </>
+
+          {/* Footer Note */}
+          <div className="pt-2 border-t border-border/50 text-[10px] font-mono text-muted-foreground text-center">
+            <span>{isFr ? "Conversion déterministe en temps réel" : "Deterministic real-time conversion"}</span>
+          </div>
+
+        </div>
       )}
     </div>
   );

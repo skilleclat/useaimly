@@ -365,13 +365,13 @@ export default function SettingsPage() {
           {/* Language Selection */}
           <div className="space-y-2">
             <label className="text-xs font-mono font-bold text-foreground block">
-              Interface Language / Langue / Lugha
+              Interface Language
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
-                { code: "en", label: "English (US/UK)", flag: "🇬🇧" },
-                { code: "fr", label: "Français (Global)", flag: "🇫🇷" },
-                { code: "sw", label: "Kiswahili (East Africa)", flag: "🇰🇪" },
+                { code: "en", label: "English", badge: "EN" },
+                { code: "fr", label: "Français", badge: "FR" },
+                { code: "sw", label: "Kiswahili", badge: "SW" },
               ].map((l) => {
                 const isSelected = language === l.code;
                 return (
@@ -381,12 +381,17 @@ export default function SettingsPage() {
                     onClick={() => setLanguage(l.code as any)}
                     className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
                       isSelected
-                        ? "border-primary bg-primary/10 text-primary ring-2 ring-primary/20 font-bold"
-                        : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                        ? "border-[#FF5533] bg-[#FF5533]/10 text-foreground ring-1 ring-[#FF5533] font-bold"
+                        : "border-border bg-background text-muted-foreground hover:border-[#FF5533]/40 hover:text-foreground"
                     }`}
                   >
-                    <span className="text-xs font-bold">{l.flag} {l.label}</span>
-                    {isSelected && <Check className="w-4 h-4 text-primary" />}
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-[10px] font-mono font-black px-1.5 py-0.5 rounded bg-secondary text-[#FF5533]">
+                        {l.badge}
+                      </span>
+                      <span className="text-xs font-semibold">{l.label}</span>
+                    </div>
+                    {isSelected && <Check className="w-4 h-4 text-[#FF5533]" />}
                   </button>
                 );
               })}
@@ -406,18 +411,18 @@ export default function SettingsPage() {
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {[
-                { code: "USD", name: "US Dollar", symbol: "$", flag: "🇺🇸" },
-                { code: "KES", name: "Kenyan Shilling", symbol: "KSh", flag: "🇰🇪" },
-                { code: "EUR", name: "Euro", symbol: "€", flag: "🇪🇺" },
-                { code: "GBP", name: "British Pound", symbol: "£", flag: "🇬🇧" },
-                { code: "CAD", name: "Canadian Dollar", symbol: "CA$", flag: "🇨🇦" },
-                { code: "CDF", name: "Franc Congolais", symbol: "FC", flag: "🇨🇩" },
-                { code: "ZAR", name: "South African Rand", symbol: "R", flag: "🇿🇦" },
-                { code: "NGN", name: "Nigerian Naira", symbol: "₦", flag: "🇳🇬" },
-                { code: "XOF", name: "Franc CFA", symbol: "CFA", flag: "🇸🇳" },
-                { code: "UGX", name: "Ugandan Shilling", symbol: "USh", flag: "🇺🇬" },
-                { code: "TZS", name: "Tanzanian Shilling", symbol: "TSh", flag: "🇹🇿" },
-                { code: "RWF", name: "Rwandan Franc", symbol: "FRw", flag: "🇷🇼" },
+                { code: "USD", name: "US Dollar", symbol: "$" },
+                { code: "KES", name: "Kenyan Shilling", symbol: "KSh" },
+                { code: "EUR", name: "Euro", symbol: "€" },
+                { code: "GBP", name: "British Pound", symbol: "£" },
+                { code: "CAD", name: "Canadian Dollar", symbol: "CA$" },
+                { code: "CDF", name: "Franc Congolais", symbol: "FC" },
+                { code: "ZAR", name: "South African Rand", symbol: "R" },
+                { code: "NGN", name: "Nigerian Naira", symbol: "₦" },
+                { code: "XOF", name: "Franc CFA", symbol: "CFA" },
+                { code: "UGX", name: "Ugandan Shilling", symbol: "USh" },
+                { code: "TZS", name: "Tanzanian Shilling", symbol: "TSh" },
+                { code: "RWF", name: "Rwandan Franc", symbol: "FRw" },
               ].map((c) => {
                 const isSelected = preferredCurrency === c.code;
                 return (
@@ -427,13 +432,13 @@ export default function SettingsPage() {
                     onClick={() => setPreferredCurrency(c.code as CurrencyCode)}
                     className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                       isSelected
-                        ? "border-primary bg-primary/5 text-primary ring-2 ring-primary/20 font-bold shadow-xs"
-                        : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                        ? "border-[#FF5533] bg-[#FF5533]/10 text-foreground ring-1 ring-[#FF5533] font-bold shadow-xs"
+                        : "border-border bg-background text-muted-foreground hover:border-[#FF5533]/40 hover:text-foreground"
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono font-bold">{c.flag} {c.code}</span>
-                      <span className="text-xs font-mono font-extrabold text-foreground">{c.symbol}</span>
+                      <span className="text-xs font-mono font-bold text-foreground">{c.code}</span>
+                      <span className="text-xs font-mono font-bold text-muted-foreground bg-secondary/80 px-1.5 py-0.2 rounded">{c.symbol}</span>
                     </div>
                     <div className="text-[10px] text-muted-foreground mt-1 truncate">
                       {c.name}
