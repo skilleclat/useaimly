@@ -133,7 +133,25 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setDrawColor(cardBorder[0], cardBorder[1], cardBorder[2]);
   doc.roundedRect(margin, y, contentWidth, 30, 3, 3, "FD");
 
-  const execDec = data.executiveDecision || (data.status === "SAFE" ? "GO" : data.status === "OFF_TRACK" ? "WAIT" : "ADJUST");
+  const remainingGapVal = data.remainingGap !== undefined ? data.remainingGap : Math.max(0, data.targetAmount - data.currentAmount);
+
+  // Synchronize Executive Decision Badge directly with data.executiveDecision and headlineVerdict
+  let execDec: ExecutiveDecision = data.executiveDecision || "GO";
+  if (!data.executiveDecision) {
+    if (data.headlineVerdict?.includes("ADJUST")) {
+      execDec = "ADJUST";
+    } else if (data.headlineVerdict?.includes("WAIT")) {
+      execDec = "WAIT";
+    } else if (data.headlineVerdict?.includes("GO")) {
+      execDec = "GO";
+    } else {
+      execDec = data.status === "SAFE" ? "GO" : data.status === "OFF_TRACK" ? "WAIT" : "ADJUST";
+    }
+  }
+
+  if (remainingGapVal === 0 && !data.executiveDecision) {
+    execDec = "GO";
+  }
 
   // Decision Badge Color
   let badgeColor = [22, 163, 74]; // GO (Green)
@@ -165,7 +183,6 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setFont("helvetica", "normal");
   doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
   let deltaText = "";
-  const remainingGapVal = data.remainingGap !== undefined ? data.remainingGap : Math.max(0, data.targetAmount - data.currentAmount);
 
   if (data.availableForGoals < 0) {
     deltaText = isFr
@@ -360,9 +377,16 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
     y += 22;
   };
 
+  let block01Text = data.whatYouCanDo;
+  if (remainingGapVal === 0) {
+    block01Text = isFr
+      ? `Votre objectif "${data.destinationTitle || "Destination"}" est 100% financé (${formatCurrency(data.currentAmount, data.currency)}). Réaffectez votre cash-flow libre (${formatCurrency(data.availableForGoals, data.currency)}/mois) aux réserves de sécurité.`
+      : `Your goal "${data.destinationTitle || "Destination"}" is 100% funded with ${formatCurrency(data.currentAmount, data.currency)} in confirmed savings. Reallocate your monthly free cash flow of ${formatCurrency(data.availableForGoals, data.currency)}/mo toward liquid emergency reserves.`;
+  }
+
   renderSynthesisBlock(
     isFr ? "01 — Action Immédiate sur les Liquidités" : "01 — Immediate Liquidity Action",
-    data.whatYouCanDo,
+    block01Text,
     [16, 185, 129]
   );
   renderSynthesisBlock(
@@ -371,17 +395,21 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
     [245, 158, 11]
   );
 
-  // Conditional Label for Block 03
+  // Conditional Label & Text for Block 03
   let block03Label = isFr ? "03 — Plan de Rattrapage Recommandé" : "03 — Recommended Catch-up Plan";
-  if (remGap === 0) {
+  let block03Text = data.toStayOnTrack;
+  if (remainingGapVal === 0) {
     block03Label = isFr ? "03 — Plan d'Allocation & Réaffectation" : "03 — Allocation & Reallocation Plan";
+    block03Text = isFr
+      ? `Aucun apport mensuel supplémentaire n'est requis pour cet objectif. Dirigez votre capacité d'épargne (${formatCurrency(data.availableForGoals, data.currency)}/mois) vers la réserve d'urgence.`
+      : `Zero further monthly contribution required for this destination. Reallocate your monthly capacity of ${formatCurrency(data.availableForGoals, data.currency)}/mo to building liquid reserves or secondary goals.`;
   } else if (data.delayInDays <= 0 || data.status === "SAFE") {
     block03Label = isFr ? "03 — Maintien de l'Élan d'Épargne" : "03 — Goal Momentum & Allocation Plan";
   }
 
   renderSynthesisBlock(
     block03Label,
-    data.toStayOnTrack,
+    block03Text,
     [255, 85, 51]
   );
   renderSynthesisBlock(
@@ -533,11 +561,26 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setTextColor(primaryOrange[0], primaryOrange[1], primaryOrange[2]);
   doc.text(isFr ? "PROCHAINE ACTION :" : "NEXT ACTION:", margin + 4, y2 + 9);
 
+  let page2Action = data.singleAction;
+  if (!page2Action || (execDec === "ADJUST" && page2Action.includes("Proceed with current goal allocation schedule"))) {
+    if (remainingGapVal === 0) {
+      page2Action = isFr
+        ? `Réaffecter le cash-flow libre (${formatCurrency(data.availableForGoals, data.currency)}/mois) aux réserves de sécurité.`
+        : `Reallocate surplus monthly cash flow (${formatCurrency(data.availableForGoals, data.currency)}/mo) to Emergency Reserves.`;
+    } else if (execDec === "ADJUST") {
+      page2Action = isFr
+        ? `Réaffecter ${formatCurrency(data.availableForGoals, data.currency)}/mois pour constituer les réserves de sécurité jusqu'à l'objectif de 3,0 mois.`
+        : `Redirect ${formatCurrency(data.availableForGoals, data.currency)}/mo to strengthen reserve buffer to 3.0-month target.`;
+    } else {
+      page2Action = isFr ? "Poursuivre le programme d'épargne mensuel automatisé." : "Proceed with current goal allocation schedule.";
+    }
+  }
+
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
   doc.text(
-    data.singleAction || (isFr ? "Poursuivre le programme d'épargne mensuel automatisé." : "Proceed with current goal allocation schedule."),
+    page2Action,
     margin + (isFr ? 34 : 30),
     y2 + 9,
     { maxWidth: contentWidth - 38 }
@@ -584,6 +627,7 @@ export function generateExecutiveBriefingPDF(
   const monthlyInflow = baseline.incomes.reduce((sum, inc) => sum + inc.amount, 0);
   const monthlyOutflow = baseline.expenses.reduce((sum, exp) => sum + exp.amount, 0);
   const availableForGoals = monthlyInflow - monthlyOutflow;
+  const remainingGap = Math.max(0, goal.targetAmount - goal.currentAmount);
 
   const strategistOutput = generateSeniorStrategistAssessment({
     currency,
@@ -595,28 +639,32 @@ export function generateExecutiveBriefingPDF(
     targetAmount: goal.targetAmount,
     targetDate: goal.targetDate,
     destinationTitle: goal.title,
-    projectedDate: "2027-12-31",
+    projectedDate: goal.targetDate,
   });
 
   const pdfData: PDFReportData = {
     destinationTitle: goal.title,
     targetAmount: goal.targetAmount,
     currentAmount: goal.currentAmount,
+    remainingGap,
     targetDate: goal.targetDate,
-    projectedDate: "2027-12-31",
+    projectedDate: goal.targetDate,
     delayInDays: 0,
     currency,
     monthlyInflow,
     monthlyOutflow,
     availableForGoals,
     liquidSavings: baseline.liquidSavings,
-    status: "SAFE",
+    executiveDecision: strategistOutput.executiveDecision,
+    confidenceLevel: strategistOutput.confidenceLevel,
+    status: strategistOutput.executiveDecision === "GO" ? "SAFE" : strategistOutput.executiveDecision === "WAIT" ? "OFF_TRACK" : "HIGH_IMPACT",
     headlineVerdict: strategistOutput.headlineVerdict,
     whatYouCanDo: strategistOutput.whatYouCanDo,
     whatItChanges: strategistOutput.whatItChanges,
     toStayOnTrack: strategistOutput.toStayOnTrack,
     strategicRead: strategistOutput.strategicRead,
     masterStrategyParagraph: strategistOutput.masterStrategyParagraph,
+    singleAction: strategistOutput.toStayOnTrack,
   };
 
   downloadPDFReport(pdfData);

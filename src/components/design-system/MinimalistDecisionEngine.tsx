@@ -44,7 +44,13 @@ import { FutureCostConsequenceCard } from "./FutureCostConsequenceCard";
 import { OfferDocumentModal } from "@/components/finance/OfferDocumentModal";
 import { ProUpgradeModal } from "@/components/finance/ProUpgradeModal";
 import { ExtractedOfferDetails } from "@/lib/nlp/document-offer-parser";
-import { FileSearch } from "lucide-react";
+import { DocumentUploadDropzone } from "@/components/finance/DocumentUploadDropzone";
+import { AimlyDecisionReport } from "@/components/finance/AimlyDecisionReport";
+import { RawUploadedFile, documentIngestionService } from "@/lib/documents/document-ingestion-service";
+import { decisionContextBuilder } from "@/lib/documents/decision-context-builder";
+import { documentIntelligenceEngine } from "@/lib/ai/document-intelligence-engine";
+import { AimlyIntelligenceReport } from "@/lib/types/document-intelligence";
+import { FileSearch, UploadCloud, SlidersHorizontal, FileText } from "lucide-react";
 
 
 export interface DecisionCardOption {
@@ -142,6 +148,57 @@ export function MinimalistDecisionEngine({
   const [showFullAnalysis, setShowFullAnalysis] = useState(autoExpandAnalysis);
   const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
+
+  // AI Document & Decision Intelligence State
+  const [uploadedFiles, setUploadedFiles] = useState<RawUploadedFile[]>([]);
+  const [isDocDrawerOpen, setIsDocDrawerOpen] = useState(false);
+  const [isContextDrawerOpen, setIsContextDrawerOpen] = useState(false);
+  const [extraIncome, setExtraIncome] = useState<number | undefined>(undefined);
+  const [extraExpenses, setExtraExpenses] = useState<number | undefined>(undefined);
+  const [extraSavings, setExtraSavings] = useState<number | undefined>(undefined);
+  const [aimlyReport, setAimlyReport] = useState<AimlyIntelligenceReport | null>(null);
+  const [isAnalyzingDocs, setIsAnalyzingDocs] = useState(false);
+  const [processingStep, setProcessingStep] = useState("Reading your documents...");
+
+  const handleRunAimlyAnalysis = async () => {
+    setIsAnalyzingDocs(true);
+    setProcessingStep(isFr ? "Lecture de vos documents & extraction..." : "Reading your documents & extracting facts...");
+
+    try {
+      // 1. Ingest files if any
+      const docs = await documentIngestionService.ingestMultipleDocuments(uploadedFiles);
+      setProcessingStep(isFr ? "Calculs déterministes d'impact & décalage..." : "Calculating deterministic cash-flow impact...");
+
+      // 2. Build decision context
+      const context = decisionContextBuilder.buildContext({
+        userDecisionText: queryInput,
+        documents: docs,
+        userContext: {
+          monthlyIncome: extraIncome || activeBaseline.incomes.reduce((s, i) => s + i.amount, 0),
+          monthlyExpenses: extraExpenses || activeBaseline.expenses.reduce((s, e) => s + e.amount, 0),
+          liquidSavings: extraSavings || activeBaseline.liquidSavings,
+          primaryGoalTarget: activeBaseline.goals[0]?.targetAmount || 500000,
+          primaryGoalSaved: activeBaseline.goals[0]?.currentAmount || 180000,
+        },
+        currency: currency as any,
+      });
+
+      setProcessingStep(isFr ? "Analyse des risques & synthèse décisionnelle..." : "Analyzing contractual risks & synthesizing report...");
+
+      // 3. Generate Aimly Intelligence Report
+      const report = documentIntelligenceEngine.generateReport(context);
+      setAimlyReport(report);
+
+      setTimeout(() => {
+        const el = document.getElementById("aimly-intelligence-report-section");
+        el?.scrollIntoView({ behavior: "smooth" });
+      }, 200);
+    } catch (e) {
+      console.error("Aimly analysis failed:", e);
+    } finally {
+      setIsAnalyzingDocs(false);
+    }
+  };
 
 
 
@@ -511,29 +568,116 @@ export function MinimalistDecisionEngine({
 
             <button
               type="button"
-              onClick={() => setIsOfferModalOpen(true)}
+              onClick={() => setIsDocDrawerOpen(!isDocDrawerOpen)}
               className="absolute right-3 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gray-100 dark:bg-secondary hover:bg-gray-200 text-gray-800 dark:text-foreground font-bold text-xs transition-all cursor-pointer"
             >
-              <FileSearch className="w-4 h-4 text-[#00A859]" />
-              <span className="hidden sm:inline">{isFr ? "Scanner Offre" : "Scan Quote"}</span>
+              <UploadCloud className="w-4 h-4 text-[#00A859]" />
+              <span className="hidden sm:inline">{isFr ? "Ajouter Document" : "Add Doc"}</span>
             </button>
           </div>
 
+          {/* Progressive Input Enhancements Bar */}
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <button
+              type="button"
+              onClick={() => setIsDocDrawerOpen(!isDocDrawerOpen)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-semibold transition-all cursor-pointer ${
+                isDocDrawerOpen || uploadedFiles.length > 0
+                  ? "bg-[#00A859]/20 border-[#00A859]/40 text-[#00A859]"
+                  : "bg-white/10 border-white/10 text-white/80 hover:bg-white/20"
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>{uploadedFiles.length > 0 ? `Documents (${uploadedFiles.length})` : (isFr ? "Analyser avec documents (PDF, devis, contrat)" : "Analyze with documents (PDF, quote, contract)")}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsContextDrawerOpen(!isContextDrawerOpen)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-semibold transition-all cursor-pointer ${
+                isContextDrawerOpen || extraIncome !== undefined
+                  ? "bg-[#00A859]/20 border-[#00A859]/40 text-[#00A859]"
+                  : "bg-white/10 border-white/10 text-white/80 hover:bg-white/20"
+              }`}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>{isFr ? "Ajouter contexte financier" : "Add Context (Optional)"}</span>
+            </button>
+          </div>
+
+          {/* Document Ingestion Drawer */}
+          {isDocDrawerOpen && (
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 animate-fadeIn">
+              <DocumentUploadDropzone
+                onFilesSelected={(files) => setUploadedFiles(files)}
+                isProcessing={isAnalyzingDocs}
+                processingStep={processingStep}
+              />
+            </div>
+          )}
+
+          {/* Progressive Financial Context Drawer */}
+          {isContextDrawerOpen && (
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3 animate-fadeIn text-xs">
+              <span className="font-bold text-white block">
+                {isFr ? "Ajuster vos paramètres de calcul (Optionnel) :" : "Adjust calculation inputs (Optional):"}
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-[11px] text-white/70 block mb-1">
+                    {isFr ? "Revenu Mensuel" : "Monthly Income"}
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 180000"
+                    value={extraIncome ?? ""}
+                    onChange={(e) => setExtraIncome(Number(e.target.value) || undefined)}
+                    className="w-full rounded-xl bg-white/10 text-white px-3 py-2 border border-white/20 focus:outline-none focus:ring-2 focus:ring-[#00A859]"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-white/70 block mb-1">
+                    {isFr ? "Charges Fixes" : "Living Expenses"}
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 112000"
+                    value={extraExpenses ?? ""}
+                    onChange={(e) => setExtraExpenses(Number(e.target.value) || undefined)}
+                    className="w-full rounded-xl bg-white/10 text-white px-3 py-2 border border-white/20 focus:outline-none focus:ring-2 focus:ring-[#00A859]"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-white/70 block mb-1">
+                    {isFr ? "Réserves Liquides" : "Liquid Reserves"}
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 200000"
+                    value={extraSavings ?? ""}
+                    onChange={(e) => setExtraSavings(Number(e.target.value) || undefined)}
+                    className="w-full rounded-xl bg-white/10 text-white px-3 py-2 border border-white/20 focus:outline-none focus:ring-2 focus:ring-[#00A859]"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           <button
             type="button"
+            disabled={isAnalyzingDocs}
             onClick={() => {
-              if (redirectOnSelect) {
+              if (uploadedFiles.length > 0 || isDocDrawerOpen) {
+                handleRunAimlyAnalysis();
+              } else if (redirectOnSelect) {
                 router.push(`/onboarding?q=${encodeURIComponent(queryInput)}`);
               } else {
-                const el = document.getElementById("verdict-result-section");
-                el?.scrollIntoView({ behavior: "smooth" });
+                handleRunAimlyAnalysis();
               }
             }}
-
-            className="w-full inline-flex items-center justify-center gap-3 rounded-2xl bg-[#00A859] hover:bg-[#00964F] text-white font-bold text-base py-4 px-6 shadow-lg shadow-[#00A859]/30 transition-all cursor-pointer"
+            className="w-full inline-flex items-center justify-center gap-3 rounded-2xl bg-[#00A859] hover:bg-[#00964F] text-white font-bold text-base py-4 px-6 shadow-lg shadow-[#00A859]/30 transition-all cursor-pointer disabled:opacity-50"
           >
-
-            <span>{isFr ? "Calculer l'impact sur ma Liberté" : "Analyze My Decision"}</span>
+            <span>{isAnalyzingDocs ? processingStep : (isFr ? "Calculer l'impact sur ma Liberté" : "Analyze My Decision")}</span>
             <div className="w-7 h-7 rounded-full bg-black/20 flex items-center justify-center">
               <ArrowRight className="w-4 h-4" />
             </div>
@@ -541,6 +685,13 @@ export function MinimalistDecisionEngine({
         </div>
 
       </div>
+
+      {/* AIMLY DECISION INTELLIGENCE REPORT EMBED */}
+      {aimlyReport && (
+        <div id="aimly-intelligence-report-section" className="w-full animate-fadeIn pt-4">
+          <AimlyDecisionReport report={aimlyReport} />
+        </div>
+      )}
 
       {/* PRE-FLIGHT CASH CRASH GUARD RADAR (THE KILLER CONVERSION FEATURE) */}
       <div className="w-full">

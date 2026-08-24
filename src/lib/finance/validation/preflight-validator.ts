@@ -17,7 +17,7 @@ export function runPreFlightValidation(
   const { baseline, simulated, delta, affordability, executiveDecision, constraintResults } = data;
 
   if (baseline.primaryGoal) {
-    const calcGap = baseline.primaryGoal.targetAmount - baseline.primaryGoal.currentAmount;
+    const calcGap = Math.max(0, baseline.primaryGoal.targetAmount - baseline.primaryGoal.currentAmount);
     if (Math.abs(calcGap - baseline.primaryGoal.remainingAmount) > 1) {
       errors.push(
         `Goal Arithmetic Mismatch: Target (${baseline.primaryGoal.targetAmount}) - Current (${baseline.primaryGoal.currentAmount}) != Remaining (${baseline.primaryGoal.remainingAmount})`
@@ -40,7 +40,7 @@ export function runPreFlightValidation(
     const proj1 = baseline.primaryGoal.projectedCompletionDate;
     const proj2 = delta.baselineCompletionDate;
 
-    if (proj1 && proj2 && proj1 !== proj2) {
+    if (proj1 && proj2 && proj1 !== proj2 && proj1 !== "Goal Achieved" && proj2 !== "Goal Achieved") {
       errors.push(
         `TIMELINE CONFLICT: Baseline completion date in goal metrics (${proj1}) does not match delta baseline date (${proj2}).`
       );
