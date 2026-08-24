@@ -264,8 +264,11 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   }
 
   // Box D: Emergency Reserve & Status
-  const resStatus = data.reserveStatus || "SATISFIED";
-  const isBelowTarget = resStatus !== "SATISFIED";
+  const resMonths = data.monthlyOutflow > 0 ? Number((data.liquidSavings / data.monthlyOutflow).toFixed(1)) : 12;
+  const minFloorSatisfied = resMonths >= 1.0;
+  const targetSatisfied = resMonths >= 3.0;
+  const isBelowTarget = !targetSatisfied;
+
   if (isBelowTarget) {
     doc.setFillColor(254, 243, 199);
     doc.setDrawColor(251, 191, 36);
@@ -274,11 +277,13 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
     doc.setDrawColor(cardBorder[0], cardBorder[1], cardBorder[2]);
   }
   doc.roundedRect(margin + boxWidth + 6, y, boxWidth, boxHeight, 2, 2, "FD");
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(isBelowTarget ? 217 : mutedGray[0], isBelowTarget ? 119 : mutedGray[1], isBelowTarget ? 6 : mutedGray[2]);
   doc.text(
-    isFr ? `RÉSERVES LIQUIDES (${resStatus === "SATISFIED" ? "SÉCURISÉES" : "SOUS LA CIBLE"})` : `LIQUID RESERVES (${resStatus.replace("_", " ")})`,
+    isFr
+      ? `RÉSERVES (${resMonths} Mois — Seuil Min: ${minFloorSatisfied ? "OK" : "BAS"} | Cible: ${targetSatisfied ? "OK" : "SOUS CIBLE"})`
+      : `LIQUID RESERVES (${resMonths} Mos — Floor: ${minFloorSatisfied ? "SATISFIED" : "BELOW MIN"} | Target: ${targetSatisfied ? "SATISFIED" : "BELOW TARGET"})`,
     margin + boxWidth + 10,
     y + 6
   );
@@ -313,9 +318,16 @@ export function generateExecutivePDFReport(data: PDFReportData): jsPDF {
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
   doc.text(formatCurrency(data.targetAmount, data.currency), margin + 6, y + 16);
   doc.text(formatCurrency(data.currentAmount, data.currency), margin + 50, y + 16);
-  doc.text(remGap === 0 ? (isFr ? "0 (ATTEINT)" : "KES 0 (ACHIEVED)") : formatCurrency(remGap, data.currency), margin + 98, y + 16);
+  doc.text(
+    remGap === 0
+      ? `${formatCurrency(0, data.currency)} (${isFr ? "ATTEINT" : "ACHIEVED"})`
+      : formatCurrency(remGap, data.currency),
+    margin + 98,
+    y + 16
+  );
   doc.setTextColor(primaryOrange[0], primaryOrange[1], primaryOrange[2]);
   doc.text(remGap === 0 ? (isFr ? "Déjà Financé" : "Fully Funded") : (data.projectedDate || "Pace Dependent"), margin + 142, y + 16);
+
 
   y += 32;
 

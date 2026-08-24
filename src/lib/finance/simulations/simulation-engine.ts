@@ -8,6 +8,7 @@ import {
   ConfidenceLevel,
   VehicleOwnershipBurden,
 } from "../types";
+import { CurrencyCode } from "@/lib/types/finance";
 import { normalizeToMonthly } from "../normalization/frequency-normalizer";
 import { calculateCashFlow } from "../cash-flow/cash-flow-calculator";
 import { calculateGoalMetrics } from "../goals/goal-calculator";
@@ -20,7 +21,7 @@ import { addMonths, differenceInDays, formatDateToISO, parseDate } from "@/lib/u
  * Evaluates the deterministic impact of a proposed financial decision against baseline profile.
  * Executes:
  * 1. Data Normalization & Fact Classification
- * 2. Deterministic Calculation & Trajectory Deltas
+        2. Deterministic Calculation & Trajectory Deltas
  * 3. Vehicle Purchase Intelligence Framework (Decision A & Decision B)
  * 4. Financial Constraint Engine Verification
  * 5. Executive Decision Engine (GO / WAIT / ADJUST) & Confidence Calibration
@@ -28,9 +29,11 @@ import { addMonths, differenceInDays, formatDateToISO, parseDate } from "@/lib/u
 export function simulateDecision(
   baseline: BaselineFinancialProfile,
   decision: DecisionSimulationInput,
-  referenceDate: Date = new Date()
+  referenceDate: Date = new Date(),
+  currency: CurrencyCode = "KES"
 ): DecisionSimulationResult {
   const { decisionTitle, amount = 0, isRecurring = false, recurringFrequency = "MONTHLY" } = decision;
+  const currCode: CurrencyCode = (decision as any).currency || currency || "KES";
 
   // 1. Calculate Baseline Cash Flow
   const baselineCashFlow = calculateCashFlow(
@@ -48,6 +51,10 @@ export function simulateDecision(
   const baselineGoalResult = primaryGoalItem
     ? calculateGoalMetrics(primaryGoalItem, Math.max(0, baselineCashFlow.monthlyFreeCashFlow), referenceDate)
     : null;
+
+  const isGoalAchieved = primaryGoalItem
+    ? primaryGoalItem.currentAmount >= primaryGoalItem.targetAmount || primaryGoalItem.targetAmount <= 0
+    : false;
 
   // 3. Compute Simulated Adjustments
   const recurringMonthlyCost = isRecurring ? normalizeToMonthly(amount, recurringFrequency) : 0;
@@ -80,7 +87,12 @@ export function simulateDecision(
   let baselineCompletionDate = baselineGoalResult?.projectedCompletionDate || formatDateToISO(referenceDate);
   let newCompletionDate = simulatedGoalResult?.projectedCompletionDate || formatDateToISO(referenceDate);
 
-  if (baselineGoalResult && simulatedGoalResult) {
+  if (primaryGoalItem && isGoalAchieved) {
+    delayInDays = 0;
+    additionalMonthlyAmountRequired = 0;
+    baselineCompletionDate = "Goal Achieved";
+    newCompletionDate = "Goal Achieved";
+  } else if (baselineGoalResult && simulatedGoalResult) {
     const targetAmount = primaryGoalItem?.targetAmount || 1;
     percentageOfGoalAffected = Number(((amount / targetAmount) * 100).toFixed(1));
 
@@ -190,6 +202,7 @@ export function simulateDecision(
     monthlyFixedObligations,
     delayInDays,
     targetReserveMonths: 3.0,
+    currency: currCode,
   });
 
   // 8. 3-Pillar Affordability Calculations
@@ -208,8 +221,9 @@ export function simulateDecision(
       : 12;
 
   const preservesGoalTrajectory =
-    delayInDays <= 30 &&
-    (simulatedGoalResult ? simulatedGoalResult.status === "ON_TRACK" || simulatedGoalResult.status === "AHEAD" : true);
+    isGoalAchieved ||
+    (delayInDays <= 30 &&
+      (simulatedGoalResult ? simulatedGoalResult.status === "ON_TRACK" || simulatedGoalResult.status === "AHEAD" : true));
 
   const affordability: ThreePillarAffordability = {
     canPhysicallyPay,
@@ -241,24 +255,31 @@ export function simulateDecision(
     executiveDecision = "WAIT";
     status = "OFF_TRACK";
     if (!canPhysicallyPay) {
-      singleAction = `Pause purchase until dedicated goal savings reach ${formatCurrency(amount, "KES")}.`;
+      singleAction = `Pause purchase until dedicated goal savings reach ${formatCurrency(amount, currCode)}.`;
     } else if (vehicleOwnershipUnaffordable) {
-      singleAction = `Hold purchase: Estimated monthly ownership burden (${formatCurrency(vehicleFramework?.decisionB.monthlyOwnershipBurden || 0, "KES")}/mo) exceeds free cash flow (${formatCurrency(baselineCashFlow.monthlyFreeCashFlow, "KES")}/mo).`;
+      singleAction = `Hold purchase: Estimated monthly ownership burden (${formatCurrency(vehicleFramework?.decisionB.monthlyOwnershipBurden || 0, currCode)}/mo) exceeds free cash flow (${formatCurrency(baselineCashFlow.monthlyFreeCashFlow, currCode)}/mo).`;
     } else {
       singleAction = "Pause non-essential outlays until liquid reserves cover 3.0 months of mandatory expenses.";
     }
   } else if (reserveFloorBreached || delayInDays > 30 || hardBlockerPresent) {
     executiveDecision = "ADJUST";
     status = reserveFloorBreached ? "HIGH_IMPACT" : "MANAGEABLE";
-    if (reserveFloorBreached) {
-      singleAction = `Reduce purchase budget to ${formatCurrency(amount * 0.7, "KES")} or delay by ${Math.ceil((minRecommendedBuffer - cashRemainingAfterDecision) / Math.max(1, baselineCashFlow.monthlyFreeCashFlow))} months to maintain a 3.0-month reserve floor (${formatCurrency(minRecommendedBuffer, "KES")}).`;
+
+    if (isGoalAchieved) {
+      singleAction = `Goal "${primaryGoalItem?.title}" is 100% funded. Do not allocate further funds to this goal. Redirect ${formatCurrency(baselineCashFlow.monthlyFreeCashFlow, currCode)}/mo surplus cash flow to Emergency Reserves until 3.0-month target (${formatCurrency(minRecommendedBuffer, currCode)}) is reached.`;
+    } else if (reserveFloorBreached) {
+      singleAction = `Reduce purchase budget to ${formatCurrency(amount * 0.7, currCode)} or delay by ${Math.ceil((minRecommendedBuffer - cashRemainingAfterDecision) / Math.max(1, baselineCashFlow.monthlyFreeCashFlow))} months to maintain a 3.0-month reserve floor (${formatCurrency(minRecommendedBuffer, currCode)}).`;
     } else {
-      singleAction = `Increase monthly goal allocation by +${formatCurrency(additionalMonthlyAmountRequired, "KES")}/mo to neutralize the +${delayInDays}-day trajectory shift.`;
+      singleAction = `Increase monthly goal allocation by +${formatCurrency(additionalMonthlyAmountRequired, currCode)}/mo to neutralize the +${delayInDays}-day trajectory shift.`;
     }
   } else {
     executiveDecision = "GO";
     status = "SAFE";
-    singleAction = "Proceed with purchase while maintaining automated monthly allocation to goal destination.";
+    if (isGoalAchieved) {
+      singleAction = `Goal "${primaryGoalItem?.title}" is fully funded. Redirect ${formatCurrency(baselineCashFlow.monthlyFreeCashFlow, currCode)}/mo surplus cash flow to secondary goals or reserves.`;
+    } else {
+      singleAction = "Proceed with purchase while maintaining automated monthly allocation to goal destination.";
+    }
   }
 
   // 10. Confidence Calibration (HIGH / MEDIUM / LOW)
@@ -282,19 +303,19 @@ export function simulateDecision(
   // 11. Fact / Calculation / Estimation / Recommendation Separation
   const factBreakdown = {
     confirmedFacts: [
-      `Monthly Gross Income: ${formatCurrency(baselineCashFlow.monthlyGrossIncome, "KES")}`,
-      `Monthly Mandatory Outflows: ${formatCurrency(monthlyFixedObligations, "KES")}`,
-      `Liquid Reserves: ${formatCurrency(baseline.liquidSavings, "KES")}`,
-      `Primary Goal Target: ${formatCurrency(primaryGoalItem?.targetAmount || 0, "KES")} by ${baselineGoalResult?.targetDate || "N/A"}`,
+      `Monthly Gross Income: ${formatCurrency(baselineCashFlow.monthlyGrossIncome, currCode)}`,
+      `Monthly Mandatory Outflows: ${formatCurrency(monthlyFixedObligations, currCode)}`,
+      `Liquid Reserves: ${formatCurrency(baseline.liquidSavings, currCode)}`,
+      `Primary Goal Target: ${formatCurrency(primaryGoalItem?.targetAmount || 0, currCode)} by ${baselineGoalResult?.targetDate || "N/A"}`,
     ],
     calculatedMetrics: [
-      `Monthly Free Cash Flow: ${formatCurrency(baselineCashFlow.monthlyFreeCashFlow, "KES")}/mo`,
+      `Monthly Free Cash Flow: ${formatCurrency(baselineCashFlow.monthlyFreeCashFlow, currCode)}/mo`,
       `Post-Decision Liquid Buffer: ${obligationsPreservedMonths} Months of mandatory expenses`,
-      `Projected Completion Date: ${newCompletionDate} (+${delayInDays} Days Delay)`,
+      `Projected Completion Date: ${newCompletionDate}${delayInDays > 0 ? ` (+${delayInDays} Days Delay)` : ""}`,
     ],
     estimatedVariables: isVehiclePurchase
       ? [
-          `Estimated Monthly Ownership Operating Burden: ${formatCurrency(vehicleFramework?.decisionB.monthlyOwnershipBurden || 0, "KES")}/mo`,
+          `Estimated Monthly Ownership Operating Burden: ${formatCurrency(vehicleFramework?.decisionB.monthlyOwnershipBurden || 0, currCode)}/mo`,
         ]
       : ["Assuming constant income and expense baseline throughout trajectory."],
     recommendations: [
@@ -320,29 +341,35 @@ export function simulateDecision(
   let recommendationText = singleAction;
 
   if (executiveDecision === "GO") {
-    headlineVerdict = "Executive Decision: GO — Plan & Buffer Intact";
-    detailedAnalysis = `Calculations confirm that this decision is fully affordable. Liquid reserves retain ${obligationsPreservedMonths} months of mandatory living buffer, exceeding your 3.0-month target, while primary goal arrival remains on schedule for ${newCompletionDate}.`;
+    headlineVerdict = isGoalAchieved
+      ? "Executive Decision: GO — Destination Fully Achieved"
+      : "Executive Decision: GO — Plan & Buffer Intact";
+
+    detailedAnalysis = isGoalAchieved
+      ? `Goal "${primaryGoalItem?.title}" is 100% funded with ${formatCurrency(primaryGoalItem?.currentAmount || 0, currCode)} in confirmed savings. Liquid reserves retain ${obligationsPreservedMonths} months of mandatory living buffer.`
+      : `Calculations confirm that this decision is fully affordable. Liquid reserves retain ${obligationsPreservedMonths} months of mandatory living buffer, exceeding your 3.0-month target, while primary goal arrival remains on schedule for ${newCompletionDate}.`;
   } else if (executiveDecision === "ADJUST") {
-    headlineVerdict = `Executive Decision: ADJUST — ${reserveFloorBreached ? "Reserve Floor Breached" : "Trajectory Delay Identified"}`;
-    detailedAnalysis = reserveFloorBreached
-      ? `While you have sufficient liquid cash to execute this payment, post-purchase reserves dip to ${obligationsPreservedMonths} months of mandatory expenses (below your 3.0-month target of ${formatCurrency(minRecommendedBuffer, "KES")}). Adjusting the timeline or purchase amount protects essential resilience.`
-      : `Executing this outlay shifts your primary destination "${primaryGoalItem?.title}" by +${delayInDays} days (Projected: ${newCompletionDate}). An allocation adjustment of +${formatCurrency(additionalMonthlyAmountRequired, "KES")}/mo is recommended to neutralize the delay.`;
+    headlineVerdict = `Executive Decision: ADJUST — ${reserveFloorBreached ? "Reserve Buffer Below Target" : "Trajectory Delay Identified"}`;
+    detailedAnalysis = isGoalAchieved
+      ? `Goal "${primaryGoalItem?.title}" is 100% funded (${formatCurrency(primaryGoalItem?.currentAmount || 0, currCode)} saved). However, post-purchase liquid reserves provide ${obligationsPreservedMonths} months of mandatory expenses (below your 3.0-month target of ${formatCurrency(minRecommendedBuffer, currCode)}). Redirect future surplus cash flow to reserves.`
+      : reserveFloorBreached
+      ? `While you have sufficient liquid cash to execute this payment, post-purchase reserves dip to ${obligationsPreservedMonths} months of mandatory expenses (below your 3.0-month target of ${formatCurrency(minRecommendedBuffer, currCode)}). Adjusting the timeline or purchase amount protects essential resilience.`
+      : `Executing this outlay shifts your primary destination "${primaryGoalItem?.title}" by +${delayInDays} days (Projected: ${newCompletionDate}). An allocation adjustment of +${formatCurrency(additionalMonthlyAmountRequired, currCode)}/mo is recommended to neutralize the delay.`;
   } else {
     if (!canPhysicallyPay) {
       headlineVerdict = "Executive Decision: WAIT — Cash Deficit: Cannot Physically Fund";
-      detailedAnalysis = `Executing this decision requires ${formatCurrency(amount, "KES")}, which exceeds accessible liquid cash by ${formatCurrency(cashDeficit, "KES")}.`;
+      detailedAnalysis = `Executing this decision requires ${formatCurrency(amount, currCode)}, which exceeds accessible liquid cash by ${formatCurrency(cashDeficit, currCode)}.`;
     } else if (simulatedFreeCashFlow < 0) {
       headlineVerdict = "Executive Decision: WAIT — Destabilizing: Creates Monthly Deficit";
-      detailedAnalysis = `This commitment would turn your monthly cash flow negative (${formatCurrency(simulatedFreeCashFlow, "KES")}/mo), draining existing reserves each month.`;
+      detailedAnalysis = `This commitment would turn your monthly cash flow negative (${formatCurrency(simulatedFreeCashFlow, currCode)}/mo), draining existing reserves each month.`;
     } else if (vehicleOwnershipUnaffordable) {
       headlineVerdict = "Executive Decision: WAIT — Vehicle Ownership Unaffordable";
-      detailedAnalysis = `You can fund the initial purchase price, but the total monthly ownership burden (${formatCurrency(vehicleFramework?.decisionB.monthlyOwnershipBurden || 0, "KES")}/mo) exceeds your monthly free cash flow (${formatCurrency(baselineCashFlow.monthlyFreeCashFlow, "KES")}/mo).`;
+      detailedAnalysis = `You can fund the initial purchase price, but the total monthly ownership burden (${formatCurrency(vehicleFramework?.decisionB.monthlyOwnershipBurden || 0, currCode)}/mo) exceeds your monthly free cash flow (${formatCurrency(baselineCashFlow.monthlyFreeCashFlow, currCode)}/mo).`;
     } else {
       headlineVerdict = "Executive Decision: WAIT — Unacceptable Reserve Risk";
       detailedAnalysis = `Executing this decision depletes essential reserves below 1.0 month of living security, introducing unacceptable vulnerability.`;
     }
   }
-
 
   const result: DecisionSimulationResult = {
     decisionTitle,

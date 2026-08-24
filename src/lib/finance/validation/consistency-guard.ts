@@ -9,7 +9,7 @@ export interface ConsistencyValidationResult {
 /**
  * Validates runtime mathematical invariants on a CanonicalFinancialDecision object.
  * Guarantees that contradictory states (e.g. Goal Achieved + Pace Shortfall, On Track + Delay > 0,
- * Required Monthly = 0 + Catch-Up Plan, ADJUST decision without a specific action) are impossible.
+ * Required Monthly = 0 + Catch-Up Plan, ADJUST decision without a specific action, or KES in USD report) are impossible.
  */
 export function validateDecisionConsistency(
   decision: CanonicalFinancialDecision
@@ -25,7 +25,7 @@ export function validateDecisionConsistency(
     );
   }
 
-  if (decision.confirmedSaved >= decision.targetAmount) {
+  if (decision.confirmedSaved >= decision.targetAmount || decision.targetAmount <= 0) {
     if (decision.remainingGap !== 0) {
       errors.push(
         `GOAL_ACHIEVED_GAP_MISMATCH: Goal is fully funded (saved ${decision.confirmedSaved} >= target ${decision.targetAmount}), but remainingGap is ${decision.remainingGap} instead of 0.`
@@ -48,7 +48,25 @@ export function validateDecisionConsistency(
     }
   }
 
-  // INVARIANT 2: Timeline & Goal Status Rules
+  // INVARIANT 2: Achieved Goal Recommendation Termination
+  if (decision.goalStatus === "ACHIEVED") {
+    const textBlob = `${decision.headlineVerdict} ${decision.strategicRead} ${decision.masterStrategyParagraph} ${decision.recommendedAction}`.toLowerCase();
+    if (
+      textBlob.includes(`toward "${decision.destinationTitle.toLowerCase()}"`) ||
+      textBlob.includes("maintain current automated savings rate") ||
+      textBlob.includes("continue funding") ||
+      textBlob.includes("allocate $") ||
+      textBlob.includes("allocate kes")
+    ) {
+      if (!textBlob.includes("do not allocate further") && !textBlob.includes("no further monthly allocation required")) {
+        errors.push(
+          `ACHIEVED_GOAL_FUNDING_CONTRADICTION: Goal is ACHIEVED, but narrative recommends allocating funds toward the same goal: '${decision.recommendedAction}'.`
+        );
+      }
+    }
+  }
+
+  // INVARIANT 3: Timeline & Goal Status Rules
   if (decision.trajectoryDelayMonths <= 0) {
     if (decision.goalStatus === "OFF_TRACK") {
       errors.push(
@@ -63,23 +81,41 @@ export function validateDecisionConsistency(
     }
   }
 
-  // INVARIANT 3: Achieved / On-Track Shortfall Text Suppression
-  if (decision.goalStatus === "ACHIEVED" || decision.goalStatus === "ON_TRACK") {
-    const textBlob = `${decision.headlineVerdict} ${decision.strategicRead} ${decision.masterStrategyParagraph} ${decision.recommendedAction}`.toLowerCase();
-    if (
-      textBlob.includes("pace shortfall") ||
-      textBlob.includes("actionable velocity gap") ||
-      textBlob.includes("pacing variance gap") ||
-      textBlob.includes("trajectory acceleration to bridge the shortfall")
-    ) {
+  // INVARIANT 4: Currency Integrity (Zero hardcoded KES in non-KES reports)
+  if (decision.currency !== "KES") {
+    const fullNarrative = `${decision.headlineVerdict} ${decision.strategicRead} ${decision.masterStrategyParagraph} ${decision.recommendedAction}`.toUpperCase();
+    if (fullNarrative.includes("KES ") || fullNarrative.includes("KES0")) {
       errors.push(
-        `NARRATIVE_CONTRADICTION: Narrative contains shortfall/acceleration claims while goalStatus is '${decision.goalStatus}'.`
+        `CURRENCY_MISMATCH_VIOLATION: Report currency is '${decision.currency}', but generated narrative text contains hardcoded 'KES' currency symbol.`
       );
     }
   }
 
-  // INVARIANT 4: ADJUST Decision Action Specificity
-  if (decision.decision === "ADJUST") {
+  // INVARIANT 5: Reserve Dual Threshold Validation
+  if (decision.reserveMonths >= decision.reserveMinimumMonths) {
+    if (decision.minimumReserveStatus !== "SATISFIED") {
+      errors.push(
+        `RESERVE_FLOOR_STATUS_MISMATCH: Reserve coverage is ${decision.reserveMonths} mos (>= ${decision.reserveMinimumMonths} mo minimum floor), but minimumReserveStatus is '${decision.minimumReserveStatus}'.`
+      );
+    }
+  } else {
+    if (decision.minimumReserveStatus !== "BELOW_MINIMUM") {
+      errors.push(
+        `RESERVE_FLOOR_STATUS_MISMATCH: Reserve coverage is ${decision.reserveMonths} mos (< ${decision.reserveMinimumMonths} mo minimum floor), but minimumReserveStatus is '${decision.minimumReserveStatus}'.`
+      );
+    }
+  }
+
+  if (decision.reserveMonths < decision.reserveTargetMonths) {
+    if (decision.targetReserveStatus !== "BELOW_TARGET") {
+      errors.push(
+        `RESERVE_TARGET_STATUS_MISMATCH: Reserve coverage is ${decision.reserveMonths} mos (< ${decision.reserveTargetMonths} mos target), but targetReserveStatus is '${decision.targetReserveStatus}'.`
+      );
+    }
+  }
+
+  // INVARIANT 6: ADJUST Decision Action Specificity
+  if (decision.purchaseDecision === "ADJUST") {
     if (!decision.recommendedAction || decision.recommendedAction.trim().length === 0) {
       errors.push(
         "ADJUST_DECISION_WITHOUT_ACTION: Executive decision is ADJUST, but recommendedAction is missing or empty."
@@ -92,13 +128,6 @@ export function validateDecisionConsistency(
         `ADJUST_DECISION_CONTRADICTORY_ACTION: Decision is ADJUST, but recommendedAction says '${decision.recommendedAction}' without specifying what variable changes.`
       );
     }
-  }
-
-  // INVARIANT 5: Confidence & Data Completeness
-  if (decision.confidence === "HIGH" && decision.missingVariables.length > 2) {
-    warnings.push(
-      "CONFIDENCE_OVERSTATED: Confidence level is HIGH, but more than 2 missing variables were identified."
-    );
   }
 
   const isValid = errors.length === 0;

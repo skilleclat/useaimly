@@ -75,7 +75,17 @@ export interface NetWorthSummary {
 export type CanonicalDecisionStatus = "GO" | "ADJUST" | "PAUSE";
 export type CanonicalGoalStatus = "ACHIEVED" | "ON_TRACK" | "AT_RISK" | "OFF_TRACK";
 export type CanonicalConfidenceLevel = "HIGH" | "MEDIUM" | "LOW";
-export type CanonicalReserveStatus = "SATISFIED" | "BELOW_TARGET" | "VIOLATED";
+export type CanonicalReserveFloorStatus = "SATISFIED" | "BELOW_MINIMUM";
+export type CanonicalReserveTargetStatus = "SATISFIED" | "BELOW_TARGET" | "ABOVE_TARGET";
+
+export interface StructuredActionPayload {
+  actionRequired: boolean;
+  actionType: "REALLOCATE_TO_RESERVES" | "MAINTAIN_ALLOCATION" | "INCREASE_ALLOCATION" | "REDUCE_OUTFLOWS" | "PAUSE_PURCHASE" | "SAVE_IN_ADVANCE";
+  actionTarget: string; // e.g. "EMERGENCY_RESERVES" | "PRIMARY_GOAL"
+  currentValue: number;
+  recommendedValue: number;
+  description: string;
+}
 
 export interface CanonicalFinancialDecision {
   analysisDate: string; // ISO date YYYY-MM-DD
@@ -86,11 +96,13 @@ export interface CanonicalFinancialDecision {
   mandatoryOutflows: number;
   freeCashFlow: number;
 
-  // Reserve Protection
+  // Reserve Protection (Dual Thresholds)
   liquidReserves: number;
   reserveMonths: number;
-  reserveTargetMonths: number;
-  reserveStatus: CanonicalReserveStatus;
+  reserveMinimumMonths: number; // default 1.0
+  reserveTargetMonths: number; // default 3.0
+  minimumReserveStatus: CanonicalReserveFloorStatus;
+  targetReserveStatus: CanonicalReserveTargetStatus;
 
   // Primary Goal Metrics (Normalized & Invariant-Checked)
   destinationTitle: string;
@@ -99,6 +111,7 @@ export interface CanonicalFinancialDecision {
   remainingGap: number;
   currentMonthlyAllocation: number;
   requiredMonthlyAllocation: number;
+  additionalFundingRequired: number;
 
   // Explicit Canonical Dates
   targetDate: string; // ISO date YYYY-MM-DD
@@ -107,7 +120,7 @@ export interface CanonicalFinancialDecision {
 
   // Dimension Separation
   goalStatus: CanonicalGoalStatus;
-  decision: CanonicalDecisionStatus;
+  purchaseDecision: CanonicalDecisionStatus;
   confidence: CanonicalConfidenceLevel;
   confidenceReasons: string[];
 
@@ -115,7 +128,7 @@ export interface CanonicalFinancialDecision {
   shortfallAmount: number;
   shortfallReason: string | null;
 
-  recommendedActionType: "REALLOCATE" | "MAINTAIN" | "INCREASE_ALLOCATION" | "REDUCE_OUTFLOWS" | "PAUSE_PURCHASE" | "SAVE_IN_ADVANCE";
+  structuredAction: StructuredActionPayload;
   recommendedAction: string;
 
   headlineVerdict: string;
@@ -126,4 +139,5 @@ export interface CanonicalFinancialDecision {
   missingVariables: string[];
   warnings: string[];
 }
+
 

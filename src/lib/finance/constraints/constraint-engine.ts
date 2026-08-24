@@ -3,6 +3,7 @@ import {
   ConstraintEvaluationResult,
   ConstraintSeverity,
 } from "../types";
+import { CurrencyCode } from "@/lib/types/finance";
 import { formatCurrency } from "@/lib/utils/currency";
 
 export interface ConstraintCheckInput {
@@ -14,6 +15,7 @@ export interface ConstraintCheckInput {
   monthlyFixedObligations: number;
   delayInDays: number;
   targetReserveMonths?: number; // default 3.0
+  currency?: CurrencyCode;
 }
 
 export function evaluateFinancialConstraints(
@@ -28,10 +30,10 @@ export function evaluateFinancialConstraints(
     monthlyFixedObligations,
     delayInDays,
     targetReserveMonths = 3.0,
+    currency = "KES",
   } = input;
 
   const results: ConstraintEvaluationResult[] = [];
-  const currency = "KES";
 
   // 1. Emergency Reserve Floor Shield Rule (User Rule Target: 3.0 Months)
   const requiredReserve = monthlyFixedObligations * targetReserveMonths;
@@ -71,7 +73,7 @@ export function evaluateFinancialConstraints(
     const deficit = Math.abs(postDecisionFreeCashFlow);
     results.push({
       ruleName: "Positive Cash Flow Protection",
-      thresholdValue: "KES 0 / mo",
+      thresholdValue: `${formatCurrency(0, currency)} / mo`,
       currentValue: `-${formatCurrency(deficit, currency)} / mo`,
       status: "VIOLATED",
       gap: `${formatCurrency(deficit, currency)} / mo`,
@@ -81,7 +83,7 @@ export function evaluateFinancialConstraints(
   } else {
     results.push({
       ruleName: "Positive Cash Flow Protection",
-      thresholdValue: "KES 0 / mo",
+      thresholdValue: `${formatCurrency(0, currency)} / mo`,
       currentValue: `${formatCurrency(postDecisionFreeCashFlow, currency)} / mo`,
       status: "SATISFIED",
       gap: 0,
@@ -95,7 +97,7 @@ export function evaluateFinancialConstraints(
     const overdraft = Math.abs(postDecisionLiquidSavings);
     results.push({
       ruleName: "Zero Overdraft Liquidity Requirement",
-      thresholdValue: "KES 0",
+      thresholdValue: formatCurrency(0, currency),
       currentValue: `-${formatCurrency(overdraft, currency)}`,
       status: "VIOLATED",
       gap: `${formatCurrency(overdraft, currency)}`,

@@ -256,8 +256,11 @@ export type {
   CanonicalDecisionStatus,
   CanonicalGoalStatus,
   CanonicalConfidenceLevel,
-  CanonicalReserveStatus,
+  CanonicalReserveFloorStatus,
+  CanonicalReserveTargetStatus,
+  StructuredActionPayload,
   CanonicalFinancialDecision,
 } from "../types/finance";
+
 
 
