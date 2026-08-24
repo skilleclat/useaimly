@@ -49,7 +49,8 @@ export class ConversationalIntelligenceEngine {
     userMessage: string,
     history: ChatMessage[] = [],
     currency: CurrencyCode = "KES",
-    userOverride?: UserContextOverride
+    userOverride?: UserContextOverride,
+    language: "en" | "fr" | "sw" = "en"
   ): Promise<ChatMessage> {
     const context = buildConversationalContext(
       currency,

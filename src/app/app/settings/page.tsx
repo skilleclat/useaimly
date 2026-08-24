@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useCurrency } from "@/lib/currency/currency-context";
+import { useI18n } from "@/lib/i18n/i18n-context";
 import { CurrencyCode } from "@/lib/types/finance";
 import { WhatsAppDispatchCard } from "@/components/finance/WhatsAppDispatchCard";
 import { PayPalCheckoutModal } from "@/components/finance/PayPalCheckoutModal";
@@ -33,6 +34,7 @@ export default function SettingsPage() {
   const planParam = searchParams.get("plan");
 
   const { user, profile, displayName, refreshProfile } = useAuth();
+  const { language, setLanguage } = useI18n();
   const { currency, setCurrency } = useCurrency();
   const [preferredCurrency, setPreferredCurrency] = useState<CurrencyCode>(currency);
   const [upgradePlanModal, setUpgradePlanModal] = useState<PricingPlan | null>(null);
@@ -347,39 +349,94 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* 2. REGIONAL & CURRENCY */}
+        {/* 2. REGIONAL & CURRENCY INTELLIGENCE */}
         <div className="rounded-[2.5rem] border border-border/80 bg-card p-6 sm:p-9 space-y-6 shadow-elevation-1">
-          <div className="flex items-center gap-2 text-sm font-bold text-foreground">
-            <Globe className="w-4 h-4 text-primary" />
-            <span>Currency & Display</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-bold text-foreground">
+              <Globe className="w-4 h-4 text-primary" />
+              <span>Language, Currency & Geographic Localization</span>
+            </div>
           </div>
 
-          <div className="space-y-3">
-            <label className="text-xs font-mono font-bold text-foreground">Active Currency</label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {(["USD", "EUR", "GBP", "KES", "CAD", "NGN", "ZAR", "XOF"] as CurrencyCode[]).map((curr) => {
-                const isSelected = preferredCurrency === curr;
+          <p className="text-xs text-muted-foreground">
+            UseAimly adapts intelligently to your geographic context. You can customize your language and financial currency independently at any time.
+          </p>
+
+          {/* Language Selection */}
+          <div className="space-y-2">
+            <label className="text-xs font-mono font-bold text-foreground block">
+              Interface Language / Langue / Lugha
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {[
+                { code: "en", label: "English (US/UK)", flag: "🇬🇧" },
+                { code: "fr", label: "Français (Global)", flag: "🇫🇷" },
+                { code: "sw", label: "Kiswahili (East Africa)", flag: "🇰🇪" },
+              ].map((l) => {
+                const isSelected = language === l.code;
                 return (
                   <button
-                    key={curr}
+                    key={l.code}
                     type="button"
-                    onClick={() => setPreferredCurrency(curr)}
-                    className={`p-4 rounded-2xl border text-center transition-all cursor-pointer ${
+                    onClick={() => setLanguage(l.code as any)}
+                    className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                      isSelected
+                        ? "border-primary bg-primary/10 text-primary ring-2 ring-primary/20 font-bold"
+                        : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                    }`}
+                  >
+                    <span className="text-xs font-bold">{l.flag} {l.label}</span>
+                    {isSelected && <Check className="w-4 h-4 text-primary" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Currency Selection */}
+          <div className="space-y-3 pt-2 border-t border-border/50">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-mono font-bold text-foreground">
+                Main Financial Currency
+              </label>
+              <span className="text-[11px] text-muted-foreground font-mono">
+                Original entries preserved
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              {[
+                { code: "USD", name: "US Dollar", symbol: "$", flag: "🇺🇸" },
+                { code: "KES", name: "Kenyan Shilling", symbol: "KSh", flag: "🇰🇪" },
+                { code: "EUR", name: "Euro", symbol: "€", flag: "🇪🇺" },
+                { code: "GBP", name: "British Pound", symbol: "£", flag: "🇬🇧" },
+                { code: "CAD", name: "Canadian Dollar", symbol: "CA$", flag: "🇨🇦" },
+                { code: "CDF", name: "Franc Congolais", symbol: "FC", flag: "🇨🇩" },
+                { code: "ZAR", name: "South African Rand", symbol: "R", flag: "🇿🇦" },
+                { code: "NGN", name: "Nigerian Naira", symbol: "₦", flag: "🇳🇬" },
+                { code: "XOF", name: "Franc CFA", symbol: "CFA", flag: "🇸🇳" },
+                { code: "UGX", name: "Ugandan Shilling", symbol: "USh", flag: "🇺🇬" },
+                { code: "TZS", name: "Tanzanian Shilling", symbol: "TSh", flag: "🇹🇿" },
+                { code: "RWF", name: "Rwandan Franc", symbol: "FRw", flag: "🇷🇼" },
+              ].map((c) => {
+                const isSelected = preferredCurrency === c.code;
+                return (
+                  <button
+                    key={c.code}
+                    type="button"
+                    onClick={() => setPreferredCurrency(c.code as CurrencyCode)}
+                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                       isSelected
                         ? "border-primary bg-primary/5 text-primary ring-2 ring-primary/20 font-bold shadow-xs"
                         : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
                     }`}
                   >
-                    <div className="text-base font-mono font-bold">{curr}</div>
-                    <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                      {curr === "USD" && "US Dollar ($)"}
-                      {curr === "EUR" && "Euro (€)"}
-                      {curr === "GBP" && "Pound (£)"}
-                      {curr === "KES" && "Shilling (KSh)"}
-                      {curr === "CAD" && "CAD Dollar (C$)"}
-                      {curr === "NGN" && "Naira (₦)"}
-                      {curr === "ZAR" && "Rand (R)"}
-                      {curr === "XOF" && "Franc CFA"}
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-mono font-bold">{c.flag} {c.code}</span>
+                      <span className="text-xs font-mono font-extrabold text-foreground">{c.symbol}</span>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground mt-1 truncate">
+                      {c.name}
                     </div>
                   </button>
                 );

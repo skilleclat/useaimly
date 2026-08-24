@@ -1,4 +1,4 @@
-export type LanguageCode = "en" | "fr";
+export type LanguageCode = "en" | "fr" | "sw";
 
 export interface TranslationDictionary {
   // Navigation
@@ -568,5 +568,194 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     footerMonetization: "Offres",
     footerSecurity: "Sécurité & Confidentialité",
     footerBackToTop: "Haut de page",
+  },
+  sw: {
+    // Navigation
+    navDestinations: "Malengo",
+    navDecide: "Maamuzi",
+    navWhatIf: "Vipi Kama?",
+    navNotes: "Miongozo",
+    navMoney: "Fedha",
+    navInvestments: "Uwekezaji",
+    navSettings: "Mipangilio",
+    navPricing: "Gharama",
+    navDesignSystem: "Mfumo wa Muundo",
+    navGetStarted: "Anza Bure",
+    navSignIn: "Ingia",
+    navSignOut: "Toka",
+    navLiveDemo: "Jaribu Moja kwa Moja",
+    quickNav: "Urambazaji wa Haraka",
+    openDashboard: "Fungua Dashibodi →",
+    openEliteDashboard: "Fungua Dashibodi ya Wasomi →",
+    openProDashboard: "Fungua Dashibodi ya Pro →",
+    decisionStudio: "Studio ya Maamuzi",
+    eliteTier: "Elite",
+    proTier: "Pro",
+    starterTier: "Mwanzo",
+
+    // Hero & Dashboard
+    greetingPrefix: "Hujambo",
+    heroSubtitle: "Kila shilingi unayookoa inakuweka karibu zaidi na malengo yako.",
+    totalSaved: "Jumla Iliyohifadhiwa",
+    totalTargetGoals: "Jumla ya Malengo",
+    progress: "Maendeleo",
+    myActiveGoals: "Malengo Yangu Hai",
+    createGoal: "Weka Lengo Jipya",
+    onTrack: "Kwenye Mstari",
+    needsAttention: "Inahitaji Uangalifu",
+    offTrack: "Imechelewa",
+
+    // Landing Hero Section
+    heroBadge: "Kabla ya kuamua",
+    heroTitlePrefix: "UAMUZI MMOJA. ",
+    heroTitleTomorrow: "ONA KESHO LEO.",
+    heroTitleSuffix: "",
+    heroMainSubtitle: "Ona jinsi uamuzi mkubwa wa kifedha unavyoathiri maisha yako ya baadaye kabla ya kuufanya.",
+
+    btnTryRealDecision: "Chambua Uamuzi Halisi",
+    noAccountNeeded: "(Matokeo ya Papo Hapo)",
+    btnCreateFreeAccount: "Anza Bure",
+    signupTime: "(Sekunde 30)",
+    socialProofRating: "5.0",
+    socialProofCount: "Inaaminika na wafanyamaamuzi 1,000+",
+
+    // Hero Interactive Simulator Widget
+    widgetHeaderTitle: "Chambua Uamuzi Wowote",
+    widgetLiveDemoTag: "HUKUMU YA PAPO HAPO",
+    widgetQueryLabel: "Uamuzi wa Kifedha",
+    widgetImmediateImpact: "ATHARI YA SASA",
+    widgetCushionText: "Akiba yako ya dharura inapungua kwa",
+    widgetFutureConsequence: "MATOKEO YA BAADAYE",
+    widgetGoalDelayText: "Lengo lako kuu linasogea mbele kwa",
+    widgetStayOnTrack: "KUBAKI KWENYE MSTARI",
+    widgetSaveAdditionalText: "Okoa ziada",
+    widgetSeeFullAnalysis: "Ona Uchambuzi Kamili wa Maamuzi →",
+
+    // "Why UseAimly?" Section
+    whyTitleTag: "KWA NINI USEAIMLY?",
+    whyMainTitle: "Programu za bajeti zinaangalia jana.",
+    whyMainTitleLine2: "UseAimly inakuonyesha kesho.",
+    whyCard1Title: "Kutazama Mbele, Sio Nyuma",
+    whyCard1Desc: "Wengi wanarekodi ulipotumia pesa. Sisi tunahesabu nini kitatokea kabla hujatumia.",
+    whyCard2Title: "Ulinzi wa Malengo Yako",
+    whyCard2Desc: "Kila uamuzi unalinganishwa na malengo yako makuu ya maisha.",
+    whyCard3Title: "Hesabu Safi ya Hakika",
+    whyCard3Desc: "Hakuna nambari za uongo. Kila uamuzi unahesabiwa kwa mantiki halisi ya kifedha.",
+    whyCard4Title: "Njia Mbadala Bora Zaidi",
+    whyCard4Desc: "Tunakupa chaguo mbadala lililohesabiwa kubaki kwenye lengo.",
+
+    // "How UseAimly Works" Section
+    howTitle: "Jinsi Inavyofanya Kazi",
+    howSubtitle: "Sekunde chache kutoka kwa uamuzi hadi uwazi kamili.",
+    howStep1Title: "1. Andika Uamuzi Wako",
+    howStep1Text: "Mfano: Ninataka kununua kompyuta ya KSh 150,000 kwa ajili ya biashara.",
+    howStep2Title: "2. Hesabu ya Athari",
+    howStep2Text: "Injini yetu inahesabu mara moja jinsi hii inavyoathiri akiba yako na malengo yako.",
+    howStep3Title: "3. Ona Athari na Njia Mbadala",
+    howStep3Text: "Linganisha kununua sasa, kusubiri, au kutumia chaguo la bei nafuu.",
+    howStep4Title: "4. Fanya Uamuzi Bora",
+    howStep4Text: "Jiamini ukijua hasa nini kinatokea baadaye.",
+
+    // Testimonials & Trust
+    trustedByTag: "IMETHIBITISHWA NA WAKURUGENZI NA WAFANYABIASHARA",
+    quote1: "Ilinizuia kufanya uamuzi wa gari ambao ungenirudisha nyuma kwa miezi 8.",
+    quote2: "Tofauti na programu zingine za bajeti, hii inaniambia hasa kama ninunue au nisubiri.",
+    quote3: "UseAimly ndiyo programu ninayofungua kabla ya kutoa pesa yoyote kubwa.",
+    role1: "Mjasiriamali",
+    role2: "Mshauri wa Biashara",
+    role3: "Mhandisi wa Programu",
+
+    // Scenario Cards Grid Section
+    scenariosSectionTitle: "Mifano ya Maamuzi Halisi",
+    scenariosSectionSubtitle: "Ona jinsi maamuzi tofauti yanavyohesabiwa.",
+    scenarioPopularTag: "MAARUFU",
+    scenarioImpactNowLabel: "ATHARI YA SASA",
+    scenarioFutureConsequenceLabel: "MATOKEO YA BAADAYE",
+    scenarioStayOnTrackLabel: "KUBAKI KWENYE MSTARI",
+    scenarioTryBtn: "Chambua Mfano Huu →",
+
+    scenario1Title: "Kununua Gari la {amount}",
+    scenario1Impact: "-2.4 Miezi ya Akiba ya Dharura",
+    scenario1Future: "Lengo la Nyumba linachelewa miezi 4",
+    scenario1Track: "Weka KSh 15,000 zaidi kila mwezi",
+
+    scenario2Title: "Kununua Kompyuta ya {amount}",
+    scenario2Impact: "-18% ya Pesa ya Papo Hapo",
+    scenario2Future: "Lengo linachelewa siku 43",
+    scenario2Track: "Subiri siku 18 au chukua chaguo nafuu",
+
+    scenario3Title: "Kuchukua Mkopo wa {amount}",
+    scenario3Impact: "+KSh 18,000 Mzigo wa Kila Mwezi",
+    scenario3Future: "Lengo linachelewa siku 45",
+    scenario3Track: "Punguza gharama zisizo za lazima",
+
+    scenario4Title: "Safari ya Likizo ya {amount}",
+    scenario4Impact: "-12% ya Akiba ya Dharura",
+    scenario4Future: "Lengo linachelewa siku 22",
+    scenario4Track: "Gawanya malipo kwa miezi 3",
+
+    // Pricing Section
+    pricingSectionTitle: "Gharama Rahisi na Wazi",
+    pricingSectionSubtitle: "Anza bure. Ongeza uwezo kwa maamuzi yasiyo na kikomo.",
+    monthlyBilling: "Malipo ya Kila Mwezi",
+    annualBilling: "Malipo ya Kila Mwaka",
+    discountBadge: "Punguzo la -35%",
+    perYear: "/mwaka",
+    perMonth: "/mwezi",
+    includedFeatures: "YALIYOJUMUISHWA:",
+    freePriceLabel: "Bure",
+    currentPlanLabel: "Kifurushi cha Sasa",
+    billedAnnuallyEquiv: "Sawa na {price}/mwezi (ikilipwa kwa mwaka)",
+
+    // Pricing Plans
+    planFreeTagline: "Chambua maamuzi yako ya kwanza na uone matokeo kwa sekunde 5.",
+    planFreeCta: "Chambua Uamuzi Wangu wa Kwanza",
+
+    planProTagline: "Fanya kila uamuzi mkubwa wa kifedha kwa uwazi kamili.",
+    planProBadge: "Mfumo Kamili wa Maamuzi",
+    planProCta: "Boresha hadi Pro",
+
+    planPremiumTagline: "Kwa wafanyabiashara na viongozi wanaotaka uchambuzi wa hali ya juu.",
+    planPremiumBadge: "Kifurushi Kamili",
+    planPremiumCta: "Fungua Aimly Pro",
+
+    // Final Conversion Banner
+    bannerTitle: "Acha kubahatisha.\nJua kabla ya kutumia.",
+    bannerSubtitle: "Chambua uamuzi wako ujao wa kifedha kwa chini ya sekunde 5.",
+    bannerCta: "Chambua Uamuzi Wangu",
+    bannerNoCard: "Hakuna kadi ya benki inayohitajika",
+
+    // Decision Studio
+    decideHeroTitle: "Studio ya Maamuzi",
+    decideSubtitle: "Chambua ununuzi, mkopo, au uwekezaji kabla ya kujitolea.",
+    askPlaceholder: "Mfano: Je, ninaweza kununua gari la KSh 500,000?",
+    simulateBtn: "Chambua Uamuzi Wangu",
+    strategyCash: "Lipa Pesa Taslimu Leo",
+    strategySpread: "Gawanya kwa Miezi 3",
+    strategyPostpone: "Okoa Kwanza & Subiri",
+
+    // Goal Wizard
+    wizardTitle: "Weka Lengo Jipya",
+    wizardStepOf: "Hatua",
+    whatsYourGoal: "Lengo lako ni nini?",
+    monthlySavingsNeeded: "Akiba inayohitajika kila mwezi",
+    monthsToGoal: "Miezi hadi kukamilika",
+    shareOfIncome: "Sehemu ya mapato ya kila mwezi",
+
+    // System & Footer
+    systemOperational: "Mfumo Unafanya Kazi Kamili",
+    deterministicMath: "100% Injini ya Hesabu Safi ya Hakika",
+    rightsReserved: "Haki zote zimehifadhiwa.",
+    footerTagline: "Ona kesho kabla ya kufanya uamuzi leo.",
+    footerBriefingTitle: "Ripoti za Kimkakati za Kila Mwezi",
+    footerBriefingTag: "Ripoti ya Kila Mwezi",
+    footerSubscribePlaceholder: "Weka barua pepe yako",
+    footerSubscribeBtn: "Jiunge",
+    footerSubscribedSuccess: "Umejiunga! Utapokea ripoti zetu za kimkakati.",
+    footerSystemHealth: "Afya ya Mfumo",
+    footerCorePlatform: "Jukwaa Kuu",
+    footerMonetization: "Vifurushi",
+    footerSecurity: "Usalama na Faragha",
+    footerBackToTop: "Rudi Juu",
   },
 };

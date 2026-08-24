@@ -3,7 +3,7 @@
  * Core financial building blocks and data contracts.
  */
 
-export type CurrencyCode = "USD" | "EUR" | "GBP" | "KES" | "CAD" | "NGN" | "ZAR" | "XOF" | "UGX" | "TZS" | "RWF";
+export type CurrencyCode = "USD" | "EUR" | "GBP" | "KES" | "CAD" | "NGN" | "ZAR" | "XOF" | "UGX" | "TZS" | "RWF" | "CDF";
 
 export type Frequency = "MONTHLY" | "ANNUAL" | "ONE_OFF" | "BI_WEEKLY" | "WEEKLY";
 

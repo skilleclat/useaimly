@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { LanguageCode, TRANSLATIONS, TranslationDictionary } from "./translations";
+import { detectGeoDefaults } from "./geo-detection";
 
 interface I18nContextType {
   language: LanguageCode;
@@ -25,15 +26,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     setMounted(true);
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY) as LanguageCode | null;
-      if (stored && (stored === "en" || stored === "fr")) {
+      if (stored && (stored === "en" || stored === "fr" || stored === "sw")) {
         setLanguageState(stored);
-      } else if (navigator) {
-        const browserLang = (navigator.language || "").toLowerCase();
-        if (browserLang.startsWith("fr")) {
-          setLanguageState("fr");
-        } else {
-          setLanguageState("en");
-        }
+      } else {
+        const geo = detectGeoDefaults();
+        setLanguageState(geo.suggestedLanguage);
       }
     }
   }, []);

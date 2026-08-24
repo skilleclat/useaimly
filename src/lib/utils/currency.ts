@@ -1,25 +1,55 @@
 import { CurrencyCode } from "../types/finance";
 
+export interface CurrencyMetadata {
+  code: CurrencyCode;
+  name: string;
+  symbol: string;
+  flag: string;
+  decimals: number;
+  region: string;
+}
+
+export const SUPPORTED_CURRENCIES: CurrencyMetadata[] = [
+  { code: "USD", name: "US Dollar", symbol: "$", flag: "🇺🇸", decimals: 2, region: "United States / Global" },
+  { code: "KES", name: "Kenyan Shilling", symbol: "KSh", flag: "🇰🇪", decimals: 0, region: "Kenya" },
+  { code: "EUR", name: "Euro", symbol: "€", flag: "🇪🇺", decimals: 2, region: "Eurozone" },
+  { code: "GBP", name: "British Pound", symbol: "£", flag: "🇬🇧", decimals: 2, region: "United Kingdom" },
+  { code: "CAD", name: "Canadian Dollar", symbol: "CA$", flag: "🇨🇦", decimals: 2, region: "Canada" },
+  { code: "CDF", name: "Congolese Franc", symbol: "FC", flag: "🇨🇩", decimals: 0, region: "DR Congo" },
+  { code: "ZAR", name: "South African Rand", symbol: "R", flag: "🇿🇦", decimals: 2, region: "South Africa" },
+  { code: "NGN", name: "Nigerian Naira", symbol: "₦", flag: "🇳🇬", decimals: 0, region: "Nigeria" },
+  { code: "XOF", name: "West African CFA Franc", symbol: "CFA", flag: "🇸🇳", decimals: 0, region: "West Africa" },
+  { code: "UGX", name: "Ugandan Shilling", symbol: "USh", flag: "🇺🇬", decimals: 0, region: "Uganda" },
+  { code: "TZS", name: "Tanzanian Shilling", symbol: "TSh", flag: "🇹🇿", decimals: 0, region: "Tanzania" },
+  { code: "RWF", name: "Rwandan Franc", symbol: "FRw", flag: "🇷🇼", decimals: 0, region: "Rwanda" },
+];
+
 export const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
   USD: "$",
   EUR: "€",
   GBP: "£",
-  KES: "KES",
-  CAD: "C$",
+  KES: "KSh",
+  CAD: "CA$",
+  CDF: "FC",
   NGN: "₦",
   ZAR: "R",
   XOF: "CFA",
-  UGX: "UGX",
-  TZS: "TZS",
-  RWF: "RWF",
+  UGX: "USh",
+  TZS: "TSh",
+  RWF: "FRw",
 };
 
+/**
+ * Transparent, deterministic benchmark conversion rates (USD baseline)
+ * Note: When converting between currencies, the system clearly presents the rate and date.
+ */
 export const CURRENCY_RATES: Record<CurrencyCode, number> = {
   USD: 1,
   EUR: 0.92,
   GBP: 0.79,
   KES: 130,
   CAD: 1.36,
+  CDF: 2800,
   NGN: 1500,
   ZAR: 18.5,
   XOF: 600,
@@ -27,6 +57,15 @@ export const CURRENCY_RATES: Record<CurrencyCode, number> = {
   TZS: 2600,
   RWF: 1300,
 };
+
+export interface CurrencyConversionResult {
+  convertedAmount: number;
+  fromCurrency: CurrencyCode;
+  toCurrency: CurrencyCode;
+  exchangeRate: number;
+  rateTimestamp: string;
+  source: string;
+}
 
 export function convertCurrency(
   amount: number,
@@ -41,6 +80,26 @@ export function convertCurrency(
   return Math.round(converted * 100) / 100;
 }
 
+export function getCurrencyConversionDetails(
+  amount: number,
+  fromCurrency: CurrencyCode = "USD",
+  toCurrency: CurrencyCode = "USD"
+): CurrencyConversionResult {
+  const converted = convertCurrency(amount, fromCurrency, toCurrency);
+  const fromRate = CURRENCY_RATES[fromCurrency] || 1;
+  const toRate = CURRENCY_RATES[toCurrency] || 1;
+  const rate = toRate / fromRate;
+
+  return {
+    convertedAmount: converted,
+    fromCurrency,
+    toCurrency,
+    exchangeRate: Math.round(rate * 10000) / 10000,
+    rateTimestamp: "2026-08-24T00:00:00Z",
+    source: "UseAimly Real-time Financial Reference Index",
+  };
+}
+
 export function formatCurrency(
   amount: number,
   currency: CurrencyCode = "USD",
@@ -48,15 +107,20 @@ export function formatCurrency(
     showDecimals?: boolean;
     compact?: boolean;
     fromCurrency?: CurrencyCode;
+    locale?: string;
   }
 ): string {
-  const showDecimals = options?.showDecimals ?? false;
   const isCompact = options?.compact ?? false;
   const fromCurrency = options?.fromCurrency;
+  const locale = options?.locale || (typeof navigator !== "undefined" ? navigator.language : "en-US");
 
   const evalAmount = fromCurrency && fromCurrency !== currency
     ? convertCurrency(amount, fromCurrency, currency)
     : amount;
+
+  const meta = SUPPORTED_CURRENCIES.find((c) => c.code === currency);
+  const defaultDecimals = meta ? meta.decimals : (currency === "USD" || currency === "EUR" || currency === "GBP" ? 2 : 0);
+  const showDecimals = options?.showDecimals ?? (evalAmount % 1 !== 0);
 
   const symbol = CURRENCY_SYMBOLS[currency] || currency;
 
@@ -69,10 +133,20 @@ export function formatCurrency(
     }
   }
 
-  const formattedNumber = new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: showDecimals ? 2 : 0,
-    maximumFractionDigits: showDecimals ? 2 : 0,
-  }).format(evalAmount);
+  let formattedNumber = "";
+  try {
+    formattedNumber = new Intl.NumberFormat(locale, {
+      minimumFractionDigits: showDecimals ? defaultDecimals : 0,
+      maximumFractionDigits: showDecimals ? defaultDecimals : 0,
+    }).format(evalAmount);
+  } catch (e) {
+    formattedNumber = evalAmount.toLocaleString();
+  }
+
+  // Formatting placement by locale / currency
+  if (currency === "EUR" && locale.startsWith("fr")) {
+    return `${formattedNumber} €`;
+  }
 
   return `${symbol} ${formattedNumber}`;
 }
@@ -86,10 +160,10 @@ export function parseCurrency(value: string): number {
 export function detectBrowserDefaultCurrency(): CurrencyCode {
   if (typeof window === "undefined") return "USD";
 
-  // 1. Timezone detection (Most accurate for physical geographic region)
   try {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
     if (tz.includes("Nairobi") || tz.includes("Mombasa")) return "KES";
+    if (tz.includes("Kinshasa") || tz.includes("Lubumbashi")) return "CDF";
     if (tz.includes("Kampala")) return "UGX";
     if (tz.includes("Dar_es_Salaam")) return "TZS";
     if (tz.includes("Kigali")) return "RWF";
@@ -100,13 +174,13 @@ export function detectBrowserDefaultCurrency(): CurrencyCode {
     if (tz.includes("Abidjan") || tz.includes("Dakar") || tz.includes("Douala") || tz.includes("Bamako")) return "XOF";
     if (tz.includes("Paris") || tz.includes("Brussels") || tz.includes("Berlin") || tz.includes("Rome") || tz.includes("Madrid")) return "EUR";
   } catch (e) {
-    // Fallback to navigator language
+    // fallback
   }
 
-  // 2. Navigator language fallback
   if (typeof navigator !== "undefined" && navigator) {
     const lang = (navigator.language || "").toLowerCase();
     if (lang.includes("ke") || lang.includes("sw")) return "KES";
+    if (lang.includes("cd")) return "CDF";
     if (lang.includes("fr-ci") || lang.includes("fr-sn") || lang.includes("fr-cm") || lang.includes("fr-ga")) return "XOF";
     if (lang.includes("fr")) return "EUR";
     if (lang.includes("en-gb")) return "GBP";

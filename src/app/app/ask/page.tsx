@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useCurrency } from "@/lib/currency/currency-context";
+import { useI18n } from "@/lib/i18n/i18n-context";
 import { formatCurrency } from "@/lib/utils/currency";
 import { CurrencyCode } from "@/lib/types/finance";
 import { FinancialStatus } from "@/components/design-system/FinancialStatus";
@@ -106,6 +107,7 @@ const SUGGESTED_QUERIES = [
 export default function AskPage() {
   const { user, profile } = useAuth();
   const { currency } = useCurrency();
+  const { language } = useI18n();
 
   const [threads, setThreads] = useState<ConversationThread[]>(INITIAL_THREADS);
   const [activeThreadId, setActiveThreadId] = useState<string>("thread-1");
@@ -177,6 +179,7 @@ export default function AskPage() {
           message: msg.trim(),
           history: updatedMessages,
           currency,
+          language,
           userOverride: {
             profile: {
               currency,

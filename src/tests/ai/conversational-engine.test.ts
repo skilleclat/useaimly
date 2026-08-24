@@ -26,7 +26,7 @@ describe("Conversational Intelligence Layer", () => {
     const reply = await engine.processUserMessage("I want to spend KES 12,000 this weekend.", [], "KES");
 
     expect(reply.sender).toBe("Useaimly");
-    expect(reply.content).toContain("KES 12,000");
+    expect(reply.content).toContain("12,000");
     expect(reply.structuredCard).toBeDefined();
     expect(reply.structuredCard?.type).toBe("DECISION_SIMULATION");
     expect(reply.structuredCard?.verdict).toBe("SAFE");

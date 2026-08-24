@@ -161,7 +161,7 @@ describe("Production Financial Engine: Stress & Edge Cases", () => {
 
   describe("4. Multi-Currency Format Precision", () => {
     it("formats amounts properly across all supported currencies", () => {
-      expect(formatCurrency(50000, "KES")).toBe("KES 50,000");
+      expect(formatCurrency(50000, "KES")).toBe("KSh 50,000");
       expect(formatCurrency(50000, "USD")).toBe("$ 50,000");
       expect(formatCurrency(50000, "EUR")).toBe("€ 50,000");
       expect(formatCurrency(50000, "GBP")).toBe("£ 50,000");

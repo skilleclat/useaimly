@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { message, history, currency, userOverride } = body;
+    const { message, history, currency, language, userOverride } = body;
 
     if (!message || typeof message !== "string") {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
@@ -17,7 +17,8 @@ export async function POST(req: NextRequest) {
       message,
       history || [],
       (currency || "KES") as CurrencyCode,
-      userOverride
+      userOverride,
+      language || "en"
     );
 
     return NextResponse.json(response);
