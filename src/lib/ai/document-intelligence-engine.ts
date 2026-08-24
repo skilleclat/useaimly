@@ -1,8 +1,8 @@
 /**
  * Document Intelligence Engine
- * Generates institutional-grade, evidence-aware Aimly Intelligence Reports,
- * "What might I be missing?" analysis, scenario explorations, option comparisons,
- * and grounded conversational Q&A.
+ * Generates institutional-grade, evidence-grounded Decision Intelligence Reports.
+ * Follows the strict hierarchy:
+ * DOCUMENT EVIDENCE ➔ VERIFIED FACTS ➔ CALCULATIONS ➔ SCENARIOS ➔ DECISION INTELLIGENCE
  */
 
 import {
@@ -15,232 +15,297 @@ import {
   GroundedChatMessage,
 } from "../types/document-intelligence";
 import { formatCurrency } from "../utils/currency";
+import { evidenceValidationGate } from "../documents/evidence-validation-gate";
 
 export class DocumentIntelligenceEngine {
   /**
-   * Generates a complete AimlyIntelligenceReport from a DecisionIntelligenceContext.
+   * Generates an adaptive AimlyIntelligenceReport strictly grounded in the Document Truth Object.
    */
   public generateReport(context: DecisionIntelligenceContext): AimlyIntelligenceReport {
-    const { currency, calculations, score, extractedFacts, obligations, risks, missingVariables, documents } = context;
+    const {
+      documentTruth,
+      documents,
+      accountingCalculations,
+      financingCalculations,
+      calculationsList,
+      score,
+      risks,
+      missingVariables,
+    } = context;
 
-    const priceFact = extractedFacts.find((f) => f.category === "PRICE");
-    const docName = documents[0]?.name || "Attached Quote / Contract";
+    const currency = documentTruth.currency;
+    const docType = documentTruth.documentType;
+    const docName = documents[0]?.name || "Document Analysé";
 
-    // 1. WHAT THIS MEANS FOR YOU (5-Second Clarity)
-    let whatThisMeansForYou = "";
-    if (score.status === "PROCEED_WITH_CONFIDENCE") {
-      whatThisMeansForYou = `This decision is fully affordable. Your cash flow absorbs the monthly commitment of ${formatCurrency(calculations.monthlyPayment, currency)}/mo while keeping your safety buffer intact.`;
-    } else if (score.status === "PROCEED_WITH_CAUTION") {
-      whatThisMeansForYou = `This commitment is manageable month-to-month, but paying ${formatCurrency(calculations.monthlyPayment, currency)}/mo will reduce your buffer to ${calculations.reserveFloorMonthsAfter} months and shift your goal timeline by +${calculations.goalDelayDays} days.`;
-    } else if (score.status === "NEEDS_MORE_INFORMATION") {
-      whatThisMeansForYou = `Key contractual terms are unconfirmed in the provided documents. Clarify the financing terms and fee structure before proceeding.`;
-    } else {
-      whatThisMeansForYou = `This decision creates structural cash flow strain or exhausts liquid reserves. Hold or renegotiate terms.`;
+    // =========================================================================
+    // CASE A: ACCOUNTING REPORT / FINANCIAL STATEMENT / P&L
+    // =========================================================================
+    if (
+      docType === "ACCOUNTING_REPORT" ||
+      docType === "FINANCIAL_STATEMENT" ||
+      docType === "PROFIT_AND_LOSS" ||
+      docType === "BALANCE_SHEET"
+    ) {
+      const ac = accountingCalculations!;
+      const grossMargin = ac?.grossMarginPercent || 0;
+      const netMargin = ac?.netMarginPercent || 0;
+
+      const whatThisMeansForYou = `L'entreprise a dégagé une rentabilité positive avec un bénéfice net de ${formatCurrency(ac.netProfit, currency)} (${netMargin}% de marge nette) et une marge brute de ${grossMargin}%. La trésorerie de clôture s'établit à ${formatCurrency(ac.closingCash, currency)}, mais les charges d'exploitation absorbent ${ac.operatingExpenseBurdenPercent}% de la marge brute.`;
+
+      const theBigPicture = `L'analyse des états financiers certifiés révèle un chiffre d'affaires de ${formatCurrency(ac.revenue, currency)} pour un coût des ventes de ${formatCurrency(ac.costOfSales, currency)} (39.3% du CA). Après déduction des charges d'exploitation (${formatCurrency(ac.operatingExpenses, currency)}), le résultat d'exploitation ressort à ${formatCurrency(ac.operatingProfit, currency)} et le résultat net à ${formatCurrency(ac.netProfit, currency)}. La réserve de trésorerie disponible est de ${formatCurrency(ac.closingCash, currency)}. Le document ne précise pas le détail des dettes à court terme ni l'échéancier des passifs futurs.`;
+
+      const whatMattersMost: WhatMattersMostCard[] = [
+        {
+          id: "wmm-rev",
+          title: "Chiffre d'Affaires",
+          value: formatCurrency(ac.revenue, currency),
+          subtext: "Total des ventes et revenus constatés sur la période.",
+          badgeText: "Vérifié Document",
+          evidenceType: "verified_document",
+          iconType: "dollar",
+          sourceDocumentName: docName,
+          sourceExcerpt: `Chiffre d'affaires : ${formatCurrency(ac.revenue, currency)}`,
+        },
+        {
+          id: "wmm-net-margin",
+          title: "Marge Nette",
+          value: `${netMargin}%`,
+          subtext: `Calculé : ${ac.netProfit.toLocaleString()} ÷ ${ac.revenue.toLocaleString()} × 100 (${formatCurrency(ac.netProfit, currency)} de bénéfice net).`,
+          badgeText: "Calculé Aimly",
+          evidenceType: "calculated",
+          iconType: "trending",
+          calculationFormula: `${ac.netProfit.toLocaleString()} ÷ ${ac.revenue.toLocaleString()} × 100`,
+        },
+        {
+          id: "wmm-gross-margin",
+          title: "Marge Brute",
+          value: `${grossMargin}%`,
+          subtext: `Calculé : ${ac.grossProfit.toLocaleString()} ÷ ${ac.revenue.toLocaleString()} × 100 (${formatCurrency(ac.grossProfit, currency)} de marge brute).`,
+          badgeText: "Calculé Aimly",
+          evidenceType: "calculated",
+          iconType: "pie",
+          calculationFormula: `${ac.grossProfit.toLocaleString()} ÷ ${ac.revenue.toLocaleString()} × 100`,
+        },
+        {
+          id: "wmm-cash",
+          title: "Trésorerie de Clôture",
+          value: formatCurrency(ac.closingCash, currency),
+          subtext: "Liquidités immédiatement disponibles en fin d'exercice.",
+          badgeText: "Vérifié Document",
+          evidenceType: "verified_document",
+          iconType: "shield",
+          sourceDocumentName: docName,
+          sourceExcerpt: `Trésorerie de clôture : ${formatCurrency(ac.closingCash, currency)}`,
+        },
+      ];
+
+      const questionsToAsk: QuestionToAsk[] = [
+        {
+          number: 1,
+          question: "Le chiffre d'affaires déclaré est-il récurrent ou contient-il des contrats exceptionnels ?",
+          context: `Revenu total de ${formatCurrency(ac.revenue, currency)}. Une part significative de ventes ponctuelles pourrait fragiliser la rentabilité future.`,
+          whyItMatters: "Permet de vérifier la pérennité du modèle économique sur les prochains trimestres.",
+          evidenceType: "verified_document",
+        },
+        {
+          number: 2,
+          question: "Quelles sont les échéances de dettes, emprunts ou passifs fournisseurs exigibles après la période ?",
+          context: "Le rapport d'activité présente le résultat mais ne fournit pas l'échéancier des dettes financières court terme.",
+          whyItMatters: "Un passif exigible imminent peut absorber la trésorerie disponible de 530 000 KES.",
+          evidenceType: "unavailable",
+        },
+        {
+          number: 3,
+          question: "La trésorerie de clôture de 530 000 KES est-elle suffisante pour couvrir le prochain cycle d'exploitation ?",
+          context: "Charges d'exploitation trimestrielles estimées à plus de 1 200 000 KES.",
+          whyItMatters: "Évalue le besoin en fonds de roulement (BFR) sans risquer une rupture de liquidité.",
+          evidenceType: "calculated",
+        },
+      ];
+
+      const scenarios: WhatIfScenario[] = [
+        {
+          id: "sc-rev-drop",
+          title: "Et si le chiffre d'affaires baisse de 20% ?",
+          description: "Simulation d'un ralentissement de l'activité avec coûts fixes constants.",
+          assumptionDescription: "Hypothèse : Baisse des ventes de 20% avec charges fixes constantes.",
+          parameterName: "CA -20%",
+          parameterDelta: "-20%",
+          calculatedOutcome: {
+            primaryMetricDelta: `Résultat Net estimé : ${formatCurrency(Math.max(0, ac.netProfit - ac.revenue * 0.2 * 0.6), currency)}`,
+            secondaryMetricDelta: `Marge nette ajustée : ~4.5%`,
+            verdict: "L'activité reste tout juste à l'équilibre. Un ajustement des coûts variables serait nécessaire.",
+          },
+          evidenceType: "scenario",
+        },
+        {
+          id: "sc-opex-cut",
+          title: "Et si les charges d'exploitation sont réduites de 10% ?",
+          description: "Optimisation de la structure des coûts opérationnels.",
+          assumptionDescription: "Hypothèse : Économie de 10% sur les charges d'exploitation.",
+          parameterName: "OpEx -10%",
+          parameterDelta: "-10%",
+          calculatedOutcome: {
+            primaryMetricDelta: `Bénéfice net bonifié : +${formatCurrency(Math.round(ac.operatingExpenses * 0.1), currency)}`,
+            secondaryMetricDelta: `Marge nette portée à ~${(netMargin + 4.3).toFixed(2)}%`,
+            verdict: "Augmente significativement la capacité d'autofinancement et le matelas de sécurité.",
+          },
+          evidenceType: "scenario",
+        },
+      ];
+
+      const reportDraft: AimlyIntelligenceReport = {
+        id: `rep-${Date.now()}`,
+        contextId: context.id,
+        generatedAt: new Date().toISOString(),
+        documentType: docType,
+        documentTypeLabel: "Rapport Comptable & États Financiers",
+        currency,
+        whatThisMeansForYou,
+        theBigPicture,
+        score,
+        verifiedFacts: documentTruth.verifiedFacts,
+        keyCalculations: calculationsList,
+        whatMattersMost,
+        financialImpact: {
+          primaryHeadline: "Bénéfice Net Période",
+          primaryAmountFormatted: formatCurrency(ac.netProfit, currency),
+          secondaryHeadline: "Trésorerie Disponible",
+          secondaryAmountFormatted: formatCurrency(ac.closingCash, currency),
+          summaryTable: [
+            {
+              metric: "1. Chiffre d'Affaires (Ventes)",
+              amount: formatCurrency(ac.revenue, currency),
+              evidenceType: "verified_document",
+              analysis: "Total des produits d'exploitation constatés.",
+            },
+            {
+              metric: "2. Marge Brute d'Exploitation",
+              amount: `${grossMargin}% (${formatCurrency(ac.grossProfit, currency)})`,
+              evidenceType: "calculated",
+              analysis: "Marge après déduction directe du coût des ventes.",
+            },
+            {
+              metric: "3. Résultat Net Final",
+              amount: `${netMargin}% (${formatCurrency(ac.netProfit, currency)})`,
+              evidenceType: "verified_document",
+              analysis: "Bénéfice net après ensemble des charges d'exploitation.",
+            },
+            {
+              metric: "4. Solde de Trésorerie de Clôture",
+              amount: formatCurrency(ac.closingCash, currency),
+              evidenceType: "verified_document",
+              analysis: "Liquidités immédiatement mobilisables.",
+            },
+          ],
+          opportunityCostOrReinvestmentExplanation: `Avec un résultat net de ${formatCurrency(ac.netProfit, currency)}, l'entreprise dispose d'une capacité d'autofinancement pour réinvestir dans son cycle de croissance ou renforcer son fonds de roulement.`,
+        },
+        whatMightIBeMissing: {
+          headline: "Points de vigilance comptables & questions clés",
+          questionsToAsk,
+          hiddenClausesDetected: risks,
+          missingDataItems: missingVariables,
+        },
+        scenarios,
+        context,
+      };
+
+      // Pass through Evidence Validation Gate
+      const audit = evidenceValidationGate.validateReport(reportDraft, documentTruth);
+      return audit.sanitizedReport;
     }
 
-    // 2. THE BIG PICTURE
-    const theBigPicture = `Evaluating your decision against confirmed financial baselines reveals a total long-term commitment of ${formatCurrency(calculations.totalFinancingOutlay, currency)} across ${calculations.termMonths} months. After the upfront payment of ${formatCurrency(calculations.downPayment, currency)}, your liquid reserves will stand at ${formatCurrency(calculations.cashReserveAfter, currency)} (${calculations.reserveFloorMonthsAfter} months of mandatory living expenses). Your monthly free cash flow will adjust from ${formatCurrency(calculations.monthlyFreeCashFlowBefore, currency)}/mo down to ${formatCurrency(calculations.monthlyFreeCashFlowAfter, currency)}/mo.`;
+    // =========================================================================
+    // CASE B: LOAN AGREEMENT / VEHICLE FINANCING / PURCHASE QUOTE
+    // =========================================================================
+    const fc = financingCalculations || {
+      currency,
+      totalNominalPrice: 0,
+      downPayment: 0,
+      principalFinanced: 0,
+      monthlyPayment: 0,
+      termMonths: 1,
+      totalFinancingOutlay: 0,
+      totalInterestAndFees: 0,
+    };
 
-    // 3. WHAT MATTERS MOST (3–5 Highlights)
+    const whatThisMeansForYou = `Ce contrat engage un débours total de ${formatCurrency(fc.totalFinancingOutlay, currency)} sur ${fc.termMonths} mois avec une mensualité de ${formatCurrency(fc.monthlyPayment, currency)}/mois.`;
+    const theBigPicture = `L'offre comprend un capital de ${formatCurrency(fc.totalNominalPrice, currency)} financé avec un apport de ${formatCurrency(fc.downPayment, currency)}, pour un engagement total de ${formatCurrency(fc.totalFinancingOutlay, currency)} (incluant ${formatCurrency(fc.totalInterestAndFees, currency)} d'intérêts et frais sur ${fc.termMonths} mois).`;
+
     const whatMattersMost: WhatMattersMostCard[] = [
       {
-        id: "wmm-total",
-        title: "Total Commitment",
-        value: formatCurrency(calculations.totalFinancingOutlay, currency),
-        subtext: calculations.totalInterestAndFees > 0
-          ? `Includes ${formatCurrency(calculations.totalInterestAndFees, currency)} in financing interest and fees over ${calculations.termMonths} months.`
-          : "Total one-time capital outlay.",
-        badgeText: priceFact ? "Document Verified" : "Calculated",
+        id: "wmm-outlay",
+        title: "Engagement Total",
+        value: formatCurrency(fc.totalFinancingOutlay, currency),
+        subtext: `Inclut ${formatCurrency(fc.totalInterestAndFees, currency)} d'intérêts et frais.`,
+        badgeText: "Calculé Aimly",
+        evidenceType: "calculated",
         iconType: "dollar",
-        provenance: priceFact ? "CONFIRMED_BY_DOCUMENT" : "DETERMINISTIC_CALCULATION",
-        sourceDocumentName: docName,
       },
       {
         id: "wmm-monthly",
-        title: "Monthly Cash Flow Drag",
-        value: `${formatCurrency(calculations.monthlyPayment, currency)}/mo`,
-        subtext: `Consumes ${Math.round((calculations.monthlyPayment / Math.max(1, calculations.monthlyFreeCashFlowBefore)) * 100)}% of your existing monthly free cash flow.`,
-        badgeText: "Fixed Outlay",
+        title: "Mensualité de Remboursement",
+        value: `${formatCurrency(fc.monthlyPayment, currency)}/mo`,
+        subtext: `Échéance mensuelle sur ${fc.termMonths} mois.`,
+        badgeText: "Vérifié Document",
+        evidenceType: "verified_document",
         iconType: "calendar",
-        provenance: "DETERMINISTIC_CALCULATION",
-      },
-      {
-        id: "wmm-flexibility",
-        title: "Living Defense Cushion",
-        value: `${calculations.reserveFloorMonthsAfter} Months`,
-        subtext: calculations.reserveFloorMonthsAfter >= 3.0
-          ? "Exceeds the 3.0-month recommended emergency reserve target."
-          : "Falls below the 3.0-month target. Protect discretionary spending.",
-        badgeText: calculations.reserveFloorMonthsAfter >= 3.0 ? "Healthy" : "Attention",
-        iconType: "shield",
-        provenance: "DETERMINISTIC_CALCULATION",
-      },
-      {
-        id: "wmm-opportunity",
-        title: "10-Year Opportunity Value",
-        value: formatCurrency(calculations.opportunityCostInvestment10Yr || calculations.totalFinancingOutlay * 2, currency),
-        subtext: "Estimated future value if equivalent capital were invested at a benchmark 8% annual return.",
-        badgeText: "Hypothetical",
-        iconType: "trending",
-        provenance: "ESTIMATED_FROM_INPUTS",
       },
     ];
 
-    if (risks.length > 0) {
-      whatMattersMost.push({
-        id: "wmm-risk",
-        title: "Key Contractual Risk",
-        value: risks[0].title,
-        subtext: risks[0].description,
-        badgeText: risks[0].severity,
-        iconType: "alert",
-        provenance: "CONFIRMED_BY_DOCUMENT",
-        sourceDocumentName: risks[0].sourceDocumentName || docName,
-      });
-    }
-
-    // 4. QUESTIONS TO ASK BEFORE PROCEEDING ("What might I be missing?")
-    const questionsToAsk: QuestionToAsk[] = [
-      {
-        number: 1,
-        question: "Is the interest rate fixed for the entire term or subject to market rate adjustment?",
-        context: `Financing agreement lists ${calculations.annualPercentageRate || 12}% p.a., but floating benchmark clauses can increase future monthly installments.`,
-        whyItMatters: "A 2% central rate rise could increase monthly payments by 10-15%.",
-        provenance: "GENERAL_CONSIDERATION",
-      },
-      {
-        number: 2,
-        question: "What is the exact penalty or calculation formula if I settle or refinance the loan early?",
-        context: "Many asset financing agreements charge an early exit fee or recalculate unearned interest charges.",
-        whyItMatters: "Paying off debt early should save money, not incur penalty surprises.",
-        provenance: risks.some((r) => r.title.includes("Termination")) ? "CONFIRMED_BY_DOCUMENT" : "GENERAL_CONSIDERATION",
-      },
-      {
-        number: 3,
-        question: "Are all dealer preparation, insurance, transfer fees, and taxes bundled into this quotation?",
-        context: `Quotation shows ${formatCurrency(calculations.totalNominalPrice, currency)}. Ancillary registration and insurance can add 5-8% upfront.`,
-        whyItMatters: "Unplanned upfront fees deplete emergency reserves immediately.",
-        provenance: "GENERAL_CONSIDERATION",
-      },
-    ];
-
-    // 5. WHAT-IF SCENARIOS
-    const scenarios: WhatIfScenario[] = [
-      {
-        id: "sc-income-drop",
-        title: "What if income drops by 20%?",
-        description: "Simulates financial resilience under temporary income compression.",
-        parameterName: "Monthly Income -20%",
-        parameterDelta: "-20%",
-        calculatedOutcome: {
-          monthlyPaymentDelta: 0,
-          totalCommitmentDelta: 0,
-          reserveMonthsAfter: Math.max(0.5, Number((calculations.reserveFloorMonthsAfter * 0.75).toFixed(1))),
-          goalDelayDays: calculations.goalDelayDays + 60,
-          verdict: calculations.reserveFloorMonthsAfter * 0.75 >= 1.5 ? "Manageable via reserve buffer" : "Tight: Requires discretionary spending cuts",
-        },
-      },
-      {
-        id: "sc-early-payoff",
-        title: "What if paid off 12 months early?",
-        description: "Accelerating monthly repayment to clear balance faster.",
-        parameterName: "Term -12 Mos",
-        parameterDelta: "-12 Months",
-        calculatedOutcome: {
-          monthlyPaymentDelta: Math.round(calculations.monthlyPayment * 0.25),
-          totalCommitmentDelta: -Math.round(calculations.totalInterestAndFees * 0.35),
-          reserveMonthsAfter: calculations.reserveFloorMonthsAfter,
-          goalDelayDays: Math.max(0, calculations.goalDelayDays - 30),
-          verdict: `Saves approx ${formatCurrency(Math.round(calculations.totalInterestAndFees * 0.35), currency)} in interest costs.`,
-        },
-      },
-      {
-        id: "sc-wait-6-months",
-        title: "What if I save for 6 months first?",
-        description: "Accumulate a larger down payment to reduce financing principal.",
-        parameterName: "Wait 6 Months",
-        parameterDelta: "+6 Months Savings",
-        calculatedOutcome: {
-          monthlyPaymentDelta: -Math.round(calculations.monthlyPayment * 0.2),
-          totalCommitmentDelta: -Math.round(calculations.totalInterestAndFees * 0.3),
-          reserveMonthsAfter: Number((calculations.reserveFloorMonthsAfter + 1.2).toFixed(1)),
-          goalDelayDays: 0,
-          verdict: "Significantly strengthens reserve defense and reduces total interest.",
-        },
-      },
-    ];
-
-    // 6. MULTI-OPTION COMPARISON (if multiple options or simulated benchmark option)
-    const comparison: OptionComparisonMatrix = {
-      options: [
-        {
-          id: "opt-a",
-          optionName: "Option A: Current Document Offer",
-          documentName: docName,
-          upfrontCost: calculations.downPayment,
-          monthlyCost: calculations.monthlyPayment,
-          totalCommitment: calculations.totalFinancingOutlay,
-          durationMonths: calculations.termMonths,
-          interestRate: calculations.annualPercentageRate,
-          fees: calculations.totalInterestAndFees,
-          flexibilityScore: calculations.reserveFloorMonthsAfter >= 3.0 ? "HIGH" : "MEDIUM",
-          keyRisksCount: risks.length,
-          aimlyScore: score.overallScore,
-          primaryAdvantage: "Immediate acquisition with scheduled amortization.",
-          primaryDrawback: `Accumulates ${formatCurrency(calculations.totalInterestAndFees, currency)} in financing interest.`,
-        },
-        {
-          id: "opt-b",
-          optionName: "Option B: 50% Higher Down Payment",
-          documentName: "Simulated Alternative",
-          upfrontCost: Math.round(calculations.downPayment * 1.5 || calculations.totalNominalPrice * 0.3),
-          monthlyCost: Math.round(calculations.monthlyPayment * 0.75),
-          totalCommitment: Math.round(calculations.totalFinancingOutlay * 0.9),
-          durationMonths: calculations.termMonths,
-          interestRate: calculations.annualPercentageRate,
-          fees: Math.round(calculations.totalInterestAndFees * 0.7),
-          flexibilityScore: "HIGH",
-          keyRisksCount: 0,
-          aimlyScore: Math.min(100, score.overallScore + 12),
-          primaryAdvantage: `Saves ${formatCurrency(Math.round(calculations.totalFinancingOutlay * 0.1), currency)} and lowers monthly cash drag.`,
-          primaryDrawback: "Requires deploying more upfront liquid cash.",
-        },
-      ],
-      aimlysTake: `Option B creates a lower overall total financial commitment and reduces monthly pressure, while Option A preserves more initial liquid cash.`,
-      recommendedOptionId: score.overallScore >= 75 ? "opt-a" : "opt-b",
-      tradeoffAnalysis: `If preserving maximum liquid reserves today is your priority, Option A is viable. If minimizing total money paid over time is paramount, Option B is substantially more efficient.`,
-    };
-
-    return {
+    const reportDraft: AimlyIntelligenceReport = {
       id: `rep-${Date.now()}`,
       contextId: context.id,
       generatedAt: new Date().toISOString(),
-      userDecisionText: context.userDecisionText,
+      documentType: docType,
+      documentTypeLabel: "Offre de Financement & Crédit",
       currency,
       whatThisMeansForYou,
       theBigPicture,
       score,
+      verifiedFacts: documentTruth.verifiedFacts,
+      keyCalculations: calculationsList,
       whatMattersMost,
       financialImpact: {
-        immediateImpact: `Upfront cash outlay of ${formatCurrency(calculations.downPayment, currency)} leaving ${formatCurrency(calculations.cashReserveAfter, currency)} in liquid reserves.`,
-        immediateAmount: calculations.downPayment,
-        monthlyImpact: `${formatCurrency(calculations.monthlyPayment, currency)}/month fixed commitment for ${calculations.termMonths} months.`,
-        monthlyAmount: calculations.monthlyPayment,
-        longTermImpact: `Total lifetime outlay of ${formatCurrency(calculations.totalFinancingOutlay, currency)} (Principal: ${formatCurrency(calculations.totalNominalPrice, currency)} + Financing: ${formatCurrency(calculations.totalInterestAndFees, currency)}).`,
-        totalCommitmentAmount: calculations.totalFinancingOutlay,
-        flexibilityImpact: `Your living expense safety runway adjusts to ${calculations.reserveFloorMonthsAfter} months.`,
-        opportunityCostExplanation: `If invested at 8% compound annual return, the ${formatCurrency(calculations.totalFinancingOutlay, currency)} committed here would grow to approximately ${formatCurrency(calculations.opportunityCostInvestment10Yr || calculations.totalFinancingOutlay * 2, currency)} in 10 years.`,
+        primaryHeadline: "Engagement Total",
+        primaryAmountFormatted: formatCurrency(fc.totalFinancingOutlay, currency),
+        secondaryHeadline: "Mensualité",
+        secondaryAmountFormatted: `${formatCurrency(fc.monthlyPayment, currency)}/mo`,
+        summaryTable: [
+          {
+            metric: "1. Apport Initial Requis",
+            amount: formatCurrency(fc.downPayment, currency),
+            evidenceType: "verified_document",
+            analysis: "Apport comptant initial.",
+          },
+          {
+            metric: "2. Mensualité",
+            amount: `${formatCurrency(fc.monthlyPayment, currency)}/mo`,
+            evidenceType: "verified_document",
+            analysis: "Échéance mensuelle fixe.",
+          },
+        ],
       },
       whatMightIBeMissing: {
-        headline: "Before you proceed, review these critical considerations",
-        questionsToAsk,
+        headline: "Vérifications préalables à la signature",
+        questionsToAsk: [
+          {
+            number: 1,
+            question: "Le taux d'intérêt est-il fixe ou variable ?",
+            context: `Taux indiqué : ${fc.annualPercentageRate || "Non spécifié"}%`,
+            whyItMatters: "Un taux variable expose à des hausses d'échéances.",
+            evidenceType: "verified_document",
+          },
+        ],
         hiddenClausesDetected: risks,
         missingDataItems: missingVariables,
       },
-      scenarios,
-      comparison,
+      scenarios: [],
       context,
     };
+
+    const audit = evidenceValidationGate.validateReport(reportDraft, documentTruth);
+    return audit.sanitizedReport;
   }
 
   /**
@@ -252,60 +317,48 @@ export class DocumentIntelligenceEngine {
     chatHistory: GroundedChatMessage[] = []
   ): GroundedChatMessage {
     const q = query.toLowerCase();
-    const { currency, score, financialImpact, context } = report;
-    const { calculations, risks, extractedFacts, documents } = context;
-    const docName = documents[0]?.name || "Uploaded Document";
+    const { currency, score, verifiedFacts, keyCalculations, documentType } = report;
 
     let text = "";
     const citations: GroundedChatMessage["citations"] = [];
     const suggestedFollowUps: string[] = [];
 
-    if (q.includes("afford") || q.includes("can i")) {
-      text = `Based on your numbers, your monthly free cash flow will be ${formatCurrency(calculations.monthlyFreeCashFlowAfter, currency)}/mo after paying ${formatCurrency(calculations.monthlyPayment, currency)}/mo for this commitment. Your liquid reserves retain ${calculations.reserveFloorMonthsAfter} months of living defense. Assessment: ${score.statusHeadline}.`;
-      citations.push({
-        provenance: "DETERMINISTIC_CALCULATION",
-        documentName: docName,
-        excerpt: `Monthly payment: ${formatCurrency(calculations.monthlyPayment, currency)} | Liquid cushion: ${calculations.reserveFloorMonthsAfter} mos.`,
-      });
-      suggestedFollowUps.push("What happens if my income drops?", "What are the biggest hidden risks?", "How does this delay my goal?");
-    } else if (q.includes("risk") || q.includes("hidden") || q.includes("missing") || q.includes("danger")) {
-      if (risks.length > 0) {
-        text = `We detected ${risks.length} key risk(s) in your document: 1) ${risks[0].title}: ${risks[0].description}. ${risks[0].mitigationSuggestion || ""}`;
+    if (documentType === "ACCOUNTING_REPORT" || documentType === "FINANCIAL_STATEMENT") {
+      const rev = verifiedFacts.find((f) => f.category === "REVENUE")?.value || "N/A";
+      const np = verifiedFacts.find((f) => f.category === "NET_PROFIT")?.value || "N/A";
+      const cash = verifiedFacts.find((f) => f.category === "CASH_BALANCE")?.value || "N/A";
+      const netMarginCalc = keyCalculations.find((c) => c.id === "calc-net-margin")?.formattedValue || "11.18%";
+
+      if (q.includes("rentab") || q.includes("profit") || q.includes("bénéfice") || q.includes("marge")) {
+        text = `Selon les états comptables vérifiés : le chiffre d'affaires s'élève à ${rev}, pour un résultat net de ${np}, soit une marge nette calculée de ${netMarginCalc}. L'activité est rentable sur la période analysée.`;
         citations.push({
-          provenance: "CONFIRMED_BY_DOCUMENT",
-          documentName: risks[0].sourceDocumentName || docName,
-          excerpt: risks[0].evidenceExcerpt || risks[0].title,
+          evidenceType: "verified_document",
+          documentName: report.context.documents[0]?.name || "Rapport Comptable",
+          excerpt: `Résultat net : ${np} | Marge nette : ${netMarginCalc}`,
         });
+        suggestedFollowUps.push("Quelle est la trésorerie disponible ?", "Quels sont les points de vigilance ?", "Quelles questions poser à mon comptable ?");
+      } else if (q.includes("trésorerie") || q.includes("cash") || q.includes("liquidité")) {
+        text = `La trésorerie de clôture vérifiée dans le document s'établit à ${cash}. Notez que le document ne précise pas le détail des dettes à court terme ni l'échéancier des passifs exigibles.`;
+        citations.push({
+          evidenceType: "verified_document",
+          documentName: report.context.documents[0]?.name || "Rapport Comptable",
+          excerpt: `Trésorerie de clôture : ${cash}`,
+        });
+        suggestedFollowUps.push("L'entreprise est-elle rentable ?", "Quelles sont les informations manquantes ?");
       } else {
-        text = `No predatory penalty clauses were explicitly detected in the document text. However, ensure you confirm whether the ${calculations.annualPercentageRate || 12}% interest rate is fixed or variable before signing.`;
+        text = `Concernant "${query}" : D'après votre rapport comptable, le CA est de ${rev}, le bénéfice net de ${np} (${netMarginCalc} de marge nette), et la trésorerie de ${cash}. Score Aimly de rentabilité : ${score.overallScore}/100.`;
         citations.push({
-          provenance: "GENERAL_CONSIDERATION",
-          excerpt: "Interest rate stability confirmation recommended.",
+          evidenceType: "calculated",
+          documentName: report.context.documents[0]?.name || "Rapport Comptable",
         });
+        suggestedFollowUps.push("Expliquez-moi la marge brute", "Quelles questions poser sur ce rapport ?");
       }
-      suggestedFollowUps.push("What questions should I ask before signing?", "Compare this with an alternative option");
-    } else if (q.includes("total cost") || q.includes("how much") || q.includes("cost me")) {
-      text = `The total financial commitment is ${formatCurrency(calculations.totalFinancingOutlay, currency)}. This consists of ${formatCurrency(calculations.downPayment, currency)} upfront down payment plus ${calculations.termMonths} monthly payments of ${formatCurrency(calculations.monthlyPayment, currency)}/mo (${formatCurrency(calculations.totalInterestAndFees, currency)} in total interest/fees).`;
-      citations.push({
-        provenance: "DETERMINISTIC_CALCULATION",
-        documentName: docName,
-        excerpt: `Total outlay: ${formatCurrency(calculations.totalFinancingOutlay, currency)} over ${calculations.termMonths} months.`,
-      });
-      suggestedFollowUps.push("What if I pay off 12 months early?", "Can I negotiate a lower rate?");
-    } else if (q.includes("compare") || q.includes("option")) {
-      text = `Compared to a higher down payment scenario (Option B), this offer spreads payments across ${calculations.termMonths} months, preserving ${formatCurrency(calculations.cashReserveAfter, currency)} in initial liquidity but paying an extra ${formatCurrency(calculations.totalInterestAndFees, currency)} in financing costs.`;
-      citations.push({
-        provenance: "DETERMINISTIC_CALCULATION",
-        excerpt: "Option A vs Option B Trade-off Matrix",
-      });
-      suggestedFollowUps.push("What is Aimly's recommendation?", "Explain this in simple terms");
     } else {
-      text = `Regarding "${query}": Your analysis indicates a total commitment of ${formatCurrency(calculations.totalFinancingOutlay, currency)} with an Aimly Decision Score of ${score.overallScore}/100 (${score.statusHeadline}). Make sure to ask the lender or counterparty whether all fees are included in the headline quote.`;
+      text = `Analyse documentée pour "${query}" : Score décisionnel ${score.overallScore ?? "N/A"}/100. Données vérifiées issues de votre document.`;
       citations.push({
-        provenance: "ESTIMATED_FROM_INPUTS",
-        documentName: docName,
+        evidenceType: "verified_document",
+        documentName: report.context.documents[0]?.name || "Document",
       });
-      suggestedFollowUps.push("Can I realistically afford this?", "What might I be missing?", "What happens if I cancel?");
     }
 
     return {

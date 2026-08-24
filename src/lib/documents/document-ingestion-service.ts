@@ -1,10 +1,11 @@
 /**
  * Document Ingestion Service
  * Handles secure file validation, type detection, multi-page text extraction,
- * OCR fallback simulation/parsing, table and metadata extraction.
+ * OCR fallback simulation/parsing, and strict currency detection.
  */
 
 import { DocumentItem, DocumentType } from "../types/document-intelligence";
+import { CurrencyCode } from "../types/finance";
 
 export interface RawUploadedFile {
   name: string;
@@ -16,60 +17,214 @@ export interface RawUploadedFile {
 
 export class DocumentIngestionService {
   /**
-   * Classifies document type from filename, mime type, and content snippets.
+   * Strictly classifies document type from content terms and filename.
    */
-  public detectDocumentType(filename: string, textSnippet: string = ""): DocumentType {
+  public detectDocumentType(filename: string, textSnippet: string = ""): {
+    type: DocumentType;
+    confidence: "high" | "medium" | "low";
+    reasoning: string;
+  } {
     const name = filename.toLowerCase();
     const text = textSnippet.toLowerCase();
 
-    if (name.includes("car") || name.includes("vehicle") || name.includes("auto") || text.includes("vehicle financing") || text.includes("car quote")) {
-      return "VEHICLE_FINANCING";
+    // 1. Accounting Report / P&L / Financial Statement
+    const hasRevenue = text.includes("revenue") || text.includes("chiffre d'affaires") || text.includes("sales") || text.includes("ventes") || text.includes("turnover");
+    const hasProfit = text.includes("gross profit") || text.includes("net profit") || text.includes("operating profit") || text.includes("marge brute") || text.includes("résultat net") || text.includes("résultat d'exploitation") || text.includes("ebitda");
+    const hasCostOfSales = text.includes("cost of sales") || text.includes("cogs") || text.includes("coût des ventes") || text.includes("achats");
+    const hasCashBalance = text.includes("closing cash") || text.includes("cash balance") || text.includes("trésorerie de clôture") || text.includes("solde de clôture");
+
+    if (
+      name.includes("comptable") ||
+      name.includes("accounting") ||
+      name.includes("p_l") ||
+      name.includes("p&l") ||
+      name.includes("profit_loss") ||
+      (hasRevenue && (hasProfit || hasCostOfSales || hasCashBalance))
+    ) {
+      return {
+        type: "ACCOUNTING_REPORT",
+        confidence: "high",
+        reasoning: "The document contains financial accounting metrics (Revenue, Cost of sales, Gross profit, Operating profit, Net profit, and Cash balance).",
+      };
     }
-    if (name.includes("mortgage") || name.includes("home") || name.includes("house") || text.includes("mortgage offer") || text.includes("property purchase")) {
-      return "MORTGAGE";
+
+    // 2. Balance Sheet
+    if (
+      name.includes("balance_sheet") ||
+      name.includes("bilan") ||
+      (text.includes("total assets") && text.includes("total liabilities")) ||
+      (text.includes("actif") && text.includes("passif") && text.includes("capitaux propres"))
+    ) {
+      return {
+        type: "BALANCE_SHEET",
+        confidence: "high",
+        reasoning: "The document contains balance sheet line items (Assets, Liabilities, and Equity).",
+      };
     }
-    if (name.includes("loan") || name.includes("credit") || text.includes("loan agreement") || text.includes("personal loan")) {
-      return "PERSONAL_LOAN";
+
+    // 3. Bank Statement
+    if (
+      name.includes("statement") ||
+      name.includes("releve") ||
+      name.includes("bank") ||
+      (text.includes("opening balance") && text.includes("closing balance")) ||
+      text.includes("account statement")
+    ) {
+      return {
+        type: "BANK_STATEMENT",
+        confidence: "high",
+        reasoning: "The document contains bank transaction statements with opening/closing balances.",
+      };
     }
-    if (name.includes("quote") || name.includes("invoice") || name.includes("proforma") || text.includes("quotation") || text.includes("invoice #")) {
-      return "PURCHASE_QUOTE";
+
+    // 4. Vehicle Financing
+    if (
+      name.includes("car") ||
+      name.includes("vehicle") ||
+      name.includes("auto") ||
+      text.includes("vehicle financing") ||
+      text.includes("car quote") ||
+      text.includes("devis vehicule") ||
+      text.includes("devis véhicule")
+    ) {
+      return {
+        type: "VEHICLE_FINANCING",
+        confidence: "high",
+        reasoning: "The document details vehicle purchase and financing terms.",
+      };
     }
-    if (name.includes("offer") || name.includes("employment") || name.includes("job") || text.includes("employment agreement") || text.includes("gross salary")) {
-      return "EMPLOYMENT_OFFER";
+
+    // 5. Mortgage
+    if (
+      name.includes("mortgage") ||
+      name.includes("immobilier") ||
+      text.includes("mortgage offer") ||
+      text.includes("property purchase") ||
+      text.includes("crédit immobilier")
+    ) {
+      return {
+        type: "MORTGAGE",
+        confidence: "high",
+        reasoning: "The document contains mortgage and property financing terms.",
+      };
     }
-    if (name.includes("payslip") || name.includes("salary") || text.includes("net pay") || text.includes("pay period")) {
-      return "PAYSLIP";
+
+    // 6. Loan / Credit Agreement
+    if (
+      name.includes("loan") ||
+      name.includes("credit") ||
+      name.includes("pret") ||
+      name.includes("prêt") ||
+      text.includes("loan agreement") ||
+      text.includes("personal loan") ||
+      text.includes("contrat de prêt")
+    ) {
+      return {
+        type: "LOAN_AGREEMENT",
+        confidence: "high",
+        reasoning: "The document outlines principal loan borrowing, interest rates, and repayment terms.",
+      };
     }
-    if (name.includes("statement") || name.includes("bank") || text.includes("account statement") || text.includes("closing balance")) {
-      return "BANK_STATEMENT";
+
+    // 7. General Purchase Quote / Invoice
+    if (
+      name.includes("quote") ||
+      name.includes("devis") ||
+      name.includes("invoice") ||
+      name.includes("facture") ||
+      text.includes("quotation") ||
+      text.includes("invoice #") ||
+      text.includes("facture n°")
+    ) {
+      return {
+        type: "PURCHASE_QUOTE",
+        confidence: "medium",
+        reasoning: "The document is a commercial purchase quote or invoice.",
+      };
     }
-    if (name.includes("lease") || name.includes("rent") || text.includes("tenancy agreement") || text.includes("monthly rent")) {
-      return "LEASE_AGREEMENT";
+
+    // 8. Lease Agreement
+    if (
+      name.includes("lease") ||
+      name.includes("bail") ||
+      name.includes("rent") ||
+      name.includes("loyer") ||
+      text.includes("tenancy agreement") ||
+      text.includes("contrat de bail")
+    ) {
+      return {
+        type: "LEASE_AGREEMENT",
+        confidence: "high",
+        reasoning: "The document specifies rental tenancy and lease obligations.",
+      };
     }
-    if (name.includes("subscription") || name.includes("contract") || text.includes("monthly subscription") || text.includes("terms of service")) {
-      return "SUBSCRIPTION_CONTRACT";
+
+    // 9. Commercial Contract
+    if (
+      name.includes("contract") ||
+      name.includes("contrat") ||
+      text.includes("terms of service") ||
+      text.includes("commercial agreement")
+    ) {
+      return {
+        type: "COMMERCIAL_CONTRACT",
+        confidence: "medium",
+        reasoning: "The document contains contractual obligations and clauses.",
+      };
     }
-    if (name.includes("invest") || name.includes("fund") || text.includes("expected return") || text.includes("term sheet")) {
-      return "INVESTMENT_PROPOSAL";
-    }
-    return "GENERAL_DOCUMENT";
+
+    return {
+      type: "UNKNOWN_DOCUMENT",
+      confidence: "low",
+      reasoning: "Insufficient document structure to identify a specific financial category.",
+    };
   }
 
   /**
-   * Ingests and parses a raw file into a structured DocumentItem with metadata and extracted text.
+   * Strictly detects the document currency from text. Never silently transforms.
+   */
+  public detectDocumentCurrency(text: string): CurrencyCode {
+    const lower = text.toLowerCase();
+
+    if (/\b(?:kes|ksh|kshs|shillings?)\b/i.test(lower)) {
+      return "KES";
+    }
+    if (/\b(?:usd|\$|dollars?)\b/i.test(lower)) {
+      return "USD";
+    }
+    if (/\b(?:eur|€|euros?)\b/i.test(lower)) {
+      return "EUR";
+    }
+    if (/\b(?:gbp|£|pounds?)\b/i.test(lower)) {
+      return "GBP";
+    }
+    if (/\b(?:cad|c\$)\b/i.test(lower)) {
+      return "CAD";
+    }
+    if (/\b(?:aud|a\$)\b/i.test(lower)) {
+      return "AUD";
+    }
+    if (/\b(?:zar|rand)\b/i.test(lower)) {
+      return "ZAR";
+    }
+
+    return "KES"; // Default currency for regional environment if unstated
+  }
+
+  /**
+   * Ingests and parses a raw file into a structured DocumentItem.
    */
   public async ingestDocument(file: RawUploadedFile): Promise<DocumentItem> {
     const id = `doc-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const uploadedAt = new Date().toISOString();
 
-    // 1. Validation Checks
-    const maxSizeBytes = 25 * 1024 * 1024; // 25 MB max limit
+    const maxSizeBytes = 25 * 1024 * 1024; // 25 MB
     if (file.size > maxSizeBytes) {
       return {
         id,
         name: file.name,
         size: file.size,
-        type: "GENERAL_DOCUMENT",
+        type: "UNKNOWN_DOCUMENT",
         mimeType: file.type || "application/octet-stream",
         uploadedAt,
         status: "failed",
@@ -78,33 +233,31 @@ export class DocumentIngestionService {
       };
     }
 
-    // 2. Text Extraction & OCR fallback
     let rawText = file.textContent || "";
     let ocrApplied = false;
 
     if (!rawText && file.base64Content) {
-      // Decode text or run OCR if binary/image
       try {
         const decoded = atob(file.base64Content.replace(/^data:.*?;base64,/, ""));
         if (decoded.length > 50 && /^[\x20-\x7E\r\n\t]+$/.test(decoded.substring(0, 100))) {
           rawText = decoded;
         } else {
-          // Simulated high-fidelity OCR for scan images / PDFs
           ocrApplied = true;
-          rawText = `[OCR EXTRACTED CONTENT FOR: ${file.name}]\nDocument text parsed via OCR engine. Key clauses and figures identified.`;
+          rawText = `[OCR PARSED: ${file.name}]`;
         }
       } catch (e) {
         rawText = `[PROCESSED DOCUMENT: ${file.name}]`;
       }
     }
 
-    const docType = this.detectDocumentType(file.name, rawText);
+    const { type } = this.detectDocumentType(file.name, rawText);
+    const detectedCurrency = this.detectDocumentCurrency(rawText);
 
     return {
       id,
       name: file.name,
       size: file.size,
-      type: docType,
+      type,
       mimeType: file.type || "application/pdf",
       uploadedAt,
       status: "ready",
@@ -112,14 +265,15 @@ export class DocumentIngestionService {
       pageCount: Math.max(1, Math.ceil(rawText.length / 1800)),
       ocrApplied,
       metadata: {
-        detectedLanguage: "en",
+        detectedLanguage: "fr",
+        detectedCurrency,
         creationDate: new Date().toISOString().split("T")[0],
       },
     };
   }
 
   /**
-   * Ingests multiple files sequentially or concurrently.
+   * Ingests multiple files sequentially.
    */
   public async ingestMultipleDocuments(files: RawUploadedFile[]): Promise<DocumentItem[]> {
     const results: DocumentItem[] = [];

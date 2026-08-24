@@ -1,7 +1,6 @@
 /**
  * Decision Context Builder
- * Builds a canonical unified Decision Intelligence Context combining user intent,
- * financial profile, ingested documents, extracted facts, obligations, risks, and calculations.
+ * Builds a unified Decision Intelligence Context strictly grounded in the Document Truth Object.
  */
 
 import {
@@ -29,50 +28,43 @@ export class DecisionContextBuilder {
       userDecisionText,
       documents = [],
       userContext = {},
-      currency = "KES",
+      currency: requestedCurrency,
     } = params;
 
     const id = `ctx-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const createdAt = new Date().toISOString();
 
-    // 1. Structured Document Extraction
-    const extraction = structuredExtractionService.extractFromMultipleDocuments(documents, currency);
+    // 1. Structured Document Truth Extraction
+    const extraction = structuredExtractionService.extractFromMultipleDocuments(documents, requestedCurrency);
+    const documentTruth = extraction.documentTruth;
+    const effectiveCurrency = documentTruth.currency;
 
-    // 2. Deterministic Calculation & Scoring
-    const { calculations, score } = documentDecisionCalculator.calculate({
-      currency,
-      userContext,
-      facts: extraction.facts,
-      obligations: extraction.obligations,
-      risks: extraction.risks,
-      missingVariables: extraction.missingVariables,
-    });
+    // 2. Deterministic Calculation & Scoring based ONLY on Document Truth
+    const { accountingCalculations, financingCalculations, calculationsList, score } =
+      documentDecisionCalculator.calculate({
+        documentTruth,
+        userContext,
+        facts: extraction.facts,
+        risks: extraction.risks,
+        missingVariables: extraction.missingVariables,
+      });
 
-    // 3. Document Category Classification
-    const primaryDoc = documents[0];
-    const category = primaryDoc ? primaryDoc.type : "GENERAL_DOCUMENT";
-
-    const assumptions: string[] = [
-      "Assuming constant gross monthly income throughout the financing term.",
-      "Assuming baseline living expenses do not experience major inflationary shocks.",
-    ];
-    if (extraction.missingVariables.some((m) => m.category === "TERMS")) {
-      assumptions.push("Interest rate assumed fixed unless floating rate clause is verified.");
+    const assumptions: string[] = [];
+    if (documentTruth.documentType === "ACCOUNTING_REPORT") {
+      assumptions.push("Analyse fondée exclusivement sur la période comptable et les chiffres certifiés du rapport.");
     }
 
     return {
       id,
       createdAt,
       userDecisionText,
-      category,
-      currency,
-      userFinancialContext: userContext,
+      documentTruth,
       documents,
-      extractedFacts: extraction.facts,
-      obligations: extraction.obligations,
+      accountingCalculations,
+      financingCalculations,
+      calculationsList,
       risks: extraction.risks,
       missingVariables: extraction.missingVariables,
-      calculations,
       score,
       assumptions,
     };

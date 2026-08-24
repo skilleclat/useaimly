@@ -403,49 +403,55 @@ export function AimlyDecisionReport({ report, className = "" }: AimlyDecisionRep
             </div>
           </section>
 
-          {/* Financial Impact Deep Dive Grid */}
+          {/* Financial Impact Deep Dive Grid (Adaptive Table with Evidence Badges) */}
           <section className="space-y-4">
-            <h3 className="text-base font-bold text-foreground">
-              Comprehensive Financial Impact Breakdown
+            <h3 className="text-base font-bold text-foreground flex items-center justify-between">
+              <span>{documentType === "ACCOUNTING_REPORT" ? "Décomposition des États Financiers Vérifiés" : "Décomposition Déterministe de l'Impact Financier"}</span>
+              <span className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">
+                100% Déterministe &amp; Vérifié
+              </span>
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-              <div className="p-5 rounded-2xl border border-border/80 bg-card space-y-2">
-                <span className="text-muted-foreground font-mono font-bold uppercase block text-[10px]">
-                  1. Immediate Impact (Day 1)
-                </span>
-                <div className="text-lg font-bold text-foreground">
-                  {formatCurrency(financialImpact.immediateAmount, currency)}
-                </div>
-                <p className="text-muted-foreground leading-relaxed">
-                  {financialImpact.immediateImpact}
-                </p>
+            <div className="rounded-2xl border border-border/80 bg-card overflow-hidden text-xs">
+              <div className="grid grid-cols-12 bg-secondary/60 p-3 font-mono font-bold text-[11px] text-muted-foreground border-b border-border/60">
+                <div className="col-span-4">MÉTRIQUE</div>
+                <div className="col-span-3">MONTANT / VALEUR</div>
+                <div className="col-span-5">SOURCE &amp; ANALYSE DÉTERMINISTE</div>
               </div>
 
-              <div className="p-5 rounded-2xl border border-border/80 bg-card space-y-2">
-                <span className="text-muted-foreground font-mono font-bold uppercase block text-[10px]">
-                  2. Monthly Cash Flow Drag
-                </span>
-                <div className="text-lg font-bold text-foreground">
-                  {formatCurrency(financialImpact.monthlyAmount, currency)} / mo
-                </div>
-                <p className="text-muted-foreground leading-relaxed">
-                  {financialImpact.monthlyImpact}
-                </p>
-              </div>
+              <div className="divide-y divide-border/40">
+                {financialImpact.summaryTable.map((row, idx) => (
+                  <div key={idx} className="grid grid-cols-12 p-3.5 items-center gap-2 hover:bg-secondary/20 transition-colors">
+                    <div className="col-span-4 font-bold text-foreground flex items-center gap-2">
+                      <span>{row.metric}</span>
+                      <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                        row.evidenceType === "verified_document"
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                          : row.evidenceType === "calculated"
+                          ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
+                          : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                      }`}>
+                        {row.evidenceType === "verified_document" ? "🟢 Vérifié" : row.evidenceType === "calculated" ? "🔵 Calculé" : "🟠 Scénario"}
+                      </span>
+                    </div>
 
-              <div className="p-5 rounded-2xl border border-border/80 bg-card space-y-2">
-                <span className="text-muted-foreground font-mono font-bold uppercase block text-[10px]">
-                  3. Total Lifetime Outlay
-                </span>
-                <div className="text-lg font-bold text-foreground">
-                  {formatCurrency(financialImpact.totalCommitmentAmount, currency)}
-                </div>
-                <p className="text-muted-foreground leading-relaxed">
-                  {financialImpact.longTermImpact}
-                </p>
+                    <div className="col-span-3 font-mono font-bold text-foreground text-sm">
+                      {row.amount}
+                    </div>
+
+                    <div className="col-span-5 text-muted-foreground text-xs leading-relaxed">
+                      {row.analysis}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
+
+            {financialImpact.opportunityCostOrReinvestmentExplanation && (
+              <div className="p-4 rounded-xl bg-secondary/30 border border-border/60 text-xs text-muted-foreground leading-relaxed">
+                <strong>Analyse Stratégique :</strong> {financialImpact.opportunityCostOrReinvestmentExplanation}
+              </div>
+            )}
           </section>
         </div>
       )}

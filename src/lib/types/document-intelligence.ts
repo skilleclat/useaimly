@@ -1,24 +1,32 @@
 /**
- * UseAimly AI Document & Decision Intelligence Engine Types
- * Provides unified schema for documents, extracted facts, provenance, obligations,
- * deterministic calculations, Aimly Decision Score™, scenarios, and grounded reports.
+ * UseAimly Document-Grounded Decision Intelligence Types
+ * Strict Evidence Hierarchy:
+ * DOCUMENT EVIDENCE ➔ VERIFIED FACTS ➔ CALCULATIONS ➔ SCENARIOS ➔ DECISION INTELLIGENCE
  */
 
 import { CurrencyCode } from "./finance";
 
 export type DocumentType =
-  | "VEHICLE_FINANCING"
-  | "MORTGAGE"
-  | "PERSONAL_LOAN"
-  | "PURCHASE_QUOTE"
-  | "EMPLOYMENT_OFFER"
-  | "PAYSLIP"
+  | "ACCOUNTING_REPORT"
+  | "FINANCIAL_STATEMENT"
+  | "PROFIT_AND_LOSS"
+  | "BALANCE_SHEET"
+  | "CASH_FLOW_STATEMENT"
   | "BANK_STATEMENT"
+  | "LOAN_AGREEMENT"
+  | "CREDIT_AGREEMENT"
+  | "MORTGAGE"
+  | "PURCHASE_QUOTE"
+  | "VEHICLE_FINANCING"
   | "LEASE_AGREEMENT"
-  | "SUBSCRIPTION_CONTRACT"
-  | "INVESTMENT_PROPOSAL"
+  | "COMMERCIAL_CONTRACT"
+  | "EMPLOYMENT_CONTRACT"
   | "INVOICE"
-  | "GENERAL_DOCUMENT";
+  | "TAX_DOCUMENT"
+  | "INVESTMENT_PROPOSAL"
+  | "INSURANCE_DOCUMENT"
+  | "MIXED_DOCUMENT"
+  | "UNKNOWN_DOCUMENT";
 
 export type DocumentProcessingStatus =
   | "uploaded"
@@ -28,6 +36,13 @@ export type DocumentProcessingStatus =
   | "analyzing"
   | "ready"
   | "failed";
+
+export type EvidenceType =
+  | "verified_document"
+  | "calculated"
+  | "user_provided"
+  | "scenario"
+  | "unavailable";
 
 export type ProvenanceSourceType =
   | "CONFIRMED_BY_DOCUMENT"
@@ -51,11 +66,22 @@ export interface DocumentItem {
     creationDate?: string;
     organization?: string;
     detectedLanguage?: string;
+    detectedCurrency?: CurrencyCode;
+    periodCovered?: string;
   };
   errorMessage?: string;
 }
 
 export type FactCategory =
+  | "REVENUE"
+  | "COST_OF_SALES"
+  | "GROSS_PROFIT"
+  | "OPERATING_EXPENSES"
+  | "OPERATING_PROFIT"
+  | "NET_PROFIT"
+  | "CASH_BALANCE"
+  | "ASSETS"
+  | "LIABILITIES"
   | "PRICE"
   | "DOWN_PAYMENT"
   | "MONTHLY_PAYMENT"
@@ -78,12 +104,45 @@ export interface DocumentFact {
   value: string;
   numericValue?: number;
   currency?: CurrencyCode;
+  evidenceType: EvidenceType;
   sourceDocumentId: string;
   sourceDocumentName: string;
-  sourceExcerpt?: string;
-  pageNumber?: number;
-  confidence: number; // 0 to 1
+  source?: {
+    page?: number;
+    section?: string;
+    originalText?: string;
+  };
+  confidence: "high" | "medium" | "low";
   isConfirmedByDocument: boolean;
+}
+
+export interface DocumentCalculation {
+  id: string;
+  label: string;
+  numericValue: number;
+  formattedValue: string;
+  unit?: string;
+  formula: string;
+  inputFactIds: string[];
+  explanation: string;
+  evidenceType: "calculated";
+}
+
+export interface DocumentTruthObject {
+  documentId: string;
+  documentName: string;
+  documentType: DocumentType;
+  confidence: "high" | "medium" | "low";
+  typeReasoning: string;
+  currency: CurrencyCode;
+  period?: string;
+  verifiedFacts: DocumentFact[];
+  notFoundFields: {
+    fieldKey: string;
+    label: string;
+    status: "NOT_FOUND";
+    implication: string;
+  }[];
 }
 
 export interface DocumentObligation {
@@ -121,7 +180,7 @@ export interface MissingVariable {
   whyItMatters: string;
   recommendedQuestion: string;
   defaultAssumption?: string;
-  category: "PRICING" | "TERMS" | "FEES" | "PENALTIES" | "FLEXIBILITY";
+  category: "PRICING" | "TERMS" | "FEES" | "PENALTIES" | "FLEXIBILITY" | "OPERATIONS" | "LIQUIDITY";
 }
 
 export interface UserFinancialContextInput {
@@ -136,7 +195,23 @@ export interface UserFinancialContextInput {
   currency?: CurrencyCode;
 }
 
-export interface DeterministicFinancialCalculations {
+export interface AccountingCalculations {
+  currency: CurrencyCode;
+  revenue: number;
+  costOfSales: number;
+  grossProfit: number;
+  grossMarginPercent: number;
+  operatingExpenses: number;
+  operatingProfit: number;
+  operatingMarginPercent: number;
+  netProfit: number;
+  netMarginPercent: number;
+  closingCash: number;
+  costOfSalesRatioPercent: number;
+  operatingExpenseBurdenPercent: number;
+}
+
+export interface FinancingCalculations {
   currency: CurrencyCode;
   totalNominalPrice: number;
   downPayment: number;
@@ -146,39 +221,40 @@ export interface DeterministicFinancialCalculations {
   totalFinancingOutlay: number;
   totalInterestAndFees: number;
   annualPercentageRate?: number;
-  cashReserveBefore: number;
-  cashReserveAfter: number;
-  reserveFloorMonthsAfter: number;
-  monthlyFreeCashFlowBefore: number;
-  monthlyFreeCashFlowAfter: number;
-  debtToIncomeRatioAfter: number;
-  goalDelayDays: number;
-  goalDelayMonths: number;
-  recoveryMonthlyAmount: number;
+  cashReserveBefore?: number;
+  cashReserveAfter?: number;
+  reserveFloorMonthsAfter?: number;
+  monthlyFreeCashFlowBefore?: number;
+  monthlyFreeCashFlowAfter?: number;
+  debtToIncomeRatioAfter?: number;
+  goalDelayDays?: number;
   opportunityCostInvestment10Yr?: number;
-  breakEvenMonths?: number;
 }
 
 export type DecisionAssessmentStatus =
   | "PROCEED_WITH_CONFIDENCE"
   | "PROCEED_WITH_CAUTION"
   | "NEEDS_MORE_INFORMATION"
-  | "HIGH_RISK_DEFICIT";
+  | "HIGH_RISK_DEFICIT"
+  | "HEALTHY_PROFITABILITY"
+  | "MODERATE_PROFITABILITY"
+  | "OPERATING_PRESSURE";
 
 export interface AimlyDecisionScore {
-  overallScore: number; // 0 to 100
+  overallScore: number | null; // null if insufficient data
   status: DecisionAssessmentStatus;
   statusHeadline: string;
+  scoreConfidence: "high" | "medium" | "low" | "insufficient_data";
   scoreBreakdown: {
-    affordability: number; // 0 to 25
-    financialPressure: number; // 0 to 20
-    longTermCommitment: number; // 0 to 20
-    flexibilityDefense: number; // 0 to 15
-    riskExposure: number; // 0 to 10
-    informationCompleteness: number; // 0 to 10
+    profitabilityOrAffordability: number;
+    operatingOrCashFlowHealth: number;
+    marginOrCommitmentDefense: number;
+    riskOrFlexibilityExposure: number;
+    dataCompleteness: number;
   };
   explanation: string;
-  keyDrivers: string[];
+  positiveDrivers: string[];
+  negativeDrivers: string[];
 }
 
 export interface WhatMattersMostCard {
@@ -187,9 +263,11 @@ export interface WhatMattersMostCard {
   value: string;
   subtext: string;
   badgeText?: string;
-  iconType: "dollar" | "calendar" | "shield" | "alert" | "trending" | "lock";
-  provenance: ProvenanceSourceType;
+  evidenceType: EvidenceType;
+  iconType: "dollar" | "calendar" | "shield" | "alert" | "trending" | "lock" | "pie";
   sourceDocumentName?: string;
+  sourceExcerpt?: string;
+  calculationFormula?: string;
 }
 
 export interface QuestionToAsk {
@@ -197,35 +275,31 @@ export interface QuestionToAsk {
   question: string;
   context: string;
   whyItMatters: string;
-  provenance: ProvenanceSourceType;
+  evidenceType: EvidenceType;
 }
 
 export interface WhatIfScenario {
   id: string;
   title: string;
   description: string;
+  assumptionDescription: string;
   parameterName: string;
   parameterDelta: string;
   calculatedOutcome: {
-    monthlyPaymentDelta: number;
-    totalCommitmentDelta: number;
-    reserveMonthsAfter: number;
-    goalDelayDays: number;
+    primaryMetricDelta: string;
+    secondaryMetricDelta: string;
     verdict: string;
   };
+  evidenceType: "scenario";
 }
 
 export interface OptionComparisonItem {
   id: string;
   optionName: string;
   documentName?: string;
-  upfrontCost: number;
-  monthlyCost: number;
-  totalCommitment: number;
-  durationMonths: number;
-  interestRate?: number;
-  fees: number;
-  flexibilityScore: "HIGH" | "MEDIUM" | "LOW";
+  primaryMetric: string;
+  secondaryMetric: string;
+  totalCommitmentOrRevenue: string;
   keyRisksCount: number;
   aimlyScore: number;
   primaryAdvantage: string;
@@ -245,7 +319,7 @@ export interface GroundedChatMessage {
   text: string;
   timestamp: string;
   citations?: {
-    provenance: ProvenanceSourceType;
+    evidenceType: EvidenceType;
     documentName?: string;
     excerpt?: string;
   }[];
@@ -256,15 +330,13 @@ export interface DecisionIntelligenceContext {
   id: string;
   createdAt: string;
   userDecisionText: string;
-  category: DocumentType;
-  currency: CurrencyCode;
-  userFinancialContext: UserFinancialContextInput;
+  documentTruth: DocumentTruthObject;
   documents: DocumentItem[];
-  extractedFacts: DocumentFact[];
-  obligations: DocumentObligation[];
+  accountingCalculations?: AccountingCalculations;
+  financingCalculations?: FinancingCalculations;
+  calculationsList: DocumentCalculation[];
   risks: DocumentRisk[];
   missingVariables: MissingVariable[];
-  calculations: DeterministicFinancialCalculations;
   score: AimlyDecisionScore;
   assumptions: string[];
 }
@@ -273,21 +345,28 @@ export interface AimlyIntelligenceReport {
   id: string;
   contextId: string;
   generatedAt: string;
-  userDecisionText: string;
+  documentType: DocumentType;
+  documentTypeLabel: string;
   currency: CurrencyCode;
-  whatThisMeansForYou: string; // 5-second instant answer
+  period?: string;
+  whatThisMeansForYou: string; // 5-second instant clarity
   theBigPicture: string; // Executive plain-language summary
   score: AimlyDecisionScore;
-  whatMattersMost: WhatMattersMostCard[]; // 3-5 critical highlights
+  verifiedFacts: DocumentFact[];
+  keyCalculations: DocumentCalculation[];
+  whatMattersMost: WhatMattersMostCard[];
   financialImpact: {
-    immediateImpact: string;
-    immediateAmount: number;
-    monthlyImpact: string;
-    monthlyAmount: number;
-    longTermImpact: string;
-    totalCommitmentAmount: number;
-    flexibilityImpact: string;
-    opportunityCostExplanation: string;
+    primaryHeadline: string;
+    primaryAmountFormatted: string;
+    secondaryHeadline: string;
+    secondaryAmountFormatted: string;
+    summaryTable: {
+      metric: string;
+      amount: string;
+      evidenceType: EvidenceType;
+      analysis: string;
+    }[];
+    opportunityCostOrReinvestmentExplanation?: string;
   };
   whatMightIBeMissing: {
     headline: string;

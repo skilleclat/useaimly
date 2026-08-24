@@ -13,8 +13,8 @@ export function generateAimlyDecisionPDF(report: AimlyIntelligenceReport, langua
     whatMattersMost,
     financialImpact,
     whatMightIBeMissing,
-    scenarios,
-    comparison,
+    documentType,
+    documentTypeLabel,
     context,
   } = report;
 
@@ -58,20 +58,25 @@ export function generateAimlyDecisionPDF(report: AimlyIntelligenceReport, langua
   doc.setLineWidth(0.4);
   doc.line(titleX, 8, titleX, 26);
 
+  const headerTitle =
+    documentType === "ACCOUNTING_REPORT" || documentType === "FINANCIAL_STATEMENT"
+      ? isFr
+        ? "RAPPORT D'ANALYSE COMPTABLE & INTELLIGENCE FINANCIÈRE"
+        : "ACCOUNTING & FINANCIAL STATEMENT INTELLIGENCE REPORT"
+      : isFr
+      ? "RAPPORT D'INTELLIGENCE DÉCISIONNELLE DOCUMENTAIRE"
+      : "AI DOCUMENT & DECISION INTELLIGENCE REPORT";
+
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.setTextColor(brandEmerald[0], brandEmerald[1], brandEmerald[2]);
-  doc.text(
-    isFr ? "RAPPORT D'INTELLIGENCE DÉCISIONNELLE DOCUMENTAIRE" : "AI DOCUMENT & DECISION INTELLIGENCE REPORT",
-    titleX + 4,
-    14
-  );
+  doc.text(headerTitle, titleX + 4, 14);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
   doc.text(
-    `${isFr ? "Généré le" : "Generated"}: ${new Date().toLocaleDateString(isFr ? "fr-FR" : "en-US", { year: "numeric", month: "long", day: "numeric" })} • ${context.documents[0]?.name || "Attached Quote/Contract"}`,
+    `${isFr ? "Généré le" : "Generated"}: ${new Date().toLocaleDateString(isFr ? "fr-FR" : "en-US", { year: "numeric", month: "long", day: "numeric" })} • ${context.documents[0]?.name || "Document"} [${currency}]`,
     titleX + 4,
     20
   );
@@ -85,7 +90,7 @@ export function generateAimlyDecisionPDF(report: AimlyIntelligenceReport, langua
   doc.roundedRect(margin, y, contentWidth, 38, 3, 3, "FD");
 
   // Score Badge
-  const scoreBoxWidth = 38;
+  const scoreBoxWidth = 40;
   const scoreBoxX = margin + contentWidth - scoreBoxWidth - 4;
   doc.setFillColor(brandEmerald[0], brandEmerald[1], brandEmerald[2]);
   doc.roundedRect(scoreBoxX, y + 4, scoreBoxWidth, 30, 2, 2, "F");
@@ -93,10 +98,10 @@ export function generateAimlyDecisionPDF(report: AimlyIntelligenceReport, langua
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   doc.setTextColor(255, 255, 255);
-  doc.text(isFr ? "AIMLY SCORE" : "AIMLY SCORE", scoreBoxX + scoreBoxWidth / 2, y + 11, { align: "center" });
+  doc.text("AIMLY SCORE", scoreBoxX + scoreBoxWidth / 2, y + 11, { align: "center" });
 
   doc.setFontSize(16);
-  doc.text(`${score.overallScore}/100`, scoreBoxX + scoreBoxWidth / 2, y + 21, { align: "center" });
+  doc.text(score.overallScore ? `${score.overallScore}/100` : "N/A", scoreBoxX + scoreBoxWidth / 2, y + 21, { align: "center" });
 
   doc.setFontSize(6.5);
   doc.setFont("helvetica", "normal");
@@ -106,10 +111,10 @@ export function generateAimlyDecisionPDF(report: AimlyIntelligenceReport, langua
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7.5);
   doc.setTextColor(brandEmerald[0], brandEmerald[1], brandEmerald[2]);
-  doc.text(isFr ? "CE QUE CELA SIGNIFIE POUR VOUS :" : "WHAT THIS MEANS FOR YOU:", margin + 4, y + 8);
+  doc.text(isFr ? "SYNTHÈSE EXÉCUTIVE D'INTELLIGENCE :" : "EXECUTIVE INTELLIGENCE SYNTHESIS:", margin + 4, y + 8);
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10.5);
+  doc.setFontSize(9.5);
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
   const verdictLines = doc.splitTextToSize(whatThisMeansForYou, contentWidth - scoreBoxWidth - 12);
   doc.text(verdictLines.slice(0, 2), margin + 4, y + 15);
@@ -122,11 +127,21 @@ export function generateAimlyDecisionPDF(report: AimlyIntelligenceReport, langua
 
   y += 44;
 
-  // 4. WHAT MATTERS MOST (4 KEY HIGHLIGHT BLOCKS)
+  // 4. WHAT MATTERS MOST (4 KEY EVIDENCE CARDS)
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.text(isFr ? "ÉLÉMENTS CLÉS & ENGAGEMENTS CONTRACTUELS" : "WHAT MATTERS MOST & KEY COMMITMENTS", margin, y);
+  doc.text(
+    documentType === "ACCOUNTING_REPORT"
+      ? isFr
+        ? "MÉTRIQUES CLÉS VÉRIFIÉES & CALCULS DE RENTABILITÉ"
+        : "VERIFIED ACCOUNTING METRICS & PROFITABILITY"
+      : isFr
+      ? "ÉLÉMENTS CLÉS & ENGAGEMENTS CONTRACTUELS"
+      : "KEY COMMITMENTS & VERIFIED TERMS",
+    margin,
+    y
+  );
   y += 4;
 
   const cardW = (contentWidth - 6) / 2;
@@ -161,35 +176,22 @@ export function generateAimlyDecisionPDF(report: AimlyIntelligenceReport, langua
 
   y += 2 * (cardH + 4) + 4;
 
-  // 5. DETAILED FINANCIAL IMPACT TABLE
+  // 5. DETAILED FINANCIAL TABLE (GROUNDED WITH EVIDENCE)
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.text(isFr ? "DÉCOMPOSITION DÉTERMINISTE DE L'IMPACT FINANCIER" : "DETERMINISTIC FINANCIAL IMPACT BREAKDOWN", margin, y);
+  doc.text(
+    documentType === "ACCOUNTING_REPORT"
+      ? isFr
+        ? "DÉCOMPOSITION DES ÉTATS FINANCIERS VÉRIFIÉS"
+        : "VERIFIED FINANCIAL STATEMENTS BREAKDOWN"
+      : isFr
+      ? "DÉCOMPOSITION DÉTERMINISTE DE L'IMPACT FINANCIER"
+      : "DETERMINISTIC FINANCIAL IMPACT BREAKDOWN",
+    margin,
+    y
+  );
   y += 4;
-
-  const tableData = [
-    [
-      isFr ? "1. Apport Initial Requis" : "1. Upfront Cash Required",
-      formatCurrency(financialImpact.immediateAmount, currency),
-      financialImpact.immediateImpact,
-    ],
-    [
-      isFr ? "2. Mensualité de Remboursement" : "2. Monthly Payment Obligation",
-      `${formatCurrency(financialImpact.monthlyAmount, currency)}/mo`,
-      financialImpact.monthlyImpact,
-    ],
-    [
-      isFr ? "3. Engagement Total sur la Durée" : "3. Total Lifetime Commitment",
-      formatCurrency(financialImpact.totalCommitmentAmount, currency),
-      financialImpact.longTermImpact,
-    ],
-    [
-      isFr ? "4. Matelas de Sécurité Restant" : "4. Remaining Reserve Cushion",
-      `${context.calculations.reserveFloorMonthsAfter} ${isFr ? "Mois" : "Months"}`,
-      financialImpact.flexibilityImpact,
-    ],
-  ];
 
   doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
   doc.rect(margin, y, contentWidth, 6, "F");
@@ -197,24 +199,24 @@ export function generateAimlyDecisionPDF(report: AimlyIntelligenceReport, langua
   doc.setFontSize(7.5);
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
   doc.text(isFr ? "MÉTRIQUE" : "METRIC", margin + 3, y + 4.5);
-  doc.text(isFr ? "MONTANT" : "AMOUNT", margin + 65, y + 4.5);
-  doc.text(isFr ? "ANALYSE D'IMPACT DÉTERMINISTE" : "DETERMINISTIC IMPACT ANALYSIS", margin + 110, y + 4.5);
+  doc.text(isFr ? "VALEUR" : "AMOUNT", margin + 65, y + 4.5);
+  doc.text(isFr ? "SOURCE & ANALYSE DÉTERMINISTE" : "SOURCE & DETERMINISTIC ANALYSIS", margin + 110, y + 4.5);
   y += 6;
 
-  tableData.forEach((row) => {
+  financialImpact.summaryTable.forEach((row) => {
     doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2]);
     doc.line(margin, y, margin + contentWidth, y);
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
     doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-    doc.text(row[0], margin + 3, y + 4.5);
-    doc.text(row[1], margin + 65, y + 4.5);
+    doc.text(row.metric, margin + 3, y + 4.5);
+    doc.text(row.amount, margin + 65, y + 4.5);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(6.5);
     doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
-    const wrapped = doc.splitTextToSize(row[2], contentWidth - 115);
+    const wrapped = doc.splitTextToSize(row.analysis, contentWidth - 115);
     doc.text(wrapped[0] || "", margin + 110, y + 4.5);
 
     y += 7;
@@ -222,14 +224,20 @@ export function generateAimlyDecisionPDF(report: AimlyIntelligenceReport, langua
 
   y += 4;
 
-  // 6. WHAT MIGHT I BE MISSING (QUESTIONS TO ASK & RISKS)
+  // 6. WHAT MIGHT I BE MISSING (DOCUMENT-SPECIFIC CRITICAL QUESTIONS)
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(darkCharcoal[0], darkCharcoal[1], darkCharcoal[2]);
-  doc.text(isFr ? "🔍 QUE POURRAIS-JE OUBLIER ? (QUESTIONS CRITIQUES AVANT DE SIGNER)" : "🔍 WHAT MIGHT I BE MISSING? (CRITICAL QUESTIONS TO ASK)", margin, y);
+  doc.text(
+    isFr
+      ? "🔍 QUE POURRAIS-JE OUBLIER ? (QUESTIONS CLÉS & POINTS DE VIGILANCE)"
+      : "🔍 WHAT MIGHT I BE MISSING? (DOCUMENT-SPECIFIC CRITICAL QUESTIONS)",
+    margin,
+    y
+  );
   y += 4;
 
-  whatMightIBeMissing.questionsToAsk.slice(0, 3).forEach((q, i) => {
+  whatMightIBeMissing.questionsToAsk.slice(0, 3).forEach((q) => {
     doc.setFillColor(255, 255, 255);
     doc.setDrawColor(245, 158, 11); // Amber border
     doc.setLineWidth(0.4);
@@ -256,7 +264,7 @@ export function generateAimlyDecisionPDF(report: AimlyIntelligenceReport, langua
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.5);
   doc.setTextColor(mutedGray[0], mutedGray[1], mutedGray[2]);
-  doc.text("UseAimly — See tomorrow before deciding today • 100% Deterministic Financial Intelligence", margin, 287);
+  doc.text("UseAimly — See tomorrow before deciding today • Document Truth Verified Financial Intelligence", margin, 287);
   doc.text("Page 1 / 1", margin + contentWidth, 287, { align: "right" });
 
   return doc;
