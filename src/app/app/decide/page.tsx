@@ -17,7 +17,7 @@ export default function DecideStudioPage() {
   const initialQuery =
     searchParams.get("q") ||
     (isFr
-      ? "J'envisage d'acheter un ordinateur à 2 000 $ pour mon activité."
+      ? "J'envisage d'acheter un ordinateur à 2 000 € pour mon activité."
       : "I'm thinking about buying a $2,000 laptop for my business.");
 
   // Baseline Financial Profile
@@ -48,9 +48,9 @@ export default function DecideStudioPage() {
   );
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8 animate-fadeIn font-sans">
+    <div className="max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-8 animate-fadeIn font-sans pb-12 sm:pb-8">
       {/* Studio Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5 text-left">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-border/60 pb-4 sm:pb-5 text-left">
         <div className="space-y-1">
           <Link
             href="/app"
@@ -59,7 +59,7 @@ export default function DecideStudioPage() {
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>{isFr ? "Retour à l'Accueil" : "Return Home"}</span>
           </Link>
-          <h1 className="text-2xl sm:text-4xl font-black text-foreground tracking-tight">
+          <h1 className="text-xl sm:text-4xl font-black text-foreground tracking-tight">
             The Aimly Decision Engine
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground font-medium">
@@ -69,10 +69,10 @@ export default function DecideStudioPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center">
           <Link
             href="/app/decisions"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold border border-border/80 bg-secondary/50 text-foreground hover:bg-secondary transition-all"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold border border-border/80 bg-secondary/50 text-foreground hover:bg-secondary transition-all min-h-[38px]"
           >
             <CheckCircle2 className="w-3.5 h-3.5 text-teal-500" />
             <span>{isFr ? "Mémoire des Décisions" : "Decision Vault"}</span>
@@ -88,4 +88,3 @@ export default function DecideStudioPage() {
     </div>
   );
 }
-

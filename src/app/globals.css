@@ -102,49 +102,50 @@
     --ring: 14 100% 58%;
 
     /* Semantic Trajectory Tokens (Dark) */
-    --trajectory-on-track: 152 65% 44%;
-    --trajectory-on-track-foreground: 152 90% 96%;
-    --trajectory-on-track-muted: 152 45% 12%;
+    --trajectory-on-track: 152 60% 48%;
+    --trajectory-on-track-foreground: 152 80% 96%;
+    --trajectory-on-track-muted: 152 40% 12%;
     --trajectory-on-track-border: 152 40% 24%;
 
-    --trajectory-at-risk: 37 90% 54%;
+    --trajectory-at-risk: 37 90% 52%;
     --trajectory-at-risk-foreground: 37 90% 96%;
-    --trajectory-at-risk-muted: 37 45% 14%;
-    --trajectory-at-risk-border: 37 40% 28%;
+    --trajectory-at-risk-muted: 37 50% 13%;
+    --trajectory-at-risk-border: 37 50% 26%;
 
-    --trajectory-off-track: 14 85% 58%;
-    --trajectory-off-track-foreground: 14 90% 96%;
-    --trajectory-off-track-muted: 14 45% 14%;
-    --trajectory-off-track-border: 14 40% 28%;
+    --trajectory-off-track: 14 85% 55%;
+    --trajectory-off-track-foreground: 14 70% 96%;
+    --trajectory-off-track-muted: 14 45% 13%;
+    --trajectory-off-track-border: 14 40% 26%;
 
-    --trajectory-ahead: 182 65% 48%;
-    --trajectory-ahead-foreground: 182 90% 96%;
-    --trajectory-ahead-muted: 182 45% 12%;
+    --trajectory-ahead: 182 70% 50%;
+    --trajectory-ahead-foreground: 182 80% 96%;
+    --trajectory-ahead-muted: 182 40% 12%;
     --trajectory-ahead-border: 182 40% 24%;
 
     /* Financial Semantics (Dark) */
-    --finance-income: 152 65% 44%;
-    --finance-income-muted: 152 45% 12%;
-    --finance-expense: 14 85% 58%;
-    --finance-expense-muted: 14 45% 14%;
-    --finance-savings: 182 65% 48%;
-    --finance-savings-muted: 182 45% 12%;
-    --finance-debt: 350 70% 60%;
-    --finance-debt-muted: 350 45% 14%;
+    --finance-income: 152 60% 48%;
+    --finance-income-muted: 152 40% 12%;
+    --finance-expense: 14 85% 55%;
+    --finance-expense-muted: 14 40% 13%;
+    --finance-savings: 182 70% 50%;
+    --finance-savings-muted: 182 40% 12%;
+    --finance-debt: 350 70% 55%;
+    --finance-debt-muted: 350 40% 13%;
     --finance-goal: 14 100% 58%;
-    --finance-goal-muted: 14 45% 14%;
-    --finance-projection: 255 60% 62%;
-    --finance-projection-muted: 255 40% 15%;
+    --finance-goal-muted: 14 40% 13%;
+    --finance-projection: 255 60% 60%;
+    --finance-projection-muted: 255 30% 13%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
   }
   html {
-    @apply overflow-x-hidden max-w-full;
-    -webkit-tap-highlight-color: transparent;
+    @apply scroll-smooth;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/15 selection:text-foreground overflow-x-hidden max-w-full;
@@ -221,3 +222,10 @@
   scrollbar-width: none;
 }
 
+/* Safe Area Inset Support */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 1rem);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 1rem);
+}

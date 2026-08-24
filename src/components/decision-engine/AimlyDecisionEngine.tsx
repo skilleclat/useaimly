@@ -156,114 +156,101 @@ export function AimlyDecisionEngine({
     };
   }, [baselineProfile, overrideSavings, overrideIncome, overrideExpenses, overrideDebt, isFr, isSw]);
 
-  // Categories definitions
-  const CATEGORIES: { id: DecisionCategory; label: string; icon: React.ReactNode; defaultPrompt: string }[] = useMemo(
+  // Categories definitions (Mobile-friendly, no truncation)
+  const CATEGORIES: { id: DecisionCategory; title: string; subtitle: string; icon: React.ReactNode; defaultPrompt: string }[] = useMemo(
     () => [
       {
         id: "BUY_SOMETHING",
-        label: isFr ? "ACHAT MATÉRIEL" : isSw ? "NUNUA KITU" : "BUY SOMETHING",
-        icon: <ShoppingBag className="w-4 h-4" />,
+        title: isFr ? "Achat Matériel" : isSw ? "Nunua Kitu" : "Buy Item / Asset",
+        subtitle: isFr ? "Ordinateur, équipement..." : "Laptop, tools, gear...",
+        icon: <ShoppingBag className="w-4 h-4 text-orange-500" />,
         defaultPrompt: isFr ? "J'envisage d'acheter un ordinateur à 2 000 € pour mon activité." : "I'm thinking about buying a $2,000 laptop for my business.",
       },
       {
         id: "TAKE_A_LOAN",
-        label: isFr ? "SOUSCRIRE UN CRÉDIT" : isSw ? "CHUKUA MKOPO" : "TAKE A LOAN",
-        icon: <CreditCard className="w-4 h-4" />,
+        title: isFr ? "Crédit & Prêt" : isSw ? "Chukua Mkopo" : "Take a Loan",
+        subtitle: isFr ? "Financement, emprunt..." : "Borrowing, debt facility...",
+        icon: <CreditCard className="w-4 h-4 text-purple-500" />,
         defaultPrompt: isFr ? "Que se passe-t-il si je souscris un prêt de 10 000 € avec 1 000 € d'apport ?" : "What happens if I take a $10,000 loan with $1,000 down payment?",
       },
       {
         id: "BUY_A_CAR",
-        label: isFr ? "ACHETER UNE VOITURE" : isSw ? "NUNUA GARI" : "BUY A VEHICLE",
-        icon: <Car className="w-4 h-4" />,
+        title: isFr ? "Véhicule / Auto" : isSw ? "Nunua Gari" : "Vehicle Purchase",
+        subtitle: isFr ? "Voiture, moto..." : "Car, transport...",
+        icon: <Car className="w-4 h-4 text-blue-500" />,
         defaultPrompt: isFr ? "Puis-je acheter une voiture à 15 000 € avec 3 000 € d'apport ?" : "Can I buy a $15,000 car with $3,000 down payment?",
       },
       {
         id: "MOVE_HOME",
-        label: isFr ? "DÉMÉNAGEMENT / LOYER" : isSw ? "HAMIA NYUMBA" : "MOVE HOME",
-        icon: <Home className="w-4 h-4" />,
-        defaultPrompt: isFr ? "Puis-je emménager dans un logement à 1 800 €/mois ?" : "Can I move to an apartment with $1,800/mo rent?",
+        title: isFr ? "Logement & Loyer" : isSw ? "Kuhama Nyumba" : "Housing & Rent",
+        subtitle: isFr ? "Changement loyer, bail..." : "Rent adjustment, relocation...",
+        icon: <Home className="w-4 h-4 text-emerald-500" />,
+        defaultPrompt: isFr ? "Que se passe-t-il si mon loyer augmente de 1 800 €/mois ?" : "What happens if my rent increases by $1,800/month?",
       },
       {
         id: "INVEST",
-        label: isFr ? "INVESTIR DU CAPITAL" : isSw ? "WEKEZA FEDHA" : "INVEST MONEY",
-        icon: <TrendingUp className="w-4 h-4" />,
-        defaultPrompt: isFr ? "Quel impact si j'investis 5 000 € dans un fonds indiciel ?" : "What happens if I invest $5,000 in an index fund?",
+        title: isFr ? "Investissement" : isSw ? "Wekeza Pesa" : "Invest Capital",
+        subtitle: isFr ? "Bourse, placement..." : "Stocks, real estate...",
+        icon: <TrendingUp className="w-4 h-4 text-teal-500" />,
+        defaultPrompt: isFr ? "Puis-je investir 5 000 € dans un fonds indiciel ?" : "Can I invest $5,000 into an index fund?",
       },
       {
         id: "BUSINESS_EXPENSE",
-        label: isFr ? "DÉPENSE PRO" : isSw ? "GHARAMA YA BIASHARA" : "BUSINESS EXPENSE",
-        icon: <Briefcase className="w-4 h-4" />,
-        defaultPrompt: isFr ? "Je prévois 3 000 € de budget marketing pour mon lancement." : "I am planning $3,000 for product marketing.",
+        title: isFr ? "Dépense Business" : isSw ? "Gharama ya Biashara" : "Business Project",
+        subtitle: isFr ? "Marketing, stock, dev..." : "Hiring, stock, growth...",
+        icon: <Briefcase className="w-4 h-4 text-amber-500" />,
+        defaultPrompt: isFr ? "J'envisage de dépenser 3 500 € pour le marketing de mon entreprise." : "I'm considering spending $3,500 on marketing for my business.",
       },
       {
         id: "PAY_OFF_DEBT",
-        label: isFr ? "SOLDAGE DE DETTE" : isSw ? "LIPA DENI" : "PAY OFF DEBT",
-        icon: <Layers className="w-3.5 h-3.5" />,
-        defaultPrompt: isFr ? "Est-ce judicieux de solder 4 000 € de dette immédiatement ?" : "Should I pay off $4,000 of debt in one lump sum?",
+        title: isFr ? "Rembourser Dette" : isSw ? "Lipa Deni" : "Pay Off Debt",
+        subtitle: isFr ? "Soldage crédit, avance..." : "Lump sum payoff...",
+        icon: <Layers className="w-4 h-4 text-rose-500" />,
+        defaultPrompt: isFr ? "Devrais-je rembourser 4 000 € de dette par anticipation ?" : "Should I pay off $4,000 of debt early?",
       },
       {
         id: "OTHER",
-        label: isFr ? "AUTRE PROJET" : isSw ? "UAMUZI MWINGINE" : "OTHER",
-        icon: <HelpCircle className="w-3.5 h-3.5" />,
-        defaultPrompt: isFr ? "Je prévois un voyage à 3 500 €." : "I am planning a $3,500 vacation.",
+        title: isFr ? "Autre Décision" : isSw ? "Uamuzi Mwingine" : "Custom Decision",
+        subtitle: isFr ? "Voyage, projet perso..." : "Travel, major life event...",
+        icon: <HelpCircle className="w-4 h-4 text-gray-400" />,
+        defaultPrompt: isFr ? "J'envisage un voyage personnel de 2 500 €." : "I'm considering a $2,500 personal trip.",
       },
     ],
     [isFr, isSw]
   );
 
-  // NLP Parser
-  const parsed = useMemo(() => {
-    return parseDecisionQuery(queryInput, currency as any);
-  }, [queryInput, currency]);
+  // NLP Parser Extraction
+  const parsed = useMemo(() => parseDecisionQuery(queryInput), [queryInput]);
+  const extractedAmount = customAmount ?? (parsed.amount || 2000);
+  const extractedTitle = parsed.title || "Proposed Decision";
+  const effectiveRecurring = isRecurringExpense || selectedCategory === "MOVE_HOME" || parsed.isRecurring;
 
-  // Extract amount
-  const extractedAmount = useMemo(() => {
-    if (customAmount !== null && customAmount > 0) return customAmount;
-    if (parsed.isValid && parsed.extractedAmount > 0) return parsed.extractedAmount;
-    return 2000;
-  }, [customAmount, parsed]);
-
-  const extractedTitle = useMemo(() => {
-    if (parsed.isValid && parsed.extractedTitle) return parsed.extractedTitle;
-    return selectedCategory === "TAKE_A_LOAN" ? "Loan Facility / Borrowing" : "Business Project Purchase";
-  }, [parsed, selectedCategory]);
-
-  const effectiveRecurring = isRecurringExpense || parsed.isRecurring;
-
-  // CANONICAL DECISION EVALUATION (Deterministic Single Source of Truth)
+  // CANONICAL DETERMINISTIC EVALUATION
   const canonicalAnalysis = useMemo(() => {
-    const inputParams: DecisionInputParameters = {
+    const inputs: DecisionInputParameters = {
       title: extractedTitle,
       category: selectedCategory,
-      decisionType:
-        selectedCategory === "TAKE_A_LOAN"
-          ? "LOAN_FACILITY"
-          : effectiveRecurring
-          ? "RECURRING_EXPENSE"
-          : customDownPayment && customDownPayment > 0 && customDownPayment < extractedAmount
-          ? "FINANCED_PURCHASE"
-          : "ONE_OFF_PURCHASE",
       totalAmount: extractedAmount,
-      downPayment: customDownPayment || 0,
-      loanTermMonths,
-      annualInterestRatePercent: interestRatePercent,
-      customMonthlyPayment: customMonthlyPayment || undefined,
+      downPayment: customDownPayment ?? undefined,
+      loanTermMonths: selectedCategory === "TAKE_A_LOAN" ? loanTermMonths : undefined,
+      annualInterestRatePercent: selectedCategory === "TAKE_A_LOAN" ? interestRatePercent : undefined,
+      customMonthlyPayment: customMonthlyPayment ?? undefined,
       isRecurring: effectiveRecurring,
       currency: currency as any,
       priority: selectedPriority,
     };
 
-    return evaluateCanonicalDecision(activeBaseline, inputParams);
+    return evaluateCanonicalDecision(activeBaseline, inputs);
   }, [
     activeBaseline,
     extractedTitle,
     selectedCategory,
-    effectiveRecurring,
     extractedAmount,
     customDownPayment,
     loanTermMonths,
     interestRatePercent,
     customMonthlyPayment,
+    effectiveRecurring,
     currency,
     selectedPriority,
   ]);
@@ -277,6 +264,7 @@ export function AimlyDecisionEngine({
       reportId: `RPT-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(1000 + Math.random() * 9000)}`,
       version: 1,
       decisionTitle: canonicalAnalysis.inputs.title,
+      category: canonicalAnalysis.inputs.category,
       transactionType: canonicalAnalysis.transactionType,
       amount: canonicalAnalysis.inputs.totalAmount,
       downPayment: canonicalAnalysis.inputs.downPayment || 0,
@@ -361,19 +349,17 @@ export function AimlyDecisionEngine({
         },
       },
       narrative: {
-        executiveSummary: verdict.primaryReason,
+        executiveSummary: verdict.headline,
         whyThisVerdict: verdict.primaryReason,
         recommendedPath: canonicalAnalysis.recommendation.actionPlanStep1,
-        tradeoffsSummary: isFr
-          ? `Arbitrage : Impact de trésorerie immédiat (${primaryImpact.immediateCashOutflow} ${currency}) vs préservation de "${baseline.primaryGoal.title}".`
-          : `Trade-off: Immediate cash outflow (${primaryImpact.immediateCashOutflow} ${currency}) vs arrival timeline for "${baseline.primaryGoal.title}".`,
+        tradeoffsSummary: "Balanced comparison between immediate execution and emergency buffer preservation.",
       },
-      assumptions,
+      assumptions: canonicalAnalysis.assumptions,
       isAssumedLoanTerms,
     };
-  }, [canonicalAnalysis, currency, isFr]);
+  }, [canonicalAnalysis, currency]);
 
-  // The Aimly Coherence Check
+  // Coherence Audit
   const verification = useMemo(() => {
     return runAimlyCoherenceCheck(verifiedReportData);
   }, [verifiedReportData]);
@@ -438,25 +424,25 @@ export function AimlyDecisionEngine({
   const verdict = canonicalAnalysis.verdict;
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6 font-sans antialiased text-left animate-fadeIn">
+    <div className="w-full max-w-4xl mx-auto space-y-4 sm:space-y-6 font-sans antialiased text-left animate-fadeIn">
       
       {/* ─────────────────────────────────────────────────────────────
-          PROGRESS NAVIGATION BAR (ELEGANT 7-STEP DOCK)
+          PROGRESS NAVIGATION BAR (MOBILE-OPTIMIZED DOCK)
       ───────────────────────────────────────────────────────────── */}
-      <div className="rounded-3xl border border-border/80 bg-card p-4 sm:p-5 shadow-xs space-y-3">
+      <div className="rounded-2xl sm:rounded-3xl border border-border/80 bg-card p-3.5 sm:p-5 shadow-xs space-y-2.5 sm:space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-mono font-bold uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] sm:text-xs font-mono font-bold uppercase tracking-wider">
+              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               <span>
                 {isFr
-                  ? `ÉTAPE ${currentStep} SUR 7`
+                  ? `ÉTAPE ${currentStep} / 7`
                   : isSw
-                  ? `HATUA YA ${currentStep} KATI YA 7`
+                  ? `HATUA ${currentStep} / 7`
                   : `STEP ${currentStep} OF 7`}
               </span>
             </span>
-            <span className="text-xs font-bold text-foreground hidden sm:inline">
+            <span className="text-xs font-bold text-foreground">
               {STEP_TITLES[currentStep - 1]?.label}
             </span>
           </div>
@@ -466,21 +452,21 @@ export function AimlyDecisionEngine({
               <button
                 type="button"
                 onClick={handlePrevStep}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-border/80 bg-secondary/60 hover:bg-secondary text-xs font-semibold text-foreground transition-all cursor-pointer min-h-[36px]"
+                className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl border border-border/80 bg-secondary/60 hover:bg-secondary text-xs font-semibold text-foreground transition-all cursor-pointer min-h-[32px] sm:min-h-[36px]"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>{isFr ? "Précédent" : isSw ? "Nyuma" : "Back"}</span>
+                <ArrowLeft className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <span>{isFr ? "Retour" : "Back"}</span>
               </button>
             )}
 
-            <span className="text-[11px] font-mono text-muted-foreground">
+            <span className="text-[11px] font-mono text-muted-foreground font-bold">
               {Math.round((currentStep / 7) * 100)}%
             </span>
           </div>
         </div>
 
         {/* Visual Progress Bar */}
-        <div className="w-full bg-secondary h-2 rounded-full overflow-hidden flex">
+        <div className="w-full bg-secondary h-1.5 sm:h-2 rounded-full overflow-hidden flex">
           <div
             className="bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] h-full transition-all duration-300 rounded-full"
             style={{ width: `${(currentStep / 7) * 100}%` }}
@@ -516,12 +502,12 @@ export function AimlyDecisionEngine({
 
 
       {/* ─────────────────────────────────────────────────────────────
-          STEP 1 OF 7 — DEFINE THE DECISION
+          STEP 1 OF 7 — DEFINE THE DECISION (MOBILE-FIRST CATEGORIES)
       ───────────────────────────────────────────────────────────── */}
       {currentStep === 1 && (
-        <section className="rounded-3xl border border-border/80 bg-card p-6 sm:p-9 space-y-6 shadow-sm animate-fadeIn">
-          <div className="space-y-1.5">
-            <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+        <section className="rounded-2xl sm:rounded-3xl border border-border/80 bg-card p-4 sm:p-8 space-y-4 sm:space-y-6 shadow-xs animate-fadeIn">
+          <div className="space-y-1">
+            <h2 className="text-lg sm:text-2xl font-black text-foreground tracking-tight">
               {isFr
                 ? "Quelle décision financière envisagez-vous ?"
                 : isSw
@@ -530,15 +516,15 @@ export function AimlyDecisionEngine({
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium">
               {isFr
-                ? "Décrivez votre achat, investissement, crédit ou projet de vie en langage naturel."
+                ? "Choisissez une catégorie rapide ou écrivez librement en langage naturel."
                 : isSw
-                ? "Andika uamuzi wako wa kifedha kwa lugha rahisi unavyofikiria."
-                : "Describe your proposed purchase, loan, or investment in natural language."}
+                ? "Chagua kategoria au andika kwa lugha rahisi unavyofikiria."
+                : "Choose a category below or type your proposed plan in plain English."}
             </p>
           </div>
 
-          {/* Quick Category Chips Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+          {/* Touch-Friendly Category Cards Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 pt-1">
             {CATEGORIES.map((cat) => {
               const isSelected = selectedCategory === cat.id;
               return (
@@ -549,41 +535,49 @@ export function AimlyDecisionEngine({
                     setSelectedCategory(cat.id);
                     setQueryInput(cat.defaultPrompt);
                   }}
-                  className={`p-3.5 rounded-2xl border text-xs font-bold transition-all flex items-center gap-2.5 cursor-pointer min-h-[48px] ${
+                  className={`p-3 sm:p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between gap-1.5 cursor-pointer min-h-[64px] sm:min-h-[72px] ${
                     isSelected
-                      ? "bg-primary text-primary-foreground border-primary shadow-xs scale-[1.01]"
+                      ? "bg-primary/10 border-primary text-foreground ring-2 ring-primary/20 shadow-xs scale-[1.01]"
                       : "bg-secondary/40 border-border/70 text-muted-foreground hover:text-foreground hover:bg-secondary"
                   }`}
                 >
-                  {cat.icon}
-                  <span className="truncate text-xs font-bold">{cat.label}</span>
+                  <div className="flex items-center justify-between w-full">
+                    <div className="p-1.5 rounded-xl bg-background/80 border border-border/60">
+                      {cat.icon}
+                    </div>
+                    {isSelected && <Check className="w-3.5 h-3.5 text-primary" />}
+                  </div>
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-foreground leading-tight">{cat.title}</div>
+                    <div className="text-[10px] text-muted-foreground leading-tight hidden sm:block">{cat.subtitle}</div>
+                  </div>
                 </button>
               );
             })}
           </div>
 
-          {/* Main Input Box */}
+          {/* Main Input Box (16px base font to prevent mobile iOS zoom) */}
           <div className="space-y-2 pt-1">
             <textarea
               rows={3}
               value={queryInput}
               onChange={(e) => setQueryInput(e.target.value)}
               placeholder="Example: I'm thinking about buying a $2,000 laptop for my business."
-              className="w-full rounded-2xl border border-border/90 bg-background p-4 text-sm sm:text-base font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-xs resize-none"
+              className="w-full rounded-2xl border border-border/90 bg-background p-3.5 sm:p-4 text-base sm:text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-xs resize-none"
             />
 
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs text-muted-foreground">
               <span>{isFr ? "Montant détecté :" : "Extracted amount:"} <strong className="text-foreground font-mono">{fmt(extractedAmount)}</strong></span>
-              <span className="font-mono text-[11px]">{extractedTitle}</span>
+              <span className="font-mono text-[11px] truncate">{extractedTitle}</span>
             </div>
           </div>
 
           {/* Primary Action */}
-          <div className="pt-4 border-t border-border/60 flex justify-end">
+          <div className="pt-3 sm:pt-4 border-t border-border/60 flex justify-end">
             <button
               type="button"
               onClick={handleNextStep}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
             >
               <span>{isFr ? "Continuer vers les Détails" : isSw ? "Endelea kwa Maelezo" : "Continue to Details"}</span>
               <ArrowRight className="w-4 h-4" />
@@ -597,9 +591,9 @@ export function AimlyDecisionEngine({
           STEP 2 OF 7 — DECISION DETAILS (CONDITIONAL & LOAN-AWARE)
       ───────────────────────────────────────────────────────────── */}
       {currentStep === 2 && (
-        <section className="rounded-3xl border border-border/80 bg-card p-6 sm:p-9 space-y-6 shadow-sm animate-fadeIn">
-          <div className="space-y-1.5">
-            <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+        <section className="rounded-2xl sm:rounded-3xl border border-border/80 bg-card p-4 sm:p-8 space-y-4 sm:space-y-6 shadow-xs animate-fadeIn">
+          <div className="space-y-1">
+            <h2 className="text-lg sm:text-2xl font-black text-foreground tracking-tight">
               {isFr ? "Précisez les paramètres de la décision" : isSw ? "Weka maelezo kamili ya uamuzi" : "Tell us about the decision"}
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium">
@@ -613,7 +607,7 @@ export function AimlyDecisionEngine({
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-mono font-bold text-foreground block">
                 {selectedCategory === "TAKE_A_LOAN"
@@ -626,7 +620,7 @@ export function AimlyDecisionEngine({
                 min="0"
                 value={customAmount ?? extractedAmount}
                 onChange={(e) => setCustomAmount(Number(e.target.value) || null)}
-                className="w-full rounded-2xl bg-background border border-border px-4 py-3 text-sm font-mono font-bold text-foreground focus:outline-none focus:border-primary min-h-[46px]"
+                className="w-full rounded-2xl bg-background border border-border px-4 py-3 text-base sm:text-sm font-mono font-bold text-foreground focus:outline-none focus:border-primary min-h-[46px]"
               />
             </div>
 
@@ -643,7 +637,7 @@ export function AimlyDecisionEngine({
                 placeholder="0"
                 value={customDownPayment ?? ""}
                 onChange={(e) => setCustomDownPayment(Number(e.target.value) || null)}
-                className="w-full rounded-2xl bg-background border border-border px-4 py-3 text-sm font-mono text-foreground focus:outline-none focus:border-primary min-h-[46px]"
+                className="w-full rounded-2xl bg-background border border-border px-4 py-3 text-base sm:text-sm font-mono text-foreground focus:outline-none focus:border-primary min-h-[46px]"
               />
             </div>
 
@@ -655,7 +649,7 @@ export function AimlyDecisionEngine({
                 <select
                   value={loanTermMonths}
                   onChange={(e) => setLoanTermMonths(Number(e.target.value))}
-                  className="w-full rounded-2xl bg-background border border-border px-4 py-3 text-sm font-mono text-foreground focus:outline-none focus:border-primary min-h-[46px]"
+                  className="w-full rounded-2xl bg-background border border-border px-4 py-3 text-base sm:text-sm font-mono text-foreground focus:outline-none focus:border-primary min-h-[46px]"
                 >
                   <option value={12}>12 {isFr ? "mois (1 an)" : "months (1 yr)"}</option>
                   <option value={24}>24 {isFr ? "mois (2 ans)" : "months (2 yrs)"}</option>
@@ -676,25 +670,25 @@ export function AimlyDecisionEngine({
                   placeholder="0"
                   value={customMonthlyPayment ?? ""}
                   onChange={(e) => setCustomMonthlyPayment(Number(e.target.value) || null)}
-                  className="w-full rounded-2xl bg-background border border-border px-4 py-3 text-sm font-mono text-foreground focus:outline-none focus:border-primary min-h-[46px]"
+                  className="w-full rounded-2xl bg-background border border-border px-4 py-3 text-base sm:text-sm font-mono text-foreground focus:outline-none focus:border-primary min-h-[46px]"
                 />
               </div>
             )}
           </div>
 
           {/* Timing Selector */}
-          <div className="p-4 rounded-2xl bg-secondary/30 border border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/30 border border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
             <span className="font-bold text-foreground">
               {isFr ? "Date envisagée pour l'engagement :" : "Proposed Execution Timing:"}
             </span>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {(["TODAY", "30_DAYS", "90_DAYS"] as const).map((t) => (
                 <button
                   key={t}
                   type="button"
                   onClick={() => setDecisionTiming(t)}
-                  className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer min-h-[38px] ${
+                  className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer min-h-[38px] ${
                     decisionTiming === t
                       ? "bg-primary text-primary-foreground shadow-xs"
                       : "bg-secondary text-muted-foreground hover:text-foreground"
@@ -708,7 +702,7 @@ export function AimlyDecisionEngine({
 
           {/* Recurring Toggle */}
           {selectedCategory !== "TAKE_A_LOAN" && (
-            <label className="flex items-center gap-3 p-4 rounded-2xl bg-secondary/30 border border-border/60 cursor-pointer">
+            <label className="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl bg-secondary/30 border border-border/60 cursor-pointer">
               <input
                 type="checkbox"
                 checked={isRecurringExpense}
@@ -724,7 +718,7 @@ export function AimlyDecisionEngine({
           )}
 
           {/* Actions */}
-          <div className="pt-4 border-t border-border/60 flex items-center justify-between gap-3">
+          <div className="pt-3 sm:pt-4 border-t border-border/60 flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={handlePrevStep}
@@ -737,9 +731,9 @@ export function AimlyDecisionEngine({
             <button
               type="button"
               onClick={handleNextStep}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
             >
-              <span>{isFr ? "Valider & Vérifier le Contexte" : "Confirm & Check Context"}</span>
+              <span>{isFr ? "Valider le Contexte" : "Confirm & Check Context"}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -751,10 +745,10 @@ export function AimlyDecisionEngine({
           STEP 3 OF 7 — FINANCIAL CONTEXT
       ───────────────────────────────────────────────────────────── */}
       {currentStep === 3 && (
-        <section className="rounded-3xl border border-border/80 bg-card p-6 sm:p-9 space-y-6 shadow-sm animate-fadeIn">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <section className="rounded-2xl sm:rounded-3xl border border-border/80 bg-card p-4 sm:p-8 space-y-4 sm:space-y-6 shadow-xs animate-fadeIn">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3">
             <div className="space-y-1">
-              <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+              <h2 className="text-lg sm:text-2xl font-black text-foreground tracking-tight">
                 {isFr ? "Vérifions votre contexte financier" : "Let's check your financial context"}
               </h2>
               <p className="text-xs sm:text-sm text-muted-foreground font-medium">
@@ -767,7 +761,7 @@ export function AimlyDecisionEngine({
             <button
               type="button"
               onClick={() => setIsEditingContext(!isEditingContext)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-secondary/60 text-xs font-bold text-primary hover:underline cursor-pointer"
+              className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-secondary/60 text-xs font-bold text-primary hover:underline cursor-pointer"
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
               <span>{isEditingContext ? (isFr ? "Terminer l'édition" : "Done Editing") : (isFr ? "Modifier ces chiffres" : "Edit Numbers")}</span>
@@ -775,10 +769,10 @@ export function AimlyDecisionEngine({
           </div>
 
           {/* 6 Key Baseline Indicators Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 text-xs">
-            <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3.5 text-xs">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
               <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-                {isFr ? "LIQUIDITÉS DISPONIBLES" : "AVAILABLE CASH"}
+                {isFr ? "LIQUIDITÉS" : "AVAILABLE CASH"}
               </span>
               {isEditingContext ? (
                 <input
@@ -786,19 +780,19 @@ export function AimlyDecisionEngine({
                   inputMode="decimal"
                   value={overrideSavings ?? activeBaseline.liquidSavings}
                   onChange={(e) => setOverrideSavings(Number(e.target.value) || null)}
-                  className="w-full rounded-xl bg-background border px-2 py-1 font-mono font-bold"
+                  className="w-full rounded-xl bg-background border px-2 py-1 font-mono font-bold text-sm"
                 />
               ) : (
-                <span className="text-lg font-black text-foreground font-mono block">
+                <span className="text-base sm:text-lg font-black text-foreground font-mono block">
                   {fmt(activeBaseline.liquidSavings)}
                 </span>
               )}
               <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold block">
-                ✓ {isFr ? "Donnée Confirmée" : "Confirmed Baseline"}
+                ✓ {isFr ? "Confirmé" : "Confirmed"}
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
               <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
                 {isFr ? "REVENU MENSUEL" : "MONTHLY INFLOW"}
               </span>
@@ -808,21 +802,21 @@ export function AimlyDecisionEngine({
                   inputMode="decimal"
                   value={overrideIncome ?? canonicalAnalysis.baseline.monthlyIncome}
                   onChange={(e) => setOverrideIncome(Number(e.target.value) || null)}
-                  className="w-full rounded-xl bg-background border px-2 py-1 font-mono font-bold"
+                  className="w-full rounded-xl bg-background border px-2 py-1 font-mono font-bold text-sm"
                 />
               ) : (
-                <span className="text-lg font-black text-foreground font-mono block">
+                <span className="text-base sm:text-lg font-black text-foreground font-mono block">
                   +{fmt(canonicalAnalysis.baseline.monthlyIncome)}
                 </span>
               )}
-              <span className="text-[10px] text-muted-foreground block">
-                {isFr ? "Entrées nettes" : "Net regular inflows"}
+              <span className="text-[10px] text-muted-foreground block truncate">
+                {isFr ? "Entrées nettes" : "Net inflows"}
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
               <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-                {isFr ? "DÉPENSES FIXES" : "FIXED LIVING COSTS"}
+                {isFr ? "CHARGES FIXES" : "FIXED LIVING"}
               </span>
               {isEditingContext ? (
                 <input
@@ -830,21 +824,21 @@ export function AimlyDecisionEngine({
                   inputMode="decimal"
                   value={overrideExpenses ?? canonicalAnalysis.baseline.monthlyLivingExpenses}
                   onChange={(e) => setOverrideExpenses(Number(e.target.value) || null)}
-                  className="w-full rounded-xl bg-background border px-2 py-1 font-mono font-bold"
+                  className="w-full rounded-xl bg-background border px-2 py-1 font-mono font-bold text-sm"
                 />
               ) : (
-                <span className="text-lg font-black text-foreground font-mono block">
+                <span className="text-base sm:text-lg font-black text-foreground font-mono block">
                   {fmt(canonicalAnalysis.baseline.monthlyLivingExpenses)}
                 </span>
               )}
-              <span className="text-[10px] text-muted-foreground block">
-                {isFr ? "Loyer & Charges" : "Rent & living costs"}
+              <span className="text-[10px] text-muted-foreground block truncate">
+                {isFr ? "Loyer & charges" : "Rent & living"}
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
               <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-                {isFr ? "DETTES EXISTANTES" : "EXISTING DEBT SERVICE"}
+                {isFr ? "DETTES ACTIVES" : "DEBT SERVICE"}
               </span>
               {isEditingContext ? (
                 <input
@@ -852,45 +846,45 @@ export function AimlyDecisionEngine({
                   inputMode="decimal"
                   value={overrideDebt ?? canonicalAnalysis.baseline.monthlyDebtService}
                   onChange={(e) => setOverrideDebt(Number(e.target.value) || null)}
-                  className="w-full rounded-xl bg-background border px-2 py-1 font-mono font-bold"
+                  className="w-full rounded-xl bg-background border px-2 py-1 font-mono font-bold text-sm"
                 />
               ) : (
-                <span className="text-lg font-black text-foreground font-mono block">
+                <span className="text-base sm:text-lg font-black text-foreground font-mono block">
                   {fmt(canonicalAnalysis.baseline.monthlyDebtService)}/mo
                 </span>
               )}
-              <span className="text-[10px] text-muted-foreground block">
-                {canonicalAnalysis.baseline.monthlyDebtService > 0 ? "Active obligations" : "Zero active debt"}
+              <span className="text-[10px] text-muted-foreground block truncate">
+                {canonicalAnalysis.baseline.monthlyDebtService > 0 ? "Active obligations" : "Zero debt"}
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
               <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-                {isFr ? "CASH-FLOW LIBRE NET" : "NET FREE CASH FLOW"}
+                {isFr ? "CASH-FLOW LIBRE" : "NET FREE CASH"}
               </span>
-              <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono block">
+              <span className="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono block">
                 +{fmt(canonicalAnalysis.baseline.netFreeCashFlow)}
               </span>
-              <span className="text-[10px] text-emerald-600/80 block">
-                {isFr ? "Capacité d'épargne mensuelle" : "Monthly savings power"}
+              <span className="text-[10px] text-emerald-600/80 block truncate">
+                {isFr ? "Épargne/mois" : "Monthly power"}
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
               <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-                {isFr ? "MATELAS DE SÉCURITÉ" : "EMERGENCY RUNWAY"}
+                {isFr ? "MATELAS SÉCURITÉ" : "EMERGENCY RUNWAY"}
               </span>
-              <span className="text-lg font-black text-foreground font-mono block">
+              <span className="text-base sm:text-lg font-black text-foreground font-mono block">
                 {canonicalAnalysis.baseline.emergencyRunwayMonths} mos
               </span>
-              <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold block">
-                {canonicalAnalysis.baseline.emergencyRunwayMonths >= 3.0 ? "Safe buffer" : "Below 3.0-month floor"}
+              <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold block truncate">
+                {canonicalAnalysis.baseline.emergencyRunwayMonths >= 3.0 ? "Safe buffer" : "< 3.0 mos"}
               </span>
             </div>
           </div>
 
           {/* Actions */}
-          <div className="pt-4 border-t border-border/60 flex items-center justify-between gap-3">
+          <div className="pt-3 sm:pt-4 border-t border-border/60 flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={handlePrevStep}
@@ -903,9 +897,9 @@ export function AimlyDecisionEngine({
             <button
               type="button"
               onClick={handleNextStep}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
             >
-              <span>{isFr ? "Confirmer & Choisir mes Priorités" : "Confirm & Set Priorities"}</span>
+              <span>{isFr ? "Choisir mes Priorités" : "Confirm & Set Priorities"}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -917,9 +911,9 @@ export function AimlyDecisionEngine({
           STEP 4 OF 7 — GOALS & PRIORITIES
       ───────────────────────────────────────────────────────────── */}
       {currentStep === 4 && (
-        <section className="rounded-3xl border border-border/80 bg-card p-6 sm:p-9 space-y-6 shadow-sm animate-fadeIn">
-          <div className="space-y-1.5">
-            <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+        <section className="rounded-2xl sm:rounded-3xl border border-border/80 bg-card p-4 sm:p-8 space-y-4 sm:space-y-6 shadow-xs animate-fadeIn">
+          <div className="space-y-1">
+            <h2 className="text-lg sm:text-2xl font-black text-foreground tracking-tight">
               {isFr ? "Que cherchez-vous à protéger en priorité ?" : "What are you trying to protect or achieve?"}
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium">
@@ -934,7 +928,7 @@ export function AimlyDecisionEngine({
             <label className="text-xs font-mono uppercase font-bold text-foreground block">
               {isFr ? "Objectif de vie principal à protéger :" : "Primary Goal Protected:"}
             </label>
-            <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 flex items-center justify-between text-xs">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 flex items-center justify-between text-xs gap-3">
               <div className="flex items-center gap-3">
                 <Target className="w-5 h-5 text-primary shrink-0" />
                 <div>
@@ -944,8 +938,8 @@ export function AimlyDecisionEngine({
                   </div>
                 </div>
               </div>
-              <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-[10px] border border-emerald-500/20">
-                ACTIVE TARGET
+              <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-[10px] border border-emerald-500/20 shrink-0">
+                ACTIVE
               </span>
             </div>
           </div>
@@ -956,7 +950,7 @@ export function AimlyDecisionEngine({
               {isFr ? "Quel critère compte le plus pour cette décision ?" : "What matters most for this decision?"}
             </label>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
               {[
                 {
                   id: "PROTECT_CASH",
@@ -985,7 +979,7 @@ export function AimlyDecisionEngine({
                     key={p.id}
                     type="button"
                     onClick={() => setSelectedPriority(p.id as UserDecisionPriority)}
-                    className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between space-y-1.5 ${
+                    className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between space-y-1.5 ${
                       isSelected
                         ? "bg-primary/10 border-primary text-foreground ring-2 ring-primary/20 shadow-xs"
                         : "bg-secondary/40 border-border/70 text-muted-foreground hover:text-foreground hover:bg-secondary"
@@ -1003,7 +997,7 @@ export function AimlyDecisionEngine({
           </div>
 
           {/* Actions */}
-          <div className="pt-4 border-t border-border/60 flex items-center justify-between gap-3">
+          <div className="pt-3 sm:pt-4 border-t border-border/60 flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={handlePrevStep}
@@ -1016,10 +1010,10 @@ export function AimlyDecisionEngine({
             <button
               type="button"
               onClick={handleNextStep}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
             >
               <Sparkles className="w-4 h-4" />
-              <span>{isFr ? "Lancer l'Analyse des Options" : "Analyze My Options"}</span>
+              <span>{isFr ? "Lancer l'Analyse" : "Analyze My Options"}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -1031,12 +1025,12 @@ export function AimlyDecisionEngine({
           STEP 5 OF 7 — ANALYZE & COMPARE (RECONCILED HUD)
       ───────────────────────────────────────────────────────────── */}
       {currentStep === 5 && (
-        <section className="rounded-3xl border border-border/80 bg-card p-6 sm:p-9 space-y-7 shadow-xl animate-fadeIn">
+        <section className="rounded-2xl sm:rounded-3xl border border-border/80 bg-card p-4 sm:p-8 space-y-5 sm:space-y-7 shadow-xl animate-fadeIn">
           
           {/* Top Verdict Header */}
-          <div className="space-y-3 border-b border-border/60 pb-5">
-            <div className="flex items-center justify-between">
-              <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full font-mono font-extrabold text-xs tracking-wider border ${
+          <div className="space-y-2.5 sm:space-y-3 border-b border-border/60 pb-4 sm:pb-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full font-mono font-extrabold text-xs tracking-wider border ${
                 verdict.decision === "RECOMMENDED"
                   ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
                   : verdict.decision === "PROCEED_WITH_CAUTION"
@@ -1044,11 +1038,11 @@ export function AimlyDecisionEngine({
                   : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30"
               }`}>
                 {verdict.decision === "RECOMMENDED" ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                 ) : verdict.decision === "PROCEED_WITH_CAUTION" ? (
-                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                  <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
                 ) : (
-                  <XCircle className="w-4 h-4 text-rose-500" />
+                  <XCircle className="w-4 h-4 text-rose-500 shrink-0" />
                 )}
                 <span>{verdict.decision.replace(/_/g, " ")}</span>
               </span>
@@ -1058,7 +1052,7 @@ export function AimlyDecisionEngine({
               </span>
             </div>
 
-            <h3 className="text-xl sm:text-3xl font-black text-foreground tracking-tight leading-snug">
+            <h3 className="text-lg sm:text-3xl font-black text-foreground tracking-tight leading-snug">
               {verdict.headline}
             </h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
@@ -1067,77 +1061,77 @@ export function AimlyDecisionEngine({
           </div>
 
           {/* 4 Key Reconciled Metrics */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-            <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
               <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-                {isFr ? "CASH APRÈS DÉCISION" : "CASH AFTER DECISION"}
+                {isFr ? "CASH APRÈS" : "CASH AFTER"}
               </span>
-              <span className="text-xl sm:text-2xl font-black text-foreground font-mono block">
+              <span className="text-lg sm:text-2xl font-black text-foreground font-mono block">
                 {fmt(primaryImpact.postDecisionCash)}
               </span>
-              <span className="text-[11px] text-muted-foreground font-medium block">
-                {primaryImpact.deltaCash === 0 ? "0 (No cash drop)" : `-${fmt(Math.abs(primaryImpact.deltaCash))} outflow`}
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium block truncate">
+                {primaryImpact.deltaCash === 0 ? "0 (No cash drop)" : `-${fmt(Math.abs(primaryImpact.deltaCash))}`}
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
               <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-                {isFr ? "MATELAS D'URGENCE" : "EMERGENCY RUNWAY"}
+                {isFr ? "MATELAS" : "RUNWAY"}
               </span>
-              <span className="text-xl sm:text-2xl font-black text-foreground font-mono block">
+              <span className="text-lg sm:text-2xl font-black text-foreground font-mono block">
                 {primaryImpact.postDecisionRunwayMonths} mos
               </span>
-              <span className="text-[11px] text-amber-600 dark:text-amber-400 font-bold block">
-                {primaryImpact.postDecisionRunwayMonths < 3.0 ? "Below 3.0 target" : "Safe buffer"}
+              <span className="text-[10px] sm:text-[11px] text-amber-600 dark:text-amber-400 font-bold block truncate">
+                {primaryImpact.postDecisionRunwayMonths < 3.0 ? "Below 3.0 floor" : "Safe buffer"}
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 space-y-1">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 space-y-1">
               <span className="text-[10px] font-mono uppercase text-rose-600 dark:text-rose-400 font-bold block">
-                {isFr ? "IMPACT SUR L'OBJECTIF" : "GOAL IMPACT"}
+                {isFr ? "IMPACT OBJECTIF" : "GOAL IMPACT"}
               </span>
-              <span className="text-xl sm:text-2xl font-black text-rose-600 dark:text-rose-400 font-mono block">
-                {primaryImpact.goalStatus === "GOAL_FUNDING_PAUSED" ? "PAUSED" : `+${primaryImpact.goalDelayDays} days`}
+              <span className="text-lg sm:text-2xl font-black text-rose-600 dark:text-rose-400 font-mono block">
+                {primaryImpact.goalStatus === "GOAL_FUNDING_PAUSED" ? "PAUSED" : `+${primaryImpact.goalDelayDays}d`}
               </span>
-              <span className="text-[11px] text-rose-600/80 dark:text-rose-400/80 font-medium block truncate">
+              <span className="text-[10px] sm:text-[11px] text-rose-600/80 dark:text-rose-400/80 font-medium block truncate">
                 {canonicalAnalysis.baseline.primaryGoal.title}
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
               <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-                {isFr ? "PRESSION MENSUELLE" : "MONTHLY CASH FLOW SHIFT"}
+                {isFr ? "PRESSION FLUX" : "CASH FLOW SHIFT"}
               </span>
-              <span className="text-xl sm:text-2xl font-black text-foreground font-mono block">
+              <span className="text-lg sm:text-2xl font-black text-foreground font-mono block">
                 {primaryImpact.deltaFreeCashFlow === 0 ? "0%" : `-${primaryImpact.fcfPercentageShift}%`}
               </span>
-              <span className="text-[11px] text-muted-foreground font-medium block">
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium block truncate">
                 +{fmt(primaryImpact.postDecisionFreeCashFlow)}/mo FCF
               </span>
             </div>
           </div>
 
           {/* Scenario Alternatives Comparison */}
-          <div className="space-y-3">
+          <div className="space-y-2.5 sm:space-y-3">
             <span className="text-xs font-mono uppercase tracking-wider text-primary font-bold block">
-              {isFr ? "COMPARAISON DES MEILLEURES OPTIONS D'AIMLY" : "AIMLY'S CALCULATED SCENARIOS"}
+              {isFr ? "COMPARAISON DES OPTIONS" : "AIMLY'S CALCULATED SCENARIOS"}
             </span>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-3.5">
               {[canonicalAnalysis.scenarios.optionA, canonicalAnalysis.scenarios.optionB, canonicalAnalysis.scenarios.optionC].map((alt) => (
                 <div
                   key={alt.id}
                   className={`p-4 sm:p-5 rounded-2xl border flex flex-col justify-between space-y-3 transition-all ${
                     alt.isRecommended
-                      ? "bg-emerald-500/10 border-emerald-500/40 ring-1 ring-emerald-500/30"
+                      ? "bg-emerald-500/10 border-emerald-500/40 ring-1 ring-emerald-500/30 shadow-xs"
                       : "bg-secondary/30 border-border/70"
                   }`}
                 >
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-background border border-border/80">
                       {alt.badge} {alt.isRecommended ? "★ BEST" : ""}
                     </span>
-                    <h4 className="text-sm font-bold text-foreground pt-1">{alt.title}</h4>
+                    <h4 className="text-sm font-bold text-foreground leading-snug">{alt.title}</h4>
                     <p className="text-xs font-bold text-primary">
                       {alt.goalDelayDays === 0 ? "0 days delay (On track)" : `+${alt.goalDelayDays} days delay`}
                     </p>
@@ -1159,7 +1153,7 @@ export function AimlyDecisionEngine({
           </div>
 
           {/* Actions */}
-          <div className="pt-4 border-t border-border/60 flex items-center justify-between gap-3">
+          <div className="pt-3 sm:pt-4 border-t border-border/60 flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={handlePrevStep}
@@ -1172,7 +1166,7 @@ export function AimlyDecisionEngine({
             <button
               type="button"
               onClick={handleNextStep}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
             >
               <ShieldCheck className="w-4 h-4" />
               <span>{isFr ? "Lancer l'Audit de Cohérence" : "Verify Analysis Coherence"}</span>
@@ -1187,24 +1181,24 @@ export function AimlyDecisionEngine({
           STEP 6 OF 7 — VERIFY THE ANALYSIS (AIMLY COHERENCE CHECK)
       ───────────────────────────────────────────────────────────── */}
       {currentStep === 6 && (
-        <section className="rounded-3xl border border-border/80 bg-card p-6 sm:p-9 space-y-6 shadow-sm animate-fadeIn">
+        <section className="rounded-2xl sm:rounded-3xl border border-border/80 bg-card p-4 sm:p-8 space-y-4 sm:space-y-6 shadow-xs animate-fadeIn">
           <div className="flex items-center gap-3">
-            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 border ${
+            <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center shrink-0 border ${
               verification.status === "VERIFIED" || verification.status === "VERIFIED WITH ASSUMPTIONS"
                 ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
                 : "bg-amber-500/15 border-amber-500/30 text-amber-600 dark:text-amber-400"
             }`}>
-              <ShieldCheck className="w-6 h-6" />
+              <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase">
+                <span className="text-[11px] sm:text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase">
                   {verification.status}
                 </span>
                 <span className="text-muted-foreground text-xs">•</span>
                 <span className="text-xs text-muted-foreground font-mono">Score: {verification.overallScore}/100</span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+              <h2 className="text-lg sm:text-2xl font-black text-foreground tracking-tight">
                 {verification.status === "VERIFIED"
                   ? "Analysis 100% Verified"
                   : verification.status === "VERIFIED WITH ASSUMPTIONS"
@@ -1220,12 +1214,12 @@ export function AimlyDecisionEngine({
               : "All cash-flow movements, loan amortizations, goal delays, and scenario tradeoffs have been strictly validated against deterministic rules."}
           </p>
 
-          {/* 7 Quality Checks List */}
-          <div className="space-y-2.5">
+          {/* Quality Checks List */}
+          <div className="space-y-2">
             {verification.checks.map((c) => (
               <div
                 key={c.id}
-                className="p-4 rounded-2xl bg-secondary/40 border border-border/70 flex items-start gap-3 text-xs"
+                className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 flex items-start gap-3 text-xs"
               >
                 <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                 <div className="space-y-0.5">
@@ -1241,7 +1235,7 @@ export function AimlyDecisionEngine({
           </div>
 
           {/* Actions */}
-          <div className="pt-4 border-t border-border/60 flex items-center justify-between gap-3">
+          <div className="pt-3 sm:pt-4 border-t border-border/60 flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={handlePrevStep}
@@ -1254,10 +1248,10 @@ export function AimlyDecisionEngine({
             <button
               type="button"
               onClick={handleNextStep}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
             >
               <FileDown className="w-4 h-4" />
-              <span>{isFr ? "Voir le Rapport Final & Télécharger le PDF" : "See My Final Decision Report"}</span>
+              <span>{isFr ? "Voir le Rapport Final" : "See Final Report"}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -1269,20 +1263,20 @@ export function AimlyDecisionEngine({
           STEP 7 OF 7 — FINAL DECISION REPORT (DOWNLOAD PDF)
       ───────────────────────────────────────────────────────────── */}
       {currentStep === 7 && (
-        <section className="rounded-3xl border border-border/80 bg-card p-6 sm:p-9 space-y-7 shadow-xl animate-fadeIn">
+        <section className="rounded-2xl sm:rounded-3xl border border-border/80 bg-card p-4 sm:p-8 space-y-5 sm:space-y-7 shadow-xl animate-fadeIn">
           
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-border/60 pb-4 sm:pb-5">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs border border-emerald-500/20">
+                <span className="px-2.5 sm:px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs border border-emerald-500/20">
                   {verification.status}
                 </span>
-                <span className="text-xs text-muted-foreground font-mono">
+                <span className="text-[11px] sm:text-xs text-muted-foreground font-mono">
                   ID: {verifiedReportData.reportId} • v{verifiedReportData.version}
                 </span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+              <h2 className="text-lg sm:text-2xl font-black text-foreground tracking-tight">
                 {isFr ? "Votre Rapport Décisionnel Vérifié est Prêt" : "Your Financial Decision Report is Ready"}
               </h2>
             </div>
@@ -1292,7 +1286,7 @@ export function AimlyDecisionEngine({
               type="button"
               disabled={isDownloadingPDF}
               onClick={handleDownloadPDF}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer shrink-0 min-h-[48px]"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer shrink-0 min-h-[48px]"
             >
               <FileDown className="w-4 h-4" />
               <span>{isDownloadingPDF ? (isFr ? "Génération en cours..." : "Generating PDF...") : (isFr ? "Télécharger le Rapport PDF" : "Download Verified PDF Report")}</span>
@@ -1300,17 +1294,17 @@ export function AimlyDecisionEngine({
           </div>
 
           {/* Report Executive Summary Box */}
-          <div className="p-5 sm:p-6 rounded-2xl bg-secondary/40 border border-border/70 space-y-3">
+          <div className="p-4 sm:p-6 rounded-2xl bg-secondary/40 border border-border/70 space-y-2 sm:space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-mono uppercase tracking-wider text-primary font-bold">
                 {isFr ? "SYNTHÈSE DU VERDICT" : "VERIFIED EXECUTIVE SUMMARY"}
               </span>
-              <span className="px-3 py-0.5 rounded-full font-mono text-[11px] font-bold border bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30">
+              <span className="px-2.5 sm:px-3 py-0.5 rounded-full font-mono text-[10px] sm:text-[11px] font-bold border bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30">
                 {verdict.decision.replace(/_/g, " ")}
               </span>
             </div>
 
-            <h3 className="text-lg sm:text-xl font-black text-foreground leading-snug">
+            <h3 className="text-base sm:text-xl font-black text-foreground leading-snug">
               {verdict.headline}
             </h3>
 
@@ -1325,48 +1319,47 @@ export function AimlyDecisionEngine({
               {isFr ? "Tableau d'Impact Financier Déterministe" : "Deterministic Financial Impact Table"}
             </span>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div className="p-4 rounded-2xl bg-secondary/30 border border-border/60 space-y-1">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 text-xs">
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/30 border border-border/60 space-y-1">
                 <span className="text-[10px] font-mono text-muted-foreground block">LIQUID RESERVES</span>
-                <span className="text-lg font-black font-mono block">{fmt(primaryImpact.postDecisionCash)}</span>
-                <span className="text-[10px] text-muted-foreground block">
-                  {primaryImpact.deltaCash === 0 ? "0 (No cash outflow)" : `-${fmt(Math.abs(primaryImpact.deltaCash))} outflow`}
+                <span className="text-base sm:text-lg font-black font-mono block">{fmt(primaryImpact.postDecisionCash)}</span>
+                <span className="text-[10px] text-muted-foreground block truncate">
+                  {primaryImpact.deltaCash === 0 ? "0 (No cash outflow)" : `-${fmt(Math.abs(primaryImpact.deltaCash))}`}
                 </span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-secondary/30 border border-border/60 space-y-1">
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/30 border border-border/60 space-y-1">
                 <span className="text-[10px] font-mono text-muted-foreground block">LIVING RUNWAY</span>
-                <span className="text-lg font-black font-mono block">{primaryImpact.postDecisionRunwayMonths} mos</span>
-                <span className="text-[10px] text-amber-600 dark:text-amber-400 block font-bold">
-                  {primaryImpact.postDecisionRunwayMonths < 3.0 ? "Below 3.0 buffer" : "Safe buffer"}
+                <span className="text-base sm:text-lg font-black font-mono block">{primaryImpact.postDecisionRunwayMonths} mos</span>
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 block font-bold truncate">
+                  {primaryImpact.postDecisionRunwayMonths < 3.0 ? "Below 3.0 floor" : "Safe buffer"}
                 </span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-secondary/30 border border-border/60 space-y-1">
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/30 border border-border/60 space-y-1">
                 <span className="text-[10px] font-mono text-muted-foreground block">GOAL IMPACT</span>
-                <span className="text-lg font-black font-mono text-rose-500 block">
+                <span className="text-base sm:text-lg font-black font-mono text-rose-500 block">
                   {primaryImpact.goalStatus === "GOAL_FUNDING_PAUSED" ? "PAUSED" : `+${primaryImpact.goalDelayDays}d`}
                 </span>
                 <span className="text-[10px] text-muted-foreground block truncate">{canonicalAnalysis.baseline.primaryGoal.title}</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-secondary/30 border border-border/60 space-y-1">
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/30 border border-border/60 space-y-1">
                 <span className="text-[10px] font-mono text-muted-foreground block">MONTHLY CASH FLOW</span>
-                <span className="text-lg font-black font-mono block">+{fmt(primaryImpact.postDecisionFreeCashFlow)}/mo</span>
-                <span className="text-[10px] text-emerald-600 block font-bold">
-                  {primaryImpact.deltaFreeCashFlow === 0 ? "0% shift" : `-${primaryImpact.fcfPercentageShift}% shift`}
+                <span className="text-base sm:text-lg font-black font-mono block">+{fmt(primaryImpact.postDecisionFreeCashFlow)}/mo</span>
+                <span className="text-[10px] text-emerald-600 block font-bold truncate">
+                  {primaryImpact.deltaFreeCashFlow === 0 ? "0% shift" : `-${primaryImpact.fcfPercentageShift}%`}
                 </span>
               </div>
             </div>
           </div>
 
           {/* Recommended Path Box */}
-          {/* Recommended Path Box (Strictly Matched to Canonical Winner) */}
-          <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
+          <div className="p-4 sm:p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-1.5 sm:space-y-2">
             <span className="text-xs font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-bold block">
               {isFr ? "PLAN D'ACTION RECOMMANDÉ PAR AIMLY" : "AIMLY'S RECOMMENDED ACTION PATH"}
             </span>
-            <h4 className="text-base font-bold text-foreground">
+            <h4 className="text-sm sm:text-base font-bold text-foreground">
               {canonicalAnalysis.recommendation.recommendedScenarioTitle}
             </h4>
             <p className="text-xs text-muted-foreground leading-relaxed">
@@ -1375,8 +1368,8 @@ export function AimlyDecisionEngine({
           </div>
 
           {/* Secondary Actions Bar */}
-          <div className="pt-4 border-t border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="pt-3 sm:pt-4 border-t border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               <button
                 type="button"
                 onClick={handleSaveDecision}
