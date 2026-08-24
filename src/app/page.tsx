@@ -14,7 +14,7 @@ import { UseaimlyLogo } from "@/components/design-system/UseaimlyLogo";
 export default function LandingPage() {
   const { profile } = useAuth();
   const { currency } = useCurrency();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const [landingYearly, setLandingYearly] = useState(true);
   const [selectedPlanForCheckout, setSelectedPlanForCheckout] = useState<PricingPlan | null>(null);
 
@@ -31,13 +31,25 @@ export default function LandingPage() {
             </div>
 
             <h1 className="text-4xl sm:text-6xl font-black text-gray-900 dark:text-foreground tracking-tight leading-[1.08]">
-              DON'T GUESS.
-              <br />
-              <span className="text-[#00A859]">KNOW BEFORE YOU COMMIT.</span>
+              {language === "fr" ? (
+                <>
+                  UNE DÉCISION.
+                  <br />
+                  <span className="text-[#00A859]">AVANT DE VOUS ENGAGER.</span>
+                </>
+              ) : (
+                <>
+                  ONE DECISION.
+                  <br />
+                  <span className="text-[#00A859]">BEFORE YOU COMMIT.</span>
+                </>
+              )}
             </h1>
 
             <p className="text-base sm:text-xl text-gray-600 dark:text-muted-foreground font-medium max-w-lg leading-relaxed">
-              Before you spend big, ask UseAimly. See what your next money decision could mean for your finances, cash flow, and life goals.
+              {language === "fr"
+                ? "Découvrez l'impact d'une décision financière majeure sur votre avenir avant de la prendre."
+                : "See what a major financial decision could do to your future before you make it."}
             </p>
           </div>
 
@@ -46,6 +58,7 @@ export default function LandingPage() {
             <Hero3DGraphic />
           </div>
         </section>
+
 
 
         {/* 2. MINIMALIST DECISION ENGINE */}

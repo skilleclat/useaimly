@@ -227,11 +227,12 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     offTrack: "Off track",
 
     // Landing Hero Section (Romain Bouvet Style)
-    heroBadge: "Know before you spend",
-    heroTitlePrefix: "Before you ",
-    heroTitleTomorrow: "spend big",
-    heroTitleSuffix: ", ask UseAimly.",
-    heroMainSubtitle: "See what your next money decision could mean for your finances and future goals.",
+    heroBadge: "Before you commit",
+    heroTitlePrefix: "ONE DECISION. ",
+    heroTitleTomorrow: "BEFORE YOU COMMIT.",
+    heroTitleSuffix: "",
+    heroMainSubtitle: "See what a major financial decision could do to your future before you make it.",
+
     btnTryRealDecision: "Analyze a Real Decision",
     noAccountNeeded: "(Instant result)",
     btnCreateFreeAccount: "Get Started Free",
@@ -416,11 +417,12 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     offTrack: "En retard",
 
     // Landing Hero Section (Romain Bouvet Style : Accroche psychologique & déclic)
-    heroBadge: "Renseignez-vous avant de dépenser",
-    heroTitlePrefix: "Avant de ",
-    heroTitleTomorrow: "dépenser une somme importante",
-    heroTitleSuffix: ", demandez conseil à UseAimly.",
-    heroMainSubtitle: "Découvrez en 5 secondes l'impact exact de votre prochaine décision financière sur vos trésoreries et vos objectifs de vie.",
+    heroBadge: "Sachez avant de vous engager",
+    heroTitlePrefix: "UNE DÉCISION. ",
+    heroTitleTomorrow: "AVANT DE VOUS ENGAGER.",
+    heroTitleSuffix: "",
+    heroMainSubtitle: "Découvrez l'impact d'une décision financière majeure sur votre avenir avant de la prendre.",
+
     btnTryRealDecision: "Analyser une Vraie Décision",
     noAccountNeeded: "(Verdict immédiat sans carte)",
     btnCreateFreeAccount: "Créer un Compte Gratuit",
