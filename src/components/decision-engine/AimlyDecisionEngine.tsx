@@ -296,8 +296,10 @@ export function AimlyDecisionEngine({
         primaryGoalTarget: baseline.primaryGoal.targetAmount,
         primaryGoalCurrent: baseline.primaryGoal.currentAmount,
         primaryGoalTargetDate: baseline.primaryGoal.targetDate,
+        monthlyGoalAllocation: baseline.primaryGoal.monthlyAllocation,
       },
       financing: canonicalAnalysis.financing,
+      categorizedAssumptions: canonicalAnalysis.categorizedAssumptions,
       recommendation: canonicalAnalysis.recommendation,
       calculatedImpact: {
         immediateCashOutflow: primaryImpact.immediateCashOutflow,
@@ -329,6 +331,7 @@ export function AimlyDecisionEngine({
           monthlyObligation: scenarios.optionA.newMonthlyObligation,
           totalInterest: scenarios.optionA.totalInterestPaid,
           totalCost: scenarios.optionA.totalCostOverTime,
+          fundingMechanics: scenarios.optionA.fundingMechanics,
           isRecommended: scenarios.optionA.isRecommended,
         },
         optionB: {
@@ -341,6 +344,7 @@ export function AimlyDecisionEngine({
           monthlyObligation: scenarios.optionB.newMonthlyObligation,
           totalInterest: scenarios.optionB.totalInterestPaid,
           totalCost: scenarios.optionB.totalCostOverTime,
+          fundingMechanics: scenarios.optionB.fundingMechanics,
           isRecommended: scenarios.optionB.isRecommended,
         },
         optionC: {
@@ -353,6 +357,7 @@ export function AimlyDecisionEngine({
           monthlyObligation: scenarios.optionC.newMonthlyObligation,
           totalInterest: scenarios.optionC.totalInterestPaid,
           totalCost: scenarios.optionC.totalCostOverTime,
+          fundingMechanics: scenarios.optionC.fundingMechanics,
           isRecommended: scenarios.optionC.isRecommended,
         },
       },

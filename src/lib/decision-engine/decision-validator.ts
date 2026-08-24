@@ -1,10 +1,16 @@
-import { CanonicalDecisionAnalysis, ScenarioImpactResult, FinancingSummary } from "./canonical-decision-engine";
+import {
+  CanonicalDecisionAnalysis,
+  ScenarioImpactResult,
+  FinancingSummary,
+  CategorizedAssumptions,
+  ScenarioFundingMechanics,
+} from "./canonical-decision-engine";
 import { CurrencyCode } from "../types/finance";
 
 export interface DecisionVerificationCheck {
   id: string;
   category:
-    | "MATHEMATICAL_CONSISTENCY"
+    | "MONEY_CONSERVATION_INVARIANT"
     | "SINGLE_RECOMMENDATION_CONSISTENCY"
     | "SCENARIO_DIFFERENTIATION_CONSISTENCY"
     | "TRANSACTION_CONSISTENCY"
@@ -53,9 +59,11 @@ export interface VerifiedDecisionData {
     primaryGoalTarget: number;
     primaryGoalCurrent: number;
     primaryGoalTargetDate: string;
+    monthlyGoalAllocation: number;
   };
 
   financing?: FinancingSummary;
+  categorizedAssumptions?: CategorizedAssumptions;
 
   calculatedImpact: {
     immediateCashOutflow: number;
@@ -97,6 +105,7 @@ export interface VerifiedDecisionData {
       monthlyObligation: number;
       totalInterest: number;
       totalCost: number;
+      fundingMechanics?: ScenarioFundingMechanics;
       isRecommended: boolean;
     };
     optionB: {
@@ -109,6 +118,7 @@ export interface VerifiedDecisionData {
       monthlyObligation: number;
       totalInterest: number;
       totalCost: number;
+      fundingMechanics?: ScenarioFundingMechanics;
       isRecommended: boolean;
     };
     optionC: {
@@ -121,6 +131,7 @@ export interface VerifiedDecisionData {
       monthlyObligation: number;
       totalInterest: number;
       totalCost: number;
+      fundingMechanics?: ScenarioFundingMechanics;
       isRecommended: boolean;
     };
   };
@@ -145,81 +156,49 @@ export function runAimlyCoherenceCheck(data: VerifiedDecisionData): Verification
 
   const { baseline, calculatedImpact, alternatives, recommendation, narrative, amount, downPayment } = data;
 
-  // 1. SINGLE CANONICAL RECOMMENDATION INVARIANT (CRITICAL ISSUE #1)
-  // The scenario with isRecommended === true MUST match recommendation.recommendedScenarioId and action plan!
-  const markedOptions = [alternatives.optionA, alternatives.optionB, alternatives.optionC].filter(
-    (o) => o.isRecommended
-  );
+  // 1. MONEY CONSERVATION INVARIANT (CRITICAL FIX #7)
+  let conservationPassed = true;
+  const optBMechanics = alternatives.optionB.fundingMechanics;
 
-  let singleRecPassed = true;
-  if (markedOptions.length !== 1) {
-    singleRecPassed = false;
-    inconsistencies.push(
-      `Recommendation conflict: Found ${markedOptions.length} options marked as BEST/Recommended instead of exactly 1.`
-    );
-  } else if (markedOptions[0].code !== recommendation.recommendedScenarioId) {
-    singleRecPassed = false;
-    inconsistencies.push(
-      `Recommendation mismatch: Marked scenario (${markedOptions[0].code}) does not match canonical recommendationId (${recommendation.recommendedScenarioId}).`
-    );
-  }
+  if (optBMechanics) {
+    const fcfReconciles =
+      Math.abs(
+        optBMechanics.monthlyGoalAllocation +
+          optBMechanics.monthlyDecisionSavings +
+          optBMechanics.unallocatedMonthlyCash -
+          baseline.netFreeCashFlow
+      ) <= 0.05;
 
-  // Check Action Plan Step 1 references the recommended scenario
-  const targetScenarioStr = recommendation.recommendedScenarioId.replace("_", " ").toLowerCase();
-  if (!recommendation.actionPlanStep1.toLowerCase().includes(targetScenarioStr)) {
-    singleRecPassed = false;
-    inconsistencies.push(
-      `Action plan contradiction: Action Step 1 does not reference the canonical winner (${recommendation.recommendedScenarioId}).`
-    );
-  }
+    const cashReconciles =
+      Math.abs(
+        baseline.liquidSavings -
+          optBMechanics.outflowFromExistingReserves -
+          optBMechanics.postDecisionReserves
+      ) <= 0.05;
 
-  checks.push({
-    id: "check-single-rec",
-    category: "SINGLE_RECOMMENDATION_CONSISTENCY",
-    name: "Single Canonical Recommendation Invariant",
-    nameFr: "Invariant Canonique Unique de Recommandation",
-    passed: singleRecPassed,
-    notes: singleRecPassed
-      ? `Exactly one canonical winner (${recommendation.recommendedScenarioId}) drives badge, action plan, and narrative.`
-      : `Contradiction detected in recommendation mapping across report sections.`,
-    notesFr: singleRecPassed
-      ? `Un vainqueur canonique unique (${recommendation.recommendedScenarioId}) contrôle le badge, le plan d'action et le récit.`
-      : `Contradiction détectée dans le mapping des recommandations.`,
-  });
-
-  // 2. SCENARIO ECONOMIC DIFFERENTIATION (CRITICAL ISSUE #2)
-  // Options A, B, and C must have genuine mathematical differences (payments, interest, or cash outflow)
-  let diffPassed = true;
-  const isAllSameMonthly =
-    alternatives.optionA.monthlyObligation === alternatives.optionB.monthlyObligation &&
-    alternatives.optionB.monthlyObligation === alternatives.optionC.monthlyObligation;
-
-  const isAllSameCost =
-    alternatives.optionA.totalCost === alternatives.optionB.totalCost &&
-    alternatives.optionB.totalCost === alternatives.optionC.totalCost;
-
-  if (isAllSameMonthly && isAllSameCost && alternatives.optionA.monthlyObligation > 0) {
-    diffPassed = false;
-    inconsistencies.push(
-      "Scenario engine failure: Options A, B, and C produced identical financial outputs with zero differentiation."
-    );
+    if (!fcfReconciles || !cashReconciles) {
+      conservationPassed = false;
+      inconsistencies.push(
+        `Money conservation breach in Option B: Free cash flow allocation (${optBMechanics.monthlyGoalAllocation} goal + ${optBMechanics.monthlyDecisionSavings} savings) != Net FCF (${baseline.netFreeCashFlow}).`
+      );
+    }
   }
 
   checks.push({
-    id: "check-scenario-diff",
-    category: "SCENARIO_DIFFERENTIATION_CONSISTENCY",
-    name: "Scenario Economic Differentiation",
-    nameFr: "Différenciation Économique des Scénarios",
-    passed: diffPassed,
-    notes: diffPassed
-      ? `Scenarios A, B, and C are mathematically differentiated across monthly obligations, borrowing costs, and cash reserves.`
-      : `Scenarios fail to present meaningful economic alternatives.`,
-    notesFr: diffPassed
-      ? `Les scénarios A, B et C sont mathématiquement différenciés sur les mensualités, les coûts d'emprunt et les réserves.`
-      : `Les scénarios ne présentent pas d'alternatives économiques significatives.`,
+    id: "check-conservation",
+    category: "MONEY_CONSERVATION_INVARIANT",
+    name: "Money Conservation Invariant",
+    nameFr: "Invariant de Conservation Monétaire",
+    passed: conservationPassed,
+    notes: conservationPassed
+      ? `Money conservation reconciled across all scenarios: No funds created or lost without traceable allocation.`
+      : `Money conservation failed in scenario allocation model.`,
+    notesFr: conservationPassed
+      ? `Conservation monétaire réconciliée : aucun euro n'est créé ou perdu sans allocation traçable.`
+      : `Échec de la conservation monétaire dans le modèle d'allocation.`,
   });
 
-  // 3. MATHEMATICAL & CASH RECONCILIATION
+  // 2. MATHEMATICAL & CASH BALANCE RECONCILIATION
   const expectedCashAfter = Math.max(0, baseline.liquidSavings - calculatedImpact.immediateCashOutflow);
   const mathDiff = Math.abs(calculatedImpact.postDecisionCash - expectedCashAfter);
   const expectedDeltaCash = calculatedImpact.postDecisionCash - baseline.liquidSavings;
@@ -246,7 +225,107 @@ export function runAimlyCoherenceCheck(data: VerifiedDecisionData): Verification
       : `Écart détecté dans l'arithmétique des réserves.`,
   });
 
-  // 4. MONTHLY CASH FLOW RECONCILIATION
+  // 2. SINGLE CANONICAL RECOMMENDATION INVARIANT
+  const markedOptions = [alternatives.optionA, alternatives.optionB, alternatives.optionC].filter(
+    (o) => o.isRecommended
+  );
+
+  let singleRecPassed = true;
+  if (markedOptions.length !== 1) {
+    singleRecPassed = false;
+    inconsistencies.push(
+      `Recommendation conflict: Found ${markedOptions.length} options marked as BEST/Recommended instead of exactly 1.`
+    );
+  } else if (markedOptions[0].code !== recommendation.recommendedScenarioId) {
+    singleRecPassed = false;
+    inconsistencies.push(
+      `Recommendation mismatch: Marked scenario (${markedOptions[0].code}) does not match canonical recommendationId (${recommendation.recommendedScenarioId}).`
+    );
+  }
+
+  const targetScenarioStr = recommendation.recommendedScenarioId.replace("_", " ").toLowerCase();
+  if (!recommendation.actionPlanStep1.toLowerCase().includes(targetScenarioStr)) {
+    singleRecPassed = false;
+    inconsistencies.push(
+      `Action plan contradiction: Action Step 1 does not reference the canonical winner (${recommendation.recommendedScenarioId}).`
+    );
+  }
+
+  checks.push({
+    id: "check-single-rec",
+    category: "SINGLE_RECOMMENDATION_CONSISTENCY",
+    name: "Single Canonical Recommendation Invariant",
+    nameFr: "Invariant Canonique Unique de Recommandation",
+    passed: singleRecPassed,
+    notes: singleRecPassed
+      ? `Exactly one canonical winner (${recommendation.recommendedScenarioId}) drives badge, action plan, and narrative.`
+      : `Contradiction detected in recommendation mapping across report sections.`,
+    notesFr: singleRecPassed
+      ? `Un vainqueur canonique unique (${recommendation.recommendedScenarioId}) contrôle le badge, le plan d'action et le récit.`
+      : `Contradiction détectée dans le mapping des recommandations.`,
+  });
+
+  // 3. SCENARIO ECONOMIC DIFFERENTIATION
+  let diffPassed = true;
+  const isAllSameMonthly =
+    alternatives.optionA.monthlyObligation === alternatives.optionB.monthlyObligation &&
+    alternatives.optionB.monthlyObligation === alternatives.optionC.monthlyObligation;
+
+  const isAllSameCost =
+    alternatives.optionA.totalCost === alternatives.optionB.totalCost &&
+    alternatives.optionB.totalCost === alternatives.optionC.totalCost;
+
+  const isAllSameCash =
+    alternatives.optionA.cashRemaining === alternatives.optionB.cashRemaining &&
+    alternatives.optionB.cashRemaining === alternatives.optionC.cashRemaining;
+
+  if (isAllSameMonthly && isAllSameCost && isAllSameCash) {
+    diffPassed = false;
+    inconsistencies.push(
+      "Scenario engine failure: Options A, B, and C produced identical financial outputs with zero differentiation."
+    );
+  }
+
+  checks.push({
+    id: "check-scenario-diff",
+    category: "SCENARIO_DIFFERENTIATION_CONSISTENCY",
+    name: "Scenario Economic Differentiation",
+    nameFr: "Différenciation Économique des Scénarios",
+    passed: diffPassed,
+    notes: diffPassed
+      ? `Scenarios A, B, and C are mathematically differentiated across cash reserves, monthly obligations, and timelines.`
+      : `Scenarios fail to present meaningful economic alternatives.`,
+    notesFr: diffPassed
+      ? `Les scénarios A, B et C sont mathématiquement différenciés sur les réserves, mensualités et délais.`
+      : `Les scénarios ne présentent pas d'alternatives économiques significatives.`,
+  });
+
+  // 4. TRANSACTION STRUCTURE & FINANCING MODELING
+  let transactionPassed = true;
+  if (data.decisionType === "LOAN_FACILITY" || data.category === "TAKE_A_LOAN") {
+    if (calculatedImpact.immediateCashOutflow >= amount && amount > 1000 && downPayment < amount) {
+      transactionPassed = false;
+      inconsistencies.push(
+        `Transaction modeling error: Loan of ${amount} ${data.currency} was treated as immediate full cash deduction.`
+      );
+    }
+  }
+
+  checks.push({
+    id: "check-transaction",
+    category: "TRANSACTION_CONSISTENCY",
+    name: "Transaction Structure & Archetype Reconciliation",
+    nameFr: "Structure de Transaction et Archétype",
+    passed: transactionPassed,
+    notes: transactionPassed
+      ? `Transaction model is consistent with archetype (${data.decisionType || data.category}).`
+      : `Transaction structure misclassified.`,
+    notesFr: transactionPassed
+      ? `Modèle de transaction conforme à l'archétype (${data.decisionType || data.category}).`
+      : `Structure de transaction mal classifiée.`,
+  });
+
+  // 5. MONTHLY CASH FLOW RECONCILIATION
   let fcfPassed = true;
   if (calculatedImpact.deltaFreeCashFlow === 0 && calculatedImpact.fcfPercentageShift !== 0) {
     fcfPassed = false;
@@ -279,31 +358,6 @@ export function runAimlyCoherenceCheck(data: VerifiedDecisionData): Verification
     notesFr: fcfPassed
       ? `Flux mensuel vérifié : +${calculatedImpact.postDecisionFreeCashFlow} ${data.currency}/mois après engagements.`
       : `Le flux mensuel contient un conflit de calcul.`,
-  });
-
-  // 5. TRANSACTION STRUCTURE CHECK
-  let transactionPassed = true;
-  if (data.decisionType === "LOAN_FACILITY" || data.category === "TAKE_A_LOAN") {
-    if (calculatedImpact.immediateCashOutflow >= amount && amount > 1000 && downPayment < amount) {
-      transactionPassed = false;
-      inconsistencies.push(
-        `Transaction modeling error: Loan of ${amount} ${data.currency} was treated as immediate full cash deduction.`
-      );
-    }
-  }
-
-  checks.push({
-    id: "check-transaction",
-    category: "TRANSACTION_CONSISTENCY",
-    name: "Transaction Structure & Financing Modeling",
-    nameFr: "Structure de Transaction et Modélisation du Financement",
-    passed: transactionPassed,
-    notes: transactionPassed
-      ? `Transaction model is consistent with archetype (${data.decisionType || data.category}).`
-      : `Transaction structure misclassified.`,
-    notesFr: transactionPassed
-      ? `Modèle de transaction conforme à l'archétype (${data.decisionType || data.category}).`
-      : `Structure de transaction mal classifiée.`,
   });
 
   // 6. GOAL PROJECTION & ANOMALY GUARD
@@ -372,7 +426,7 @@ export function runAimlyCoherenceCheck(data: VerifiedDecisionData): Verification
       : `Le récit contient des affirmations incomplètes ou non ancrées.`,
   });
 
-  // Determine Overall Status
+  // Determine Status
   const allPassed = checks.every((c) => c.passed);
   const passedCount = checks.filter((c) => c.passed).length;
   const overallScore = Math.round((passedCount / checks.length) * 100);

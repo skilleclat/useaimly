@@ -119,7 +119,7 @@ describe("Verified Financial Decision Report System", () => {
     const verification = runAimlyCoherenceCheck(mockValidDecisionData);
     expect(verification.status).toBe("VERIFIED WITH ASSUMPTIONS");
     expect(verification.overallScore).toBe(100);
-    expect(verification.checks.length).toBe(8);
+    expect(verification.checks.length).toBe(9);
     expect(verification.checks.every((c) => c.passed)).toBe(true);
     expect(verification.inconsistencies.length).toBe(0);
   });
