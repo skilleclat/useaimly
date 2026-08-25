@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const sub = await reconcileUserSubscription(user.id, user.email);
+    const sub = await reconcileUserSubscription(user.id, user.email, supabase);
 
     return NextResponse.json({
       success: true,

@@ -12,6 +12,8 @@ import {
   Sparkles,
   Loader2,
   Compass,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 
 interface StripeSessionDetails {
@@ -33,27 +35,27 @@ export function PaymentSuccessClient() {
   const { format } = useCurrency();
 
   const sessionId = searchParams.get("session_id") || searchParams.get("sessionId");
-  const planParam = searchParams.get("plan");
-  const cycleParam = searchParams.get("cycle");
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [sessionDetails, setSessionDetails] = useState<StripeSessionDetails | null>(null);
+  const [isVerifyingFailure, setIsVerifyingFailure] = useState<boolean>(false);
 
   const verifyCheckout = useCallback(async () => {
     setIsLoading(true);
+    setIsVerifyingFailure(false);
 
     try {
-      // 1. If we have a sessionId query param from Stripe
-      if (sessionId) {
+      // 1. If we have a sessionId query param from Stripe, verify server-side
+      if (sessionId && sessionId.trim().length > 0) {
         const res = await fetch("/api/stripe/verify-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionId }),
+          body: JSON.stringify({ sessionId: sessionId.trim() }),
         });
 
         const data = await res.json();
 
-        if (res.ok && data.success) {
+        if (res.ok && data.success && data.status !== "failed") {
           const isAnnual = data.billingCycle === "ANNUAL";
           setSessionDetails({
             isValid: true,
@@ -69,52 +71,38 @@ export function PaymentSuccessClient() {
 
           await refreshProfile();
           return;
+        } else {
+          setIsVerifyingFailure(true);
         }
       }
 
-      // 2. If authenticated user already has Pro / Premium in profile
-      if (profile?.plan_tier === "pro" || profile?.plan_tier === "premium" || planParam === "pro" || planParam === "premium") {
-        const isAnnual = cycleParam === "ANNUAL";
+      // 2. If authenticated user already has verified Pro / Premium in PostgreSQL profile
+      if (profile?.plan_tier === "pro" || profile?.plan_tier === "premium") {
         setSessionDetails({
           isValid: true,
           status: "active",
           planName: profile?.plan_tier === "premium" ? "UseAimly Premium" : "UseAimly Pro",
-          priceFormatted: isAnnual ? "$39.00 / year" : "$4.99 / month",
-          intervalText: isAnnual ? "Billed annually" : "Billed monthly",
+          priceFormatted: "$4.99 / month",
+          intervalText: "Billed monthly",
           customerEmail: user?.email || undefined,
-          amountPaid: isAnnual ? 39.0 : 4.99,
+          amountPaid: 4.99,
           currency: "USD",
-          billingCycle: isAnnual ? "ANNUAL" : "MONTHLY",
+          billingCycle: "MONTHLY",
         });
-        await refreshProfile();
         return;
       }
 
-      // 3. Fallback: payment completed successfully without active session lookup
-      setSessionDetails({
-        isValid: true,
-        status: "active",
-        planName: "UseAimly Pro",
-        priceFormatted: "$4.99 / month",
-        intervalText: "Billed monthly",
-        customerEmail: user?.email || undefined,
-        amountPaid: 4.99,
-        currency: "USD",
-      });
+      // 3. If no valid session ID and user does NOT have active Pro in database, mark as unverified
+      setIsVerifyingFailure(true);
+      setSessionDetails(null);
     } catch (err: any) {
       console.warn("Session verification warning:", err);
-      // Non-blocking fallback
-      setSessionDetails({
-        isValid: true,
-        status: "active",
-        planName: "UseAimly Pro",
-        priceFormatted: "$4.99 / month",
-        customerEmail: user?.email || undefined,
-      });
+      setIsVerifyingFailure(true);
+      setSessionDetails(null);
     } finally {
       setIsLoading(false);
     }
-  }, [sessionId, planParam, cycleParam, profile, user, refreshProfile]);
+  }, [sessionId, profile, user, refreshProfile]);
 
   useEffect(() => {
     verifyCheckout();
@@ -164,7 +152,48 @@ export function PaymentSuccessClient() {
           </div>
         )}
 
-        {!isLoading && (
+        {/* UNVERIFIED / NO ACTIVE PAYMENT FOUND (SECURITY GATE) */}
+        {!isLoading && isVerifyingFailure && !sessionDetails && (
+          <div className="rounded-[2.5rem] border border-border/80 bg-card p-8 sm:p-12 text-center space-y-6 shadow-xl animate-fadeIn">
+            <div className="inline-flex items-center justify-center p-3 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 mx-auto">
+              <AlertCircle className="w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
+                No Active Payment Session Found
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+                We could not verify an active Stripe payment for this session. Pro features require a verified checkout transaction.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-secondary/50 border border-border/70 text-xs text-muted-foreground text-left space-y-2 font-mono">
+              <p>• If you just completed a payment, please make sure you are logged into the same UseAimly account.</p>
+              <p>• If you need to upgrade, choose a plan from the pricing page.</p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => verifyCheckout()}
+                className="flex-1 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground border border-border font-bold text-xs sm:text-sm py-3.5 px-6 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <RefreshCw className="w-4 h-4 text-primary" />
+                <span>Re-check Verification</span>
+              </button>
+              <Link
+                href="/pricing"
+                className="flex-1 rounded-2xl bg-[#FF4D26] hover:bg-[#E53E1B] text-white font-extrabold text-xs sm:text-sm py-3.5 px-6 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>View Pricing & Upgrade</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* VERIFIED SUCCESS STATE */}
+        {!isLoading && sessionDetails && (
           <>
             {/* 1. SUCCESS HERO */}
             <div className="text-center space-y-4">
@@ -180,50 +209,48 @@ export function PaymentSuccessClient() {
                   Welcome to UseAimly Pro
                 </h1>
                 <p className="text-base sm:text-lg font-medium text-muted-foreground max-w-lg mx-auto leading-relaxed">
-                  Your subscription is active. You now have access to the full UseAimly Pro experience.
+                  Your subscription is active and verified. You now have access to the full UseAimly Pro experience.
                 </p>
               </div>
             </div>
 
-            {/* STRIPE VERIFIED SESSION CARD (If session or customer data is present) */}
-            {sessionDetails && (
-              <div className="rounded-[2rem] border border-border/80 bg-card p-6 sm:p-7 shadow-xs space-y-4">
-                <div className="flex items-center justify-between border-b border-border/60 pb-3.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
-                      Subscription Summary
-                    </span>
-                  </div>
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-0.5 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span>Active</span>
-                  </div>
+            {/* STRIPE VERIFIED SESSION CARD */}
+            <div className="rounded-[2rem] border border-border/80 bg-card p-6 sm:p-7 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-border/60 pb-3.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
+                    Subscription Summary
+                  </span>
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                  <div>
-                    <span className="text-[11px] font-mono text-muted-foreground block">Plan</span>
-                    <span className="text-base font-extrabold text-foreground">{sessionDetails.planName}</span>
-                  </div>
-
-                  {sessionDetails.priceFormatted && (
-                    <div>
-                      <span className="text-[11px] font-mono text-muted-foreground block">Rate</span>
-                      <span className="text-base font-extrabold text-foreground font-mono">
-                        {sessionDetails.priceFormatted}
-                      </span>
-                    </div>
-                  )}
-
-                  {sessionDetails.customerEmail && (
-                    <div className="sm:col-span-2 pt-2 border-t border-border/40 flex items-center justify-between text-xs font-mono">
-                      <span className="text-muted-foreground">Account</span>
-                      <span className="font-semibold text-foreground">{sessionDetails.customerEmail}</span>
-                    </div>
-                  )}
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-0.5 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Active</span>
                 </div>
               </div>
-            )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                <div>
+                  <span className="text-[11px] font-mono text-muted-foreground block">Plan</span>
+                  <span className="text-base font-extrabold text-foreground">{sessionDetails.planName}</span>
+                </div>
+
+                {sessionDetails.priceFormatted && (
+                  <div>
+                    <span className="text-[11px] font-mono text-muted-foreground block">Rate</span>
+                    <span className="text-base font-extrabold text-foreground font-mono">
+                      {sessionDetails.priceFormatted}
+                    </span>
+                  </div>
+                )}
+
+                {sessionDetails.customerEmail && (
+                  <div className="sm:col-span-2 pt-2 border-t border-border/40 flex items-center justify-between text-xs font-mono">
+                    <span className="text-muted-foreground">Account</span>
+                    <span className="font-semibold text-foreground">{sessionDetails.customerEmail}</span>
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* 2. VALUE CONFIRMATION */}
             <div className="rounded-[2rem] border border-border/80 bg-secondary/30 p-6 sm:p-8 space-y-5">
@@ -278,14 +305,14 @@ export function PaymentSuccessClient() {
             {/* 5. ACCOUNT NOTICE */}
             <div className="p-4 rounded-2xl bg-secondary/50 border border-border/70 text-center space-y-1">
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Your subscription is now active. If you signed up with a new account, make sure you are logged into the UseAimly account you want to use.
+                Your subscription is server-verified. You have continuous access across all your devices and browsers.
               </p>
             </div>
 
             {/* Security Guarantee Badge */}
             <div className="flex items-center justify-center gap-2 text-xs font-mono text-muted-foreground/80 pt-1">
               <ShieldCheck className="w-4 h-4 text-emerald-500" />
-              <span>256-Bit SSL Encrypted • Verified Subscription</span>
+              <span>256-Bit SSL Encrypted • Server-Verified Subscription</span>
             </div>
           </>
         )}

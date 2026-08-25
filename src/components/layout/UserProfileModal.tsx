@@ -502,7 +502,7 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
 
               {!isPro && (
                 <Link
-                  href="/pricing"
+                  href="/checkout?plan=pro"
                   onClick={onClose}
                   className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] py-2.5 text-xs font-bold text-white shadow-md hover:opacity-95 transition-opacity"
                 >

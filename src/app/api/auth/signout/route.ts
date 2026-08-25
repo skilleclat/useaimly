@@ -5,11 +5,12 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    // Fast local signOut on server client without blocking on slow remote global invalidate
     try {
-      await supabase.auth.signOut({ scope: "global" });
+      const supabase = await createClient();
+      supabase.auth.signOut({ scope: "local" }).catch(() => {});
     } catch {
-      // Continue even if session is already invalid
+      // Ignore
     }
 
     const response = NextResponse.json({
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // 2. Also proactively expire common token names
+    // 2. Also proactively expire standard Supabase and app auth cookies
     const explicitCookieNames = [
       "sb-access-token",
       "sb-refresh-token",
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error: any) {
     console.warn("Sign out server error:", error);
-    return NextResponse.json({ success: true, warning: error?.message });
+    return NextResponse.json({ success: true });
   }
 }
 

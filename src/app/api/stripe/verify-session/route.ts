@@ -9,9 +9,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const sessionId = body.sessionId || body.session_id;
 
-    if (!sessionId || typeof sessionId !== "string") {
+    if (!sessionId || typeof sessionId !== "string" || sessionId.trim().length === 0) {
       return NextResponse.json(
-        { success: false, error: "Missing session_id parameter" },
+        { success: false, status: "failed", error: "Missing or invalid session_id parameter" },
         { status: 400 }
       );
     }
@@ -19,12 +19,13 @@ export async function POST(request: NextRequest) {
     // Attempt to identify authenticated user from session cookies
     let currentUserId: string | null = null;
     let currentUserEmail: string | null = null;
+    let supabaseClient: any = null;
 
     try {
-      const supabase = await createClient();
+      supabaseClient = await createClient();
       const {
         data: { user },
-      } = await supabase.auth.getUser();
+      } = await supabaseClient.auth.getUser();
       if (user) {
         currentUserId = user.id;
         currentUserEmail = user.email || null;
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
       // User may be anonymous or completing post-checkout redirect
     }
 
-    const verified = await verifyStripeSession(sessionId, currentUserId);
+    const verified = await verifyStripeSession(sessionId.trim(), currentUserId, supabaseClient);
 
     if (!verified.isValid || verified.status === "failed") {
       return NextResponse.json(
@@ -75,21 +76,22 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get("session_id") || searchParams.get("sessionId");
 
-    if (!sessionId) {
+    if (!sessionId || typeof sessionId !== "string" || sessionId.trim().length === 0) {
       return NextResponse.json(
-        { success: false, error: "Missing session_id parameter" },
+        { success: false, status: "failed", error: "Missing or invalid session_id parameter" },
         { status: 400 }
       );
     }
 
     let currentUserId: string | null = null;
     let currentUserEmail: string | null = null;
+    let supabaseClient: any = null;
 
     try {
-      const supabase = await createClient();
+      supabaseClient = await createClient();
       const {
         data: { user },
-      } = await supabase.auth.getUser();
+      } = await supabaseClient.auth.getUser();
       if (user) {
         currentUserId = user.id;
         currentUserEmail = user.email || null;
@@ -98,7 +100,7 @@ export async function GET(request: NextRequest) {
       // ignore
     }
 
-    const verified = await verifyStripeSession(sessionId, currentUserId);
+    const verified = await verifyStripeSession(sessionId.trim(), currentUserId, supabaseClient);
 
     return NextResponse.json({
       success: verified.isValid,

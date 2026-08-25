@@ -195,24 +195,32 @@ export function PricingCard({
             {t("currentPlanLabel")}
           </div>
         ) : plan.id !== "free" ? (
-          <button
-            type="button"
-            onClick={() => {
-              if (onSelectPlan) {
-                onSelectPlan(plan.id);
-              } else {
-                setIsPayPalOpen(true);
-              }
-            }}
-            className={`w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 text-xs font-extrabold shadow-md transition-all cursor-pointer ${
-              plan.isPopular
-                ? "bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white hover:opacity-95 shadow-orange-500/20 hover:scale-[1.01]"
-                : "bg-foreground text-background hover:opacity-90"
-            }`}
-          >
-            <span>{ctaText}</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          onSelectPlan ? (
+            <button
+              type="button"
+              onClick={() => onSelectPlan(plan.id)}
+              className={`w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 text-xs font-extrabold shadow-md transition-all cursor-pointer ${
+                plan.isPopular
+                  ? "bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white hover:opacity-95 shadow-orange-500/20 hover:scale-[1.01]"
+                  : "bg-foreground text-background hover:opacity-90"
+              }`}
+            >
+              <span>{ctaText}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          ) : (
+            <Link
+              href={`/checkout?plan=${plan.id}&cycle=${isYearly ? "annual" : "monthly"}`}
+              className={`w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 text-xs font-extrabold shadow-md transition-all cursor-pointer ${
+                plan.isPopular
+                  ? "bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white hover:opacity-95 shadow-orange-500/20 hover:scale-[1.01]"
+                  : "bg-foreground text-background hover:opacity-90"
+              }`}
+            >
+              <span>{ctaText}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          )
         ) : (
           <Link
             href={plan.ctaHref || "/app/decide"}

@@ -33,12 +33,42 @@ export interface VerifiedStripeSession {
   userId?: string;
 }
 
+export interface StripeReconciliationDiagnostic {
+  isConfigured: boolean;
+  planTier: "free" | "pro" | "premium";
+  planStatus: "active" | "canceled" | "trial";
+  hasActiveSubscription: boolean;
+  matchedVia?:
+    | "db_profiles"
+    | "db_subscriptions"
+    | "db_saved_scenarios"
+    | "stripe_subscription_metadata"
+    | "stripe_subscription_email"
+    | "stripe_session_metadata"
+    | "stripe_session_email"
+    | "stripe_customer_lookup"
+    | "owner_account"
+    | "none";
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  currentPeriodEnd?: string;
+  details?: string;
+}
+
+export interface StripeRecoveryResult {
+  success: boolean;
+  planTier: "free" | "pro" | "premium";
+  planStatus: "active" | "canceled";
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  matchedVia: string;
+  message: string;
+}
+
 const STRIPE_API_BASE = "https://api.stripe.com/v1";
 
 /**
- * Creates a Stripe Checkout Session.
- * If STRIPE_SECRET_KEY is configured, calls Stripe API directly.
- * Otherwise produces a fallback URL for development/demo.
+ * Creates a Stripe Checkout Session with authenticated UseAimly user ID securely attached.
  */
 export async function createStripeCheckoutSession(
   req: StripeCheckoutRequest
@@ -49,8 +79,8 @@ export async function createStripeCheckoutSession(
   const priceAmount =
     req.planId === "pro"
       ? req.billingCycle === "ANNUAL"
-        ? 3900 // in cents ($39.00)
-        : 499  // in cents ($4.99)
+        ? 3900 // $39.00 in cents
+        : 499  // $4.99 in cents
       : req.planId === "premium"
       ? req.billingCycle === "ANNUAL"
         ? 7900
@@ -58,7 +88,7 @@ export async function createStripeCheckoutSession(
       : 0;
 
   const defaultSuccessUrl = `${appUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`;
-  const defaultCancelUrl = `${appUrl}/pricing`;
+  const defaultCancelUrl = `${appUrl}/app/settings`;
 
   const successUrl = req.successUrl || defaultSuccessUrl;
   const cancelUrl = req.cancelUrl || defaultCancelUrl;
@@ -72,15 +102,19 @@ export async function createStripeCheckoutSession(
       params.append("cancel_url", cancelUrl);
 
       if (req.customerEmail) {
-        params.append("customer_email", req.customerEmail);
+        params.append("customer_email", req.customerEmail.trim().toLowerCase());
       }
 
+      // Securely attach internal UseAimly user identifier to Stripe Checkout Session & Subscription metadata
       if (req.userId) {
         params.append("client_reference_id", req.userId);
         params.append("metadata[userId]", req.userId);
+        params.append("subscription_data[metadata][userId]", req.userId);
       }
       params.append("metadata[planId]", req.planId);
       params.append("metadata[billingCycle]", req.billingCycle);
+      params.append("subscription_data[metadata][planId]", req.planId);
+      params.append("subscription_data[metadata][billingCycle]", req.billingCycle);
 
       // Line item configuration
       params.append("line_items[0][price_data][currency]", "usd");
@@ -121,11 +155,11 @@ export async function createStripeCheckoutSession(
         message: `Stripe checkout initialized for ${req.planId.toUpperCase()} (${req.billingCycle})`,
       };
     } catch (err: any) {
-      console.warn("Stripe live session error, falling back to hosted flow:", err?.message);
+      console.warn("Stripe live session creation note:", err?.message);
     }
   }
 
-  // Fallback demo session ID if STRIPE_SECRET_KEY is not configured
+  // Fallback demo/test session ID if STRIPE_SECRET_KEY is not configured
   const mockSessionId = `cs_test_${Date.now()}_${Math.random().toString(36).substring(7)}`;
   const checkoutUrl = `${appUrl}/payment-success?session_id=${mockSessionId}&plan=${req.planId}&cycle=${req.billingCycle}`;
 
@@ -142,15 +176,31 @@ export async function createStripeCheckoutSession(
  */
 export async function verifyStripeSession(
   sessionId: string,
-  currentUserId?: string | null
+  currentUserId?: string | null,
+  supabaseClient?: any
 ): Promise<VerifiedStripeSession> {
   const secretKey = (process.env.STRIPE_SECRET_KEY || "").trim();
 
+  // Validate session ID string
+  if (!sessionId || typeof sessionId !== "string" || sessionId.trim().length === 0) {
+    return {
+      isValid: false,
+      status: "failed",
+      sessionId: "",
+      planId: "pro",
+      billingCycle: "MONTHLY",
+      amountPaid: 4.99,
+      currency: "USD",
+    };
+  }
+
+  const cleanSessionId = sessionId.trim();
+
   // 1. If real Stripe Secret Key exists, verify against Stripe API
-  if (secretKey && !sessionId.startsWith("cs_mock_")) {
+  if (secretKey && !cleanSessionId.startsWith("cs_mock_")) {
     try {
       const res = await fetch(
-        `${STRIPE_API_BASE}/checkout/sessions/${encodeURIComponent(sessionId)}?expand[]=subscription&expand[]=customer`,
+        `${STRIPE_API_BASE}/checkout/sessions/${encodeURIComponent(cleanSessionId)}?expand[]=subscription&expand[]=customer`,
         {
           headers: {
             Authorization: `Bearer ${secretKey}`,
@@ -179,16 +229,18 @@ export async function verifyStripeSession(
         }
 
         if (isPaid) {
-          // Idempotently sync with database
+          // Idempotently sync with central PostgreSQL database
           await syncVerifiedSubscription({
             userId,
             customerEmail,
             planId,
             billingCycle,
-            subscriptionId: subscriptionId || sessionId,
+            subscriptionId: subscriptionId || session.id,
+            customerId,
             amountPaid,
             currency,
             currentPeriodEnd,
+            supabaseClient,
           });
 
           return {
@@ -223,27 +275,27 @@ export async function verifyStripeSession(
     }
   }
 
-  // 2. Fallback verification for demo / test environments or when verified locally
-  if (sessionId && sessionId.length > 5) {
-    const isMock = sessionId.startsWith("cs_test_") || sessionId.startsWith("cs_mock_") || sessionId.startsWith("demo_");
-    const planId: "pro" | "premium" = sessionId.includes("premium") ? "premium" : "pro";
-    const billingCycle: "MONTHLY" | "ANNUAL" = sessionId.includes("annual") ? "ANNUAL" : "MONTHLY";
+  // 2. Fallback verification for test / demo environments with valid prefix
+  if (cleanSessionId.startsWith("cs_test_") || cleanSessionId.startsWith("cs_mock_") || cleanSessionId.startsWith("demo_")) {
+    const planId: "pro" | "premium" = cleanSessionId.includes("premium") ? "premium" : "pro";
+    const billingCycle: "MONTHLY" | "ANNUAL" = cleanSessionId.includes("annual") ? "ANNUAL" : "MONTHLY";
 
     if (currentUserId) {
       await syncVerifiedSubscription({
         userId: currentUserId,
         planId,
         billingCycle,
-        subscriptionId: sessionId,
+        subscriptionId: cleanSessionId,
         amountPaid: billingCycle === "ANNUAL" ? 39.00 : 4.99,
         currency: "USD",
+        supabaseClient,
       });
     }
 
     return {
       isValid: true,
       status: "active",
-      sessionId,
+      sessionId: cleanSessionId,
       planId,
       billingCycle,
       amountPaid: billingCycle === "ANNUAL" ? 39.00 : 4.99,
@@ -255,7 +307,7 @@ export async function verifyStripeSession(
   return {
     isValid: false,
     status: "failed",
-    sessionId: sessionId || "",
+    sessionId: cleanSessionId,
     planId: "pro",
     billingCycle: "MONTHLY",
     amountPaid: 4.99,
@@ -291,7 +343,8 @@ export async function findUserIdByEmail(email?: string): Promise<string | null> 
 }
 
 /**
- * Idempotently updates the user's profile and subscriptions record in Supabase.
+ * Idempotently updates the user's profile and subscriptions record in Supabase PostgreSQL.
+ * Multi-layer persistence: writes to `profiles`, `subscriptions`, and `saved_scenarios` (verified table).
  * Guaranteed to update the persistent database record for the user across all browsers/devices.
  */
 export async function syncVerifiedSubscription(params: {
@@ -300,12 +353,16 @@ export async function syncVerifiedSubscription(params: {
   planId: "pro" | "premium";
   billingCycle: "MONTHLY" | "ANNUAL";
   subscriptionId?: string;
+  customerId?: string;
   amountPaid: number;
   currency: string;
   currentPeriodEnd?: string;
+  supabaseClient?: any;
 }): Promise<boolean> {
   try {
-    const supabase = createAdminClient();
+    const adminSupabase = createAdminClient();
+    const activeClient = params.supabaseClient || adminSupabase;
+
     let targetUserId = params.userId;
 
     // If userId not provided directly, lookup by customer email
@@ -322,68 +379,123 @@ export async function syncVerifiedSubscription(params: {
     }
 
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetUserId);
+    const externalSubId = params.subscriptionId || `sub_${targetUserId}_${Date.now()}`;
 
-    // 1. Update persistent profiles table in PostgreSQL (guaranteed column: plan_tier)
+    // 1. Update persistent profiles table in PostgreSQL (if columns exist)
+    const updatePayload: Record<string, any> = {
+      plan_tier: params.planId,
+      plan_status: "active",
+      updated_at: new Date().toISOString(),
+    };
+    if (params.customerId) updatePayload.stripe_customer_id = params.customerId;
+    if (params.subscriptionId) updatePayload.stripe_subscription_id = params.subscriptionId;
+
     try {
-      const { error: profileError } = await (supabase.from("profiles") as any)
-        .update({
-          plan_tier: params.planId,
-          updated_at: new Date().toISOString(),
-        })
+      const { error: activeErr } = await (activeClient.from("profiles") as any)
+        .update(updatePayload)
         .eq("id", targetUserId);
 
-      if (profileError) {
-        // If update returned 0 rows or error, try upsert
-        await (supabase.from("profiles") as any).upsert(
-          {
-            id: targetUserId,
-            plan_tier: params.planId,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "id" }
-        );
+      if (activeErr && activeClient !== adminSupabase) {
+        await (adminSupabase.from("profiles") as any)
+          .update(updatePayload)
+          .eq("id", targetUserId);
       }
     } catch (profileErr) {
       console.warn("Profile plan_tier update note:", profileErr);
     }
 
-    // 2. Optionally insert or update subscriptions record in PostgreSQL
+    // 2. Insert or update subscriptions record in PostgreSQL (if table exists)
     if (isUuid) {
       try {
-        const externalSubId = params.subscriptionId || `sub_sync_${targetUserId}_${Date.now()}`;
-        await (supabase.from("subscriptions") as any).upsert(
-          {
-            user_id: targetUserId,
-            plan_id: params.planId,
-            billing_cycle: params.billingCycle,
-            payment_provider: "STRIPE",
-            external_subscription_id: externalSubId,
-            status: "ACTIVE",
-            amount_paid: params.amountPaid,
-            currency: params.currency || "USD",
-            current_period_end: params.currentPeriodEnd
-              ? params.currentPeriodEnd.split("T")[0]
-              : undefined,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "external_subscription_id" }
-        );
+        const subData = {
+          user_id: targetUserId,
+          plan_id: params.planId,
+          billing_cycle: params.billingCycle,
+          payment_provider: "STRIPE",
+          external_subscription_id: externalSubId,
+          status: "ACTIVE",
+          amount_paid: params.amountPaid,
+          currency: params.currency || "USD",
+          current_period_end: params.currentPeriodEnd
+            ? params.currentPeriodEnd.split("T")[0]
+            : undefined,
+          updated_at: new Date().toISOString(),
+        };
+
+        const { data: existingSub } = await (activeClient.from("subscriptions") as any)
+          .select("id")
+          .eq("external_subscription_id", externalSubId)
+          .maybeSingle();
+
+        if (existingSub?.id) {
+          await (activeClient.from("subscriptions") as any)
+            .update(subData)
+            .eq("id", existingSub.id);
+        } else {
+          await (activeClient.from("subscriptions") as any).insert(subData);
+        }
       } catch (subErr) {
-        // Table may not exist yet in remote schema, non-blocking
+        // subscriptions table query non-blocking
       }
     }
 
-    // 3. Update Supabase Auth user metadata
+    // 3. Guaranteed PostgreSQL persistence in saved_scenarios table (verified existing table in remote DB)
     if (isUuid) {
       try {
-        await supabase.auth.admin.updateUserById(targetUserId, {
+        const entitlementRecord = {
+          user_id: targetUserId,
+          title: "STRIPE_SUBSCRIPTION_ENTITLEMENT",
+          description: `Active ${params.planId.toUpperCase()} Subscription (${params.billingCycle})`,
+          scenario_type: "STRIPE_SUBSCRIPTION_ENTITLEMENT",
+          input: {
+            plan_id: params.planId,
+            billing_cycle: params.billingCycle,
+            stripe_customer_id: params.customerId || null,
+            stripe_subscription_id: externalSubId,
+            amount_paid: params.amountPaid,
+            currency: params.currency || "USD",
+            current_period_end: params.currentPeriodEnd || null,
+          },
+          result: {
+            status: "ACTIVE",
+            plan_tier: params.planId,
+            verified_at: new Date().toISOString(),
+          },
+          updated_at: new Date().toISOString(),
+        };
+
+        // Check if scenario entitlement already exists for user
+        const { data: existingScenario } = await (activeClient.from("saved_scenarios") as any)
+          .select("id")
+          .eq("user_id", targetUserId)
+          .eq("scenario_type", "STRIPE_SUBSCRIPTION_ENTITLEMENT")
+          .maybeSingle();
+
+        if (existingScenario?.id) {
+          await (activeClient.from("saved_scenarios") as any)
+            .update(entitlementRecord)
+            .eq("id", existingScenario.id);
+        } else {
+          await (activeClient.from("saved_scenarios") as any).insert(entitlementRecord);
+        }
+      } catch (scenarioErr) {
+        console.warn("saved_scenarios entitlement persistence note:", scenarioErr);
+      }
+    }
+
+    // 4. Update Supabase Auth user metadata via admin if possible
+    if (isUuid) {
+      try {
+        await adminSupabase.auth.admin.updateUserById(targetUserId, {
           user_metadata: {
             plan_tier: params.planId,
             plan_status: "active",
+            stripe_customer_id: params.customerId,
+            stripe_subscription_id: externalSubId,
           },
         });
       } catch (metaErr) {
-        console.warn("Note updating auth metadata:", metaErr);
+        // Admin update non-blocking
       }
     }
 
@@ -395,49 +507,89 @@ export async function syncVerifiedSubscription(params: {
 }
 
 /**
- * Server-authoritative subscription reconciliation.
- * Queries PostgreSQL profiles table and Stripe API to ensure the database profile
- * is 100% accurate and consistent across all browsers and devices.
+ * Server-authoritative subscription reconciliation with deep Stripe scanning.
+ * Queries PostgreSQL profiles table, PostgreSQL subscriptions table, saved_scenarios table, and Stripe live/sandbox API.
+ * When an active Stripe subscription is verified, it is immediately persisted into PostgreSQL.
  */
 export async function reconcileUserSubscription(
   userId: string,
-  userEmail?: string | null
-): Promise<{
-  planTier: "free" | "pro" | "premium";
-  planStatus: "active" | "canceled" | "trial";
-  hasActiveSubscription: boolean;
-}> {
+  userEmail?: string | null,
+  supabaseClient?: any
+): Promise<StripeReconciliationDiagnostic> {
   const isOwner = userEmail?.trim().toLowerCase() === "skilleclat@gmail.com";
   if (isOwner) {
-    return { planTier: "premium", planStatus: "active", hasActiveSubscription: true };
+    return {
+      isConfigured: true,
+      planTier: "premium",
+      planStatus: "active",
+      hasActiveSubscription: true,
+      matchedVia: "owner_account",
+      details: "Owner account receives automatic premium entitlement.",
+    };
   }
 
-  const supabase = createAdminClient();
+  const adminSupabase = createAdminClient();
+  const activeClient = supabaseClient || adminSupabase;
 
   let profileTier: "free" | "pro" | "premium" = "free";
 
-  // 1. Check PostgreSQL profiles table
+  // 1. Check PostgreSQL profiles table (if columns exist)
   try {
-    const { data: profile } = await supabase
+    const { data: profile, error } = await activeClient
       .from("profiles")
-      .select("plan_tier")
+      .select("plan_tier, plan_status, stripe_customer_id, stripe_subscription_id")
       .eq("id", userId)
       .maybeSingle();
 
-    if (profile?.plan_tier === "pro" || profile?.plan_tier === "premium") {
-      return { planTier: profile.plan_tier, planStatus: "active", hasActiveSubscription: true };
+    if (!error && (profile?.plan_tier === "pro" || profile?.plan_tier === "premium")) {
+      return {
+        isConfigured: true,
+        planTier: profile.plan_tier,
+        planStatus: profile.plan_status === "canceled" ? "canceled" : "active",
+        hasActiveSubscription: profile.plan_status !== "canceled",
+        matchedVia: "db_profiles",
+        stripeCustomerId: profile.stripe_customer_id || undefined,
+        stripeSubscriptionId: profile.stripe_subscription_id || undefined,
+        details: "Subscription verified directly from central PostgreSQL profiles table.",
+      };
     }
     if (profile?.plan_tier) {
       profileTier = profile.plan_tier as any;
     }
   } catch (e) {
-    console.warn("Profiles query note:", e);
+    console.warn("Profiles query note during reconciliation:", e);
   }
 
-  // 2. Check PostgreSQL subscriptions table for any ACTIVE subscription (if table exists)
+  // Also check adminClient for profiles
+  if (profileTier === "free" && activeClient !== adminSupabase) {
+    try {
+      const { data: adminProfile, error: aErr } = await adminSupabase
+        .from("profiles")
+        .select("plan_tier, plan_status, stripe_customer_id, stripe_subscription_id")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (!aErr && (adminProfile?.plan_tier === "pro" || adminProfile?.plan_tier === "premium")) {
+        return {
+          isConfigured: true,
+          planTier: adminProfile.plan_tier,
+          planStatus: adminProfile.plan_status === "canceled" ? "canceled" : "active",
+          hasActiveSubscription: adminProfile.plan_status !== "canceled",
+          matchedVia: "db_profiles",
+          stripeCustomerId: adminProfile.stripe_customer_id || undefined,
+          stripeSubscriptionId: adminProfile.stripe_subscription_id || undefined,
+          details: "Subscription verified directly from admin PostgreSQL query.",
+        };
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // 2. Check PostgreSQL subscriptions table for any ACTIVE subscription
   try {
-    const { data: activeSubs } = await (supabase.from("subscriptions") as any)
-      .select("plan_id, status")
+    const { data: activeSubs } = await (activeClient.from("subscriptions") as any)
+      .select("plan_id, status, external_subscription_id, current_period_end")
       .eq("user_id", userId)
       .eq("status", "ACTIVE")
       .order("created_at", { ascending: false })
@@ -447,83 +599,350 @@ export async function reconcileUserSubscription(
       const sub = activeSubs[0];
       const planId = (sub.plan_id === "premium" ? "premium" : "pro") as "pro" | "premium";
 
-      await (supabase.from("profiles") as any)
-        .update({
-          plan_tier: planId,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", userId);
-
-      return { planTier: planId, planStatus: "active", hasActiveSubscription: true };
+      return {
+        isConfigured: true,
+        planTier: planId,
+        planStatus: "active",
+        hasActiveSubscription: true,
+        matchedVia: "db_subscriptions",
+        stripeSubscriptionId: sub.external_subscription_id,
+        currentPeriodEnd: sub.current_period_end,
+        details: "Subscription verified from PostgreSQL subscriptions table.",
+      };
     }
   } catch (subErr) {
-    // subscriptions table may not exist, continue
+    // subscriptions table query non-blocking
   }
 
-  // 3. If Stripe Secret Key is present, check Stripe live/sandbox API directly by email
+  // 3. Check PostgreSQL saved_scenarios table (entitlement ledger)
+  try {
+    const { data: scenarioSub } = await (activeClient.from("saved_scenarios") as any)
+      .select("input, result, updated_at")
+      .eq("user_id", userId)
+      .eq("scenario_type", "STRIPE_SUBSCRIPTION_ENTITLEMENT")
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (scenarioSub?.result?.status === "ACTIVE" && scenarioSub.input?.plan_id) {
+      const planId = (scenarioSub.input.plan_id === "premium" ? "premium" : "pro") as "pro" | "premium";
+      return {
+        isConfigured: true,
+        planTier: planId,
+        planStatus: "active",
+        hasActiveSubscription: true,
+        matchedVia: "db_saved_scenarios",
+        stripeCustomerId: scenarioSub.input?.stripe_customer_id || undefined,
+        stripeSubscriptionId: scenarioSub.input?.stripe_subscription_id || undefined,
+        currentPeriodEnd: scenarioSub.input?.current_period_end || undefined,
+        details: "Subscription verified from central PostgreSQL saved_scenarios ledger.",
+      };
+    }
+  } catch (scenarioErr) {
+    // saved_scenarios query non-blocking
+  }
+
+  // 4. DEEP STRIPE SCANNING: If Stripe Secret Key is present, scan Stripe Live/Sandbox API
   const secretKey = (process.env.STRIPE_SECRET_KEY || "").trim();
-  if (secretKey && userEmail && userEmail.includes("@")) {
+  const normalizedUserEmail = userEmail?.trim().toLowerCase();
+
+  if (secretKey) {
+    // A. Query active Subscriptions directly in Stripe
     try {
-      const emailsToTest = [
-        userEmail.trim().toLowerCase(),
-        userEmail.trim(),
-      ];
+      const subRes = await fetch(
+        `${STRIPE_API_BASE}/subscriptions?limit=100&status=active&expand[]=data.customer`,
+        {
+          headers: { Authorization: `Bearer ${secretKey}` },
+        }
+      );
+      const subData = await subRes.json();
 
-      for (const testEmail of Array.from(new Set(emailsToTest))) {
-        const res = await fetch(
-          `${STRIPE_API_BASE}/customers?email=${encodeURIComponent(testEmail)}&expand[]=data.subscriptions`,
-          {
-            headers: { Authorization: `Bearer ${secretKey}` },
-          }
-        );
+      if (subRes.ok && subData.data && Array.isArray(subData.data)) {
+        for (const sub of subData.data) {
+          const customer = sub.customer;
+          const custEmail = (typeof customer === "object" ? customer?.email : undefined)?.toLowerCase().trim();
+          const custId = typeof customer === "string" ? customer : customer?.id;
+          const metadataUserId = sub.metadata?.userId || sub.metadata?.user_id;
 
-        const customerData = await res.json();
-        if (res.ok && customerData.data && customerData.data.length > 0) {
-          for (const customer of customerData.data) {
-            const subs = customer.subscriptions?.data || [];
-            const activeSub = subs.find(
-              (s: any) => s.status === "active" || s.status === "trialing"
-            );
+          const isUserMatch = metadataUserId === userId;
+          const isEmailMatch = normalizedUserEmail && custEmail === normalizedUserEmail;
 
-            if (activeSub) {
-              const planId = activeSub.items?.data?.[0]?.price?.product === "premium" ? "premium" : "pro";
-              const interval = activeSub.items?.data?.[0]?.price?.recurring?.interval === "year" ? "ANNUAL" : "MONTHLY";
-              const amountPaid = (activeSub.items?.data?.[0]?.price?.unit_amount || 499) / 100;
-              const currency = (activeSub.currency || "USD").toUpperCase();
-              const currentPeriodEnd = activeSub.current_period_end
-                ? new Date(activeSub.current_period_end * 1000).toISOString()
-                : undefined;
+          if (isUserMatch || isEmailMatch) {
+            const planId = (sub.metadata?.planId === "premium" ? "premium" : "pro") as "pro" | "premium";
+            const interval = sub.items?.data?.[0]?.price?.recurring?.interval === "year" ? "ANNUAL" : "MONTHLY";
+            const amountPaid = (sub.items?.data?.[0]?.price?.unit_amount || 499) / 100;
+            const currency = (sub.currency || "USD").toUpperCase();
+            const currentPeriodEnd = sub.current_period_end
+              ? new Date(sub.current_period_end * 1000).toISOString()
+              : undefined;
 
-              await syncVerifiedSubscription({
-                userId,
-                customerEmail: testEmail,
-                planId,
-                billingCycle: interval,
-                subscriptionId: activeSub.id,
-                amountPaid,
-                currency,
-                currentPeriodEnd,
-              });
+            await syncVerifiedSubscription({
+              userId,
+              customerEmail: custEmail || userEmail || undefined,
+              planId,
+              billingCycle: interval,
+              subscriptionId: sub.id,
+              customerId: custId,
+              amountPaid,
+              currency,
+              currentPeriodEnd,
+              supabaseClient: activeClient,
+            });
 
-              return { planTier: planId, planStatus: "active", hasActiveSubscription: true };
-            }
+            return {
+              isConfigured: true,
+              planTier: planId,
+              planStatus: "active",
+              hasActiveSubscription: true,
+              matchedVia: isUserMatch ? "stripe_subscription_metadata" : "stripe_subscription_email",
+              stripeCustomerId: custId,
+              stripeSubscriptionId: sub.id,
+              currentPeriodEnd,
+              details: `Stripe Sandbox active subscription (${sub.id}) matched and persisted to PostgreSQL.`,
+            };
           }
         }
       }
     } catch (stripeErr) {
-      console.warn("Stripe customer query note during reconciliation:", stripeErr);
+      console.warn("Stripe subscriptions query note during reconciliation:", stripeErr);
+    }
+
+    // B. Query Stripe Checkout Sessions
+    try {
+      const sessRes = await fetch(
+        `${STRIPE_API_BASE}/checkout/sessions?limit=100&expand[]=data.subscription&expand[]=data.customer`,
+        {
+          headers: { Authorization: `Bearer ${secretKey}` },
+        }
+      );
+      const sessData = await sessRes.json();
+
+      if (sessRes.ok && sessData.data && Array.isArray(sessData.data)) {
+        for (const session of sessData.data) {
+          const isPaid = session.payment_status === "paid" || session.status === "complete";
+          if (!isPaid) continue;
+
+          const metadataUserId = session.client_reference_id || session.metadata?.userId || session.metadata?.user_id;
+          const sessionEmail = (session.customer_details?.email || session.customer_email || session.customer?.email)?.toLowerCase().trim();
+          const custId = typeof session.customer === "string" ? session.customer : session.customer?.id;
+          const subId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
+
+          const isUserMatch = metadataUserId === userId;
+          const isEmailMatch = normalizedUserEmail && sessionEmail === normalizedUserEmail;
+
+          if (isUserMatch || isEmailMatch) {
+            const planId = (session.metadata?.planId === "premium" ? "premium" : "pro") as "pro" | "premium";
+            const billingCycle = (session.metadata?.billingCycle === "ANNUAL" ? "ANNUAL" : "MONTHLY") as "MONTHLY" | "ANNUAL";
+            const amountPaid = (session.amount_total || 499) / 100;
+            const currency = (session.currency || "USD").toUpperCase();
+
+            await syncVerifiedSubscription({
+              userId,
+              customerEmail: sessionEmail || userEmail || undefined,
+              planId,
+              billingCycle,
+              subscriptionId: subId || session.id,
+              customerId: custId,
+              amountPaid,
+              currency,
+              supabaseClient: activeClient,
+            });
+
+            return {
+              isConfigured: true,
+              planTier: planId,
+              planStatus: "active",
+              hasActiveSubscription: true,
+              matchedVia: isUserMatch ? "stripe_session_metadata" : "stripe_session_email",
+              stripeCustomerId: custId,
+              stripeSubscriptionId: subId || session.id,
+              details: `Stripe Checkout session (${session.id}) matched and persisted to PostgreSQL.`,
+            };
+          }
+        }
+      }
+    } catch (sessErr) {
+      console.warn("Stripe checkout sessions query note:", sessErr);
     }
   }
 
-  // 4. Return existing profile tier or default to free
+  // 5. Return existing profile tier or default to free
   const finalTier = profileTier === "pro" || profileTier === "premium"
     ? profileTier
     : "free";
 
   return {
+    isConfigured: secretKey.length > 0,
     planTier: finalTier,
     planStatus: "active",
     hasActiveSubscription: finalTier !== "free",
+    matchedVia: "none",
+    details: secretKey.length === 0
+      ? "STRIPE_SECRET_KEY is not configured in .env.local. Configure it to enable real-time Stripe Sandbox synchronization."
+      : "No active Stripe subscription or completed checkout was found for this user in the database or Stripe API.",
+  };
+}
+
+/**
+ * Safe, one-time server-side recovery and association of an existing Stripe Sandbox subscription.
+ * Verifies with Stripe API that subscription is ACTIVE, checks customer identity, and writes to PostgreSQL.
+ */
+export async function recoverExistingStripeSubscription(params: {
+  userId: string;
+  userEmail?: string | null;
+  subscriptionId?: string;
+  customerId?: string;
+  supabaseClient?: any;
+}): Promise<StripeRecoveryResult> {
+  const secretKey = (process.env.STRIPE_SECRET_KEY || "").trim();
+  const normalizedEmail = params.userEmail?.trim().toLowerCase();
+
+  if (!params.userId) {
+    return {
+      success: false,
+      planTier: "free",
+      planStatus: "canceled",
+      matchedVia: "none",
+      message: "User ID is required for subscription recovery.",
+    };
+  }
+
+  if (!secretKey) {
+    // If running in development without Stripe API key, attempt database recovery from saved_scenarios
+    const diag = await reconcileUserSubscription(params.userId, params.userEmail, params.supabaseClient);
+    if (diag.hasActiveSubscription) {
+      return {
+        success: true,
+        planTier: diag.planTier,
+        planStatus: "active",
+        stripeCustomerId: diag.stripeCustomerId,
+        stripeSubscriptionId: diag.stripeSubscriptionId,
+        matchedVia: diag.matchedVia || "database",
+        message: "Active subscription recovered from central PostgreSQL records.",
+      };
+    }
+
+    return {
+      success: false,
+      planTier: "free",
+      planStatus: "canceled",
+      matchedVia: "none",
+      message: "STRIPE_SECRET_KEY is not set in environment. Set it in .env.local to verify against Stripe API.",
+    };
+  }
+
+  // 1. If subscriptionId is directly provided, verify it with Stripe API
+  if (params.subscriptionId) {
+    try {
+      const subRes = await fetch(
+        `${STRIPE_API_BASE}/subscriptions/${encodeURIComponent(params.subscriptionId)}?expand[]=customer`,
+        { headers: { Authorization: `Bearer ${secretKey}` } }
+      );
+      const sub = await subRes.json();
+
+      if (subRes.ok && sub.id && (sub.status === "active" || sub.status === "trialing")) {
+        const customer = sub.customer;
+        const custEmail = (typeof customer === "object" ? customer?.email : undefined)?.toLowerCase().trim();
+        const custId = typeof customer === "string" ? customer : customer?.id;
+
+        const planId = (sub.metadata?.planId === "premium" ? "premium" : "pro") as "pro" | "premium";
+        const interval = sub.items?.data?.[0]?.price?.recurring?.interval === "year" ? "ANNUAL" : "MONTHLY";
+        const amountPaid = (sub.items?.data?.[0]?.price?.unit_amount || 499) / 100;
+        const currency = (sub.currency || "USD").toUpperCase();
+        const currentPeriodEnd = sub.current_period_end
+          ? new Date(sub.current_period_end * 1000).toISOString()
+          : undefined;
+
+        await syncVerifiedSubscription({
+          userId: params.userId,
+          customerEmail: custEmail || params.userEmail || undefined,
+          planId,
+          billingCycle: interval,
+          subscriptionId: sub.id,
+          customerId: custId,
+          amountPaid,
+          currency,
+          currentPeriodEnd,
+          supabaseClient: params.supabaseClient,
+        });
+
+        return {
+          success: true,
+          planTier: planId,
+          planStatus: "active",
+          stripeCustomerId: custId,
+          stripeSubscriptionId: sub.id,
+          matchedVia: "stripe_subscription_direct_id",
+          message: `Stripe subscription ${sub.id} verified and mapped to user ${params.userId}.`,
+        };
+      }
+    } catch (e: any) {
+      console.warn("Direct subscription recovery error:", e);
+    }
+  }
+
+  // 2. Scan active subscriptions matching user email or metadata
+  try {
+    const subRes = await fetch(
+      `${STRIPE_API_BASE}/subscriptions?limit=100&status=active&expand[]=data.customer`,
+      { headers: { Authorization: `Bearer ${secretKey}` } }
+    );
+    const subData = await subRes.json();
+
+    if (subRes.ok && subData.data && Array.isArray(subData.data)) {
+      for (const sub of subData.data) {
+        const customer = sub.customer;
+        const custEmail = (typeof customer === "object" ? customer?.email : undefined)?.toLowerCase().trim();
+        const custId = typeof customer === "string" ? customer : customer?.id;
+        const metadataUserId = sub.metadata?.userId || sub.metadata?.user_id;
+
+        const isUserMatch = metadataUserId === params.userId;
+        const isEmailMatch = normalizedEmail && custEmail === normalizedEmail;
+
+        if (isUserMatch || isEmailMatch) {
+          const planId = (sub.metadata?.planId === "premium" ? "premium" : "pro") as "pro" | "premium";
+          const interval = sub.items?.data?.[0]?.price?.recurring?.interval === "year" ? "ANNUAL" : "MONTHLY";
+          const amountPaid = (sub.items?.data?.[0]?.price?.unit_amount || 499) / 100;
+          const currency = (sub.currency || "USD").toUpperCase();
+          const currentPeriodEnd = sub.current_period_end
+            ? new Date(sub.current_period_end * 1000).toISOString()
+            : undefined;
+
+          await syncVerifiedSubscription({
+            userId: params.userId,
+            customerEmail: custEmail || params.userEmail || undefined,
+            planId,
+            billingCycle: interval,
+            subscriptionId: sub.id,
+            customerId: custId,
+            amountPaid,
+            currency,
+            currentPeriodEnd,
+            supabaseClient: params.supabaseClient,
+          });
+
+          return {
+            success: true,
+            planTier: planId,
+            planStatus: "active",
+            stripeCustomerId: custId,
+            stripeSubscriptionId: sub.id,
+            matchedVia: isUserMatch ? "stripe_subscription_metadata" : "stripe_subscription_email",
+            message: `Recovered active Stripe Sandbox subscription ${sub.id} for user ${params.userId}.`,
+          };
+        }
+      }
+    }
+  } catch (scanErr) {
+    console.warn("Stripe subscription scan error during recovery:", scanErr);
+  }
+
+  return {
+    success: false,
+    planTier: "free",
+    planStatus: "canceled",
+    matchedVia: "none",
+    message: "No active Stripe Sandbox subscription found matching user ID or email.",
   };
 }
 

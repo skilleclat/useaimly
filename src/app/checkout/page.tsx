@@ -2,10 +2,11 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { PRICING_PLANS } from "@/lib/types/pricing";
 import { useCurrency } from "@/lib/currency/currency-context";
 import { useI18n } from "@/lib/i18n/i18n-context";
+import { useAuth } from "@/lib/auth/auth-context";
 import { MPESA_CONFIG } from "@/lib/payments/mpesa-service";
 import {
   ShieldCheck,
@@ -18,16 +19,21 @@ import {
   Smartphone,
   Copy,
   Check,
+  CreditCard,
+  Loader2,
 } from "lucide-react";
 import { PayPalCheckoutModal } from "@/components/finance/PayPalCheckoutModal";
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const plan = PRICING_PLANS.find((p) => p.id === "pro") || PRICING_PLANS[1];
 
   const [isYearly, setIsYearly] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isStripeLoading, setIsStripeLoading] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const { user } = useAuth();
   const { format } = useCurrency();
   const { language } = useI18n();
   const isFr = language === "fr";
@@ -43,6 +49,34 @@ function CheckoutContent() {
       navigator.clipboard.writeText(text);
       setCopiedField(fieldKey);
       setTimeout(() => setCopiedField(null), 2500);
+    }
+  };
+
+  const handleStripeCheckout = async () => {
+    setIsStripeLoading(true);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId: "pro",
+          billingCycle: isYearly ? "ANNUAL" : "MONTHLY",
+          provider: "STRIPE",
+          customerEmail: user?.email,
+          userId: user?.id,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success && data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        alert(data.error || "Failed to initialize Stripe checkout");
+        setIsStripeLoading(false);
+      }
+    } catch (err: any) {
+      console.error("Stripe checkout initiation error:", err);
+      setIsStripeLoading(false);
     }
   };
 
@@ -159,81 +193,67 @@ function CheckoutContent() {
             </div>
           </div>
 
-          {/* Quick Paybill Reference Box */}
-          <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 space-y-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-              <Smartphone className="w-4 h-4" />
-              <span>{isFr ? "Paiement Rapide Lipa na M-Pesa (Paybill)" : "Quick M-Pesa Paybill Checkout"}</span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
-              <div className="p-2.5 rounded-xl bg-card border border-border/80 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] text-muted-foreground block">Business No. (Paybill)</span>
-                  <span className="font-bold text-foreground text-sm">{MPESA_CONFIG.businessNumber}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleCopy(MPESA_CONFIG.businessNumber, "biz_page")}
-                  className="p-1.5 rounded-lg border border-border hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors cursor-pointer text-[10px]"
-                >
-                  {copiedField === "biz_page" ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                </button>
-              </div>
-
-              <div className="p-2.5 rounded-xl bg-card border border-border/80 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] text-muted-foreground block">Account No.</span>
-                  <span className="font-bold text-foreground text-sm">{MPESA_CONFIG.accountNumber}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleCopy(MPESA_CONFIG.accountNumber, "acc_page")}
-                  className="p-1.5 rounded-lg border border-border hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors cursor-pointer text-[10px]"
-                >
-                  {copiedField === "acc_page" ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                </button>
-              </div>
-            </div>
-          </div>
-
           {/* Payment Actions */}
-          <div className="space-y-3 pt-2">
+          <div className="space-y-4 pt-2">
             <label className="text-xs font-mono font-bold uppercase text-muted-foreground block text-center">
-              {isFr ? "Choisissez votre méthode pour finaliser" : "Choose your payment method to complete"}
+              {isFr ? "Choisissez votre méthode de paiement" : "Choose your payment method"}
             </label>
 
-            {/* 1. Official PayPal Checkout Button */}
-            <a
-              href={`https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=${encodeURIComponent(
-                "herimaliyabwana@gmail.com"
-              )}&item_name=${encodeURIComponent(`UseAimly Pro (${isYearly ? "Annual" : "Monthly"})`)}&amount=${baseUSD.toFixed(2)}&currency_code=USD`}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setIsModalOpen(true)}
-              className="w-full rounded-2xl bg-[#FFC439] hover:bg-[#F2BA36] text-[#003087] font-black text-sm py-3.5 px-6 shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 group min-h-[48px] text-center"
-            >
-              <span className="italic font-serif font-black text-lg text-[#003087]">PayPal</span>
-              <span className="font-extrabold text-xs text-[#003087]">
-                {isFr ? `Payer avec PayPal ou Carte (${formattedPriceUSD}) →` : `Pay with Card / PayPal (${formattedPriceUSD}) →`}
-              </span>
-            </a>
-
-            {/* 2. M-Pesa Paybill / Validation Button */}
+            {/* 1. Official Stripe Card Checkout Button (Primary) */}
             <button
               type="button"
-              onClick={() => setIsModalOpen(true)}
-              className="w-full rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm py-3.5 px-6 shadow-lg shadow-emerald-600/20 transition-all cursor-pointer flex items-center justify-center gap-3 group min-h-[48px]"
+              disabled={isStripeLoading}
+              onClick={handleStripeCheckout}
+              className="w-full rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] hover:opacity-95 text-white font-extrabold text-sm py-4 px-6 shadow-xl shadow-orange-500/20 transition-all cursor-pointer flex items-center justify-center gap-3 group min-h-[52px] disabled:opacity-50"
             >
-              <Smartphone className="w-4 h-4" />
-              <span>{isFr ? `Valider via M-Pesa Paybill (${formattedPriceKES})` : `Verify M-Pesa Payment (${formattedPriceKES})`}</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              {isStripeLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <CreditCard className="w-5 h-5" />
+              )}
+              <span>
+                {isStripeLoading
+                  ? (isFr ? "Connexion sécurisée à Stripe..." : "Connecting to Stripe...")
+                  : (isFr ? `Payer par Carte Bancaire / Stripe (${formattedPriceUSD})` : `Pay with Card via Stripe (${formattedPriceUSD})`)}
+              </span>
+              {!isStripeLoading && (
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              )}
             </button>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* 2. Official PayPal Checkout Button */}
+              <a
+                href={`https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=${encodeURIComponent(
+                  "herimaliyabwana@gmail.com"
+                )}&item_name=${encodeURIComponent(`UseAimly Pro (${isYearly ? "Annual" : "Monthly"})`)}&amount=${baseUSD.toFixed(2)}&currency_code=USD`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsModalOpen(true)}
+                className="w-full rounded-2xl bg-[#FFC439] hover:bg-[#F2BA36] text-[#003087] font-black text-xs py-3 px-4 shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2 group min-h-[44px] text-center"
+              >
+                <span className="italic font-serif font-black text-base text-[#003087]">PayPal</span>
+                <span className="font-extrabold text-xs text-[#003087]">
+                  {isFr ? `PayPal (${formattedPriceUSD})` : `PayPal (${formattedPriceUSD})`}
+                </span>
+              </a>
+
+              {/* 3. M-Pesa Paybill / Validation Button */}
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(true)}
+                className="w-full rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs py-3 px-4 shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2 group min-h-[44px]"
+              >
+                <Smartphone className="w-4 h-4" />
+                <span>{isFr ? `M-Pesa (${formattedPriceKES})` : `M-Pesa (${formattedPriceKES})`}</span>
+              </button>
+            </div>
           </div>
 
           {/* Guarantee Footnote */}
           <div className="flex items-center justify-center gap-2 text-xs font-mono text-muted-foreground pt-4 border-t border-border/60">
             <ShieldCheck className="w-4 h-4 text-emerald-500" />
-            <span>{isFr ? "Garantie Tranquillité & Clarté Totale • M-Pesa & PayPal Sécurisés" : "14-Day Money-Back Guarantee • SSL 256-Bit Encrypted"}</span>
+            <span>{isFr ? "Garantie Tranquillité & Clarté Totale • Stripe, M-Pesa & PayPal Sécurisés" : "14-Day Money-Back Guarantee • SSL 256-Bit Encrypted"}</span>
           </div>
         </div>
       </div>

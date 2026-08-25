@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       timezone: "Africa/Nairobi",
       locale: "en",
       onboarding_completed: true,
-      plan_tier: isOwner ? "premium" : (authUser.user_metadata?.plan_tier as any) || "free",
+      plan_tier: isOwner ? "premium" : "free",
       plan_status: "active",
       created_at: authUser.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -230,22 +230,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     setIsLoading(true);
 
-    try {
-      // 1. Clear Supabase browser client session
-      await supabase.auth.signOut({ scope: "local" }).catch(() => {});
-      await supabase.auth.signOut().catch(() => {});
-    } catch (e) {
-      console.warn("Client signOut error:", e);
-    }
+    // 1. Immediately reset React state
+    setUser(null);
+    setProfile(null);
 
-    // 2. Call server-side logout route handler to clear SSR cookies
-    try {
-      await fetch("/api/auth/signout", { method: "POST" }).catch(() => {});
-    } catch (e) {
-      console.warn("Server signOut API error:", e);
-    }
-
-    // 3. Clear local storage & session storage tokens
+    // 2. Synchronously clear client local storage & session storage tokens
     try {
       if (typeof window !== "undefined") {
         Object.keys(localStorage).forEach((key) => {
@@ -265,11 +254,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.warn("Storage clear error:", e);
     }
 
-    // 4. Reset React state
-    setUser(null);
-    setProfile(null);
+    // 3. Fire client & server session invalidation in parallel without blocking UI
+    try {
+      await Promise.allSettled([
+        supabase.auth.signOut({ scope: "local" }).catch(() => {}),
+        fetch("/api/auth/signout", { method: "POST", keepalive: true }).catch(() => {}),
+      ]);
+    } catch {
+      // Non-blocking
+    }
 
-    // 5. Hard browser reload to /login ensuring all in-memory caches are wiped
+    // 4. Hard browser redirect to /login
     if (typeof window !== "undefined") {
       window.location.href = "/login";
     } else {

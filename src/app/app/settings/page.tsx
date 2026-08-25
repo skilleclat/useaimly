@@ -96,32 +96,10 @@ export default function SettingsPage() {
   };
 
   React.useEffect(() => {
-    if (paymentSuccessParam === "true" && (planParam === "pro" || planParam === "premium")) {
-      const activatePurchasedPlan = async () => {
-        try {
-          if (user) {
-            const { createClient } = await import("@/lib/supabase/client");
-            const supabase = createClient();
-            await supabase.auth.updateUser({
-              data: { plan_tier: planParam, plan_status: "active" },
-            });
-            await (supabase.from("profiles") as any)
-              .update({ plan_tier: planParam, plan_status: "active" })
-              .eq("id", user.id);
-            await refreshProfile();
-            setTierSuccessMsg(
-              `Félicitations ! Votre paiement a été validé avec succès. Votre formule ${
-                planParam === "premium" ? "AIMLY ÉLITE" : "AIMLY PRO"
-              } est désormais 100% active !`
-            );
-          }
-        } catch (e) {
-          console.warn("Payment auto-activation sync warning:", e);
-        }
-      };
-      activatePurchasedPlan();
+    if (paymentSuccessParam === "true") {
+      refreshProfile().catch((e) => console.warn("Settings profile sync note:", e));
     }
-  }, [paymentSuccessParam, planParam, user, refreshProfile]);
+  }, [paymentSuccessParam, refreshProfile]);
 
   React.useEffect(() => {
     if (displayName && displayName !== "Strategist") {

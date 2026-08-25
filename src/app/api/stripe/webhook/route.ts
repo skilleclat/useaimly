@@ -12,8 +12,6 @@ export async function POST(request: NextRequest) {
 
     let event: any;
 
-    // If webhook secret is present, we could verify signatures
-    // For standard JSON parsing:
     try {
       event = JSON.parse(rawBody);
     } catch {
@@ -36,7 +34,8 @@ export async function POST(request: NextRequest) {
         const customerEmail = dataObject.customer_details?.email || dataObject.customer_email;
         const planId = metadata.planId === "premium" ? "premium" : "pro";
         const billingCycle = metadata.billingCycle === "ANNUAL" ? "ANNUAL" : "MONTHLY";
-        const subscriptionId = dataObject.subscription || dataObject.id;
+        const subscriptionId = typeof dataObject.subscription === "string" ? dataObject.subscription : dataObject.id;
+        const customerId = typeof dataObject.customer === "string" ? dataObject.customer : undefined;
         const amountPaid = (dataObject.amount_total || 499) / 100;
         const currency = (dataObject.currency || "usd").toUpperCase();
 
@@ -46,6 +45,7 @@ export async function POST(request: NextRequest) {
           planId,
           billingCycle,
           subscriptionId,
+          customerId,
           amountPaid,
           currency,
         });
@@ -56,62 +56,45 @@ export async function POST(request: NextRequest) {
       case "customer.subscription.updated": {
         const status = dataObject.status; // 'active', 'past_due', 'canceled', 'trialing'
         const subscriptionId = dataObject.id;
-        const planId = dataObject.items?.data?.[0]?.price?.product === "premium" ? "premium" : "pro";
+        const customerId = typeof dataObject.customer === "string" ? dataObject.customer : undefined;
+        const metadata = dataObject.metadata || {};
+        const userId = metadata.userId || metadata.user_id;
+        const planId = dataObject.items?.data?.[0]?.price?.product === "premium" || metadata.planId === "premium" ? "premium" : "pro";
         const interval = dataObject.items?.data?.[0]?.price?.recurring?.interval;
-        const billingCycle = interval === "year" ? "ANNUAL" : "MONTHLY";
+        const billingCycle = interval === "year" || metadata.billingCycle === "ANNUAL" ? "ANNUAL" : "MONTHLY";
         const currentPeriodEnd = dataObject.current_period_end
           ? new Date(dataObject.current_period_end * 1000).toISOString()
           : undefined;
 
         const isGoodStanding = status === "active" || status === "trialing";
 
-        // Find subscription by external ID
-        const { data: existingSub } = await supabase
-          .from("subscriptions")
-          .select("user_id")
-          .eq("external_subscription_id", subscriptionId)
-          .maybeSingle();
-
-        if (existingSub?.user_id) {
-          await (supabase.from("profiles") as any)
-            .update({
-              plan_tier: isGoodStanding ? planId : "free",
-              plan_status: isGoodStanding ? "active" : "canceled",
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", existingSub.user_id);
-
-          await (supabase.from("subscriptions") as any)
-            .update({
-              status: isGoodStanding ? "ACTIVE" : "CANCELLED",
-              current_period_end: currentPeriodEnd ? currentPeriodEnd.split("T")[0] : undefined,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("external_subscription_id", subscriptionId);
-        } else if (dataObject.customer && isGoodStanding) {
-          // If subscription record was not pre-registered, lookup customer email from Stripe
-          try {
-            const secretKey = (process.env.STRIPE_SECRET_KEY || "").trim();
-            if (secretKey) {
-              const custRes = await fetch(`https://api.stripe.com/v1/customers/${dataObject.customer}`, {
+        if (isGoodStanding) {
+          // If customer email needs lookup from Stripe
+          let customerEmail: string | undefined = undefined;
+          const secretKey = (process.env.STRIPE_SECRET_KEY || "").trim();
+          if (secretKey && customerId && !userId) {
+            try {
+              const custRes = await fetch(`https://api.stripe.com/v1/customers/${customerId}`, {
                 headers: { Authorization: `Bearer ${secretKey}` },
               });
               const cust = await custRes.json();
-              if (cust?.email) {
-                await syncVerifiedSubscription({
-                  customerEmail: cust.email,
-                  planId,
-                  billingCycle,
-                  subscriptionId,
-                  amountPaid: (dataObject.items?.data?.[0]?.price?.unit_amount || 499) / 100,
-                  currency: (dataObject.currency || "USD").toUpperCase(),
-                  currentPeriodEnd,
-                });
-              }
+              if (cust?.email) customerEmail = cust.email;
+            } catch (e) {
+              console.warn("Webhook customer lookup note:", e);
             }
-          } catch (e) {
-            console.warn("Webhook customer lookup note:", e);
           }
+
+          await syncVerifiedSubscription({
+            userId,
+            customerEmail,
+            planId,
+            billingCycle,
+            subscriptionId,
+            customerId,
+            amountPaid: (dataObject.items?.data?.[0]?.price?.unit_amount || 499) / 100,
+            currency: (dataObject.currency || "USD").toUpperCase(),
+            currentPeriodEnd,
+          });
         }
         break;
       }
@@ -144,7 +127,6 @@ export async function POST(request: NextRequest) {
       }
 
       case "invoice.payment_succeeded": {
-        // Recurring subscription payment succeeded
         const subscriptionId = dataObject.subscription;
         if (subscriptionId) {
           const { data: existingSub } = await supabase
@@ -188,7 +170,6 @@ export async function POST(request: NextRequest) {
       }
 
       default:
-        // Ignore unhandled event types
         break;
     }
 
