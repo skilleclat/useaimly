@@ -30,6 +30,13 @@ import {
 import { useCurrency } from "@/lib/currency/currency-context";
 import { useI18n } from "@/lib/i18n/i18n-context";
 import { parseDecisionQuery } from "@/lib/nlp/decision-query-parser";
+import { extractStructuredDecisionStep1 } from "@/lib/decision-engine/step1-define-extractor";
+import {
+  getAdaptiveQuestions,
+  applyAdaptiveAnswer,
+  UserAnswerRecord,
+} from "@/lib/decision-engine/adaptive-questioning-system";
+import { createBlankDecisionIntelligenceObject } from "@/lib/decision-engine/master-decision-model";
 import { BaselineFinancialProfile, saveDecisionRecord } from "@/lib/finance";
 import { formatCurrency } from "@/lib/utils/currency";
 import {
@@ -91,7 +98,7 @@ export function AimlyDecisionEngine({
   const [queryInput, setQueryInput] = useState(initialQuery);
   const [selectedCategory, setSelectedCategory] = useState<DecisionCategory>(initialCategory);
 
-  // STEP 2: Decision Details
+  // STEP 2: Decision Details & Adaptive Questioning
   const [customAmount, setCustomAmount] = useState<number | null>(null);
   const [customDownPayment, setCustomDownPayment] = useState<number | null>(null);
   const [customMonthlyPayment, setCustomMonthlyPayment] = useState<number | null>(null);
@@ -99,6 +106,8 @@ export function AimlyDecisionEngine({
   const [interestRatePercent, setInterestRatePercent] = useState<number>(8.5);
   const [isRecurringExpense, setIsRecurringExpense] = useState(false);
   const [decisionTiming, setDecisionTiming] = useState<"TODAY" | "30_DAYS" | "90_DAYS">("TODAY");
+  const [adaptiveAnswers, setAdaptiveAnswers] = useState<Record<string, UserAnswerRecord>>({});
+  const [skippedQuestionIds, setSkippedQuestionIds] = useState<string[]>([]);
 
   // STEP 3: Financial Context Overrides
   const [overrideSavings, setOverrideSavings] = useState<number | null>(null);
@@ -219,10 +228,14 @@ export function AimlyDecisionEngine({
     [isFr, isEs]
   );
 
-  // NLP Parser Extraction
+  // NLP Parser Extraction & Deep Epistemic Step 1 Structuring
   const parsed = useMemo(() => parseDecisionQuery(queryInput), [queryInput]);
-  const extractedAmount = customAmount ?? (parsed.amount || 2000);
-  const extractedTitle = parsed.title || "Proposed Decision";
+  const structuredStep1 = useMemo(
+    () => extractStructuredDecisionStep1(queryInput, selectedCategory as any, currency as any),
+    [queryInput, selectedCategory, currency]
+  );
+  const extractedAmount = customAmount ?? (parsed.amount || structuredStep1.financialAmount.value || 2000);
+  const extractedTitle = parsed.title || structuredStep1.proposedAction || "Proposed Decision";
   const effectiveRecurring = isRecurringExpense || selectedCategory === "MOVE_HOME" || parsed.isRecurring;
 
   // CANONICAL DETERMINISTIC EVALUATION
@@ -254,6 +267,53 @@ export function AimlyDecisionEngine({
     currency,
     selectedPriority,
   ]);
+
+  // Master Decision Intelligence Object for Adaptive Questioning
+  const masterDecisionObj = useMemo(() => {
+    return createBlankDecisionIntelligenceObject({
+      category: selectedCategory as any,
+      action: extractedTitle,
+      currency: currency as any,
+      locale: isEs ? "es" : isFr ? "fr" : "en",
+    });
+  }, [selectedCategory, extractedTitle, currency, isFr, isEs]);
+
+  const adaptiveState = useMemo(() => {
+    return getAdaptiveQuestions(masterDecisionObj, adaptiveAnswers, skippedQuestionIds, 3);
+  }, [masterDecisionObj, adaptiveAnswers, skippedQuestionIds]);
+
+  const handleAnswerAdaptiveQuestion = (questionId: string, value: any, isEstimate = false) => {
+    setAdaptiveAnswers((prev) => ({
+      ...prev,
+      [questionId]: {
+        questionId,
+        value,
+        isUnknown: false,
+        isEstimate,
+        answeredAt: new Date().toISOString(),
+      },
+    }));
+    if (questionId === "q_down_payment") setCustomDownPayment(Number(value) || 0);
+    if (questionId === "q_interest_rate") setInterestRatePercent(Number(value) || 8.5);
+    if (questionId === "q_loan_duration") setLoanTermMonths(Number(value) || 36);
+  };
+
+  const handleMarkAdaptiveUnknown = (questionId: string) => {
+    setAdaptiveAnswers((prev) => ({
+      ...prev,
+      [questionId]: {
+        questionId,
+        value: 0,
+        isUnknown: true,
+        isEstimate: false,
+        answeredAt: new Date().toISOString(),
+      },
+    }));
+  };
+
+  const handleSkipAdaptiveQuestion = (questionId: string) => {
+    setSkippedQuestionIds((prev) => [...prev, questionId]);
+  };
 
   // Map Canonical to VerifiedDecisionData
   const verifiedReportData: VerifiedDecisionData = useMemo(() => {
@@ -570,6 +630,42 @@ export function AimlyDecisionEngine({
               <span>{isEs ? "Monto detectado:" : isFr ? "Montant détecté :" : "Extracted amount:"} <strong className="text-foreground font-mono">{fmt(extractedAmount)}</strong></span>
               <span className="font-mono text-[11px] truncate">{extractedTitle}</span>
             </div>
+
+            {/* Step 1 Intelligent Decision Anatomy & Epistemic Discovery */}
+            <div className="rounded-xl bg-secondary/40 border border-border/70 p-3 space-y-2 text-xs">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[11px] font-bold">
+                  <Sparkles className="w-3 h-3" />
+                  <span>{structuredStep1.commitmentType.replace(/_/g, " ")}</span>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-background border border-border text-foreground text-[11px] font-medium">
+                  <span>{isEs ? "Horizonte:" : isFr ? "Horizon :" : "Horizon:"}</span>
+                  <strong className="font-semibold">{structuredStep1.timeHorizon.replace(/_/g, " ")}</strong>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-background border border-border text-foreground text-[11px] font-medium">
+                  <span>{isEs ? "Reversibilidad:" : isFr ? "Réversibilité :" : "Reversibility:"}</span>
+                  <strong className="font-semibold">{structuredStep1.reversibilityLevel.replace(/_/g, " ")}</strong>
+                </span>
+              </div>
+
+              <div className="text-[11px] text-muted-foreground leading-relaxed">
+                <span className="font-semibold text-foreground">{isEs ? "Hipótesis detectada: " : isFr ? "Hypothèse détectée : " : "Initial Hypothesis: "}</span>
+                {structuredStep1.initialDecisionHypothesis}
+              </div>
+
+              {structuredStep1.criticalUnknownVariables.length > 0 && (
+                <div className="flex items-center gap-1.5 text-[11px] text-amber-600 dark:text-amber-400 font-medium pt-0.5">
+                  <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+                  <span>
+                    {isEs
+                      ? `${structuredStep1.criticalUnknownVariables.length} variables críticas detectadas para verificación en los siguientes pasos.`
+                      : isFr
+                      ? `${structuredStep1.criticalUnknownVariables.length} variables critiques identifiées pour vérification dans les étapes suivantes.`
+                      : `${structuredStep1.criticalUnknownVariables.length} critical decision variables identified for verification in subsequent steps.`}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Primary Action */}
@@ -721,6 +817,116 @@ export function AimlyDecisionEngine({
                   : "This is a recurring monthly obligation / expense"}
               </span>
             </label>
+          )}
+
+          {/* ADAPTIVE QUESTIONING PANEL (HIGH IMPACT VARIABLES) */}
+          {adaptiveState.currentPendingQuestions.length > 0 && (
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <h3 className="text-xs sm:text-sm font-bold text-foreground">
+                    {isEs
+                      ? "Consultas adaptativas de alta sensibilidad"
+                      : isFr
+                      ? "Précisions adaptatives à fort impact analytique"
+                      : "High-Impact Analytical Inquiries"}
+                  </h3>
+                </div>
+                <span className="text-[11px] font-mono text-muted-foreground">
+                  {isEs ? "Incertidumbre residual:" : isFr ? "Incertitude restante :" : "Residual uncertainty:"}{" "}
+                  <strong className="text-foreground">{adaptiveState.remainingUncertaintyScore}%</strong>
+                </span>
+              </div>
+
+              <div className="space-y-2.5">
+                {adaptiveState.currentPendingQuestions.map((q) => {
+                  const title = isEs ? q.titleEs : isFr ? q.titleFr : q.titleEn;
+                  const helper = isEs ? q.helperEs : isFr ? q.helperFr : q.helperEn;
+                  const unknownImpact = isEs ? q.impactIfUnknownEs : isFr ? q.impactIfUnknownFr : q.impactIfUnknownEn;
+
+                  return (
+                    <div
+                      key={q.id}
+                      className="p-3.5 sm:p-4 rounded-2xl bg-secondary/30 border border-border/70 space-y-2.5 transition-all"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-1.5">
+                        <div className="space-y-0.5">
+                          <div className="text-xs font-bold text-foreground leading-snug">{title}</div>
+                          <div className="text-[11px] text-muted-foreground leading-snug">{helper}</div>
+                        </div>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-mono font-bold self-start whitespace-nowrap">
+                          {isEs ? "Sensibilidad" : isFr ? "Sensibilité" : "Sensitivity"}: {Math.round(q.decisionSensitivity * 100)}%
+                        </span>
+                      </div>
+
+                      {/* Question Controls */}
+                      {q.inputType === "CHOICE" && q.choices && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {q.choices.map((c) => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => handleAnswerAdaptiveQuestion(q.id, c.value, false)}
+                              className="px-3 py-1.5 rounded-xl border border-border bg-background hover:bg-primary/10 hover:border-primary text-xs font-medium text-foreground transition-all cursor-pointer"
+                            >
+                              {isEs ? c.labelEs : isFr ? c.labelFr : c.labelEn}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {q.inputType === "NUMERIC" && (
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            placeholder={q.defaultValue?.toString() || "0"}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                const val = Number((e.target as HTMLInputElement).value);
+                                if (!isNaN(val)) handleAnswerAdaptiveQuestion(q.id, val, false);
+                              }
+                            }}
+                            onBlur={(e) => {
+                              const val = Number(e.target.value);
+                              if (!isNaN(val) && e.target.value !== "") {
+                                handleAnswerAdaptiveQuestion(q.id, val, false);
+                              }
+                            }}
+                            className="w-full sm:w-48 rounded-xl bg-background border border-border px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-primary"
+                          />
+
+                          <div className="flex items-center gap-1.5">
+                            {q.allowsDontKnow && (
+                              <button
+                                type="button"
+                                onClick={() => handleMarkAdaptiveUnknown(q.id)}
+                                className="px-2.5 py-1.5 rounded-xl border border-border bg-background/80 hover:bg-secondary text-[11px] font-semibold text-muted-foreground hover:text-foreground transition-all cursor-pointer whitespace-nowrap"
+                              >
+                                {isEs ? "No lo sé" : isFr ? "Je ne sais pas" : "I don't know"}
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => handleSkipAdaptiveQuestion(q.id)}
+                              className="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold text-muted-foreground hover:text-foreground transition-all cursor-pointer whitespace-nowrap"
+                            >
+                              {isEs ? "Ignorar" : isFr ? "Ignorer" : "Skip"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="text-[10px] text-muted-foreground/80 italic">
+                        {isEs ? "Si se desconoce:" : isFr ? "Si non renseigné :" : "If unknown:"} {unknownImpact}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
 
           {/* Actions */}

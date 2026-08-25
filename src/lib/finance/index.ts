@@ -23,6 +23,7 @@ export * from "./cash-flow/cash-flow-calculator";
 
 // Goals & Milestones
 export * from "./goals/goal-calculator";
+export * from "./goals/goal-intelligence-engine";
 
 // Trajectories & Accumulation Curves
 export * from "./trajectories/trajectory-calculator";
