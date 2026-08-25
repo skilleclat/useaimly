@@ -523,6 +523,153 @@ export async function syncVerifiedSubscription(params: {
 }
 
 /**
+ * Idempotently updates user lifecycle status across PostgreSQL tables (profiles, subscriptions, saved_scenarios).
+ * Handles downgrades, cancellations, end-of-period access, and past-due statuses.
+ */
+export async function updateSubscriptionLifecycleStatus(params: {
+  userId?: string;
+  customerEmail?: string;
+  subscriptionId: string;
+  customerId?: string;
+  planTier: "free" | "pro" | "premium";
+  planStatus: "active" | "canceled" | "past_due" | "unpaid" | "trialing";
+  cancelAtPeriodEnd?: boolean;
+  currentPeriodEnd?: string;
+  supabaseClient?: any;
+}): Promise<boolean> {
+  try {
+    const adminSupabase = createAdminClient();
+    const activeClient = params.supabaseClient || adminSupabase;
+
+    let targetUserId = params.userId;
+
+    // Lookup user by email if userId not passed directly
+    if (!targetUserId && params.customerEmail) {
+      targetUserId = (await findUserIdByEmail(params.customerEmail)) || undefined;
+    }
+
+    // Lookup user by stripe_customer_id or stripe_subscription_id if still not found
+    if (!targetUserId && (params.subscriptionId || params.customerId)) {
+      try {
+        if (params.subscriptionId) {
+          const { data: sub } = await (activeClient.from("subscriptions") as any)
+            .select("user_id")
+            .eq("external_subscription_id", params.subscriptionId)
+            .maybeSingle();
+          if (sub?.user_id) targetUserId = sub.user_id;
+        }
+
+        if (!targetUserId && params.customerId) {
+          const { data: prof } = await (activeClient.from("profiles") as any)
+            .select("id")
+            .eq("stripe_customer_id", params.customerId)
+            .maybeSingle();
+          if (prof?.id) targetUserId = prof.id;
+        }
+      } catch (lookupErr) {
+        console.warn("User lookup via subscription/customer note:", lookupErr);
+      }
+    }
+
+    if (!targetUserId) {
+      console.warn("updateSubscriptionLifecycleStatus: No matching user found for:", {
+        userId: params.userId,
+        email: params.customerEmail,
+        subscriptionId: params.subscriptionId,
+        customerId: params.customerId,
+      });
+      return false;
+    }
+
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetUserId);
+
+    // 1. Update profiles table
+    const profilePayload: Record<string, any> = {
+      plan_tier: params.planTier,
+      plan_status: params.planStatus,
+      updated_at: new Date().toISOString(),
+    };
+    if (params.customerId) profilePayload.stripe_customer_id = params.customerId;
+    if (params.subscriptionId) profilePayload.stripe_subscription_id = params.subscriptionId;
+
+    try {
+      await (activeClient.from("profiles") as any)
+        .update(profilePayload)
+        .eq("id", targetUserId);
+    } catch (e) {
+      console.warn("Profile lifecycle update note:", e);
+    }
+
+    // 2. Update subscriptions table
+    if (isUuid && params.subscriptionId) {
+      try {
+        const subUpdatePayload: Record<string, any> = {
+          plan_id: params.planTier,
+          status: params.planStatus === "active" ? "ACTIVE" : params.planStatus === "canceled" ? "CANCELLED" : "PAST_DUE",
+          updated_at: new Date().toISOString(),
+        };
+        if (params.currentPeriodEnd) {
+          subUpdatePayload.current_period_end = params.currentPeriodEnd.split("T")[0];
+        }
+
+        await (activeClient.from("subscriptions") as any)
+          .update(subUpdatePayload)
+          .eq("external_subscription_id", params.subscriptionId);
+      } catch (e) {
+        // non-blocking
+      }
+    }
+
+    // 3. Update saved_scenarios ledger fallback
+    if (isUuid) {
+      try {
+        const { data: existingScenario } = await (activeClient.from("saved_scenarios") as any)
+          .select("id, input")
+          .eq("user_id", targetUserId)
+          .eq("scenario_type", "STRIPE_SUBSCRIPTION_ENTITLEMENT")
+          .maybeSingle();
+
+        if (existingScenario?.id) {
+          await (activeClient.from("saved_scenarios") as any)
+            .update({
+              result: {
+                status: params.planStatus === "active" ? "ACTIVE" : params.planStatus === "canceled" ? "CANCELED" : "PAST_DUE",
+                plan_tier: params.planTier,
+                cancel_at_period_end: params.cancelAtPeriodEnd || false,
+                current_period_end: params.currentPeriodEnd || null,
+                updated_at: new Date().toISOString(),
+              },
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", existingScenario.id);
+        }
+      } catch (e) {
+        console.warn("saved_scenarios lifecycle update note:", e);
+      }
+    }
+
+    // 4. Update Supabase Auth user metadata
+    if (isUuid) {
+      try {
+        await adminSupabase.auth.admin.updateUserById(targetUserId, {
+          user_metadata: {
+            plan_tier: params.planTier,
+            plan_status: params.planStatus,
+          },
+        });
+      } catch (e) {
+        // non-blocking
+      }
+    }
+
+    return true;
+  } catch (err) {
+    console.error("updateSubscriptionLifecycleStatus error:", err);
+    return false;
+  }
+}
+
+/**
  * Server-authoritative subscription reconciliation with deep Stripe scanning.
  * Queries PostgreSQL profiles table, PostgreSQL subscriptions table, saved_scenarios table, and Stripe live/sandbox API.
  * When an active Stripe subscription is verified, it is immediately persisted into PostgreSQL.

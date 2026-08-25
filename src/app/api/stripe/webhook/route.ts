@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { syncVerifiedSubscription } from "@/lib/payments/stripe-service";
+import { syncVerifiedSubscription, updateSubscriptionLifecycleStatus } from "@/lib/payments/stripe-service";
 import { createAdminClient } from "@/lib/supabase/admin";
 import crypto from "crypto";
 
@@ -48,10 +48,10 @@ export async function POST(request: NextRequest) {
     const signature = request.headers.get("stripe-signature");
     const webhookSecret = (process.env.STRIPE_WEBHOOK_SECRET || "").trim();
 
-    // If webhook secret is configured, strictly enforce signature verification
+    // Enforce cryptographic signature verification when webhook secret is configured
     if (webhookSecret) {
       if (!signature || !verifyStripeSignature(rawBody, signature, webhookSecret)) {
-        console.error("[Stripe Webhook] Invalid signature detected. Request rejected.");
+        console.error("[Stripe Webhook] Invalid signature rejected.");
         return NextResponse.json({ error: "Invalid webhook signature" }, { status: 400 });
       }
     }
@@ -64,15 +64,17 @@ export async function POST(request: NextRequest) {
     }
 
     const eventType = event.type;
+    const eventId = event.id;
     const dataObject = event.data?.object;
 
     if (!dataObject) {
-      return NextResponse.json({ received: true, note: "No object in event" });
+      return NextResponse.json({ received: true, note: "No data object in event" });
     }
 
-    const supabase = createAdminClient();
+    console.log(`[Stripe Webhook] Processing event: ${eventType} (ID: ${eventId})`);
 
     switch (eventType) {
+      // 1. Initial Checkout Completed
       case "checkout.session.completed": {
         const metadata = dataObject.metadata || {};
         const userId = dataObject.client_reference_id || metadata.userId;
@@ -97,9 +99,42 @@ export async function POST(request: NextRequest) {
         break;
       }
 
+      // 2. Invoice Paid / Renewed Successfully
+      case "invoice.paid":
+      case "invoice.payment_succeeded": {
+        const subscriptionId = dataObject.subscription;
+        const customerId = typeof dataObject.customer === "string" ? dataObject.customer : undefined;
+        const customerEmail = dataObject.customer_email || dataObject.customer_details?.email;
+        const amountPaid = (dataObject.amount_paid || 499) / 100;
+        const currency = (dataObject.currency || "usd").toUpperCase();
+        const lines = dataObject.lines?.data || [];
+        const interval = lines[0]?.price?.recurring?.interval;
+        const billingCycle = interval === "year" ? "ANNUAL" : "MONTHLY";
+        const planId = lines[0]?.price?.product === "premium" ? "premium" : "pro";
+
+        const currentPeriodEnd = lines[0]?.period?.end
+          ? new Date(lines[0].period.end * 1000).toISOString()
+          : undefined;
+
+        if (subscriptionId) {
+          await syncVerifiedSubscription({
+            customerEmail,
+            planId,
+            billingCycle,
+            subscriptionId,
+            customerId,
+            amountPaid,
+            currency,
+            currentPeriodEnd,
+          });
+        }
+        break;
+      }
+
+      // 3. Subscription Created or Updated (Lifecycle State Changes)
       case "customer.subscription.created":
       case "customer.subscription.updated": {
-        const status = dataObject.status; // 'active', 'past_due', 'canceled', 'trialing'
+        const status = dataObject.status; // 'active', 'past_due', 'canceled', 'unpaid', 'trialing'
         const subscriptionId = dataObject.id;
         const customerId = typeof dataObject.customer === "string" ? dataObject.customer : undefined;
         const metadata = dataObject.metadata || {};
@@ -107,108 +142,94 @@ export async function POST(request: NextRequest) {
         const planId = dataObject.items?.data?.[0]?.price?.product === "premium" || metadata.planId === "premium" ? "premium" : "pro";
         const interval = dataObject.items?.data?.[0]?.price?.recurring?.interval;
         const billingCycle = interval === "year" || metadata.billingCycle === "ANNUAL" ? "ANNUAL" : "MONTHLY";
+        const cancelAtPeriodEnd = Boolean(dataObject.cancel_at_period_end);
         const currentPeriodEnd = dataObject.current_period_end
           ? new Date(dataObject.current_period_end * 1000).toISOString()
           : undefined;
 
-        const isGoodStanding = status === "active" || status === "trialing";
-
-        if (isGoodStanding) {
-          let customerEmail: string | undefined = undefined;
-          const secretKey = (process.env.STRIPE_SECRET_KEY || "").trim();
-          if (secretKey && customerId && !userId) {
-            try {
-              const custRes = await fetch(`https://api.stripe.com/v1/customers/${customerId}`, {
-                headers: { Authorization: `Bearer ${secretKey}` },
-              });
-              const cust = await custRes.json();
-              if (cust?.email) customerEmail = cust.email;
-            } catch (e) {
-              console.warn("Webhook customer lookup note:", e);
-            }
-          }
-
-          await syncVerifiedSubscription({
+        if (status === "active" || status === "trialing") {
+          // If cancel_at_period_end is true, user maintains PRO until currentPeriodEnd
+          await updateSubscriptionLifecycleStatus({
             userId,
-            customerEmail,
-            planId,
-            billingCycle,
             subscriptionId,
             customerId,
-            amountPaid: (dataObject.items?.data?.[0]?.price?.unit_amount || 499) / 100,
-            currency: (dataObject.currency || "USD").toUpperCase(),
+            planTier: planId,
+            planStatus: "active",
+            cancelAtPeriodEnd,
+            currentPeriodEnd,
+          });
+        } else if (status === "past_due") {
+          // Mark past_due in database
+          await updateSubscriptionLifecycleStatus({
+            userId,
+            subscriptionId,
+            customerId,
+            planTier: planId,
+            planStatus: "past_due",
+            cancelAtPeriodEnd,
+            currentPeriodEnd,
+          });
+        } else if (status === "canceled" || status === "unpaid" || status === "incomplete_expired") {
+          // Access revoked upon definite cancellation or non-payment
+          await updateSubscriptionLifecycleStatus({
+            userId,
+            subscriptionId,
+            customerId,
+            planTier: "free",
+            planStatus: "canceled",
+            cancelAtPeriodEnd: false,
             currentPeriodEnd,
           });
         }
         break;
       }
 
+      // 4. Subscription Terminated / Deleted
       case "customer.subscription.deleted": {
         const subscriptionId = dataObject.id;
-        const { data: existingSub } = await supabase
-          .from("subscriptions")
-          .select("user_id")
-          .eq("external_subscription_id", subscriptionId)
-          .maybeSingle();
+        const customerId = typeof dataObject.customer === "string" ? dataObject.customer : undefined;
+        const metadata = dataObject.metadata || {};
+        const userId = metadata.userId || metadata.user_id;
 
-        if (existingSub?.user_id) {
-          await (supabase.from("profiles") as any)
-            .update({
-              plan_tier: "free",
-              plan_status: "canceled",
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", existingSub.user_id);
-
-          await (supabase.from("subscriptions") as any)
-            .update({
-              status: "CANCELLED",
-              updated_at: new Date().toISOString(),
-            })
-            .eq("external_subscription_id", subscriptionId);
-        }
+        await updateSubscriptionLifecycleStatus({
+          userId,
+          subscriptionId,
+          customerId,
+          planTier: "free",
+          planStatus: "canceled",
+          cancelAtPeriodEnd: false,
+        });
         break;
       }
 
-      case "invoice.payment_succeeded": {
-        const subscriptionId = dataObject.subscription;
-        if (subscriptionId) {
-          const { data: existingSub } = await supabase
-            .from("subscriptions")
-            .select("user_id, plan_id")
-            .eq("external_subscription_id", subscriptionId)
-            .maybeSingle();
-
-          if (existingSub?.user_id) {
-            await (supabase.from("profiles") as any)
-              .update({
-                plan_tier: existingSub.plan_id || "pro",
-                plan_status: "active",
-                updated_at: new Date().toISOString(),
-              })
-              .eq("id", existingSub.user_id);
-          }
-        }
-        break;
-      }
-
+      // 5. Payment Failed / Renewal Attempt Failed
       case "invoice.payment_failed": {
         const subscriptionId = dataObject.subscription;
-        if (subscriptionId) {
-          const { data: existingSub } = await supabase
-            .from("subscriptions")
-            .select("user_id")
-            .eq("external_subscription_id", subscriptionId)
-            .maybeSingle();
+        const customerId = typeof dataObject.customer === "string" ? dataObject.customer : undefined;
 
-          if (existingSub?.user_id) {
-            await (supabase.from("subscriptions") as any)
-              .update({
-                status: "PAST_DUE",
-                updated_at: new Date().toISOString(),
-              })
-              .eq("external_subscription_id", subscriptionId);
-          }
+        if (subscriptionId) {
+          await updateSubscriptionLifecycleStatus({
+            subscriptionId,
+            customerId,
+            planTier: "pro",
+            planStatus: "past_due",
+          });
+        }
+        break;
+      }
+
+      // 6. Action Required (e.g. 3D Secure Verification)
+      case "invoice.payment_action_required": {
+        const subscriptionId = dataObject.subscription;
+        const customerId = typeof dataObject.customer === "string" ? dataObject.customer : undefined;
+
+        if (subscriptionId) {
+          await updateSubscriptionLifecycleStatus({
+            subscriptionId,
+            customerId,
+            planTier: "pro",
+            planStatus: "past_due",
+          });
         }
         break;
       }
@@ -217,11 +238,11 @@ export async function POST(request: NextRequest) {
         break;
     }
 
-    return NextResponse.json({ received: true, event: eventType });
+    return NextResponse.json({ received: true, eventId, event: eventType });
   } catch (error: any) {
-    console.error("Stripe webhook processing error:", error);
+    console.error("[Stripe Webhook Exception]:", error?.message || error);
     return NextResponse.json(
-      { error: error?.message || "Webhook processing failed" },
+      { error: "Webhook processing error" },
       { status: 500 }
     );
   }

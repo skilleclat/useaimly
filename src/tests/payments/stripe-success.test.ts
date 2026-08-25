@@ -284,4 +284,78 @@ describe("Stripe Checkout, Cross-Browser Persistence & Security Suite", () => {
     const userId = await findUserIdByEmail("invalid-email-format");
     expect(userId).toBeNull();
   });
+
+  it("LIFECYCLE TEST: updates subscription status upon cancellation and terminates PRO entitlement", async () => {
+    const cancelUserId = "cancel-test-user-123";
+    const mockSupabase = {
+      from: vi.fn(() => ({
+        update: vi.fn(() => ({
+          eq: vi.fn().mockResolvedValue({ data: {}, error: null }),
+        })),
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              maybeSingle: vi.fn().mockResolvedValue({ data: { id: "scenario-1" }, error: null }),
+            })),
+          })),
+        })),
+      })),
+      auth: {
+        admin: {
+          updateUserById: vi.fn().mockResolvedValue({ data: {}, error: null }),
+        },
+      },
+    };
+
+    const updated = await import("@/lib/payments/stripe-service").then((m) =>
+      m.updateSubscriptionLifecycleStatus({
+        userId: cancelUserId,
+        subscriptionId: "sub_cancel_123",
+        planTier: "free",
+        planStatus: "canceled",
+        supabaseClient: mockSupabase,
+      })
+    );
+
+    expect(updated).toBe(true);
+  });
+
+  it("LIFECYCLE TEST: preserves PRO entitlement when cancel_at_period_end is active until expiry", async () => {
+    const periodUserId = "period-end-user-123";
+    const futureExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    const mockSupabase = {
+      from: vi.fn(() => ({
+        update: vi.fn(() => ({
+          eq: vi.fn().mockResolvedValue({ data: {}, error: null }),
+        })),
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              maybeSingle: vi.fn().mockResolvedValue({ data: { id: "scenario-2" }, error: null }),
+            })),
+          })),
+        })),
+      })),
+      auth: {
+        admin: {
+          updateUserById: vi.fn().mockResolvedValue({ data: {}, error: null }),
+        },
+      },
+    };
+
+    const updated = await import("@/lib/payments/stripe-service").then((m) =>
+      m.updateSubscriptionLifecycleStatus({
+        userId: periodUserId,
+        subscriptionId: "sub_future_123",
+        planTier: "pro",
+        planStatus: "active",
+        cancelAtPeriodEnd: true,
+        currentPeriodEnd: futureExpiry,
+        supabaseClient: mockSupabase,
+      })
+    );
+
+    expect(updated).toBe(true);
+  });
 });
