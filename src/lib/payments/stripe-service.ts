@@ -116,22 +116,32 @@ export async function createStripeCheckoutSession(
       params.append("subscription_data[metadata][planId]", req.planId);
       params.append("subscription_data[metadata][billingCycle]", req.billingCycle);
 
-      // Line item configuration
-      params.append("line_items[0][price_data][currency]", "usd");
-      params.append(
-        "line_items[0][price_data][product_data][name]",
-        `UseAimly ${req.planId === "premium" ? "Premium" : "Pro"}`
-      );
-      params.append(
-        "line_items[0][price_data][product_data][description]",
-        "Goal-Aware Decision Intelligence Platform - Continuous Decision System"
-      );
-      params.append("line_items[0][price_data][unit_amount]", priceAmount.toString());
-      params.append(
-        "line_items[0][price_data][recurring][interval]",
-        req.billingCycle === "ANNUAL" ? "year" : "month"
-      );
-      params.append("line_items[0][quantity]", "1");
+      // Line item configuration: use configured Price ID if provided, otherwise dynamic recurring price_data
+      const configuredPriceId =
+        req.billingCycle === "ANNUAL"
+          ? process.env.STRIPE_PRICE_ID_ANNUAL
+          : process.env.STRIPE_PRICE_ID_MONTHLY;
+
+      if (configuredPriceId && configuredPriceId.trim().startsWith("price_")) {
+        params.append("line_items[0][price]", configuredPriceId.trim());
+        params.append("line_items[0][quantity]", "1");
+      } else {
+        params.append("line_items[0][price_data][currency]", "usd");
+        params.append(
+          "line_items[0][price_data][product_data][name]",
+          `UseAimly ${req.planId === "premium" ? "Premium" : "Pro"}`
+        );
+        params.append(
+          "line_items[0][price_data][product_data][description]",
+          "Goal-Aware Decision Intelligence Platform - Continuous Decision System"
+        );
+        params.append("line_items[0][price_data][unit_amount]", priceAmount.toString());
+        params.append(
+          "line_items[0][price_data][recurring][interval]",
+          req.billingCycle === "ANNUAL" ? "year" : "month"
+        );
+        params.append("line_items[0][quantity]", "1");
+      }
 
       const response = await fetch(`${STRIPE_API_BASE}/checkout/sessions`, {
         method: "POST",

@@ -1,8 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
 import { syncVerifiedSubscription } from "@/lib/payments/stripe-service";
 import { createAdminClient } from "@/lib/supabase/admin";
+import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Validates Stripe webhook signature according to Stripe specification:
+ * Header: t=timestamp,v1=signature
+ * Expected: HMAC-SHA256(timestamp.rawBody, webhookSecret)
+ */
+function verifyStripeSignature(rawBody: string, signatureHeader: string, secret: string): boolean {
+  try {
+    if (!signatureHeader || !secret) return false;
+
+    const parts = signatureHeader.split(",");
+    let timestamp = "";
+    let signature = "";
+
+    for (const part of parts) {
+      const [key, value] = part.trim().split("=");
+      if (key === "t") timestamp = value;
+      if (key === "v1") signature = value;
+    }
+
+    if (!timestamp || !signature) return false;
+
+    const signedPayload = `${timestamp}.${rawBody}`;
+    const expectedSignature = crypto
+      .createHmac("sha256", secret)
+      .update(signedPayload)
+      .digest("hex");
+
+    return crypto.timingSafeEqual(
+      Buffer.from(signature, "hex"),
+      Buffer.from(expectedSignature, "hex")
+    );
+  } catch (err) {
+    console.warn("Signature verification failed:", err);
+    return false;
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,8 +48,15 @@ export async function POST(request: NextRequest) {
     const signature = request.headers.get("stripe-signature");
     const webhookSecret = (process.env.STRIPE_WEBHOOK_SECRET || "").trim();
 
-    let event: any;
+    // If webhook secret is configured, strictly enforce signature verification
+    if (webhookSecret) {
+      if (!signature || !verifyStripeSignature(rawBody, signature, webhookSecret)) {
+        console.error("[Stripe Webhook] Invalid signature detected. Request rejected.");
+        return NextResponse.json({ error: "Invalid webhook signature" }, { status: 400 });
+      }
+    }
 
+    let event: any;
     try {
       event = JSON.parse(rawBody);
     } catch {
@@ -69,7 +114,6 @@ export async function POST(request: NextRequest) {
         const isGoodStanding = status === "active" || status === "trialing";
 
         if (isGoodStanding) {
-          // If customer email needs lookup from Stripe
           let customerEmail: string | undefined = undefined;
           const secretKey = (process.env.STRIPE_SECRET_KEY || "").trim();
           if (secretKey && customerId && !userId) {
