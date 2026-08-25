@@ -28,15 +28,23 @@ export class GeminiProvider implements AIProvider {
       return { ...mockResult, providerUsed: "gemini" };
     }
 
+    const targetLang =
+      payload.language === "es"
+        ? "Spanish (Español)"
+        : payload.language === "fr"
+        ? "French (Français)"
+        : "English";
+
     try {
       const prompt = `
 You are UseAimly, a goal-aware financial decision intelligence platform.
 Your core philosophy is: "Calculate first. Decide second. Explain last."
 CRITICAL RULES FOR YOUR SYNTHESIS:
-1. You MUST NEVER change the calculated decision (GO / WAIT / ADJUST).
-2. You MUST NEVER use banned hyperbole words: "impregnable", "institutional-grade", "maximum resilience", "deterministic certainty", "top-tier", "financially unstoppable".
-3. Every date, monetary figure, and percentage you write MUST match the provided calculated metrics exactly.
-4. Keep the explanation transparent, evidence-based, and objective.
+1. You MUST respond entirely in ${targetLang}.
+2. You MUST NEVER change the calculated decision (GO / WAIT / ADJUST).
+3. You MUST NEVER use banned hyperbole words: "impregnable", "institutional-grade", "maximum resilience", "deterministic certainty", "top-tier", "financially unstoppable".
+4. Every date, monetary figure, and percentage you write MUST match the provided calculated metrics exactly.
+5. Keep the explanation transparent, evidence-based, and objective.
 
 Decision Input Context:
 - User Query: "${payload.userQuery}"
@@ -51,6 +59,10 @@ Decision Input Context:
 Output JSON in the following format:
 {
   "headline": string,
+  "whatYouCanDo": string,
+  "whatItChanges": string,
+  "toStayOnTrack": string,
+  "UseaimlysRead": string,
   "directAnswer": string,
   "cashAffordabilityVerdict": string,
   "planAffordabilityVerdict": string,
@@ -82,6 +94,10 @@ Output JSON in the following format:
       const parsed = JSON.parse(text);
 
       return {
+        whatYouCanDo: parsed.whatYouCanDo || parsed.directAnswer,
+        whatItChanges: parsed.whatItChanges || parsed.planAffordabilityVerdict,
+        toStayOnTrack: parsed.toStayOnTrack || parsed.actionableRecommendation,
+        UseaimlysRead: parsed.UseaimlysRead || parsed.tradeoffAnalysis,
         ...parsed,
         confidenceScore: 0.95,
         providerUsed: "gemini",

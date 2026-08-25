@@ -25,6 +25,13 @@ export class OpenAIProvider implements AIProvider {
       return { ...mockResult, providerUsed: "openai" };
     }
 
+    const targetLang =
+      payload.language === "es"
+        ? "Spanish (Español)"
+        : payload.language === "fr"
+        ? "French (Français)"
+        : "English";
+
     try {
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
@@ -39,7 +46,7 @@ export class OpenAIProvider implements AIProvider {
             {
               role: "system",
               content:
-                "You are Useaimly, a goal-aware personal finance decision intelligence engine. The philosophy is 'See tomorrow before deciding today' and 'Cash affordability != Plan affordability'. Output JSON only.",
+                `You are Useaimly, a goal-aware personal finance decision intelligence engine. The philosophy is 'See tomorrow before deciding today' and 'Cash affordability != Plan affordability'. Output JSON only. CRITICAL: Respond strictly in ${targetLang}.`,
             },
             {
               role: "user",
@@ -58,6 +65,10 @@ export class OpenAIProvider implements AIProvider {
       const parsed = JSON.parse(content);
 
       return {
+        whatYouCanDo: parsed.whatYouCanDo || parsed.directAnswer,
+        whatItChanges: parsed.whatItChanges || parsed.planAffordabilityVerdict,
+        toStayOnTrack: parsed.toStayOnTrack || parsed.actionableRecommendation,
+        UseaimlysRead: parsed.UseaimlysRead || parsed.tradeoffAnalysis,
         ...parsed,
         confidenceScore: 0.95,
         providerUsed: "openai",

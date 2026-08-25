@@ -10,6 +10,7 @@ export type AIProviderType = "mock" | "openai" | "anthropic" | "gemini";
 
 export interface DecisionExplanationPayload {
   userQuery: string;
+  language?: "en" | "fr" | "es";
   simulation: DecisionSimulationResult;
   profileSummary: {
     currency: string;

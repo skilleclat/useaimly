@@ -70,28 +70,28 @@ describe("Global Geographic Localization, Language & Currency Intelligence", () 
     expect(cdfFormatted).toContain("10,000");
   });
 
-  // Translation Dictionaries (English, French, Swahili)
-  it("provides complete, 100% synchronized dictionaries for en, fr, and sw", () => {
+  // Translation Dictionaries (English, French, Spanish)
+  it("provides complete, 100% synchronized dictionaries for en, fr, and es", () => {
     const enKeys = Object.keys(TRANSLATIONS.en).sort();
     const frKeys = Object.keys(TRANSLATIONS.fr).sort();
-    const swKeys = Object.keys(TRANSLATIONS.sw).sort();
+    const esKeys = Object.keys(TRANSLATIONS.es).sort();
 
     expect(enKeys.length).toBeGreaterThan(50);
     expect(frKeys.length).toBe(enKeys.length);
-    expect(swKeys.length).toBe(enKeys.length);
+    expect(esKeys.length).toBe(enKeys.length);
 
     // Verify key brand slogan in each language
     expect(TRANSLATIONS.en.heroTitleTomorrow).toBe("BEFORE YOU COMMIT.");
     expect(TRANSLATIONS.fr.heroTitleTomorrow).toBe("AVANT DE VOUS ENGAGER.");
-    expect(TRANSLATIONS.sw.heroTitleTomorrow).toBe("ONA KESHO LEO.");
+    expect(TRANSLATIONS.es.heroTitleTomorrow).toBe("MIRA EL MAÑANA.");
   });
 
-  // Swahili financial terms
-  it("contains natural, high-trust Kiswahili financial terminology", () => {
-    expect(TRANSLATIONS.sw.navDecide).toBe("Maamuzi");
-    expect(TRANSLATIONS.sw.navDestinations).toBe("Malengo");
-    expect(TRANSLATIONS.sw.onTrack).toBe("Kwenye Mstari");
-    expect(TRANSLATIONS.sw.planFreeCta).toBe("Chambua Uamuzi Wangu wa Kwanza");
+  // Spanish financial terms
+  it("contains natural, high-trust Spanish financial terminology", () => {
+    expect(TRANSLATIONS.es.navDecide).toBe("Decisiones");
+    expect(TRANSLATIONS.es.navDestinations).toBe("Objetivos");
+    expect(TRANSLATIONS.es.onTrack).toBe("En curso");
+    expect(TRANSLATIONS.es.planFreeCta).toBe("Comenzar Gratis");
   });
 
   // Independent overrides

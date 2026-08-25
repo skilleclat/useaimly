@@ -35,7 +35,7 @@ export function VerifiedDecisionReportModal({
 }: VerifiedDecisionReportModalProps) {
   const { language } = useI18n();
   const isFr = language === "fr";
-  const isSw = language === "sw";
+  const isEs = language === "es";
 
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -56,7 +56,7 @@ export function VerifiedDecisionReportModal({
   const handleDownloadPDF = () => {
     setIsDownloading(true);
     try {
-      const doc = generateVerifiedDecisionReportPDF(data, verification, language as any);
+      const doc = generateVerifiedDecisionReportPDF(data, verification, (language as any) || "en");
       doc.save(`UseAimly_Verified_Report_${data.decisionTitle.replace(/\s+/g, "_")}_${data.reportId}.pdf`);
       // Auto-save to vault upon download
       saveDecisionReportToVault(data, verification);
@@ -90,7 +90,7 @@ export function VerifiedDecisionReportModal({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-                  {verification.status}
+                  {isEs ? (verification.status === "VERIFIED" ? "VERIFICADO" : "CON SUPUESTOS") : verification.status}
                 </span>
                 <span className="text-muted-foreground text-xs">•</span>
                 <span className="text-xs text-muted-foreground font-mono">
@@ -98,7 +98,11 @@ export function VerifiedDecisionReportModal({
                 </span>
               </div>
               <h2 className="text-lg sm:text-xl font-black text-foreground">
-                {isFr ? "Rapport d'Analyse Décisionnelle Vérifiée" : isSw ? "Ripoti Iliyothibitishwa ya Maamuzi" : "Verified Financial Decision Report"}
+                {isEs
+                  ? "Informe de Decisión Financiera Verificado"
+                  : isFr
+                  ? "Rapport d'Analyse Décisionnelle Vérifiée"
+                  : "Verified Financial Decision Report"}
               </h2>
             </div>
           </div>
@@ -123,7 +127,7 @@ export function VerifiedDecisionReportModal({
                 : "bg-secondary text-muted-foreground hover:text-foreground"
             }`}
           >
-            {isFr ? "Aperçu du Rapport" : isSw ? "Muhtasari wa Ripoti" : "Report Preview"}
+            {isEs ? "Vista Previa del Informe" : isFr ? "Aperçu du Rapport" : "Report Preview"}
           </button>
 
           <button
@@ -136,7 +140,7 @@ export function VerifiedDecisionReportModal({
             }`}
           >
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>{isFr ? "Contrôles de Cohérence (6/6)" : "Coherence Checks (6/6)"}</span>
+            <span>{isEs ? "Controles de Coherencia (6/6)" : isFr ? "Contrôles de Cohérence (6/6)" : "Coherence Checks (6/6)"}</span>
           </button>
 
           {reportHistory.length > 0 && (
@@ -150,7 +154,7 @@ export function VerifiedDecisionReportModal({
               }`}
             >
               <History className="w-3.5 h-3.5" />
-              <span>{isFr ? `Versions (${reportHistory.length})` : `History (v${data.version})`}</span>
+              <span>{isEs ? `Versiones (${reportHistory.length})` : isFr ? `Versions (${reportHistory.length})` : `History (v${data.version})`}</span>
             </button>
           )}
         </div>
@@ -162,7 +166,7 @@ export function VerifiedDecisionReportModal({
             <div className="p-5 rounded-2xl bg-secondary/40 border border-border/70 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-mono uppercase tracking-wider text-primary font-bold">
-                  {isFr ? "VERDICT EXÉCUTIF VÉRIFIÉ" : "VERIFIED EXECUTIVE VERDICT"}
+                  {isEs ? "VEREDICTO EJECUTIVO VERIFICADO" : isFr ? "VERDICT EXÉCUTIF VÉRIFIÉ" : "VERIFIED EXECUTIVE VERDICT"}
                 </span>
                 <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
                   Aimly Coherence Score: {verification.overallScore}/100
@@ -179,33 +183,33 @@ export function VerifiedDecisionReportModal({
             {/* Financial Impact Comparison Matrix */}
             <div className="space-y-2">
               <span className="text-xs font-mono uppercase font-bold text-muted-foreground block">
-                {isFr ? "Tableau d'Impact Avant / Après" : "Financial Impact Matrix (Before vs After)"}
+                {isEs ? "Matriz de Impacto Antes / Después" : isFr ? "Tableau d'Impact Avant / Après" : "Financial Impact Matrix (Before vs After)"}
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                 <div className="p-3.5 rounded-2xl bg-secondary/30 border border-border/60 space-y-1">
-                  <span className="text-[10px] font-mono text-muted-foreground block">LIQUID RESERVES</span>
+                  <span className="text-[10px] font-mono text-muted-foreground block">{isEs ? "RESERVAS LÍQUIDAS" : isFr ? "RÉSERVES LIQUIDES" : "LIQUID RESERVES"}</span>
                   <span className="text-base font-black font-mono block">{fmt(data.calculatedImpact.postDecisionCash)}</span>
-                  <span className="text-[10px] text-muted-foreground block">-{fmt(data.amount)} outlay</span>
+                  <span className="text-[10px] text-muted-foreground block">-{fmt(data.amount)} {isEs ? "salida" : isFr ? "dépense" : "outlay"}</span>
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-secondary/30 border border-border/60 space-y-1">
-                  <span className="text-[10px] font-mono text-muted-foreground block">LIVING BUFFER</span>
-                  <span className="text-base font-black font-mono block">{data.calculatedImpact.postDecisionRunway} mos</span>
+                  <span className="text-[10px] font-mono text-muted-foreground block">{isEs ? "COLCHÓN VITAL" : isFr ? "MATELAS VITAL" : "LIVING BUFFER"}</span>
+                  <span className="text-base font-black font-mono block">{data.calculatedImpact.postDecisionRunway} {isEs ? "meses" : isFr ? "mois" : "mos"}</span>
                   <span className="text-[10px] text-amber-600 dark:text-amber-400 block font-bold">
-                    {data.calculatedImpact.postDecisionRunway < 3.0 ? "Below 3.0 target" : "Safe zone"}
+                    {data.calculatedImpact.postDecisionRunway < 3.0 ? (isEs ? "Bajo el objetivo 3.0" : isFr ? "Sous la cible 3.0" : "Below 3.0 target") : (isEs ? "Zona segura" : isFr ? "Zone sécurisée" : "Safe zone")}
                   </span>
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-secondary/30 border border-border/60 space-y-1">
-                  <span className="text-[10px] font-mono text-muted-foreground block">GOAL DELAY</span>
+                  <span className="text-[10px] font-mono text-muted-foreground block">{isEs ? "RETRASO EN META" : isFr ? "RETARD OBJECTIF" : "GOAL DELAY"}</span>
                   <span className="text-base font-black font-mono text-rose-500 block">+{data.calculatedImpact.goalDelayDays}d</span>
                   <span className="text-[10px] text-muted-foreground block truncate">{data.baseline.primaryGoalTitle}</span>
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-secondary/30 border border-border/60 space-y-1">
-                  <span className="text-[10px] font-mono text-muted-foreground block">MONTHLY PRESSURE</span>
+                  <span className="text-[10px] font-mono text-muted-foreground block">{isEs ? "PRESIÓN MENSUAL" : isFr ? "PRESSION MENSUELLE" : "MONTHLY PRESSURE"}</span>
                   <span className="text-base font-black font-mono block">+{data.calculatedImpact.monthlyPressurePercent}%</span>
-                  <span className="text-[10px] text-emerald-600 block font-bold">+{fmt(data.baseline.netFreeCashFlow)}/mo FCF</span>
+                  <span className="text-[10px] text-emerald-600 block font-bold">+{fmt(data.baseline.netFreeCashFlow)}{isEs ? "/mes" : isFr ? "/mois" : "/mo"} FCF</span>
                 </div>
               </div>
             </div>
@@ -213,11 +217,15 @@ export function VerifiedDecisionReportModal({
             {/* Grounded Narrative Summary */}
             <div className="p-4 rounded-2xl bg-secondary/30 border border-border/60 space-y-2 text-xs">
               <span className="font-mono uppercase font-bold text-primary block">
-                {isFr ? "Synthèse de l'Analyse Stratégique" : "Grounded Strategic Synthesis"}
+                {isEs ? "Síntesis del Análisis Estratégico" : isFr ? "Synthèse de l'Analyse Stratégique" : "Grounded Strategic Synthesis"}
               </span>
               <p className="text-muted-foreground leading-relaxed">
                 {data.narrative.executiveSummary ||
-                  `Executing this purchase of ${fmt(data.amount)} leaves ${fmt(data.calculatedImpact.postDecisionCash)} in liquid reserves (${data.calculatedImpact.postDecisionRunway} months of fixed living buffer). It shifts your primary goal "${data.baseline.primaryGoalTitle}" by approximately +${data.calculatedImpact.goalDelayDays} days.`}
+                  (isEs
+                    ? `Ejecutar esta compra de ${fmt(data.amount)} deja ${fmt(data.calculatedImpact.postDecisionCash)} en reservas líquidas (${data.calculatedImpact.postDecisionRunway} meses de colchón de gastos fijos). Desplaza su meta principal "${data.baseline.primaryGoalTitle}" aproximadamente +${data.calculatedImpact.goalDelayDays} días.`
+                    : isFr
+                    ? `L'exécution de cet achat de ${fmt(data.amount)} laisse ${fmt(data.calculatedImpact.postDecisionCash)} de réserves liquides (${data.calculatedImpact.postDecisionRunway} mois de charges essentielles). Elle décale votre objectif prioritaire "${data.baseline.primaryGoalTitle}" d'environ +${data.calculatedImpact.goalDelayDays} jours.`
+                    : `Executing this purchase of ${fmt(data.amount)} leaves ${fmt(data.calculatedImpact.postDecisionCash)} in liquid reserves (${data.calculatedImpact.postDecisionRunway} months of fixed living buffer). It shifts your primary goal "${data.baseline.primaryGoalTitle}" by approximately +${data.calculatedImpact.goalDelayDays} days.`)}
               </p>
             </div>
           </div>
@@ -227,7 +235,7 @@ export function VerifiedDecisionReportModal({
         {activeTab === "CHECKS" && (
           <div className="space-y-3 animate-fadeIn">
             <span className="text-xs font-mono uppercase font-bold text-muted-foreground block">
-              {isFr ? "Résultats de l'Audit Déterministe d'Aimly" : "Aimly Coherence & Validation Audit"}
+              {isEs ? "Resultados de la Auditoría Determinista de Aimly" : isFr ? "Résultats de l'Audit Déterministe d'Aimly" : "Aimly Coherence & Validation Audit"}
             </span>
 
             <div className="space-y-2.5">
@@ -239,10 +247,10 @@ export function VerifiedDecisionReportModal({
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                   <div className="space-y-0.5">
                     <div className="font-bold text-foreground">
-                      {isFr ? c.nameFr : c.name}
+                      {isEs ? (c as any).nameEs || c.name : isFr ? c.nameFr : c.name}
                     </div>
                     <div className="text-[11px] text-muted-foreground">
-                      {isFr ? c.notesFr : c.notes}
+                      {isEs ? (c as any).notesEs || c.notes : isFr ? c.notesFr : c.notes}
                     </div>
                   </div>
                 </div>
@@ -255,7 +263,7 @@ export function VerifiedDecisionReportModal({
         {activeTab === "HISTORY" && (
           <div className="space-y-3 animate-fadeIn">
             <span className="text-xs font-mono uppercase font-bold text-muted-foreground block">
-              {isFr ? "Versions Archivées du Rapport" : "Stored Decision Report Versions"}
+              {isEs ? "Versiones Archivadas del Informe" : isFr ? "Versions Archivées du Rapport" : "Stored Decision Report Versions"}
             </span>
 
             <div className="space-y-2">
@@ -272,20 +280,20 @@ export function VerifiedDecisionReportModal({
                       <span className="text-muted-foreground">{fmt(rpt.amount)}</span>
                     </div>
                     <div className="text-[10px] text-muted-foreground mt-0.5">
-                      {new Date(rpt.createdAt).toLocaleString(isFr ? "fr-FR" : "en-US")} • Status: {rpt.status}
+                      {new Date(rpt.createdAt).toLocaleString(isEs ? "es-ES" : isFr ? "fr-FR" : "en-US")} • Status: {rpt.status}
                     </div>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => {
-                      const doc = generateVerifiedDecisionReportPDF(rpt.data, rpt.verification, language as any);
+                      const doc = generateVerifiedDecisionReportPDF(rpt.data, rpt.verification, (language as any) || "en");
                       doc.save(`UseAimly_Report_${rpt.decisionTitle}_v${rpt.version}.pdf`);
                     }}
                     className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-secondary hover:bg-secondary/80 border border-border text-xs font-bold cursor-pointer"
                   >
                     <FileDown className="w-3.5 h-3.5" />
-                    <span>Download v{rpt.version}</span>
+                    <span>{isEs ? `Descargar v${rpt.version}` : isFr ? `Télécharger v${rpt.version}` : `Download v${rpt.version}`}</span>
                   </button>
                 </div>
               ))}
@@ -306,7 +314,19 @@ export function VerifiedDecisionReportModal({
               }`}
             >
               <Bookmark className={`w-3.5 h-3.5 ${isSaved ? "fill-emerald-500 text-emerald-500" : ""}`} />
-              <span>{isSaved ? (isFr ? "Enregistré dans le Coffre (v" + data.version + ")" : "Saved to Vault (v" + data.version + ")") : (isFr ? "Enregistrer la Version" : "Save Report Version")}</span>
+              <span>
+                {isSaved
+                  ? isEs
+                    ? `Guardado en el Cofre (v${data.version})`
+                    : isFr
+                    ? `Enregistré dans le Coffre (v${data.version})`
+                    : `Saved to Vault (v${data.version})`
+                  : isEs
+                  ? "Guardar Versión"
+                  : isFr
+                  ? "Enregistrer la Version"
+                  : "Save Report Version"}
+              </span>
             </button>
           </div>
 
@@ -317,7 +337,19 @@ export function VerifiedDecisionReportModal({
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
           >
             <FileDown className="w-4 h-4" />
-            <span>{isDownloading ? (isFr ? "Génération en cours..." : "Generating PDF...") : (isFr ? "Télécharger le Rapport Vérifié (PDF)" : "Download Verified Report (PDF)")}</span>
+            <span>
+              {isDownloading
+                ? isEs
+                  ? "Generando PDF..."
+                  : isFr
+                  ? "Génération en cours..."
+                  : "Generating PDF..."
+                : isEs
+                ? "Descargar Informe Verificado (PDF)"
+                : isFr
+                ? "Télécharger le Rapport Vérifié (PDF)"
+                : "Download Verified Report (PDF)"}
+            </span>
           </button>
         </div>
 

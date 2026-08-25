@@ -80,7 +80,7 @@ export function AimlyDecisionEngine({
   const { currency } = useCurrency();
   const { language } = useI18n();
   const isFr = language === "fr";
-  const isSw = language === "sw";
+  const isEs = language === "es";
 
   const fmt = (amt: number) => formatCurrency(amt, currency as any);
 
@@ -131,7 +131,7 @@ export function AimlyDecisionEngine({
       goals: [
         {
           id: "primary-goal",
-          title: isFr ? "Lancement Entreprise & Projets" : isSw ? "Kuanzisha Biashara" : "Business Launch Goal",
+          title: isEs ? "Lanzamiento de Negocio y Proyectos" : isFr ? "Lancement Entreprise & Projets" : "Business Launch Goal",
           targetAmount: 25000,
           currentAmount: 12000,
           targetDate: "2027-12-31",
@@ -154,69 +154,69 @@ export function AimlyDecisionEngine({
         ? [{ id: "debt-ovr", name: "Existing Debt", totalAmount: overrideDebt * 24, monthlyPayment: overrideDebt, interestRate: 0.1, category: "OTHER" as any, isSecured: false }]
         : base.debts,
     };
-  }, [baselineProfile, overrideSavings, overrideIncome, overrideExpenses, overrideDebt, isFr, isSw]);
+  }, [baselineProfile, overrideSavings, overrideIncome, overrideExpenses, overrideDebt, isFr, isEs]);
 
   // Categories definitions (Mobile-friendly, no truncation)
   const CATEGORIES: { id: DecisionCategory; title: string; subtitle: string; icon: React.ReactNode; defaultPrompt: string }[] = useMemo(
     () => [
       {
         id: "BUY_SOMETHING",
-        title: isFr ? "Achat Matériel" : isSw ? "Nunua Kitu" : "Buy Item / Asset",
-        subtitle: isFr ? "Ordinateur, équipement..." : "Laptop, tools, gear...",
+        title: isEs ? "Comprar Algo" : isFr ? "Achat Matériel" : "Buy Item / Asset",
+        subtitle: isEs ? "Portátil, equipo, material..." : isFr ? "Ordinateur, équipement..." : "Laptop, tools, gear...",
         icon: <ShoppingBag className="w-4 h-4 text-orange-500" />,
-        defaultPrompt: isFr ? "J'envisage d'acheter un ordinateur à 2 000 € pour mon activité." : "I'm thinking about buying a $2,000 laptop for my business.",
+        defaultPrompt: isEs ? "Estoy pensando en comprar un portátil de $2,000 para mi negocio." : isFr ? "J'envisage d'acheter un ordinateur à 2 000 € pour mon activité." : "I'm thinking about buying a $2,000 laptop for my business.",
       },
       {
         id: "TAKE_A_LOAN",
-        title: isFr ? "Crédit & Prêt" : isSw ? "Chukua Mkopo" : "Take a Loan",
-        subtitle: isFr ? "Financement, emprunt..." : "Borrowing, debt facility...",
+        title: isEs ? "Solicitar Préstamo" : isFr ? "Crédit & Prêt" : "Take a Loan",
+        subtitle: isEs ? "Financiación, préstamo..." : isFr ? "Financement, emprunt..." : "Borrowing, debt facility...",
         icon: <CreditCard className="w-4 h-4 text-purple-500" />,
-        defaultPrompt: isFr ? "Que se passe-t-il si je souscris un prêt de 10 000 € avec 1 000 € d'apport ?" : "What happens if I take a $10,000 loan with $1,000 down payment?",
+        defaultPrompt: isEs ? "¿Qué ocurre si solicito un préstamo de $10,000 con $1,000 de entrada?" : isFr ? "Que se passe-t-il si je souscris un prêt de 10 000 € avec 1 000 € d'apport ?" : "What happens if I take a $10,000 loan with $1,000 down payment?",
       },
       {
         id: "BUY_A_CAR",
-        title: isFr ? "Véhicule / Auto" : isSw ? "Nunua Gari" : "Vehicle Purchase",
-        subtitle: isFr ? "Voiture, moto..." : "Car, transport...",
+        title: isEs ? "Comprar Vehículo" : isFr ? "Véhicule / Auto" : "Vehicle Purchase",
+        subtitle: isEs ? "Coche, moto, transporte..." : isFr ? "Voiture, moto..." : "Car, transport...",
         icon: <Car className="w-4 h-4 text-blue-500" />,
-        defaultPrompt: isFr ? "Puis-je acheter une voiture à 15 000 € avec 3 000 € d'apport ?" : "Can I buy a $15,000 car with $3,000 down payment?",
+        defaultPrompt: isEs ? "¿Puedo comprar un coche de $15,000 con $3,000 de entrada?" : isFr ? "Puis-je acheter une voiture à 15 000 € avec 3 000 € d'apport ?" : "Can I buy a $15,000 car with $3,000 down payment?",
       },
       {
         id: "MOVE_HOME",
-        title: isFr ? "Logement & Loyer" : isSw ? "Kuhama Nyumba" : "Housing & Rent",
-        subtitle: isFr ? "Changement loyer, bail..." : "Rent adjustment, relocation...",
+        title: isEs ? "Vivienda y Alquiler" : isFr ? "Logement & Loyer" : "Housing & Rent",
+        subtitle: isEs ? "Cambio de alquiler, mudanza..." : isFr ? "Changement loyer, bail..." : "Rent adjustment, relocation...",
         icon: <Home className="w-4 h-4 text-emerald-500" />,
-        defaultPrompt: isFr ? "Que se passe-t-il si mon loyer augmente de 1 800 €/mois ?" : "What happens if my rent increases by $1,800/month?",
+        defaultPrompt: isEs ? "¿Qué pasa si mi alquiler aumenta en $1,800/mes?" : isFr ? "Que se passe-t-il si mon loyer augmente de 1 800 €/mois ?" : "What happens if my rent increases by $1,800/month?",
       },
       {
         id: "INVEST",
-        title: isFr ? "Investissement" : isSw ? "Wekeza Pesa" : "Invest Capital",
-        subtitle: isFr ? "Bourse, placement..." : "Stocks, real estate...",
+        title: isEs ? "Invertir Capital" : isFr ? "Investissement" : "Invest Capital",
+        subtitle: isEs ? "Bolsa, fondos, inmuebles..." : isFr ? "Bourse, placement..." : "Stocks, real estate...",
         icon: <TrendingUp className="w-4 h-4 text-teal-500" />,
-        defaultPrompt: isFr ? "Puis-je investir 5 000 € dans un fonds indiciel ?" : "Can I invest $5,000 into an index fund?",
+        defaultPrompt: isEs ? "¿Puedo invertir $5,000 en un fondo indexado?" : isFr ? "Puis-je investir 5 000 € dans un fonds indiciel ?" : "Can I invest $5,000 into an index fund?",
       },
       {
         id: "BUSINESS_EXPENSE",
-        title: isFr ? "Dépense Business" : isSw ? "Gharama ya Biashara" : "Business Project",
-        subtitle: isFr ? "Marketing, stock, dev..." : "Hiring, stock, growth...",
+        title: isEs ? "Gasto de Negocio" : isFr ? "Dépense Business" : "Business Project",
+        subtitle: isEs ? "Marketing, stock, desarrollo..." : isFr ? "Marketing, stock, dev..." : "Hiring, stock, growth...",
         icon: <Briefcase className="w-4 h-4 text-amber-500" />,
-        defaultPrompt: isFr ? "J'envisage de dépenser 3 500 € pour le marketing de mon entreprise." : "I'm considering spending $3,500 on marketing for my business.",
+        defaultPrompt: isEs ? "Estoy considerando invertir $3,500 en marketing para mi empresa." : isFr ? "J'envisage de dépenser 3 500 € pour le marketing de mon entreprise." : "I'm considering spending $3,500 on marketing for my business.",
       },
       {
         id: "PAY_OFF_DEBT",
-        title: isFr ? "Rembourser Dette" : isSw ? "Lipa Deni" : "Pay Off Debt",
-        subtitle: isFr ? "Soldage crédit, avance..." : "Lump sum payoff...",
+        title: isEs ? "Amortizar Deuda" : isFr ? "Rembourser Dette" : "Pay Off Debt",
+        subtitle: isEs ? "Liquidación anticipada..." : isFr ? "Soldage crédit, avance..." : "Lump sum payoff...",
         icon: <Layers className="w-4 h-4 text-rose-500" />,
-        defaultPrompt: isFr ? "Devrais-je rembourser 4 000 € de dette par anticipation ?" : "Should I pay off $4,000 of debt early?",
+        defaultPrompt: isEs ? "¿Debería amortizar $4,000 de deuda por adelantado?" : isFr ? "Devrais-je rembourser 4 000 € de dette par anticipation ?" : "Should I pay off $4,000 of debt early?",
       },
       {
         id: "OTHER",
-        title: isFr ? "Autre Décision" : isSw ? "Uamuzi Mwingine" : "Custom Decision",
-        subtitle: isFr ? "Voyage, projet perso..." : "Travel, major life event...",
+        title: isEs ? "Otra Decisión" : isFr ? "Autre Décision" : "Custom Decision",
+        subtitle: isEs ? "Viaje, proyecto personal..." : isFr ? "Voyage, projet perso..." : "Travel, major life event...",
         icon: <HelpCircle className="w-4 h-4 text-gray-400" />,
-        defaultPrompt: isFr ? "J'envisage un voyage personnel de 2 500 €." : "I'm considering a $2,500 personal trip.",
+        defaultPrompt: isEs ? "Estoy considerando un viaje personal de $2,500." : isFr ? "J'envisage un voyage personnel de 2 500 €." : "I'm considering a $2,500 personal trip.",
       },
     ],
-    [isFr, isSw]
+    [isFr, isEs]
   );
 
   // NLP Parser Extraction
@@ -411,13 +411,13 @@ export function AimlyDecisionEngine({
 
   // Step Labels for Header
   const STEP_TITLES = [
-    { num: 1, label: isFr ? "Définir" : isSw ? "Tambulisha" : "Define" },
-    { num: 2, label: isFr ? "Détails" : isSw ? "Maelezo" : "Details" },
-    { num: 3, label: isFr ? "Contexte" : isSw ? "Wasifu" : "Context" },
-    { num: 4, label: isFr ? "Priorités" : isSw ? "Vipaumbele" : "Priorities" },
-    { num: 5, label: isFr ? "Analyser" : isSw ? "Chambua" : "Analyze" },
-    { num: 6, label: isFr ? "Vérifier" : isSw ? "Thibitisha" : "Verify" },
-    { num: 7, label: isFr ? "Rapport" : isSw ? "Ripoti" : "Report" },
+    { num: 1, label: isEs ? "Definir" : isFr ? "Définir" : "Define" },
+    { num: 2, label: isEs ? "Detalles" : isFr ? "Détails" : "Details" },
+    { num: 3, label: isEs ? "Contexto" : isFr ? "Contexte" : "Context" },
+    { num: 4, label: isEs ? "Prioridades" : isFr ? "Priorités" : "Priorities" },
+    { num: 5, label: isEs ? "Analizar" : isFr ? "Analyser" : "Analyze" },
+    { num: 6, label: isEs ? "Verificar" : isFr ? "Vérifier" : "Verify" },
+    { num: 7, label: isEs ? "Informe" : isFr ? "Rapport" : "Report" },
   ];
 
   const primaryImpact = canonicalAnalysis.primaryImpact;
@@ -435,10 +435,10 @@ export function AimlyDecisionEngine({
             <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] sm:text-xs font-mono font-bold uppercase tracking-wider">
               <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               <span>
-                {isFr
+                {isEs
+                  ? `PASO ${currentStep} / 7`
+                  : isFr
                   ? `ÉTAPE ${currentStep} / 7`
-                  : isSw
-                  ? `HATUA ${currentStep} / 7`
                   : `STEP ${currentStep} OF 7`}
               </span>
             </span>
@@ -455,7 +455,7 @@ export function AimlyDecisionEngine({
                 className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl border border-border/80 bg-secondary/60 hover:bg-secondary text-xs font-semibold text-foreground transition-all cursor-pointer min-h-[32px] sm:min-h-[36px]"
               >
                 <ArrowLeft className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                <span>{isFr ? "Retour" : "Back"}</span>
+                <span>{isEs ? "Atrás" : isFr ? "Retour" : "Back"}</span>
               </button>
             )}
 
@@ -508,17 +508,17 @@ export function AimlyDecisionEngine({
         <section className="rounded-2xl sm:rounded-3xl border border-border/80 bg-card p-4 sm:p-8 space-y-4 sm:space-y-6 shadow-xs animate-fadeIn">
           <div className="space-y-1">
             <h2 className="text-lg sm:text-2xl font-black text-foreground tracking-tight">
-              {isFr
+              {isEs
+                ? "¿Qué decisión financiera está considerando?"
+                : isFr
                 ? "Quelle décision financière envisagez-vous ?"
-                : isSw
-                ? "Ni uamuzi gani wa kifedha unaofikiria?"
                 : "What financial decision are you considering?"}
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium">
-              {isFr
+              {isEs
+                ? "Elija una categoría rápida o escriba libremente en lenguaje natural."
+                : isFr
                 ? "Choisissez une catégorie rapide ou écrivez librement en langage naturel."
-                : isSw
-                ? "Chagua kategoria au andika kwa lugha rahisi unavyofikiria."
                 : "Choose a category below or type your proposed plan in plain English."}
             </p>
           </div>
@@ -562,12 +562,12 @@ export function AimlyDecisionEngine({
               rows={3}
               value={queryInput}
               onChange={(e) => setQueryInput(e.target.value)}
-              placeholder="Example: I'm thinking about buying a $2,000 laptop for my business."
+              placeholder={isEs ? "Ejemplo: Estoy pensando en comprar un portátil de $2,000 para mi negocio." : isFr ? "Exemple: J'envisage d'acheter un ordinateur à 2 000 € pour mon activité." : "Example: I'm thinking about buying a $2,000 laptop for my business."}
               className="w-full rounded-2xl border border-border/90 bg-background p-3.5 sm:p-4 text-base sm:text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-xs resize-none"
             />
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs text-muted-foreground">
-              <span>{isFr ? "Montant détecté :" : "Extracted amount:"} <strong className="text-foreground font-mono">{fmt(extractedAmount)}</strong></span>
+              <span>{isEs ? "Monto detectado:" : isFr ? "Montant détecté :" : "Extracted amount:"} <strong className="text-foreground font-mono">{fmt(extractedAmount)}</strong></span>
               <span className="font-mono text-[11px] truncate">{extractedTitle}</span>
             </div>
           </div>
@@ -579,7 +579,7 @@ export function AimlyDecisionEngine({
               onClick={handleNextStep}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
             >
-              <span>{isFr ? "Continuer vers les Détails" : isSw ? "Endelea kwa Maelezo" : "Continue to Details"}</span>
+              <span>{isEs ? "Continuar hacia los Detalles" : isFr ? "Continuer vers les Détails" : "Continue to Details"}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -594,13 +594,17 @@ export function AimlyDecisionEngine({
         <section className="rounded-2xl sm:rounded-3xl border border-border/80 bg-card p-4 sm:p-8 space-y-4 sm:space-y-6 shadow-xs animate-fadeIn">
           <div className="space-y-1">
             <h2 className="text-lg sm:text-2xl font-black text-foreground tracking-tight">
-              {isFr ? "Précisez les paramètres de la décision" : isSw ? "Weka maelezo kamili ya uamuzi" : "Tell us about the decision"}
+              {isEs ? "Especifique los parámetros de la decisión" : isFr ? "Précisez les paramètres de la décision" : "Tell us about the decision"}
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium">
               {selectedCategory === "TAKE_A_LOAN"
-                ? isFr
+                ? isEs
+                  ? "Indique el capital solicitado, la entrada inicial y el plazo de devolución."
+                  : isFr
                   ? "Indiquez le capital emprunté, l'apport initial et la durée du prêt."
                   : "Specify the borrowed amount, down payment/fees, and loan duration."
+                : isEs
+                ? "Ajuste el importe total, el pago inicial y los plazos previstos."
                 : isFr
                 ? "Ajustez le prix total, l'acompte et les modalités de paiement."
                 : "Fine-tune total outlay, down payments, and proposed execution timing."}
@@ -611,8 +615,8 @@ export function AimlyDecisionEngine({
             <div className="space-y-1.5">
               <label className="text-xs font-mono font-bold text-foreground block">
                 {selectedCategory === "TAKE_A_LOAN"
-                  ? isFr ? "Capital Emprunté" : "Borrowed Amount / Loan Total"
-                  : isFr ? "Prix d'Achat Total" : "Purchase Price / Total Outlay"}
+                  ? isEs ? "Capital Solicitado / Total Préstamo" : isFr ? "Capital Emprunté" : "Borrowed Amount / Loan Total"
+                  : isEs ? "Precio de Compra / Importe Total" : isFr ? "Prix d'Achat Total" : "Purchase Price / Total Outlay"}
               </label>
               <input
                 type="number"
@@ -627,8 +631,8 @@ export function AimlyDecisionEngine({
             <div className="space-y-1.5">
               <label className="text-xs font-mono font-bold text-foreground block">
                 {selectedCategory === "TAKE_A_LOAN"
-                  ? isFr ? "Frais Initiaux / Apport" : "Down Payment / Upfront Fees"
-                  : isFr ? "Acompte / Apport Immédiat" : "Down Payment (if financing)"}
+                  ? isEs ? "Entrada Inicial / Comisiones" : isFr ? "Frais Initiaux / Apport" : "Down Payment / Upfront Fees"
+                  : isEs ? "Entrada / Pago Inmediato" : isFr ? "Acompte / Apport Immédiat" : "Down Payment (if financing)"}
               </label>
               <input
                 type="number"
@@ -644,24 +648,24 @@ export function AimlyDecisionEngine({
             {selectedCategory === "TAKE_A_LOAN" ? (
               <div className="space-y-1.5">
                 <label className="text-xs font-mono font-bold text-foreground block">
-                  {isFr ? "Durée du Prêt (Mois)" : "Loan Term (Months)"}
+                  {isEs ? "Plazo del Crédito (Meses)" : isFr ? "Durée du Prêt (Mois)" : "Loan Term (Months)"}
                 </label>
                 <select
                   value={loanTermMonths}
                   onChange={(e) => setLoanTermMonths(Number(e.target.value))}
                   className="w-full rounded-2xl bg-background border border-border px-4 py-3 text-base sm:text-sm font-mono text-foreground focus:outline-none focus:border-primary min-h-[46px]"
                 >
-                  <option value={12}>12 {isFr ? "mois (1 an)" : "months (1 yr)"}</option>
-                  <option value={24}>24 {isFr ? "mois (2 ans)" : "months (2 yrs)"}</option>
-                  <option value={36}>36 {isFr ? "mois (3 ans)" : "months (3 yrs)"}</option>
-                  <option value={48}>48 {isFr ? "mois (4 ans)" : "months (4 yrs)"}</option>
-                  <option value={60}>60 {isFr ? "mois (5 ans)" : "months (5 yrs)"}</option>
+                  <option value={12}>12 {isEs ? "meses (1 año)" : isFr ? "mois (1 an)" : "months (1 yr)"}</option>
+                  <option value={24}>24 {isEs ? "meses (2 años)" : isFr ? "mois (2 ans)" : "months (2 yrs)"}</option>
+                  <option value={36}>36 {isEs ? "meses (3 años)" : isFr ? "mois (3 ans)" : "months (3 yrs)"}</option>
+                  <option value={48}>48 {isEs ? "meses (4 años)" : isFr ? "mois (4 ans)" : "months (4 yrs)"}</option>
+                  <option value={60}>60 {isEs ? "meses (5 años)" : isFr ? "mois (5 ans)" : "months (5 yrs)"}</option>
                 </select>
               </div>
             ) : (
               <div className="space-y-1.5">
                 <label className="text-xs font-mono font-bold text-foreground block">
-                  {isFr ? "Mensualité (si crédit)" : "Monthly Payment (if loan/recurring)"}
+                  {isEs ? "Cuota Mensual (si crédito/recurrente)" : isFr ? "Mensualité (si crédit)" : "Monthly Payment (if loan/recurring)"}
                 </label>
                 <input
                   type="number"
@@ -679,7 +683,7 @@ export function AimlyDecisionEngine({
           {/* Timing Selector */}
           <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/30 border border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
             <span className="font-bold text-foreground">
-              {isFr ? "Date envisagée pour l'engagement :" : "Proposed Execution Timing:"}
+              {isEs ? "Fecha prevista para la ejecución:" : isFr ? "Date envisagée pour l'engagement :" : "Proposed Execution Timing:"}
             </span>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -694,7 +698,7 @@ export function AimlyDecisionEngine({
                       : "bg-secondary text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {t === "TODAY" ? (isFr ? "Aujourd'hui" : "Today") : t === "30_DAYS" ? "+30j" : "+90j"}
+                  {t === "TODAY" ? (isEs ? "Hoy" : isFr ? "Aujourd'hui" : "Today") : t === "30_DAYS" ? (isEs ? "+30 días" : "+30j") : (isEs ? "+90 días" : "+90j")}
                 </button>
               ))}
             </div>
@@ -710,7 +714,9 @@ export function AimlyDecisionEngine({
                 className="w-4 h-4 rounded text-primary focus:ring-primary accent-[#FF5533]"
               />
               <span className="text-xs font-bold text-foreground">
-                {isFr
+                {isEs
+                  ? "Se trata de un gasto u obligación recurrente mensual"
+                  : isFr
                   ? "Il s'agit d'une dépense ou charge récurrente mensuelle"
                   : "This is a recurring monthly obligation / expense"}
               </span>
@@ -725,7 +731,7 @@ export function AimlyDecisionEngine({
               className="inline-flex items-center gap-1 px-4 py-3 rounded-xl bg-secondary text-xs font-bold text-foreground cursor-pointer min-h-[44px]"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>{isFr ? "Retour" : "Back"}</span>
+              <span>{isEs ? "Atrás" : isFr ? "Retour" : "Back"}</span>
             </button>
 
             <button
@@ -733,7 +739,7 @@ export function AimlyDecisionEngine({
               onClick={handleNextStep}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
             >
-              <span>{isFr ? "Valider le Contexte" : "Confirm & Check Context"}</span>
+              <span>{isEs ? "Confirmar y Verificar Contexto" : isFr ? "Valider le Contexte" : "Confirm & Check Context"}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -749,10 +755,12 @@ export function AimlyDecisionEngine({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3">
             <div className="space-y-1">
               <h2 className="text-lg sm:text-2xl font-black text-foreground tracking-tight">
-                {isFr ? "Vérifions votre contexte financier" : "Let's check your financial context"}
+                {isEs ? "Verifiquemos su contexto financiero" : isFr ? "Vérifions votre contexte financier" : "Let's check your financial context"}
               </h2>
               <p className="text-xs sm:text-sm text-muted-foreground font-medium">
-                {isFr
+                {isEs
+                  ? "Estos son los datos reales que UseAimly utilizará para modelar el impacto determinista."
+                  : isFr
                   ? "Voici les données réelles qu'UseAimly utilisera pour modéliser l'impact."
                   : "Review the financial baseline data UseAimly will use for calculation."}
               </p>
@@ -764,7 +772,7 @@ export function AimlyDecisionEngine({
               className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-secondary/60 text-xs font-bold text-primary hover:underline cursor-pointer"
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>{isEditingContext ? (isFr ? "Terminer l'édition" : "Done Editing") : (isFr ? "Modifier ces chiffres" : "Edit Numbers")}</span>
+              <span>{isEditingContext ? (isEs ? "Finalizar edición" : isFr ? "Terminer l'édition" : "Done Editing") : (isEs ? "Modificar cifras" : isFr ? "Modifier ces chiffres" : "Edit Numbers")}</span>
             </button>
           </div>
 
@@ -772,7 +780,7 @@ export function AimlyDecisionEngine({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3.5 text-xs">
             <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
               <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-                {isFr ? "LIQUIDITÉS" : "AVAILABLE CASH"}
+                {isEs ? "LIQUIDEZ" : isFr ? "LIQUIDITÉS" : "AVAILABLE CASH"}
               </span>
               {isEditingContext ? (
                 <input
@@ -788,13 +796,13 @@ export function AimlyDecisionEngine({
                 </span>
               )}
               <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold block">
-                ✓ {isFr ? "Confirmé" : "Confirmed"}
+                ✓ {isEs ? "Confirmado" : isFr ? "Confirmé" : "Confirmed"}
               </span>
             </div>
 
             <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
               <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-                {isFr ? "REVENU MENSUEL" : "MONTHLY INFLOW"}
+                {isEs ? "INGRESOS NETOS" : isFr ? "REVENU MENSUEL" : "MONTHLY INFLOW"}
               </span>
               {isEditingContext ? (
                 <input
@@ -810,13 +818,13 @@ export function AimlyDecisionEngine({
                 </span>
               )}
               <span className="text-[10px] text-muted-foreground block truncate">
-                {isFr ? "Entrées nettes" : "Net inflows"}
+                {isEs ? "Entradas netas" : isFr ? "Entrées nettes" : "Net inflows"}
               </span>
             </div>
 
             <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
               <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-                {isFr ? "CHARGES FIXES" : "FIXED LIVING"}
+                {isEs ? "GASTOS FIJOS" : isFr ? "CHARGES FIXES" : "FIXED LIVING"}
               </span>
               {isEditingContext ? (
                 <input
@@ -832,13 +840,13 @@ export function AimlyDecisionEngine({
                 </span>
               )}
               <span className="text-[10px] text-muted-foreground block truncate">
-                {isFr ? "Loyer & charges" : "Rent & living"}
+                {isEs ? "Alquiler y gastos" : isFr ? "Loyer & charges" : "Rent & living"}
               </span>
             </div>
 
             <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
               <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-                {isFr ? "DETTES ACTIVES" : "DEBT SERVICE"}
+                {isEs ? "DEUDAS ACTIVAS" : isFr ? "DETTES ACTIVES" : "DEBT SERVICE"}
               </span>
               {isEditingContext ? (
                 <input
@@ -850,35 +858,35 @@ export function AimlyDecisionEngine({
                 />
               ) : (
                 <span className="text-base sm:text-lg font-black text-foreground font-mono block">
-                  {fmt(canonicalAnalysis.baseline.monthlyDebtService)}/mo
+                  {fmt(canonicalAnalysis.baseline.monthlyDebtService)}{isEs ? "/mes" : isFr ? "/mois" : "/mo"}
                 </span>
               )}
               <span className="text-[10px] text-muted-foreground block truncate">
-                {canonicalAnalysis.baseline.monthlyDebtService > 0 ? "Active obligations" : "Zero debt"}
+                {canonicalAnalysis.baseline.monthlyDebtService > 0 ? (isEs ? "Obligaciones activas" : "Active obligations") : (isEs ? "Sin deuda" : "Zero debt")}
               </span>
             </div>
 
             <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
               <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-                {isFr ? "CASH-FLOW LIBRE" : "NET FREE CASH"}
+                {isEs ? "FLUJO LIBRE" : isFr ? "CASH-FLOW LIBRE" : "NET FREE CASH"}
               </span>
               <span className="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono block">
                 +{fmt(canonicalAnalysis.baseline.netFreeCashFlow)}
               </span>
               <span className="text-[10px] text-emerald-600/80 block truncate">
-                {isFr ? "Épargne/mois" : "Monthly power"}
+                {isEs ? "Ahorro/mes" : isFr ? "Épargne/mois" : "Monthly power"}
               </span>
             </div>
 
             <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
               <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-                {isFr ? "MATELAS SÉCURITÉ" : "EMERGENCY RUNWAY"}
+                {isEs ? "COLCHÓN VITAL" : isFr ? "MATELAS SÉCURITÉ" : "EMERGENCY RUNWAY"}
               </span>
               <span className="text-base sm:text-lg font-black text-foreground font-mono block">
-                {canonicalAnalysis.baseline.emergencyRunwayMonths} mos
+                {canonicalAnalysis.baseline.emergencyRunwayMonths} {isEs ? "meses" : isFr ? "mois" : "mos"}
               </span>
               <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold block truncate">
-                {canonicalAnalysis.baseline.emergencyRunwayMonths >= 3.0 ? "Safe buffer" : "< 3.0 mos"}
+                {canonicalAnalysis.baseline.emergencyRunwayMonths >= 3.0 ? (isEs ? "Colchón seguro" : "Safe buffer") : (isEs ? "< 3.0 meses" : "< 3.0 mos")}
               </span>
             </div>
           </div>
@@ -891,7 +899,7 @@ export function AimlyDecisionEngine({
               className="inline-flex items-center gap-1 px-4 py-3 rounded-xl bg-secondary text-xs font-bold text-foreground cursor-pointer min-h-[44px]"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>{isFr ? "Retour" : "Back"}</span>
+              <span>{isEs ? "Atrás" : isFr ? "Retour" : "Back"}</span>
             </button>
 
             <button
@@ -899,7 +907,7 @@ export function AimlyDecisionEngine({
               onClick={handleNextStep}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
             >
-              <span>{isFr ? "Choisir mes Priorités" : "Confirm & Set Priorities"}</span>
+              <span>{isEs ? "Confirmar y Establecer Prioridades" : isFr ? "Choisir mes Priorités" : "Confirm & Set Priorities"}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -914,10 +922,12 @@ export function AimlyDecisionEngine({
         <section className="rounded-2xl sm:rounded-3xl border border-border/80 bg-card p-4 sm:p-8 space-y-4 sm:space-y-6 shadow-xs animate-fadeIn">
           <div className="space-y-1">
             <h2 className="text-lg sm:text-2xl font-black text-foreground tracking-tight">
-              {isFr ? "Que cherchez-vous à protéger en priorité ?" : "What are you trying to protect or achieve?"}
+              {isEs ? "¿Qué busca proteger o lograr como prioridad?" : isFr ? "Que cherchez-vous à protéger en priorité ?" : "What are you trying to protect or achieve?"}
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium">
-              {isFr
+              {isEs
+                ? "El algoritmo utilizará su prioridad para clasificar las opciones y recomendar el mejor compromiso."
+                : isFr
                 ? "L'algorithme utilisera votre priorité pour classer les options et recommander le meilleur compromis."
                 : "Your selected priority is transparently used to rank alternatives and determine the recommended path."}
             </p>
@@ -926,7 +936,7 @@ export function AimlyDecisionEngine({
           {/* Goal selection */}
           <div className="space-y-2">
             <label className="text-xs font-mono uppercase font-bold text-foreground block">
-              {isFr ? "Objectif de vie principal à protéger :" : "Primary Goal Protected:"}
+              {isEs ? "Meta de vida principal a proteger:" : isFr ? "Objectif de vie principal à protéger :" : "Primary Goal Protected:"}
             </label>
             <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 flex items-center justify-between text-xs gap-3">
               <div className="flex items-center gap-3">
@@ -934,12 +944,12 @@ export function AimlyDecisionEngine({
                 <div>
                   <div className="font-bold text-foreground">{canonicalAnalysis.baseline.primaryGoal.title}</div>
                   <div className="text-muted-foreground text-[11px]">
-                    {fmt(canonicalAnalysis.baseline.primaryGoal.currentAmount)} saved of {fmt(canonicalAnalysis.baseline.primaryGoal.targetAmount)} (Deadline: {canonicalAnalysis.baseline.primaryGoal.targetDate})
+                    {fmt(canonicalAnalysis.baseline.primaryGoal.currentAmount)} {isEs ? "ahorrado de" : isFr ? "épargné sur" : "saved of"} {fmt(canonicalAnalysis.baseline.primaryGoal.targetAmount)} ({isEs ? "Límite" : isFr ? "Échéance" : "Deadline"}: {canonicalAnalysis.baseline.primaryGoal.targetDate})
                   </div>
                 </div>
               </div>
               <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-[10px] border border-emerald-500/20 shrink-0">
-                ACTIVE
+                {isEs ? "ACTIVA" : isFr ? "ACTIF" : "ACTIVE"}
               </span>
             </div>
           </div>
@@ -947,30 +957,30 @@ export function AimlyDecisionEngine({
           {/* Priorities Selection */}
           <div className="space-y-2 pt-2 border-t border-border/50">
             <label className="text-xs font-mono uppercase font-bold text-foreground block">
-              {isFr ? "Quel critère compte le plus pour cette décision ?" : "What matters most for this decision?"}
+              {isEs ? "¿Qué criterio tiene más peso en esta decisión?" : isFr ? "Quel critère compte le plus pour cette décision ?" : "What matters most for this decision?"}
             </label>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
               {[
                 {
                   id: "PROTECT_CASH",
-                  label: isFr ? "1. Protéger le matelas de sécurité" : "1. Protecting emergency cash buffer",
-                  desc: isFr ? "Ne jamais descendre sous 3 mois de charges fixes." : "Keep at least 3.0 months of living runway locked.",
+                  label: isEs ? "1. Proteger el colchón de seguridad" : isFr ? "1. Protéger le matelas de sécurité" : "1. Protecting emergency cash buffer",
+                  desc: isEs ? "No descender nunca de 3.0 meses de gastos fijos." : isFr ? "Ne jamais descendre sous 3 mois de charges fixes." : "Keep at least 3.0 months of living runway locked.",
                 },
                 {
                   id: "REACH_GOALS",
-                  label: isFr ? "2. Atteindre mon objectif au plus vite" : "2. Reaching goals on schedule",
-                  desc: isFr ? "Minimiser tout retard sur la date d'arrivée." : "Prevent delays on major destination milestones.",
+                  label: isEs ? "2. Alcanzar mi meta a tiempo" : isFr ? "2. Atteindre mon objectif au plus vite" : "2. Reaching goals on schedule",
+                  desc: isEs ? "Minimizar cualquier retraso en la fecha de llegada." : isFr ? "Minimiser tout retard sur la date d'arrivée." : "Prevent delays on major destination milestones.",
                 },
                 {
                   id: "LOW_MONTHLY",
-                  label: isFr ? "3. Garder des charges mensuelles faibles" : "3. Keeping monthly recurring costs low",
-                  desc: isFr ? "Éviter d'engager le cash-flow libre récurrent." : "Avoid committing free cash flow to monthly debt.",
+                  label: isEs ? "3. Mantener gastos mensuales bajos" : isFr ? "3. Garder des charges mensuelles faibles" : "3. Keeping monthly recurring costs low",
+                  desc: isEs ? "Evitar comprometer el flujo de caja libre recurrente." : isFr ? "Éviter d'engager le cash-flow libre récurrent." : "Avoid committing free cash flow to monthly debt.",
                 },
                 {
                   id: "BUY_SOONER",
-                  label: isFr ? "4. Concrétiser l'achat immédiatement" : "4. Making the purchase as soon as possible",
-                  desc: isFr ? "Privilégier l'utilité immédiate quitte à décaler un objectif." : "Prioritize immediate execution and offset later.",
+                  label: isEs ? "4. Concretar la compra de inmediato" : isFr ? "4. Concrétiser l'achat immédiatement" : "4. Making the purchase as soon as possible",
+                  desc: isEs ? "Priorizar la utilidad inmediata aunque se retrase una meta." : isFr ? "Privilégier l'utilité immédiate quitte à décaler un objectif." : "Prioritize immediate execution and offset later.",
                 },
               ].map((p) => {
                 const isSelected = selectedPriority === p.id;
@@ -1004,7 +1014,7 @@ export function AimlyDecisionEngine({
               className="inline-flex items-center gap-1 px-4 py-3 rounded-xl bg-secondary text-xs font-bold text-foreground cursor-pointer min-h-[44px]"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>{isFr ? "Retour" : "Back"}</span>
+              <span>{isEs ? "Atrás" : isFr ? "Retour" : "Back"}</span>
             </button>
 
             <button
@@ -1013,7 +1023,7 @@ export function AimlyDecisionEngine({
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
             >
               <Sparkles className="w-4 h-4" />
-              <span>{isFr ? "Lancer l'Analyse" : "Analyze My Options"}</span>
+              <span>{isEs ? "Analizar mis Opciones" : isFr ? "Lancer l'Analyse" : "Analyze My Options"}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -1044,11 +1054,17 @@ export function AimlyDecisionEngine({
                 ) : (
                   <XCircle className="w-4 h-4 text-rose-500 shrink-0" />
                 )}
-                <span>{verdict.decision.replace(/_/g, " ")}</span>
+                <span>
+                  {verdict.decision === "RECOMMENDED"
+                    ? isEs ? "RECOMENDADO" : isFr ? "RECOMMANDÉ" : "RECOMMENDED"
+                    : verdict.decision === "PROCEED_WITH_CAUTION"
+                    ? isEs ? "CON PRECAUCIÓN" : isFr ? "AVEC PRUDENCE" : "PROCEED WITH CAUTION"
+                    : isEs ? "NO RECOMENDADO" : isFr ? "NON RECOMMANDÉ" : "NOT RECOMMENDED"}
+                </span>
               </span>
 
               <span className="text-[11px] font-mono text-muted-foreground">
-                Priority: <strong className="text-foreground">{selectedPriority.replace(/_/g, " ")}</strong>
+                {isEs ? "Prioridad:" : isFr ? "Priorité :" : "Priority:"} <strong className="text-foreground">{selectedPriority.replace(/_/g, " ")}</strong>
               </span>
             </div>
 
@@ -1064,34 +1080,34 @@ export function AimlyDecisionEngine({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5">
             <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
               <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-                {isFr ? "CASH APRÈS" : "CASH AFTER"}
+                {isEs ? "CASH DESPUÉS" : isFr ? "CASH APRÈS" : "CASH AFTER"}
               </span>
               <span className="text-lg sm:text-2xl font-black text-foreground font-mono block">
                 {fmt(primaryImpact.postDecisionCash)}
               </span>
               <span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium block truncate">
-                {primaryImpact.deltaCash === 0 ? "0 (No cash drop)" : `-${fmt(Math.abs(primaryImpact.deltaCash))}`}
+                {primaryImpact.deltaCash === 0 ? (isEs ? "0 (Sin salida)" : "0 (No cash drop)") : `-${fmt(Math.abs(primaryImpact.deltaCash))}`}
               </span>
             </div>
 
             <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
               <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-                {isFr ? "MATELAS" : "RUNWAY"}
+                {isEs ? "COLCHÓN" : isFr ? "MATELAS" : "RUNWAY"}
               </span>
               <span className="text-lg sm:text-2xl font-black text-foreground font-mono block">
-                {primaryImpact.postDecisionRunwayMonths} mos
+                {primaryImpact.postDecisionRunwayMonths} {isEs ? "meses" : isFr ? "mois" : "mos"}
               </span>
               <span className="text-[10px] sm:text-[11px] text-amber-600 dark:text-amber-400 font-bold block truncate">
-                {primaryImpact.postDecisionRunwayMonths < 3.0 ? "Below 3.0 floor" : "Safe buffer"}
+                {primaryImpact.postDecisionRunwayMonths < 3.0 ? (isEs ? "Bajo el umbral 3.0" : "Below 3.0 floor") : (isEs ? "Zona segura" : "Safe buffer")}
               </span>
             </div>
 
             <div className="p-3.5 sm:p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 space-y-1">
               <span className="text-[10px] font-mono uppercase text-rose-600 dark:text-rose-400 font-bold block">
-                {isFr ? "IMPACT OBJECTIF" : "GOAL IMPACT"}
+                {isEs ? "IMPACTO EN META" : isFr ? "IMPACT OBJECTIF" : "GOAL IMPACT"}
               </span>
               <span className="text-lg sm:text-2xl font-black text-rose-600 dark:text-rose-400 font-mono block">
-                {primaryImpact.goalStatus === "GOAL_FUNDING_PAUSED" ? "PAUSED" : `+${primaryImpact.goalDelayDays}d`}
+                {primaryImpact.goalStatus === "GOAL_FUNDING_PAUSED" ? (isEs ? "PAUSADO" : "PAUSED") : `+${primaryImpact.goalDelayDays}d`}
               </span>
               <span className="text-[10px] sm:text-[11px] text-rose-600/80 dark:text-rose-400/80 font-medium block truncate">
                 {canonicalAnalysis.baseline.primaryGoal.title}
@@ -1100,13 +1116,13 @@ export function AimlyDecisionEngine({
 
             <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/40 border border-border/70 space-y-1">
               <span className="text-[10px] font-mono uppercase text-muted-foreground font-bold block">
-                {isFr ? "PRESSION FLUX" : "CASH FLOW SHIFT"}
+                {isEs ? "VARIACIÓN FLUJO" : isFr ? "PRESSION FLUX" : "CASH FLOW SHIFT"}
               </span>
               <span className="text-lg sm:text-2xl font-black text-foreground font-mono block">
                 {primaryImpact.deltaFreeCashFlow === 0 ? "0%" : `-${primaryImpact.fcfPercentageShift}%`}
               </span>
               <span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium block truncate">
-                +{fmt(primaryImpact.postDecisionFreeCashFlow)}/mo FCF
+                +{fmt(primaryImpact.postDecisionFreeCashFlow)}{isEs ? "/mes" : isFr ? "/mois" : "/mo"} FCF
               </span>
             </div>
           </div>
@@ -1114,7 +1130,7 @@ export function AimlyDecisionEngine({
           {/* Scenario Alternatives Comparison */}
           <div className="space-y-2.5 sm:space-y-3">
             <span className="text-xs font-mono uppercase tracking-wider text-primary font-bold block">
-              {isFr ? "COMPARAISON DES OPTIONS" : "AIMLY'S CALCULATED SCENARIOS"}
+              {isEs ? "COMPARACIÓN DE ESCENARIOS CALCULADOS" : isFr ? "COMPARAISON DES OPTIONS" : "AIMLY'S CALCULATED SCENARIOS"}
             </span>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-3.5">
@@ -1129,22 +1145,22 @@ export function AimlyDecisionEngine({
                 >
                   <div className="space-y-1.5">
                     <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-background border border-border/80">
-                      {alt.badge} {alt.isRecommended ? "★ BEST" : ""}
+                      {alt.badge} {alt.isRecommended ? (isEs ? "★ ÓPTIMO" : "★ BEST") : ""}
                     </span>
                     <h4 className="text-sm font-bold text-foreground leading-snug">{alt.title}</h4>
                     <p className="text-xs font-bold text-primary">
-                      {alt.goalDelayDays === 0 ? "0 days delay (On track)" : `+${alt.goalDelayDays} days delay`}
+                      {alt.goalDelayDays === 0 ? (isEs ? "0 días de retraso (A tiempo)" : "0 days delay (On track)") : `+${alt.goalDelayDays} ${isEs ? "días de retraso" : "days delay"}`}
                     </p>
                   </div>
 
                   <div className="pt-2 border-t border-border/50 text-[11px] text-muted-foreground space-y-1">
                     <div className="flex justify-between">
-                      <span>Cash after:</span>
+                      <span>{isEs ? "Liquidez después:" : "Cash after:"}</span>
                       <strong className="text-foreground font-mono">{fmt(alt.postDecisionCash)}</strong>
                     </div>
                     <div className="flex justify-between">
-                      <span>Runway:</span>
-                      <strong className="text-foreground font-mono">{alt.postDecisionRunwayMonths} mos</strong>
+                      <span>{isEs ? "Colchón:" : "Runway:"}</span>
+                      <strong className="text-foreground font-mono">{alt.postDecisionRunwayMonths} {isEs ? "meses" : "mos"}</strong>
                     </div>
                   </div>
                 </div>
@@ -1160,7 +1176,7 @@ export function AimlyDecisionEngine({
               className="inline-flex items-center gap-1 px-4 py-3 rounded-xl bg-secondary text-xs font-bold text-foreground cursor-pointer min-h-[44px]"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>{isFr ? "Retour" : "Back"}</span>
+              <span>{isEs ? "Atrás" : isFr ? "Retour" : "Back"}</span>
             </button>
 
             <button
@@ -1169,7 +1185,7 @@ export function AimlyDecisionEngine({
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
             >
               <ShieldCheck className="w-4 h-4" />
-              <span>{isFr ? "Lancer l'Audit de Cohérence" : "Verify Analysis Coherence"}</span>
+              <span>{isEs ? "Verificar Coherencia del Análisis" : isFr ? "Lancer l'Audit de Cohérence" : "Verify Analysis Coherence"}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -1193,23 +1209,25 @@ export function AimlyDecisionEngine({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[11px] sm:text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase">
-                  {verification.status}
+                  {isEs ? (verification.status === "VERIFIED" ? "VERIFICADO" : "CON SUPUESTOS") : verification.status}
                 </span>
                 <span className="text-muted-foreground text-xs">•</span>
                 <span className="text-xs text-muted-foreground font-mono">Score: {verification.overallScore}/100</span>
               </div>
               <h2 className="text-lg sm:text-2xl font-black text-foreground tracking-tight">
                 {verification.status === "VERIFIED"
-                  ? "Analysis 100% Verified"
+                  ? isEs ? "Análisis 100% Verificado" : isFr ? "Analyse 100% Vérifiée" : "Analysis 100% Verified"
                   : verification.status === "VERIFIED WITH ASSUMPTIONS"
-                  ? "Verified with Explicit Assumptions"
-                  : "Analysis Requires Review"}
+                  ? isEs ? "Verificado con Supuestos Explícitos" : isFr ? "Vérifié avec Hypothèses Explicites" : "Verified with Explicit Assumptions"
+                  : isEs ? "El análisis requiere revisión" : isFr ? "Analyse nécessitant une revue" : "Analysis Requires Review"}
               </h2>
             </div>
           </div>
 
           <p className="text-xs sm:text-sm text-muted-foreground">
-            {isFr
+            {isEs
+              ? "Todos los cálculos de amortización, impacto en metas y compensaciones entre escenarios han sido rigurosamente auditados frente a reglas matemáticas deterministas."
+              : isFr
               ? "Toutes les étapes arithmétiques, les scénarios comparatifs et l'alignement temporel ont été rigoureusement certifiés conformes au modèle mathématique."
               : "All cash-flow movements, loan amortizations, goal delays, and scenario tradeoffs have been strictly validated against deterministic rules."}
           </p>
@@ -1224,10 +1242,10 @@ export function AimlyDecisionEngine({
                 <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                 <div className="space-y-0.5">
                   <div className="font-bold text-foreground">
-                    {isFr ? c.nameFr : c.name}
+                    {isEs ? (c as any).nameEs || c.name : isFr ? c.nameFr : c.name}
                   </div>
                   <div className="text-[11px] text-muted-foreground">
-                    {isFr ? c.notesFr : c.notes}
+                    {isEs ? (c as any).notesEs || c.notes : isFr ? c.notesFr : c.notes}
                   </div>
                 </div>
               </div>
@@ -1242,7 +1260,7 @@ export function AimlyDecisionEngine({
               className="inline-flex items-center gap-1 px-4 py-3 rounded-xl bg-secondary text-xs font-bold text-foreground cursor-pointer min-h-[44px]"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>{isFr ? "Retour" : "Back"}</span>
+              <span>{isEs ? "Atrás" : isFr ? "Retour" : "Back"}</span>
             </button>
 
             <button
@@ -1251,7 +1269,7 @@ export function AimlyDecisionEngine({
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer min-h-[48px]"
             >
               <FileDown className="w-4 h-4" />
-              <span>{isFr ? "Voir le Rapport Final" : "See Final Report"}</span>
+              <span>{isEs ? "Ver Informe Final" : isFr ? "Voir le Rapport Final" : "See Final Report"}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -1270,14 +1288,14 @@ export function AimlyDecisionEngine({
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="px-2.5 sm:px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs border border-emerald-500/20">
-                  {verification.status}
+                  {isEs ? (verification.status === "VERIFIED" ? "VERIFICADO" : "CON SUPUESTOS") : verification.status}
                 </span>
                 <span className="text-[11px] sm:text-xs text-muted-foreground font-mono">
                   ID: {verifiedReportData.reportId} • v{verifiedReportData.version}
                 </span>
               </div>
               <h2 className="text-lg sm:text-2xl font-black text-foreground tracking-tight">
-                {isFr ? "Votre Rapport Décisionnel Vérifié est Prêt" : "Your Financial Decision Report is Ready"}
+                {isEs ? "Su Informe Decisional Verificado está Listo" : isFr ? "Votre Rapport Décisionnel Vérifié est Prêt" : "Your Financial Decision Report is Ready"}
               </h2>
             </div>
 
@@ -1289,7 +1307,7 @@ export function AimlyDecisionEngine({
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-orange-500/25 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer shrink-0 min-h-[48px]"
             >
               <FileDown className="w-4 h-4" />
-              <span>{isDownloadingPDF ? (isFr ? "Génération en cours..." : "Generating PDF...") : (isFr ? "Télécharger le Rapport PDF" : "Download Verified PDF Report")}</span>
+              <span>{isDownloadingPDF ? (isEs ? "Generando PDF..." : isFr ? "Génération en cours..." : "Generating PDF...") : (isEs ? "Descargar Informe Verificado (PDF)" : isFr ? "Télécharger le Rapport PDF" : "Download Verified PDF Report")}</span>
             </button>
           </div>
 
@@ -1297,7 +1315,7 @@ export function AimlyDecisionEngine({
           <div className="p-4 sm:p-6 rounded-2xl bg-secondary/40 border border-border/70 space-y-2 sm:space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-mono uppercase tracking-wider text-primary font-bold">
-                {isFr ? "SYNTHÈSE DU VERDICT" : "VERIFIED EXECUTIVE SUMMARY"}
+                {isEs ? "SÍNTESIS DEL VEREDICTO" : isFr ? "SYNTHÈSE DU VERDICT" : "VERIFIED EXECUTIVE SUMMARY"}
               </span>
               <span className="px-2.5 sm:px-3 py-0.5 rounded-full font-mono text-[10px] sm:text-[11px] font-bold border bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30">
                 {verdict.decision.replace(/_/g, " ")}
@@ -1316,39 +1334,39 @@ export function AimlyDecisionEngine({
           {/* Financial Impact Comparison Table (Reconciled) */}
           <div className="space-y-2">
             <span className="text-xs font-mono uppercase font-bold text-muted-foreground block">
-              {isFr ? "Tableau d'Impact Financier Déterministe" : "Deterministic Financial Impact Table"}
+              {isEs ? "Tabla de Impacto Financiero Determinista" : isFr ? "Tableau d'Impact Financier Déterministe" : "Deterministic Financial Impact Table"}
             </span>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 text-xs">
               <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/30 border border-border/60 space-y-1">
-                <span className="text-[10px] font-mono text-muted-foreground block">LIQUID RESERVES</span>
+                <span className="text-[10px] font-mono text-muted-foreground block">{isEs ? "RESERVAS LÍQUIDAS" : isFr ? "RÉSERVES LIQUIDES" : "LIQUID RESERVES"}</span>
                 <span className="text-base sm:text-lg font-black font-mono block">{fmt(primaryImpact.postDecisionCash)}</span>
                 <span className="text-[10px] text-muted-foreground block truncate">
-                  {primaryImpact.deltaCash === 0 ? "0 (No cash outflow)" : `-${fmt(Math.abs(primaryImpact.deltaCash))}`}
+                  {primaryImpact.deltaCash === 0 ? (isEs ? "0 (Sin salida)" : "0 (No cash outflow)") : `-${fmt(Math.abs(primaryImpact.deltaCash))}`}
                 </span>
               </div>
 
               <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/30 border border-border/60 space-y-1">
-                <span className="text-[10px] font-mono text-muted-foreground block">LIVING RUNWAY</span>
-                <span className="text-base sm:text-lg font-black font-mono block">{primaryImpact.postDecisionRunwayMonths} mos</span>
+                <span className="text-[10px] font-mono text-muted-foreground block">{isEs ? "COLCHÓN VITAL" : isFr ? "MATELAS VITAL" : "LIVING RUNWAY"}</span>
+                <span className="text-base sm:text-lg font-black font-mono block">{primaryImpact.postDecisionRunwayMonths} {isEs ? "meses" : isFr ? "mois" : "mos"}</span>
                 <span className="text-[10px] text-amber-600 dark:text-amber-400 block font-bold truncate">
-                  {primaryImpact.postDecisionRunwayMonths < 3.0 ? "Below 3.0 floor" : "Safe buffer"}
+                  {primaryImpact.postDecisionRunwayMonths < 3.0 ? (isEs ? "Bajo el umbral 3.0" : "Below 3.0 floor") : (isEs ? "Zona segura" : "Safe buffer")}
                 </span>
               </div>
 
               <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/30 border border-border/60 space-y-1">
-                <span className="text-[10px] font-mono text-muted-foreground block">GOAL IMPACT</span>
+                <span className="text-[10px] font-mono text-muted-foreground block">{isEs ? "IMPACTO EN META" : isFr ? "IMPACT OBJECTIF" : "GOAL IMPACT"}</span>
                 <span className="text-base sm:text-lg font-black font-mono text-rose-500 block">
-                  {primaryImpact.goalStatus === "GOAL_FUNDING_PAUSED" ? "PAUSED" : `+${primaryImpact.goalDelayDays}d`}
+                  {primaryImpact.goalStatus === "GOAL_FUNDING_PAUSED" ? (isEs ? "PAUSADO" : "PAUSED") : `+${primaryImpact.goalDelayDays}d`}
                 </span>
                 <span className="text-[10px] text-muted-foreground block truncate">{canonicalAnalysis.baseline.primaryGoal.title}</span>
               </div>
 
               <div className="p-3.5 sm:p-4 rounded-2xl bg-secondary/30 border border-border/60 space-y-1">
-                <span className="text-[10px] font-mono text-muted-foreground block">MONTHLY CASH FLOW</span>
-                <span className="text-base sm:text-lg font-black font-mono block">+{fmt(primaryImpact.postDecisionFreeCashFlow)}/mo</span>
+                <span className="text-[10px] font-mono text-muted-foreground block">{isEs ? "FLUJO DE CAJA" : isFr ? "CASH-FLOW LIBRE" : "MONTHLY CASH FLOW"}</span>
+                <span className="text-base sm:text-lg font-black font-mono block">+{fmt(primaryImpact.postDecisionFreeCashFlow)}{isEs ? "/mes" : isFr ? "/mois" : "/mo"}</span>
                 <span className="text-[10px] text-emerald-600 block font-bold truncate">
-                  {primaryImpact.deltaFreeCashFlow === 0 ? "0% shift" : `-${primaryImpact.fcfPercentageShift}%`}
+                  {primaryImpact.deltaFreeCashFlow === 0 ? "0%" : `-${primaryImpact.fcfPercentageShift}%`}
                 </span>
               </div>
             </div>
@@ -1357,7 +1375,7 @@ export function AimlyDecisionEngine({
           {/* Recommended Path Box */}
           <div className="p-4 sm:p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-1.5 sm:space-y-2">
             <span className="text-xs font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-bold block">
-              {isFr ? "PLAN D'ACTION RECOMMANDÉ PAR AIMLY" : "AIMLY'S RECOMMENDED ACTION PATH"}
+              {isEs ? "PLAN DE ACCIÓN RECOMENDADO POR AIMLY" : isFr ? "PLAN D'ACTION RECOMMANDÉ PAR AIMLY" : "AIMLY'S RECOMMENDED ACTION PATH"}
             </span>
             <h4 className="text-sm sm:text-base font-bold text-foreground">
               {canonicalAnalysis.recommendation.recommendedScenarioTitle}
@@ -1380,7 +1398,19 @@ export function AimlyDecisionEngine({
                 }`}
               >
                 <Bookmark className={`w-3.5 h-3.5 ${isSaved ? "fill-emerald-500 text-emerald-500" : ""}`} />
-                <span>{isSaved ? (isFr ? "Décision Sauvegardée" : "Decision Saved") : (isFr ? "Sauvegarder dans le Coffre" : "Save to Vault")}</span>
+                <span>
+                  {isSaved
+                    ? isEs
+                      ? "Decisión Guardada"
+                      : isFr
+                      ? "Décision Sauvegardée"
+                      : "Decision Saved"
+                    : isEs
+                    ? "Guardar en el Cofre"
+                    : isFr
+                    ? "Sauvegarder dans le Coffre"
+                    : "Save to Vault"}
+                </span>
               </button>
 
               <button
@@ -1389,7 +1419,19 @@ export function AimlyDecisionEngine({
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 border border-border text-xs font-bold text-foreground cursor-pointer min-h-[44px]"
               >
                 {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5" />}
-                <span>{copiedLink ? (isFr ? "Lien Copié" : "Link Copied") : (isFr ? "Partager" : "Share")}</span>
+                <span>
+                  {copiedLink
+                    ? isEs
+                      ? "Enlace Copiado"
+                      : isFr
+                      ? "Lien Copié"
+                      : "Link Copied"
+                    : isEs
+                    ? "Compartir"
+                    : isFr
+                    ? "Partager"
+                    : "Share"}
+                </span>
               </button>
 
               <button
@@ -1398,7 +1440,7 @@ export function AimlyDecisionEngine({
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 border border-border text-xs font-bold text-foreground cursor-pointer min-h-[44px]"
               >
                 <SlidersHorizontal className="w-3.5 h-3.5" />
-                <span>{isFr ? "Modifier les Hypothèses (v2)" : "Edit Assumptions (v2)"}</span>
+                <span>{isEs ? "Modificar Supuestos (v2)" : isFr ? "Modifier les Hypothèses (v2)" : "Edit Assumptions (v2)"}</span>
               </button>
             </div>
 
@@ -1407,7 +1449,7 @@ export function AimlyDecisionEngine({
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground text-xs font-bold border border-border transition-all min-h-[44px]"
             >
               <MessageSquare className="w-3.5 h-3.5" />
-              <span>{isFr ? "Demander conseil à Aimly" : "Ask Aimly About Next Moves"}</span>
+              <span>{isEs ? "Consultar con Aimly" : isFr ? "Demander conseil à Aimly" : "Ask Aimly About Next Moves"}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -1417,3 +1459,4 @@ export function AimlyDecisionEngine({
     </div>
   );
 }
+

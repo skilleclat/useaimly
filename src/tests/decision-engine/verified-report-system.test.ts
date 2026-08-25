@@ -170,14 +170,14 @@ describe("Verified Financial Decision Report System", () => {
     expect(pdfBlob.size).toBeGreaterThan(5000);
   });
 
-  // 5. PDF GENERATION: Works in French and Swahili
-  it("generates Verified Decision PDF reports in French and Swahili seamlessly", () => {
+  // 5. PDF GENERATION: Works in French and Spanish
+  it("generates Verified Decision PDF reports in French and Spanish seamlessly", () => {
     const verification = runAimlyCoherenceCheck(mockValidDecisionData);
     const pdfFr = generateVerifiedDecisionReportPDF(mockValidDecisionData, verification, "fr");
-    const pdfSw = generateVerifiedDecisionReportPDF(mockValidDecisionData, verification, "sw");
+    const pdfEs = generateVerifiedDecisionReportPDF(mockValidDecisionData, verification, "es");
 
     expect(pdfFr.getNumberOfPages()).toBeGreaterThanOrEqual(1);
-    expect(pdfSw.getNumberOfPages()).toBeGreaterThanOrEqual(1);
+    expect(pdfEs.getNumberOfPages()).toBeGreaterThanOrEqual(1);
   });
 
   // 6. REPORT VAULT & VERSIONING: Increments report versions without overwriting
