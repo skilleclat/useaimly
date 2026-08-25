@@ -88,6 +88,30 @@ export async function POST(request: NextRequest) {
               updated_at: new Date().toISOString(),
             })
             .eq("external_subscription_id", subscriptionId);
+        } else if (dataObject.customer && isGoodStanding) {
+          // If subscription record was not pre-registered, lookup customer email from Stripe
+          try {
+            const secretKey = (process.env.STRIPE_SECRET_KEY || "").trim();
+            if (secretKey) {
+              const custRes = await fetch(`https://api.stripe.com/v1/customers/${dataObject.customer}`, {
+                headers: { Authorization: `Bearer ${secretKey}` },
+              });
+              const cust = await custRes.json();
+              if (cust?.email) {
+                await syncVerifiedSubscription({
+                  customerEmail: cust.email,
+                  planId,
+                  billingCycle,
+                  subscriptionId,
+                  amountPaid: (dataObject.items?.data?.[0]?.price?.unit_amount || 499) / 100,
+                  currency: (dataObject.currency || "USD").toUpperCase(),
+                  currentPeriodEnd,
+                });
+              }
+            }
+          } catch (e) {
+            console.warn("Webhook customer lookup note:", e);
+          }
         }
         break;
       }

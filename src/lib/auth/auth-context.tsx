@@ -91,11 +91,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = useCallback(async (authUser: User) => {
     const isOwner = authUser.email?.trim().toLowerCase() === "skilleclat@gmail.com";
     try {
+      // 1. Fetch profile record from PostgreSQL
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", authUser.id)
-        .single();
+        .maybeSingle();
+
+      // 2. Query server-authoritative subscription status
+      let verifiedPlanTier: "free" | "pro" | "premium" = isOwner ? "premium" : "free";
+      let verifiedPlanStatus: "active" | "canceled" | "trial" = "active";
+
+      try {
+        const subRes = await fetch("/api/auth/subscription-status", {
+          method: "GET",
+          cache: "no-store",
+        });
+        if (subRes.ok) {
+          const subData = await subRes.json();
+          if (subData.success && subData.planTier) {
+            verifiedPlanTier = isOwner ? "premium" : subData.planTier;
+            verifiedPlanStatus = subData.planStatus || "active";
+          }
+        }
+      } catch (subErr) {
+        console.warn("Subscription status verification note:", subErr);
+      }
 
       if (data && !error) {
         const effectiveName =
@@ -103,13 +124,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             ? data.full_name
             : getUserDisplayName(authUser, null);
 
-        const effectiveTier = isOwner ? "premium" : (data.plan_tier || "free");
+        // Server authoritative tier takes precedence over stale cached state
+        const effectiveTier = isOwner
+          ? "premium"
+          : verifiedPlanTier !== "free"
+          ? verifiedPlanTier
+          : (data.plan_tier || "free");
 
         setProfile({
           ...data,
           full_name: effectiveName,
           plan_tier: effectiveTier,
-          plan_status: "active",
+          plan_status: verifiedPlanStatus,
         });
 
         // Automatically sync owner status in Supabase if not already premium
@@ -129,13 +155,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // If profile record does not exist in Supabase yet, create fallback & upsert
       const fallback = buildFallbackProfile(authUser);
+      fallback.plan_tier = verifiedPlanTier;
       setProfile(fallback);
 
       await (supabase.from("profiles") as any).upsert({
         id: authUser.id,
         full_name: fallback.full_name,
         preferred_currency: fallback.preferred_currency,
-        plan_tier: isOwner ? "premium" : fallback.plan_tier,
+        plan_tier: isOwner ? "premium" : verifiedPlanTier,
         plan_status: "active",
         onboarding_completed: true,
       });
@@ -146,7 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       }
     } catch (e) {
-      console.warn("Failed to fetch profile, using metadata fallback:", e);
+      console.warn("Failed to fetch profile, using fallback:", e);
       setProfile(buildFallbackProfile(authUser));
     }
   }, [supabase, buildFallbackProfile]);

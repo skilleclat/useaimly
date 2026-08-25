@@ -41,10 +41,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(mpesaResult);
     }
 
+    // Resolve authenticated user session if available
+    let authUserId = body.userId;
+    let authEmail = customerEmail;
+
+    try {
+      const { createClient } = await import("@/lib/supabase/server");
+      const supabase = await createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        authUserId = user.id;
+        authEmail = user.email || customerEmail;
+      }
+    } catch {
+      // Unauthenticated checkout or guest flow
+    }
+
     // Default to Stripe Checkout Session
     const stripeResult = await createStripeCheckoutSession({
       planId,
       billingCycle,
+      userId: authUserId,
+      customerEmail: authEmail,
     });
 
     return NextResponse.json(stripeResult);

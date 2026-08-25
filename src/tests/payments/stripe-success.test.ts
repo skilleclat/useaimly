@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { verifyStripeSession, createStripeCheckoutSession } from "@/lib/payments/stripe-service";
+import {
+  verifyStripeSession,
+  createStripeCheckoutSession,
+  reconcileUserSubscription,
+  findUserIdByEmail,
+  syncVerifiedSubscription,
+} from "@/lib/payments/stripe-service";
 
 describe("Stripe Checkout and Verification Suite", () => {
   it("generates a valid Stripe checkout session request object with correct success URL", async () => {
@@ -7,6 +13,7 @@ describe("Stripe Checkout and Verification Suite", () => {
       planId: "pro",
       billingCycle: "MONTHLY",
       customerEmail: "investor@useaimly.com",
+      userId: "user-123-uuid",
     });
 
     expect(result.success).toBe(true);
@@ -30,5 +37,25 @@ describe("Stripe Checkout and Verification Suite", () => {
 
     expect(verification.isValid).toBe(false);
     expect(verification.status).toBe("failed");
+  });
+
+  it("reconciles owner account to premium across any browser", async () => {
+    const status = await reconcileUserSubscription("owner-user-id", "skilleclat@gmail.com");
+
+    expect(status.planTier).toBe("premium");
+    expect(status.planStatus).toBe("active");
+    expect(status.hasActiveSubscription).toBe(true);
+  });
+
+  it("returns free for unauthenticated or non-subscribed user", async () => {
+    const status = await reconcileUserSubscription("unpaid-user-uuid", "unpaid@example.com");
+
+    expect(status.planTier).toBe("free");
+    expect(status.hasActiveSubscription).toBe(false);
+  });
+
+  it("safely handles invalid email lookups without throwing", async () => {
+    const userId = await findUserIdByEmail("invalid-email-format");
+    expect(userId).toBeNull();
   });
 });
