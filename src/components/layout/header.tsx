@@ -91,22 +91,22 @@ export function Header() {
           </Link>
 
           {user ? (
-            <div className="flex items-center gap-3">
+            <div className="relative flex items-center gap-2 sm:gap-3">
               <Link
                 href="/app"
-                className="inline-flex items-center gap-1.5 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground border border-border font-bold text-xs lg:text-sm px-4 py-2 lg:px-4.5 lg:py-2.5 shadow-2xs transition-all"
+                className="hidden xs:inline-flex items-center gap-1.5 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground border border-border font-bold text-xs lg:text-sm px-3.5 sm:px-4 py-2 lg:px-4.5 lg:py-2.5 shadow-2xs transition-all"
               >
                 <span>Dashboard</span>
               </Link>
 
-              {/* User Avatar Pill */}
+              {/* User Avatar & Dropdown Trigger */}
               <button
                 type="button"
-                onClick={() => setIsProfileModalOpen(true)}
-                className="w-10 h-10 rounded-full bg-foreground text-background flex items-center justify-center shadow-md hover:scale-105 transition-transform cursor-pointer"
+                onClick={() => setIsProfileModalOpen(!isProfileModalOpen)}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-[#FF6B4A] via-[#FF5533] to-[#FF3820] text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-md hover:scale-105 transition-transform cursor-pointer"
                 title="Account Settings & Profile"
               >
-                <User className="w-4 h-4 text-background" />
+                {displayName ? displayName.charAt(0).toUpperCase() : <User className="w-4 h-4 text-white" />}
               </button>
             </div>
           ) : (

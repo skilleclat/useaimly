@@ -154,16 +154,25 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 overflow-y-auto overscroll-contain font-sans"
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 font-sans"
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: "100vw",
+        height: "100dvh",
+      }}
     >
       {/* Dark Blurred Backdrop */}
       <div
-        className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity animate-fadeIn"
+        className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity animate-fadeIn cursor-pointer"
         onClick={onClose}
       />
 
       {/* Modal Dialog Card */}
-      <div className="relative w-full max-w-md bg-[#16161A] text-white border border-white/10 rounded-3xl p-4 sm:p-5 shadow-2xl z-10 flex flex-col max-h-[88vh] overflow-hidden my-auto animate-scaleUp">
+      <div className="relative w-full max-w-md bg-[#16161A] text-white border border-white/10 rounded-3xl p-4 sm:p-5 shadow-2xl z-10 flex flex-col max-h-[85dvh] overflow-hidden animate-scaleUp">
         {/* 1. Header (Avatar, Name, Plan, Close) */}
         <div className="flex items-center justify-between pb-3 border-b border-white/10 shrink-0 gap-2">
           <div className="flex items-center gap-3 min-w-0">
