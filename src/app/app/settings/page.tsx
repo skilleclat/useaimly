@@ -26,6 +26,8 @@ import {
   ArrowRight,
   Sparkles,
   Smartphone,
+  LogOut,
+  Loader2,
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -33,7 +35,7 @@ export default function SettingsPage() {
   const paymentSuccessParam = searchParams.get("payment_success");
   const planParam = searchParams.get("plan");
 
-  const { user, profile, displayName, refreshProfile } = useAuth();
+  const { user, profile, displayName, refreshProfile, signOut } = useAuth();
   const { language, setLanguage } = useI18n();
   const { currency, setCurrency } = useCurrency();
   const [preferredCurrency, setPreferredCurrency] = useState<CurrencyCode>(currency);
@@ -55,6 +57,7 @@ export default function SettingsPage() {
   const [adminPasscode, setAdminPasscode] = useState("");
   const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
   const [passcodeError, setPasscodeError] = useState<string | null>(null);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleVerifyPasscode = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -551,6 +554,42 @@ export default function SettingsPage() {
           monthlyGoalCapacity={68000}
           currency={preferredCurrency}
         />
+
+        {/* 6. ACCOUNT SESSION & LOGOUT */}
+        <div className="rounded-3xl border border-border/80 bg-card p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-extrabold text-foreground flex items-center gap-2">
+                <Shield className="w-4 h-4 text-primary" />
+                <span>{language === "fr" ? "Sécurité & Session Active" : "Account Session & Security"}</span>
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5 font-mono">
+                {user?.email || "Current active session"}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              disabled={isSigningOut}
+              onClick={async () => {
+                setIsSigningOut(true);
+                await signOut();
+              }}
+              className="inline-flex items-center gap-2 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-2.5 text-xs font-bold text-rose-500 hover:bg-rose-500/20 transition-all cursor-pointer disabled:opacity-50"
+            >
+              {isSigningOut ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <LogOut className="w-3.5 h-3.5" />
+              )}
+              <span>
+                {isSigningOut
+                  ? (language === "fr" ? "Déconnexion..." : "Signing out...")
+                  : (language === "fr" ? "Se Déconnecter" : "Sign Out")}
+              </span>
+            </button>
+          </div>
+        </div>
 
         {/* Save Button */}
         <div className="flex justify-end pt-2">

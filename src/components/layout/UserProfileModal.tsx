@@ -36,6 +36,7 @@ import {
   Save,
   Check,
   Globe,
+  Loader2,
 } from "lucide-react";
 
 interface UserProfileModalProps {
@@ -63,6 +64,7 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
   const [isDeletingField, setIsDeletingField] = useState(false);
   const [isSwitchingTier, setIsSwitchingTier] = useState(false);
   const [tierMsg, setTierMsg] = useState<string | null>(null);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleSwitchPlanTier = async (targetTier: PlanTier) => {
     setIsSwitchingTier(true);
@@ -615,17 +617,26 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
             </Link>
           </div>
 
-          {user && (
+          {(user || profile) && (
             <button
               type="button"
-              onClick={() => {
-                onClose();
-                signOut();
+              disabled={isSigningOut}
+              onClick={async () => {
+                setIsSigningOut(true);
+                try {
+                  await signOut();
+                } finally {
+                  onClose();
+                }
               }}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-xs font-bold text-rose-500 hover:bg-rose-500/20 transition-colors"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-xs font-bold text-rose-500 hover:bg-rose-500/20 transition-colors cursor-pointer disabled:opacity-50"
             >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>{t("navSignOut")}</span>
+              {isSigningOut ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <LogOut className="w-3.5 h-3.5" />
+              )}
+              <span>{isSigningOut ? (language === "fr" ? "Déconnexion..." : "Signing out...") : (t("navSignOut") || "Sign Out")}</span>
             </button>
           )}
         </div>

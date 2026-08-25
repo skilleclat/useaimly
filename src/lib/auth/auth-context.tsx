@@ -201,15 +201,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase, buildFallbackProfile, fetchProfile]);
 
   const signOut = async () => {
+    setIsLoading(true);
+
     try {
-      await supabase.auth.signOut();
+      // 1. Clear Supabase browser client session
+      await supabase.auth.signOut({ scope: "local" }).catch(() => {});
+      await supabase.auth.signOut().catch(() => {});
     } catch (e) {
-      console.warn("Sign out error:", e);
+      console.warn("Client signOut error:", e);
     }
+
+    // 2. Call server-side logout route handler to clear SSR cookies
+    try {
+      await fetch("/api/auth/signout", { method: "POST" }).catch(() => {});
+    } catch (e) {
+      console.warn("Server signOut API error:", e);
+    }
+
+    // 3. Clear local storage & session storage tokens
+    try {
+      if (typeof window !== "undefined") {
+        Object.keys(localStorage).forEach((key) => {
+          if (
+            key.includes("supabase") ||
+            key.includes("sb-") ||
+            key.includes("aimly") ||
+            key.includes("auth") ||
+            key.includes("user")
+          ) {
+            localStorage.removeItem(key);
+          }
+        });
+        sessionStorage.clear();
+      }
+    } catch (e) {
+      console.warn("Storage clear error:", e);
+    }
+
+    // 4. Reset React state
     setUser(null);
     setProfile(null);
-    router.push("/");
-    router.refresh();
+
+    // 5. Hard browser reload to /login ensuring all in-memory caches are wiped
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
+    } else {
+      router.push("/login");
+    }
   };
 
   const refreshProfile = async () => {
