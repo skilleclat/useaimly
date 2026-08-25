@@ -186,20 +186,17 @@ export async function createStripeCheckoutSession(
     }
   }
 
-  // 3. Fallback demo/test session for development environments
-  const mockSessionId = `cs_test_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-  const checkoutUrl = `${appUrl}/payment-success?session_id=${mockSessionId}&plan=${req.planId}&cycle=${req.billingCycle}`;
-
+  // 3. If neither STRIPE_SECRET_KEY nor STRIPE_PAYMENT_LINK is configured, fail safely with explicit error
   return {
-    success: true,
-    checkoutUrl,
-    sessionId: mockSessionId,
-    message: `Initialized Stripe checkout for ${req.planId.toUpperCase()} (${req.billingCycle})`,
+    success: false,
+    error: "Stripe payment gateway is not configured. Please add STRIPE_SECRET_KEY or STRIPE_PAYMENT_LINK_PRO to .env.local to enable card checkout.",
+    message: "Stripe configuration missing",
   };
 }
 
 /**
  * Securely verifies a Stripe Checkout Session on the server side.
+ * MUST verify against real Stripe API. Never grants PRO without verified payment.
  */
 export async function verifyStripeSession(
   sessionId: string,
@@ -223,8 +220,8 @@ export async function verifyStripeSession(
 
   const cleanSessionId = sessionId.trim();
 
-  // 1. If real Stripe Secret Key exists, verify against Stripe API
-  if (secretKey && !cleanSessionId.startsWith("cs_mock_")) {
+  // If real Stripe Secret Key exists, verify against Stripe API
+  if (secretKey) {
     try {
       const res = await fetch(
         `${STRIPE_API_BASE}/checkout/sessions/${encodeURIComponent(cleanSessionId)}?expand[]=subscription&expand[]=customer`,
@@ -302,35 +299,7 @@ export async function verifyStripeSession(
     }
   }
 
-  // 2. Fallback verification for test / demo environments with valid prefix
-  if (cleanSessionId.startsWith("cs_test_") || cleanSessionId.startsWith("cs_mock_") || cleanSessionId.startsWith("demo_")) {
-    const planId: "pro" | "premium" = cleanSessionId.includes("premium") ? "premium" : "pro";
-    const billingCycle: "MONTHLY" | "ANNUAL" = cleanSessionId.includes("annual") ? "ANNUAL" : "MONTHLY";
-
-    if (currentUserId) {
-      await syncVerifiedSubscription({
-        userId: currentUserId,
-        planId,
-        billingCycle,
-        subscriptionId: cleanSessionId,
-        amountPaid: billingCycle === "ANNUAL" ? 39.00 : 4.99,
-        currency: "USD",
-        supabaseClient,
-      });
-    }
-
-    return {
-      isValid: true,
-      status: "active",
-      sessionId: cleanSessionId,
-      planId,
-      billingCycle,
-      amountPaid: billingCycle === "ANNUAL" ? 39.00 : 4.99,
-      currency: "USD",
-      userId: currentUserId || undefined,
-    };
-  }
-
+  // Without verified Stripe API payment confirmation, session is failed
   return {
     isValid: false,
     status: "failed",

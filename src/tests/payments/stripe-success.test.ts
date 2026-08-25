@@ -10,7 +10,7 @@ import {
 import { isUserProOrHigher } from "@/lib/auth/plan-permissions";
 
 describe("Stripe Checkout, Cross-Browser Persistence & Security Suite", () => {
-  it("generates a valid Stripe checkout session with client_reference_id and metadata.userId", async () => {
+  it("fails safely if Stripe is unconfigured and never generates fake success URLs", async () => {
     const result = await createStripeCheckoutSession({
       planId: "pro",
       billingCycle: "MONTHLY",
@@ -18,20 +18,21 @@ describe("Stripe Checkout, Cross-Browser Persistence & Security Suite", () => {
       userId: "user-123-uuid",
     });
 
-    expect(result.success).toBe(true);
-    expect(result.sessionId).toBeDefined();
-    expect(result.checkoutUrl).toContain("/payment-success");
+    // Without secret key or payment link, fails safely with clear message
+    if (!process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_PAYMENT_LINK_PRO) {
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Stripe");
+      expect(result.checkoutUrl).toBeUndefined();
+    }
   });
 
-  it("verifies a valid test checkout session and returns active status", async () => {
+  it("SECURITY TEST: rejects unverified or mock session IDs when unconfirmed by Stripe API", async () => {
     const mockSessionId = "cs_test_mock_123456789";
     const verification = await verifyStripeSession(mockSessionId, "test-user-id");
 
-    expect(verification.isValid).toBe(true);
-    expect(verification.status).toBe("active");
-    expect(verification.planId).toBe("pro");
-    expect(verification.amountPaid).toBe(4.99);
-    expect(verification.currency).toBe("USD");
+    // Must be rejected without verified Stripe API confirmation
+    expect(verification.isValid).toBe(false);
+    expect(verification.status).toBe("failed");
   });
 
   it("SECURITY TEST 7: rejects empty or unverified session IDs and never grants Pro", async () => {
