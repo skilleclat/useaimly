@@ -59,12 +59,35 @@ function LoginForm() {
   const onSubmit = (data: LoginInput) => {
     setServerError(null);
     startTransition(async () => {
-      const result = await loginAction(data);
-      if (!result.success) {
-        setServerError(result.message || "Failed to log in.");
-      } else if (result.redirectTo) {
-        router.push(result.redirectTo);
-        router.refresh();
+      try {
+        // 1. Run server login action
+        const result = await loginAction(data);
+        if (!result.success) {
+          setServerError(result.message || "Failed to log in.");
+          return;
+        }
+
+        // 2. Synchronize Supabase browser client
+        try {
+          const { createClient } = await import("@/lib/supabase/client");
+          const supabase = createClient();
+          await supabase.auth.signInWithPassword({
+            email: data.email,
+            password: data.password,
+          });
+        } catch {
+          // Server cookies are already set by loginAction
+        }
+
+        // 3. Reliable hard navigation to target route (guarantees session hydration on mobile)
+        const targetUrl = result.redirectTo || "/app";
+        if (typeof window !== "undefined") {
+          window.location.href = targetUrl;
+        } else {
+          router.push(targetUrl);
+        }
+      } catch (err: any) {
+        setServerError(err?.message || "An unexpected login error occurred.");
       }
     });
   };

@@ -164,14 +164,62 @@ export function Header() {
           </div>
 
           <div className="pt-3 border-t border-border flex flex-col gap-2">
-            <Link
-              href={user ? "/app" : "/signup"}
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] py-2.5 text-xs font-bold text-white shadow-xs"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>{user ? "Go to App" : t("navGetStarted")}</span>
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  href="/app"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] py-2.5 text-xs font-bold text-white shadow-xs"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>{isFr ? "Accéder au Dashboard" : "Go to Dashboard"}</span>
+                </Link>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setIsProfileModalOpen(true);
+                    }}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-secondary/60 py-2 text-xs font-bold text-foreground hover:bg-secondary transition-all cursor-pointer"
+                  >
+                    <User className="w-3.5 h-3.5" />
+                    <span>{isFr ? "Mon Profil" : "My Profile"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setMobileMenuOpen(false);
+                      await signOut();
+                    }}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 py-2 text-xs font-bold text-rose-500 hover:bg-rose-500/20 transition-all cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>{t("navSignOut") || (isFr ? "Déconnexion" : "Sign Out")}</span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="inline-flex items-center justify-center rounded-xl border border-border bg-secondary/50 py-2.5 text-xs font-bold text-foreground hover:bg-secondary"
+                >
+                  <span>{t("navSignIn")}</span>
+                </Link>
+                <Link
+                  href="/signup"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="inline-flex items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] py-2.5 text-xs font-bold text-white shadow-xs"
+                >
+                  <span>{t("navGetStarted")}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}
