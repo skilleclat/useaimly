@@ -464,42 +464,49 @@ export async function reconcileUserSubscription(
   const secretKey = (process.env.STRIPE_SECRET_KEY || "").trim();
   if (secretKey && userEmail && userEmail.includes("@")) {
     try {
-      const res = await fetch(
-        `${STRIPE_API_BASE}/customers?email=${encodeURIComponent(userEmail.trim())}&expand[]=data.subscriptions`,
-        {
-          headers: { Authorization: `Bearer ${secretKey}` },
-        }
-      );
+      const emailsToTest = [
+        userEmail.trim().toLowerCase(),
+        userEmail.trim(),
+      ];
 
-      const customerData = await res.json();
-      if (res.ok && customerData.data && customerData.data.length > 0) {
-        for (const customer of customerData.data) {
-          const subs = customer.subscriptions?.data || [];
-          const activeSub = subs.find(
-            (s: any) => s.status === "active" || s.status === "trialing"
-          );
+      for (const testEmail of Array.from(new Set(emailsToTest))) {
+        const res = await fetch(
+          `${STRIPE_API_BASE}/customers?email=${encodeURIComponent(testEmail)}&expand[]=data.subscriptions`,
+          {
+            headers: { Authorization: `Bearer ${secretKey}` },
+          }
+        );
 
-          if (activeSub) {
-            const planId = activeSub.items?.data?.[0]?.price?.product === "premium" ? "premium" : "pro";
-            const interval = activeSub.items?.data?.[0]?.price?.recurring?.interval === "year" ? "ANNUAL" : "MONTHLY";
-            const amountPaid = (activeSub.items?.data?.[0]?.price?.unit_amount || 499) / 100;
-            const currency = (activeSub.currency || "USD").toUpperCase();
-            const currentPeriodEnd = activeSub.current_period_end
-              ? new Date(activeSub.current_period_end * 1000).toISOString()
-              : undefined;
+        const customerData = await res.json();
+        if (res.ok && customerData.data && customerData.data.length > 0) {
+          for (const customer of customerData.data) {
+            const subs = customer.subscriptions?.data || [];
+            const activeSub = subs.find(
+              (s: any) => s.status === "active" || s.status === "trialing"
+            );
 
-            await syncVerifiedSubscription({
-              userId,
-              customerEmail: userEmail,
-              planId,
-              billingCycle: interval,
-              subscriptionId: activeSub.id,
-              amountPaid,
-              currency,
-              currentPeriodEnd,
-            });
+            if (activeSub) {
+              const planId = activeSub.items?.data?.[0]?.price?.product === "premium" ? "premium" : "pro";
+              const interval = activeSub.items?.data?.[0]?.price?.recurring?.interval === "year" ? "ANNUAL" : "MONTHLY";
+              const amountPaid = (activeSub.items?.data?.[0]?.price?.unit_amount || 499) / 100;
+              const currency = (activeSub.currency || "USD").toUpperCase();
+              const currentPeriodEnd = activeSub.current_period_end
+                ? new Date(activeSub.current_period_end * 1000).toISOString()
+                : undefined;
 
-            return { planTier: planId, planStatus: "active", hasActiveSubscription: true };
+              await syncVerifiedSubscription({
+                userId,
+                customerEmail: testEmail,
+                planId,
+                billingCycle: interval,
+                subscriptionId: activeSub.id,
+                amountPaid,
+                currency,
+                currentPeriodEnd,
+              });
+
+              return { planTier: planId, planStatus: "active", hasActiveSubscription: true };
+            }
           }
         }
       }

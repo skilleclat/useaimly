@@ -61,6 +61,7 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
   const [isSwitchingTier, setIsSwitchingTier] = useState(false);
   const [tierMsg, setTierMsg] = useState<string | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isSyncingPlan, setIsSyncingPlan] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -69,13 +70,25 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
+      // Auto-reconcile subscription on open
+      refreshProfile().catch(() => {});
     } else {
       document.body.style.overflow = "";
     }
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isOpen]);
+  }, [isOpen, refreshProfile]);
+
+  const handleSyncSubscription = async () => {
+    setIsSyncingPlan(true);
+    try {
+      await refreshProfile();
+    } catch {}
+    finally {
+      setIsSyncingPlan(false);
+    }
+  };
 
   useEffect(() => {
     if (displayName && displayName !== "Strategist") {
@@ -232,7 +245,7 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
   ];
 
   return createPortal(
-    <div className="fixed inset-0 z-[99999] flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 md:p-6 overflow-hidden font-sans">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-5 md:p-6 overflow-hidden font-sans">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity"
@@ -240,10 +253,7 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
       />
 
       {/* Modal Container */}
-      <div className="relative w-full max-w-2xl bg-card border-t sm:border border-border/80 rounded-t-[28px] sm:rounded-3xl p-4 sm:p-6 shadow-2xl z-10 flex flex-col h-[85dvh] max-h-[85dvh] sm:h-auto sm:max-h-[85vh] transition-all">
-        {/* Mobile Drag Indicator */}
-        <div className="w-12 h-1.5 bg-muted-foreground/30 rounded-full mx-auto -mt-1 mb-2.5 sm:hidden shrink-0" />
-
+      <div className="relative w-full max-w-lg bg-card border border-border/80 rounded-3xl p-4 sm:p-6 shadow-2xl z-10 flex flex-col max-h-[88dvh] sm:max-h-[85vh] transition-all animate-fadeIn">
         {/* 1. Header Bar (Pinned top - shrink-0) */}
         <div className="flex items-center justify-between border-b border-border/60 pb-3 shrink-0 gap-2">
           <div className="flex items-center gap-3 min-w-0">
@@ -252,18 +262,29 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-sm sm:text-base font-bold font-editorial text-foreground tracking-tight truncate max-w-[140px] sm:max-w-[240px]">
+                <h3 className="text-sm sm:text-base font-bold font-editorial text-foreground tracking-tight truncate max-w-[140px] sm:max-w-[220px]">
                   {displayName}
                 </h3>
-                <span className="rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-extrabold px-2 py-0.5 border border-emerald-500/30 uppercase shrink-0">
-                  {profile?.plan_tier === "premium"
-                    ? "Elite"
-                    : profile?.plan_tier === "pro"
-                    ? "Aimly Pro"
-                    : user
-                    ? "Free"
-                    : "Live Demo"}
-                </span>
+                <button
+                  type="button"
+                  onClick={handleSyncSubscription}
+                  disabled={isSyncingPlan}
+                  className="rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-extrabold px-2.5 py-0.5 border border-emerald-500/30 uppercase shrink-0 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                  title="Click to refresh subscription status"
+                >
+                  {isSyncingPlan ? (
+                    <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                  ) : null}
+                  <span>
+                    {profile?.plan_tier === "premium"
+                      ? "Elite"
+                      : profile?.plan_tier === "pro"
+                      ? "Aimly Pro"
+                      : user
+                      ? "Free"
+                      : "Live Demo"}
+                  </span>
+                </button>
               </div>
               <p className="text-[11px] text-muted-foreground font-mono truncate mt-0.5">
                 {username} • {emailInput} • {preferredCurrency}
