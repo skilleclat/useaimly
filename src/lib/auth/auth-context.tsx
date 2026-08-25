@@ -77,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       id: authUser.id,
       full_name: userFullName,
       avatar_url: authUser.user_metadata?.avatar_url || null,
-      preferred_currency: authUser.user_metadata?.preferred_currency || "KES",
+      preferred_currency: authUser.user_metadata?.preferred_currency || "USD",
       timezone: "Africa/Nairobi",
       locale: "en",
       onboarding_completed: true,
@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = useCallback(async (authUser: User) => {
     const isOwner = authUser.email?.trim().toLowerCase() === "skilleclat@gmail.com";
     try {
-      // 1. Fetch profile record from PostgreSQL
+      // 1. Fetch profile record from PostgreSQL for this exact user ID
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -109,7 +109,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         if (subRes.ok) {
           const subData = await subRes.json();
-          if (subData.success && subData.planTier) {
+          // STRICT SECURITY: Only accept subscription status if the returned user ID matches the active user ID
+          if (subData.success && subData.planTier && (!subData.userId || subData.userId === authUser.id)) {
             verifiedPlanTier = isOwner ? "premium" : subData.planTier;
             verifiedPlanStatus = subData.planStatus || "active";
           }
@@ -183,21 +184,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        // Authoritative user check via getUser() against Supabase Auth server
+        const { data: { user: currentUser }, error } = await supabase.auth.getUser();
         if (!isMounted) return;
 
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-
-        if (currentUser) {
-          // Immediately set a truthful metadata-based profile to prevent flashing demo names
+        if (currentUser && !error) {
+          setUser(currentUser);
           setProfile(buildFallbackProfile(currentUser));
           await fetchProfile(currentUser);
         } else {
+          setUser(null);
           setProfile(null);
         }
       } catch (err) {
-        console.warn("Session check error:", err);
+        console.warn("User validation error:", err);
+        if (isMounted) {
+          setUser(null);
+          setProfile(null);
+        }
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -208,15 +212,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!isMounted) return;
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
 
-        if (currentUser) {
-          setProfile(buildFallbackProfile(currentUser));
-          await fetchProfile(currentUser);
-        } else {
+        if (event === "SIGNED_OUT" || !session?.user) {
+          setUser(null);
           setProfile(null);
+          setIsLoading(false);
+          return;
         }
+
+        const currentUser = session.user;
+        setUser(currentUser);
+        setProfile(buildFallbackProfile(currentUser));
+        await fetchProfile(currentUser);
         setIsLoading(false);
       }
     );
@@ -230,11 +237,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     setIsLoading(true);
 
-    // 1. Immediately reset React state
+    // 1. Immediately reset React state to eradicate any stale profile in memory
     setUser(null);
     setProfile(null);
 
-    // 2. Synchronously clear client local storage & session storage tokens
+    // 2. Synchronously clear all application storage
     try {
       if (typeof window !== "undefined") {
         Object.keys(localStorage).forEach((key) => {
@@ -254,17 +261,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.warn("Storage clear error:", e);
     }
 
-    // 3. Fire client & server session invalidation in parallel without blocking UI
+    // 3. Invalidate Supabase session globally and clear server cookies
     try {
       await Promise.allSettled([
-        supabase.auth.signOut({ scope: "local" }).catch(() => {}),
-        fetch("/api/auth/signout", { method: "POST", keepalive: true }).catch(() => {}),
+        supabase.auth.signOut(),
+        fetch("/api/auth/signout", { method: "POST", keepalive: true }),
       ]);
     } catch {
       // Non-blocking
     }
 
-    // 4. Hard browser redirect to /login
+    // 4. Force hard navigation to /login to ensure clean state across whole app
     if (typeof window !== "undefined") {
       window.location.href = "/login";
     } else {

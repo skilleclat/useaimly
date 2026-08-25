@@ -5,12 +5,11 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
-    // Fast local signOut on server client without blocking on slow remote global invalidate
     try {
       const supabase = await createClient();
-      supabase.auth.signOut({ scope: "local" }).catch(() => {});
-    } catch {
-      // Ignore
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.warn("Server auth.signOut note:", e);
     }
 
     const response = NextResponse.json({
@@ -18,29 +17,21 @@ export async function POST(request: NextRequest) {
       message: "Signed out successfully",
     });
 
-    // 1. Clear all cookies currently present on request that relate to Supabase / Auth
+    // 1. Clear all cookies currently present on request
     const allCookies = request.cookies.getAll();
     allCookies.forEach((cookie) => {
-      const name = cookie.name.toLowerCase();
-      if (
-        name.startsWith("sb-") ||
-        name.includes("auth") ||
-        name.includes("supabase") ||
-        name.includes("token")
-      ) {
-        response.cookies.set(cookie.name, "", {
-          maxAge: 0,
-          path: "/",
-          expires: new Date(0),
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-        });
-        response.cookies.delete(cookie.name);
-      }
+      response.cookies.set(cookie.name, "", {
+        maxAge: 0,
+        path: "/",
+        expires: new Date(0),
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+      });
+      response.cookies.delete(cookie.name);
     });
 
-    // 2. Also proactively expire standard Supabase and app auth cookies
+    // 2. Proactively delete all standard Supabase cookie variations
     const explicitCookieNames = [
       "sb-access-token",
       "sb-refresh-token",

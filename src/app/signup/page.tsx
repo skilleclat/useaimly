@@ -43,16 +43,6 @@ function SignupFormContent() {
 
   const [checkoutModalPlan, setCheckoutModalPlan] = useState<PricingPlan | null>(null);
 
-  useEffect(() => {
-    // If user is already logged in, redirect immediately to payment checkout on pricing page
-    const isLoggedIn = Boolean(user || (profile && profile.id !== "demo-user-id"));
-    if (isLoggedIn) {
-      if (typeof window !== "undefined") {
-        window.location.replace(`/pricing?plan=${selectedPlan}`);
-      }
-    }
-  }, [user, profile, selectedPlan]);
-
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);

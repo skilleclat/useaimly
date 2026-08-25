@@ -332,7 +332,7 @@ export async function verifyStripeSession(
 }
 
 /**
- * Finds a Supabase user ID by email address using Admin API.
+ * Finds a Supabase user ID by email address using Admin API and profiles table queries.
  */
 export async function findUserIdByEmail(email?: string): Promise<string | null> {
   if (!email || !email.includes("@")) return null;
@@ -340,19 +340,37 @@ export async function findUserIdByEmail(email?: string): Promise<string | null> 
 
   try {
     const supabase = createAdminClient();
-    const { data: userList, error } = await supabase.auth.admin.listUsers({
-      page: 1,
-      perPage: 100,
-    });
 
-    if (!error && userList?.users) {
-      const match = userList.users.find(
-        (u) => u.email?.trim().toLowerCase() === normalizedEmail
-      );
-      if (match?.id) return match.id;
+    // 1. Check profiles table directly by email
+    try {
+      const { data: prof } = await (supabase.from("profiles") as any)
+        .select("id")
+        .ilike("email", normalizedEmail)
+        .maybeSingle();
+
+      if (prof?.id) return prof.id;
+    } catch {
+      // profiles column lookup non-blocking
+    }
+
+    // 2. Query Auth admin user list
+    try {
+      const { data: userList, error } = await supabase.auth.admin.listUsers({
+        page: 1,
+        perPage: 100,
+      });
+
+      if (!error && userList?.users) {
+        const match = userList.users.find(
+          (u) => u.email?.trim().toLowerCase() === normalizedEmail
+        );
+        if (match?.id) return match.id;
+      }
+    } catch (adminErr) {
+      console.warn("Failed to find user by email via admin API:", adminErr);
     }
   } catch (err) {
-    console.warn("Failed to find user by email via admin API:", err);
+    console.warn("User lookup error:", err);
   }
 
   return null;
