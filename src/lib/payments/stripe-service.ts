@@ -96,7 +96,7 @@ export async function createStripeCheckoutSession(
   if (secretKey) {
     try {
       const params = new URLSearchParams();
-      params.append("payment_method_types[0]", "card");
+      // Omit payment_method_types to support modern Stripe Managed Payments automatically
       params.append("mode", "subscription");
       params.append("success_url", successUrl);
       params.append("cancel_url", cancelUrl);
@@ -135,6 +135,10 @@ export async function createStripeCheckoutSession(
           "line_items[0][price_data][product_data][description]",
           "Goal-Aware Decision Intelligence Platform - Continuous Decision System"
         );
+        params.append(
+          "line_items[0][price_data][product_data][tax_code]",
+          "txcd_10000000"
+        );
         params.append("line_items[0][price_data][unit_amount]", priceAmount.toString());
         params.append(
           "line_items[0][price_data][recurring][interval]",
@@ -155,6 +159,7 @@ export async function createStripeCheckoutSession(
       const session = await response.json();
 
       if (!response.ok || session.error) {
+        console.error("[Stripe API Error]", session.error);
         throw new Error(session.error?.message || "Stripe API session creation failed");
       }
 
@@ -165,7 +170,12 @@ export async function createStripeCheckoutSession(
         message: `Stripe checkout initialized for ${req.planId.toUpperCase()} (${req.billingCycle})`,
       };
     } catch (err: any) {
-      console.warn("Stripe live session creation note:", err?.message);
+      console.error("Stripe live session creation error:", err?.message);
+      return {
+        success: false,
+        error: err?.message || "Stripe API checkout creation failed",
+        message: err?.message || "Stripe API error",
+      };
     }
   }
 

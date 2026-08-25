@@ -67,8 +67,9 @@ export async function POST(request: NextRequest) {
       customerEmail: authEmail,
     });
 
-    return NextResponse.json(stripeResult);
+    return NextResponse.json(stripeResult, { status: stripeResult.success ? 200 : 400 });
   } catch (error: any) {
+    console.error("POST /api/checkout exception:", error);
     return NextResponse.json(
       { success: false, error: error?.message || "Checkout session initialization failed" },
       { status: 500 }
