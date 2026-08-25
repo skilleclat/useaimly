@@ -40,6 +40,9 @@ export function PaymentSuccessClient() {
   const [sessionDetails, setSessionDetails] = useState<StripeSessionDetails | null>(null);
   const [isVerifyingFailure, setIsVerifyingFailure] = useState<boolean>(false);
 
+  // Single-flight verification lock to prevent infinite re-verification loop
+  const hasRunVerificationRef = React.useRef(false);
+
   const verifyCheckout = useCallback(async () => {
     setIsLoading(true);
     setIsVerifyingFailure(false);
@@ -69,7 +72,8 @@ export function PaymentSuccessClient() {
             billingCycle: data.billingCycle,
           });
 
-          await refreshProfile();
+          // Refresh profile in background once
+          refreshProfile().catch(console.error);
           return;
         } else {
           setIsVerifyingFailure(true);
@@ -102,10 +106,13 @@ export function PaymentSuccessClient() {
     } finally {
       setIsLoading(false);
     }
-  }, [sessionId, profile, user, refreshProfile]);
+  }, [sessionId]);
 
   useEffect(() => {
-    verifyCheckout();
+    if (!hasRunVerificationRef.current) {
+      hasRunVerificationRef.current = true;
+      verifyCheckout();
+    }
   }, [verifyCheckout]);
 
   const dashboardTarget = user ? "/app" : "/login?redirect=/app";

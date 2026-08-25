@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { PRICING_PLANS } from "@/lib/types/pricing";
@@ -21,6 +21,7 @@ import {
   Check,
   CreditCard,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { PayPalCheckoutModal } from "@/components/finance/PayPalCheckoutModal";
 
@@ -32,7 +33,12 @@ function CheckoutContent() {
   const [isYearly, setIsYearly] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isStripeLoading, setIsStripeLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  
+  // Single-flight execution lock
+  const isSubmittingRef = useRef(false);
+
   const { user } = useAuth();
   const { format } = useCurrency();
   const { language } = useI18n();
@@ -53,7 +59,15 @@ function CheckoutContent() {
   };
 
   const handleStripeCheckout = async () => {
+    // Prevent double execution
+    if (isSubmittingRef.current || isStripeLoading) {
+      return;
+    }
+
+    isSubmittingRef.current = true;
     setIsStripeLoading(true);
+    setCheckoutError(null);
+
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
@@ -68,15 +82,28 @@ function CheckoutContent() {
       });
 
       const data = await res.json();
-      if (data.success && data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
+
+      if (res.ok && data.success && data.checkoutUrl) {
+        // Single direct navigation to Stripe Checkout URL
+        window.location.assign(data.checkoutUrl);
       } else {
-        alert(data.error || "Failed to initialize Stripe checkout");
+        setCheckoutError(
+          data.error ||
+          (isFr
+            ? "Impossible d'initialiser Stripe. Vérifiez votre configuration."
+            : "Failed to initialize Stripe checkout. Please try again.")
+        );
         setIsStripeLoading(false);
+        isSubmittingRef.current = false;
       }
     } catch (err: any) {
       console.error("Stripe checkout initiation error:", err);
+      setCheckoutError(
+        err?.message ||
+        (isFr ? "Erreur de connexion au serveur." : "Network error connecting to checkout.")
+      );
       setIsStripeLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -116,6 +143,14 @@ function CheckoutContent() {
 
         {/* Checkout Container */}
         <div className="rounded-[2.5rem] border border-border/80 bg-card p-6 sm:p-10 shadow-2xl space-y-8">
+          {/* Error Banner if Stripe initialization fails */}
+          {checkoutError && (
+            <div className="p-4 rounded-2xl border border-destructive/30 bg-destructive/10 text-destructive text-xs font-medium flex items-center gap-2.5 animate-fadeIn">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{checkoutError}</span>
+            </div>
+          )}
+
           {/* Billing Cycle Selector */}
           <div className="flex items-center justify-between p-2 rounded-2xl bg-secondary/50 border border-border/60">
             <button
@@ -199,12 +234,12 @@ function CheckoutContent() {
               {isFr ? "Choisissez votre méthode de paiement" : "Choose your payment method"}
             </label>
 
-            {/* 1. Official Stripe Card Checkout Button (Primary) */}
+            {/* 1. Official Stripe Card Checkout Button (Primary Single-Flight) */}
             <button
               type="button"
               disabled={isStripeLoading}
               onClick={handleStripeCheckout}
-              className="w-full rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] hover:opacity-95 text-white font-extrabold text-sm py-4 px-6 shadow-xl shadow-orange-500/20 transition-all cursor-pointer flex items-center justify-center gap-3 group min-h-[52px] disabled:opacity-50"
+              className="w-full rounded-2xl bg-gradient-to-r from-[#FF6B4A] via-[#FF5533] to-[#FF3820] hover:opacity-95 text-white font-extrabold text-sm py-4 px-6 shadow-xl shadow-orange-500/20 transition-all cursor-pointer flex items-center justify-center gap-3 group min-h-[52px] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isStripeLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

@@ -159,7 +159,34 @@ export async function createStripeCheckoutSession(
     }
   }
 
-  // Fallback demo/test session ID if STRIPE_SECRET_KEY is not configured
+  // 2. Check for configured Stripe Payment Link (Stripe Hosted Checkout)
+  const paymentLink =
+    (req.billingCycle === "ANNUAL"
+      ? process.env.STRIPE_PAYMENT_LINK_PRO_ANNUAL || process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_PRO_ANNUAL
+      : process.env.STRIPE_PAYMENT_LINK_PRO || process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_PRO || process.env.STRIPE_PAYMENT_LINK) || "";
+
+  if (paymentLink && paymentLink.trim().startsWith("http")) {
+    try {
+      const plUrl = new URL(paymentLink.trim());
+      if (req.userId) {
+        plUrl.searchParams.set("client_reference_id", req.userId);
+      }
+      if (req.customerEmail) {
+        plUrl.searchParams.set("prefilled_email", req.customerEmail.trim().toLowerCase());
+      }
+
+      return {
+        success: true,
+        checkoutUrl: plUrl.toString(),
+        sessionId: `plink_${Date.now()}`,
+        message: `Redirecting to Stripe Payment Link for ${req.planId.toUpperCase()} (${req.billingCycle})`,
+      };
+    } catch (e) {
+      console.warn("Payment link URL construction note:", e);
+    }
+  }
+
+  // 3. Fallback demo/test session for development environments
   const mockSessionId = `cs_test_${Date.now()}_${Math.random().toString(36).substring(7)}`;
   const checkoutUrl = `${appUrl}/payment-success?session_id=${mockSessionId}&plan=${req.planId}&cycle=${req.billingCycle}`;
 

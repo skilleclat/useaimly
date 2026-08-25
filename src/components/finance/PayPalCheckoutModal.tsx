@@ -86,10 +86,18 @@ export function PayPalCheckoutModal({
     }
   };
 
-  // Primary Stripe Checkout Handler
+  const isSubmittingRef = React.useRef(false);
+
+  // Primary Stripe Checkout Handler (Single-Flight Protected)
   const handleStripeCheckout = async () => {
+    if (isSubmittingRef.current || isStripeLoading) {
+      return;
+    }
+
+    isSubmittingRef.current = true;
     setIsStripeLoading(true);
     setErrorMessage(null);
+
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
@@ -104,16 +112,18 @@ export function PayPalCheckoutModal({
       });
 
       const data = await res.json();
-      if (data.success && data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
+      if (res.ok && data.success && data.checkoutUrl) {
+        window.location.assign(data.checkoutUrl);
       } else {
         setErrorMessage(data.error || (isFr ? "Échec de l'initialisation du paiement Stripe." : "Failed to initialize Stripe checkout"));
         setIsStripeLoading(false);
+        isSubmittingRef.current = false;
       }
     } catch (err: any) {
       console.error("Stripe checkout error:", err);
       setErrorMessage(err?.message || (isFr ? "Erreur de connexion à Stripe." : "Error connecting to Stripe"));
       setIsStripeLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 

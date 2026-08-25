@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Sparkles, CheckCircle2, Zap, X, ArrowRight, CreditCard, Loader2 } from "lucide-react";
 import { useI18n } from "@/lib/i18n/i18n-context";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -18,11 +18,15 @@ export function ProUpgradeModal({ isOpen, onClose, onSelectTier }: ProUpgradeMod
   const router = useRouter();
   const isFr = language === "fr";
   const [isLoading, setIsLoading] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   if (!isOpen) return null;
 
   const handleStartStripePro = async () => {
+    if (isSubmittingRef.current || isLoading) return;
+    isSubmittingRef.current = true;
     setIsLoading(true);
+
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
@@ -37,13 +41,16 @@ export function ProUpgradeModal({ isOpen, onClose, onSelectTier }: ProUpgradeMod
       });
 
       const data = await res.json();
-      if (data.success && data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
+      if (res.ok && data.success && data.checkoutUrl) {
+        window.location.assign(data.checkoutUrl);
       } else {
         router.push("/checkout?plan=pro");
       }
     } catch {
       router.push("/checkout?plan=pro");
+    } finally {
+      setIsLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -69,7 +76,7 @@ export function ProUpgradeModal({ isOpen, onClose, onSelectTier }: ProUpgradeMod
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
