@@ -82,7 +82,7 @@ export async function loginAction(data: LoginInput): Promise<AuthActionResult> {
   if (!parsed.success) {
     return {
       success: false,
-      message: "Please check your login details.",
+      message: "Veuillez vérifier vos identifiants.",
       errors: parsed.error.flatten().fieldErrors,
     };
   }
@@ -96,11 +96,18 @@ export async function loginAction(data: LoginInput): Promise<AuthActionResult> {
   });
 
   if (error) {
-    let friendlyMessage = "Invalid email or password.";
-    if (error.message.toLowerCase().includes("email not confirmed")) {
-      friendlyMessage = "Please verify your email address before logging in.";
-    } else if (error.message.toLowerCase().includes("network")) {
-      friendlyMessage = "Network error. Please try again in a few moments.";
+    let friendlyMessage = "Adresse email ou mot de passe incorrect.";
+    const errMsg = error.message.toLowerCase();
+    if (errMsg.includes("email not confirmed") || errMsg.includes("not confirmed")) {
+      return {
+        success: false,
+        requiresOtp: true,
+        email,
+        redirectTo: `/verify-email?email=${encodeURIComponent(email)}`,
+        message: "Votre adresse email n'est pas encore vérifiée. Veuillez saisir votre code à 6 chiffres.",
+      };
+    } else if (errMsg.includes("network")) {
+      friendlyMessage = "Erreur de connexion réseau. Veuillez réessayer dans quelques instants.";
     }
 
     return {
@@ -110,7 +117,22 @@ export async function loginAction(data: LoginInput): Promise<AuthActionResult> {
   }
 
   if (!authData.user) {
-    return { success: false, message: "Authentication failed." };
+    return { success: false, message: "Échec de l'authentification." };
+  }
+
+  // Check email confirmation status
+  const isGoogleUser =
+    authData.user.app_metadata?.provider === "google" ||
+    authData.user.identities?.some((id) => id.provider === "google");
+
+  if (!isGoogleUser && !authData.user.email_confirmed_at) {
+    return {
+      success: false,
+      requiresOtp: true,
+      email,
+      redirectTo: `/verify-email?email=${encodeURIComponent(email)}`,
+      message: "Veuillez confirmer votre adresse email avec votre code de vérification.",
+    };
   }
 
   // If owner (skilleclat@gmail.com), guarantee immediate premium tier
@@ -153,16 +175,16 @@ export async function signupAction(data: SignupInput): Promise<AuthActionResult>
     if (!parsed.success) {
       return {
         success: false,
-        message: "Please check your form details.",
+        message: "Veuillez vérifier les informations du formulaire.",
         errors: parsed.error.flatten().fieldErrors,
       };
     }
 
     const { email, password, fullName, preferredCurrency, planTier } = parsed.data;
     const supabase = await createClient();
-
     const appUrl = getAppUrl();
 
+    // 1. Trigger Supabase Sign Up
     const { data: authData, error } = await supabase.auth.signUp({
       email,
       password,
@@ -180,52 +202,20 @@ export async function signupAction(data: SignupInput): Promise<AuthActionResult>
       const rawMsg = extractErrorMessage(error, "");
       const errMsg = rawMsg.toLowerCase();
 
-      // 1. Check if user already exists
       if (errMsg.includes("already registered") || errMsg.includes("already exists") || error.status === 422) {
         return {
           success: false,
-          message: "An account with this email address already exists. Please sign in instead.",
+          message: "Un compte avec cette adresse email existe déjà. Veuillez vous connecter.",
         };
       }
 
-      // 2. Handle rate limits, SMTP delivery restrictions (e.g. Resend onboarding domain limitation), or missing message strings
-      console.warn("Supabase auth signUp warning, attempting direct session fallback:", rawMsg || error);
-
-      // Attempt to sign in directly
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (!signInError && signInData.user) {
-        try {
-          await supabase.from("profiles").upsert({
-            id: signInData.user.id,
-            full_name: fullName,
-            preferred_currency: preferredCurrency,
-            plan_tier: planTier || "free",
-            plan_status: "active",
-            onboarding_completed: false,
-          } as any);
-        } catch (pErr) {
-          console.warn("Profile upsert warning:", pErr);
-        }
-        return {
-          success: true,
-          redirectTo: "/onboarding",
-          message: "Account ready! Directing to onboarding...",
-        };
-      }
-
-      // If user details are valid but email send was restricted or rate-limited, proceed seamlessly to onboarding
       return {
-        success: true,
-        redirectTo: "/onboarding",
-        message: "Workspace initialized! Welcome to UseAimly.",
+        success: false,
+        message: rawMsg || "Impossible de créer le compte pour le moment. Veuillez réessayer.",
       };
     }
 
-    // Ensure profile row exists in public.profiles
+    // 2. Profile initialization (unverified by default)
     if (authData.user) {
       try {
         await supabase.from("profiles").upsert({
@@ -241,18 +231,19 @@ export async function signupAction(data: SignupInput): Promise<AuthActionResult>
       }
     }
 
-    // Enforce 6-digit OTP email verification for all signups
+    // 3. STRICT: Always require 6-digit OTP verification before any access
     return {
       success: true,
       requiresOtp: true,
       email,
-      message: `Un code de vérification à 6 chiffres a été envoyé à ${email}.`,
+      redirectTo: `/verify-email?email=${encodeURIComponent(email)}`,
+      message: `Un code de confirmation à 6 chiffres a été envoyé à ${email}.`,
     };
   } catch (err: any) {
     console.error("signupAction exception:", err);
     return {
       success: false,
-      message: extractErrorMessage(err, "An error occurred while creating your account. Please try again."),
+      message: extractErrorMessage(err, "Une erreur est survenue lors de l'inscription. Veuillez réessayer."),
     };
   }
 }
@@ -522,16 +513,21 @@ export async function verifyOtpAction(data: VerifyOtpInput): Promise<AuthActionR
         token,
         type: "email",
       });
-      if (!retry.error) {
+      if (!retry.error && retry.data) {
         authData = retry.data;
         error = null;
       }
     }
 
     if (error || !authData?.user) {
+      const msg = error?.message?.toLowerCase() || "";
+      let friendly = "Code de vérification invalide ou expiré. Veuillez vérifier et réessayer.";
+      if (msg.includes("expired")) {
+        friendly = "Le code de vérification a expiré. Veuillez en demander un nouveau.";
+      }
       return {
         success: false,
-        message: error?.message || "Invalid or expired 6-digit verification code. Please try again.",
+        message: friendly,
       };
     }
 
@@ -552,13 +548,13 @@ export async function verifyOtpAction(data: VerifyOtpInput): Promise<AuthActionR
     return {
       success: true,
       redirectTo: "/onboarding",
-      message: "Verification successful! Launching workspace...",
+      message: "Email vérifié avec succès ! Bienvenue sur UseAimly.",
     };
   } catch (err: any) {
     console.error("verifyOtpAction exception:", err);
     return {
       success: false,
-      message: err?.message || "Verification failed. Please try again.",
+      message: err?.message || "Échec de la vérification. Veuillez réessayer.",
     };
   }
 }
@@ -566,28 +562,39 @@ export async function verifyOtpAction(data: VerifyOtpInput): Promise<AuthActionR
 export async function resendOtpAction(email: string): Promise<AuthActionResult> {
   try {
     const supabase = await createClient();
-    const { error } = await supabase.auth.resend({
+    let { error } = await supabase.auth.resend({
       type: "signup",
       email,
     });
 
     if (error) {
+      const retry = await supabase.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: false },
+      });
+      if (!retry.error) {
+        error = null;
+      }
+    }
+
+    if (error) {
+      const errMsg = error.message.toLowerCase();
       return {
         success: false,
-        message: error.message.toLowerCase().includes("rate limit")
-          ? "Please wait a moment before requesting another code."
-          : error.message,
+        message: errMsg.includes("rate limit")
+          ? "Veuillez patienter un instant avant de demander un nouveau code."
+          : error.message || "Impossible de renvoyer le code pour le moment.",
       };
     }
 
     return {
       success: true,
-      message: "A new 6-digit verification code has been sent to your email.",
+      message: "Un nouveau code de sécurité à 6 chiffres a été envoyé à votre adresse email.",
     };
   } catch (err: any) {
     return {
       success: false,
-      message: err?.message || "Failed to resend verification code.",
+      message: err?.message || "Échec du renvoi du code de vérification.",
     };
   }
 }

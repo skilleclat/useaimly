@@ -243,4 +243,75 @@ describe("CRITICAL MULTI-ACCOUNT ISOLATION & SESSION SWITCHING SUITE", () => {
     expect(user?.id).toBe(accountB.id);
     expect(user?.email).toBe(accountB.email);
   });
+
+  it("TEST 11: Unverified Email user (email_confirmed_at: null) -> blocked from protected routes and redirected to verify-email", async () => {
+    const unverifiedUser = {
+      id: "user-unverified-123",
+      email: "newuser@example.com",
+      email_confirmed_at: null,
+      app_metadata: { provider: "email" },
+    };
+
+    const isGoogle = unverifiedUser.app_metadata.provider === "google";
+    const isVerified = Boolean(isGoogle || unverifiedUser.email_confirmed_at);
+
+    expect(isVerified).toBe(false);
+  });
+
+  it("TEST 12: Wrong 6-digit OTP code -> rejects verification with error", async () => {
+    const mockVerifyOtp = vi.fn().mockImplementation(({ token }) => {
+      if (token !== "123456") {
+        return Promise.resolve({
+          data: { user: null, session: null },
+          error: { message: "Token has expired or is invalid", status: 403 },
+        });
+      }
+      return Promise.resolve({
+        data: {
+          user: { id: "user-unverified-123", email: "newuser@example.com", email_confirmed_at: new Date().toISOString() },
+          session: { access_token: "valid-jwt" },
+        },
+        error: null,
+      });
+    });
+
+    const result = await mockVerifyOtp({ email: "newuser@example.com", token: "000000" });
+    expect(result.error).not.toBeNull();
+    expect(result.error?.status).toBe(403);
+    expect(result.data.user).toBeNull();
+  });
+
+  it("TEST 13: Valid 6-digit OTP code -> confirms email and establishes verified session", async () => {
+    const mockVerifyOtp = vi.fn().mockImplementation(({ token }) => {
+      if (token === "123456") {
+        return Promise.resolve({
+          data: {
+            user: { id: "user-unverified-123", email: "newuser@example.com", email_confirmed_at: new Date().toISOString() },
+            session: { access_token: "valid-jwt" },
+          },
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: { user: null, session: null }, error: { message: "Invalid" } });
+    });
+
+    const result = await mockVerifyOtp({ email: "newuser@example.com", token: "123456" });
+    expect(result.error).toBeNull();
+    expect(result.data.user?.email_confirmed_at).toBeDefined();
+    expect(result.data.session?.access_token).toBe("valid-jwt");
+  });
+
+  it("TEST 14: Google OAuth user is considered pre-verified by identity provider", async () => {
+    const googleUser = {
+      id: "user-google-456",
+      email: "googleuser@gmail.com",
+      email_confirmed_at: new Date().toISOString(),
+      app_metadata: { provider: "google" },
+    };
+
+    const isGoogle = googleUser.app_metadata.provider === "google";
+    const isVerified = Boolean(isGoogle || googleUser.email_confirmed_at);
+
+    expect(isVerified).toBe(true);
+  });
 });

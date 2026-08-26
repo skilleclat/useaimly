@@ -63,7 +63,11 @@ function LoginForm() {
         // 1. Run server login action
         const result = await loginAction(data);
         if (!result.success) {
-          setServerError(result.message || "Failed to log in.");
+          if (result.requiresOtp && result.redirectTo) {
+            window.location.href = result.redirectTo;
+            return;
+          }
+          setServerError(result.message || "Échec de la connexion.");
           return;
         }
 

@@ -122,18 +122,11 @@ function SignupFormContent() {
         if (!result.success) {
           const msg = typeof result.message === "string" && result.message.trim().length > 0 && result.message !== "{}"
             ? result.message.trim()
-            : "Failed to create account. Please check your form details.";
+            : "Impossible de créer le compte. Veuillez vérifier vos informations.";
           setServerError(msg);
-        } else if (result.requiresOtp || result.email) {
-          setOtpEmail(result.email || emailVal);
-          setShowOtpView(true);
-          setOtpSuccess(`Verification code sent to ${result.email || emailVal}`);
-          setCooldown(30);
-        } else if (result.redirectTo) {
-          setSuccessMessage(result.message || "Account created successfully! Redirecting to onboarding...");
-          setTimeout(() => {
-            window.location.href = result.redirectTo!;
-          }, 300);
+        } else {
+          const targetUrl = result.redirectTo || `/verify-email?email=${encodeURIComponent(emailVal)}`;
+          window.location.href = targetUrl;
         }
       } catch (err: any) {
         const msg = typeof err?.message === "string" && err.message.trim().length > 0 && err.message !== "{}"
