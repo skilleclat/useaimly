@@ -264,7 +264,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 3. Invalidate Supabase session globally and clear server cookies
     try {
       await Promise.allSettled([
-        supabase.auth.signOut(),
+        supabase.auth.signOut({ scope: "global" }),
         fetch("/api/auth/signout", { method: "POST", keepalive: true }),
       ]);
     } catch {

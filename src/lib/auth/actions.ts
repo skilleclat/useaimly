@@ -57,6 +57,10 @@ export async function signInWithGoogleAction(): Promise<AuthActionResult> {
     provider: "google",
     options: {
       redirectTo: `${appUrl}/auth/callback`,
+      queryParams: {
+        prompt: "select_account consent",
+        access_type: "offline",
+      },
     },
   });
 
@@ -237,39 +241,14 @@ export async function signupAction(data: SignupInput): Promise<AuthActionResult>
       }
     }
 
-    // If signUp created the user without an active session, attempt instant sign in
+    // If user is created and needs email verification (or no active session yet), require 6-digit OTP
     if (authData.user && !authData.session) {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      return {
+        success: true,
+        requiresOtp: true,
         email,
-        password,
-      });
-
-      if (signInError && signInError.message && signInError.message.toLowerCase().includes("email not confirmed")) {
-        // Try admin auto-confirmation if SUPABASE_SERVICE_ROLE_KEY is present
-        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-        if (serviceRoleKey && serviceRoleKey.length > 20 && !serviceRoleKey.includes("your-service-role")) {
-          try {
-            const { createClient: createAdminClient } = await import("@supabase/supabase-js");
-            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://ozlkmamtmkoigweidnij.supabase.co";
-            const admin = createAdminClient(supabaseUrl, serviceRoleKey);
-            await admin.auth.admin.updateUserById(authData.user.id, { email_confirm: true });
-
-            await supabase.auth.signInWithPassword({
-              email,
-              password,
-            });
-          } catch (adminErr) {
-            console.warn("Admin auto-confirm attempted:", adminErr);
-          }
-        }
-
-        // Account is created successfully. Redirect user directly to onboarding for a pro SaaS experience.
-        return {
-          success: true,
-          redirectTo: "/onboarding",
-          message: "Account created successfully! Welcome to UseAimly.",
-        };
-      }
+        message: `Un code de vérification à 6 chiffres a été envoyé à ${email}.`,
+      };
     }
 
     return {
@@ -349,7 +328,7 @@ export async function resetPasswordAction(data: ResetPasswordInput): Promise<Aut
 
 export async function logoutAction(): Promise<void> {
   const supabase = await createClient();
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: "global" });
   redirect("/login");
 }
 

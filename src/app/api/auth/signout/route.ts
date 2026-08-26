@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   try {
     try {
       const supabase = await createClient();
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: "global" });
     } catch (e) {
       console.warn("Server auth.signOut note:", e);
     }
