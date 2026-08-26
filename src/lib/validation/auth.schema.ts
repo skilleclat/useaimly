@@ -36,7 +36,7 @@ export const ResetPasswordSchema = z
 
 export const VerifyOtpSchema = z.object({
   email: z.string().min(1, "Email is required").email("Please enter a valid email address"),
-  token: z.string().length(6, "Verification code must be 6 digits"),
+  token: z.string().min(6, "Code must be at least 6 characters").max(10, "Code is too long"),
 });
 
 export type LoginInput = z.infer<typeof LoginSchema>;
