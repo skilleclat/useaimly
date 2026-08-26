@@ -4,12 +4,15 @@ import React, { useState, useRef, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { verifyOtpAction, resendOtpAction } from "@/lib/auth/actions";
+import { useI18n } from "@/lib/i18n/i18n-context";
 import { KeyRound, ShieldCheck, AlertCircle, RefreshCw, ArrowRight, Mail, ArrowLeft, RotateCcw, Clock } from "lucide-react";
 
 function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailParam = searchParams.get("email") || "";
+  const { language } = useI18n();
+  const isFr = language === "fr";
 
   const [email, setEmail] = useState(emailParam);
   // Default to 8 digits support (Supabase can send 6 or 8 digits)
@@ -17,7 +20,9 @@ function VerifyEmailContent() {
   const [codeLength, setCodeLength] = useState<6 | 8>(8);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(
-    emailParam ? `Un code de sécurité a été envoyé à ${emailParam}` : null
+    emailParam
+      ? (isFr ? `Un code de sécurité a été envoyé à ${emailParam}` : `A security code has been sent to ${emailParam}`)
+      : null
   );
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -106,13 +111,13 @@ function VerifyEmailContent() {
   };
 
   const submitVerification = async (codeToSubmit?: string) => {
-    const rawCode = (codeToSubmit || digits.join("")).trim();
+    const rawCode = (codeToSubmit || digits.slice(0, activeInputsCount).join("")).replace(/\s/g, "").trim();
     if (!email || !email.includes("@")) {
-      setErrorMsg("Veuillez renseigner une adresse email valide.");
+      setErrorMsg(isFr ? "Veuillez renseigner une adresse email valide." : "Please enter a valid email address.");
       return;
     }
     if (rawCode.length < 6) {
-      setErrorMsg("Veuillez saisir le code de vérification complet.");
+      setErrorMsg(isFr ? "Veuillez saisir le code de vérification complet." : "Please enter the complete verification code.");
       return;
     }
 
@@ -121,30 +126,56 @@ function VerifyEmailContent() {
     setSuccessMsg(null);
 
     try {
+      // 1. Verify via Server Action
       const result = await verifyOtpAction({
         email: email.trim(),
         token: rawCode,
       });
 
       if (!result.success) {
-        setErrorMsg(result.message || "Code invalide ou expiré. Veuillez vérifier et réessayer.");
-        setIsVerifying(false);
-      } else {
-        setSuccessMsg("Email vérifié avec succès ! Chargement de votre espace...");
-        // Synchronize browser Supabase client
+        // 2. Client-side fallback attempt directly against Supabase Auth
         try {
           const { createClient } = await import("@/lib/supabase/client");
           const supabase = createClient();
-          await supabase.auth.getUser();
+          let clientRes = await supabase.auth.verifyOtp({
+            email: email.trim(),
+            token: rawCode,
+            type: "signup",
+          });
+          if (clientRes.error) {
+            clientRes = await supabase.auth.verifyOtp({
+              email: email.trim(),
+              token: rawCode,
+              type: "email",
+            });
+          }
+
+          if (!clientRes.error && clientRes.data?.user) {
+            setSuccessMsg(isFr ? "Email vérifié avec succès ! Chargement de votre espace..." : "Email verified successfully! Loading workspace...");
+            setTimeout(() => {
+              window.location.href = "/onboarding";
+            }, 300);
+            return;
+          }
         } catch {
-          // Non-blocking
+          // Continue with server error message
         }
+
+        setErrorMsg(
+          result.message ||
+          (isFr
+            ? "Code de vérification invalide ou expiré. Assurez-vous d'utiliser le dernier code reçu."
+            : "Invalid or expired verification code. Please ensure you use the newest code received.")
+        );
+        setIsVerifying(false);
+      } else {
+        setSuccessMsg(isFr ? "Email vérifié avec succès ! Chargement de votre espace..." : "Email verified successfully! Loading workspace...");
         setTimeout(() => {
           window.location.href = result.redirectTo || "/onboarding";
-        }, 350);
+        }, 300);
       }
     } catch (err: any) {
-      setErrorMsg(err?.message || "Échec de la vérification. Veuillez réessayer.");
+      setErrorMsg(err?.message || (isFr ? "Échec de la vérification. Veuillez réessayer." : "Verification failed. Please try again."));
       setIsVerifying(false);
     }
   };
@@ -158,13 +189,17 @@ function VerifyEmailContent() {
     try {
       const result = await resendOtpAction(email.trim());
       if (result.success) {
-        setSuccessMsg(result.message || "Un nouveau code de sécurité vous a été envoyé par email.");
+        setSuccessMsg(
+          isFr
+            ? "Un nouveau code de sécurité vous a été envoyé par email."
+            : "A new security verification code has been sent to your email."
+        );
         setCooldown(60);
       } else {
-        setErrorMsg(result.message || "Impossible de renvoyer le code pour le moment.");
+        setErrorMsg(result.message || (isFr ? "Impossible de renvoyer le code pour le moment." : "Unable to resend verification code right now."));
       }
     } catch (err: any) {
-      setErrorMsg("Erreur lors du renvoi du code. Veuillez patienter.");
+      setErrorMsg(isFr ? "Erreur lors du renvoi du code. Veuillez patienter." : "Error while resending code. Please wait.");
     } finally {
       setIsResending(false);
     }
@@ -179,10 +214,12 @@ function VerifyEmailContent() {
             <KeyRound className="w-6 h-6" />
           </div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground font-editorial">
-            Vérifiez votre email
+            {isFr ? "Vérifiez votre email" : "Verify your email"}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
-            Pour sécuriser votre compte UseAimly, entrez le code de confirmation envoyé à votre adresse email.
+            {isFr
+              ? "Pour sécuriser votre compte UseAimly, entrez le code de confirmation envoyé à votre adresse email."
+              : "To secure your UseAimly account, enter the confirmation code sent to your email address."}
           </p>
         </div>
 
@@ -195,8 +232,10 @@ function VerifyEmailContent() {
                 <Mail className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <div className="text-xs font-bold text-foreground truncate">Email de destination</div>
-                <div className="text-[11px] font-mono text-muted-foreground truncate">{email || "Email non spécifié"}</div>
+                <div className="text-xs font-bold text-foreground truncate">
+                  {isFr ? "Email de destination" : "Destination Email"}
+                </div>
+                <div className="text-[11px] font-mono text-muted-foreground truncate">{email || (isFr ? "Email non spécifié" : "No email specified")}</div>
               </div>
             </div>
             <Link
@@ -204,7 +243,7 @@ function VerifyEmailContent() {
               className="text-[11px] font-mono font-bold text-primary hover:underline shrink-0 flex items-center gap-1"
             >
               <ArrowLeft className="w-3 h-3" />
-              <span>Changer</span>
+              <span>{isFr ? "Changer" : "Change"}</span>
             </Link>
           </div>
 
@@ -227,7 +266,7 @@ function VerifyEmailContent() {
           {/* Code Length Switcher (6 or 8 digits) */}
           <div className="flex items-center justify-between px-1">
             <label className="text-xs font-mono font-bold text-foreground uppercase tracking-wider">
-              Code de sécurité ({activeInputsCount} caractères)
+              {isFr ? `Code de sécurité (${activeInputsCount} caractères)` : `Security Code (${activeInputsCount} digits)`}
             </label>
             <div className="flex items-center gap-1 text-[11px] font-mono">
               <button
@@ -239,7 +278,7 @@ function VerifyEmailContent() {
                     : "bg-secondary text-muted-foreground hover:text-foreground"
                 }`}
               >
-                6 Chiffres
+                {isFr ? "6 Chiffres" : "6 Digits"}
               </button>
               <button
                 type="button"
@@ -250,7 +289,7 @@ function VerifyEmailContent() {
                     : "bg-secondary text-muted-foreground hover:text-foreground"
                 }`}
               >
-                8 Chiffres
+                {isFr ? "8 Chiffres" : "8 Digits"}
               </button>
             </div>
           </div>
@@ -276,7 +315,9 @@ function VerifyEmailContent() {
               ))}
             </div>
             <p className="text-[11px] text-center text-muted-foreground font-mono">
-              Astuce : vous pouvez coller directement le code reçu par email
+              {isFr
+                ? "Astuce : vous pouvez coller directement le code reçu par email"
+                : "Tip: you can paste the code directly from your email"}
             </p>
           </div>
 
@@ -290,11 +331,11 @@ function VerifyEmailContent() {
             {isVerifying ? (
               <>
                 <RefreshCw className="w-4 h-4 animate-spin" />
-                <span>Vérification du code...</span>
+                <span>{isFr ? "Vérification du code..." : "Verifying Code..."}</span>
               </>
             ) : (
               <>
-                <span>Valider et Activer mon Compte</span>
+                <span>{isFr ? "Valider et Activer mon Compte" : "Verify & Activate Account"}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -305,7 +346,10 @@ function VerifyEmailContent() {
             {cooldown > 0 ? (
               <div className="flex items-center gap-2 text-muted-foreground font-mono bg-secondary/40 px-3.5 py-1.5 rounded-full border border-border/60">
                 <Clock className="w-3.5 h-3.5 text-primary animate-pulse" />
-                <span>Renvoyer un nouveau code dans <strong className="text-foreground">{cooldown}s</strong></span>
+                <span>
+                  {isFr ? "Renvoyer un nouveau code dans" : "Resend a new code in"}{" "}
+                  <strong className="text-foreground">{cooldown}s</strong>
+                </span>
               </div>
             ) : (
               <button
@@ -315,12 +359,18 @@ function VerifyEmailContent() {
                 className="inline-flex items-center gap-1.5 text-primary font-bold hover:underline transition-all cursor-pointer px-3 py-1.5 rounded-full hover:bg-primary/10"
               >
                 <RotateCcw className={`w-3.5 h-3.5 ${isResending ? "animate-spin" : ""}`} />
-                <span>{isResending ? "Envoi du code en cours..." : "Vous n'avez pas reçu le code ? Renvoyer un code"}</span>
+                <span>
+                  {isResending
+                    ? (isFr ? "Envoi du code en cours..." : "Sending code...")
+                    : (isFr ? "Vous n'avez pas reçu le code ? Renvoyer un code" : "Didn't receive the code? Resend Code")}
+                </span>
               </button>
             )}
 
             <p className="text-[10px] text-center text-muted-foreground/80 font-mono pt-1">
-              Pensez à vérifier votre dossier de <strong>Courriers indésirables (Spam)</strong> si le code tarde à apparaître.
+              {isFr
+                ? "Pensez à vérifier votre dossier de Courriers indésirables (Spam) si le code tarde à apparaître."
+                : "Check your spam or junk folder if the confirmation code does not appear in your inbox."}
             </p>
           </div>
         </div>
@@ -328,7 +378,11 @@ function VerifyEmailContent() {
         {/* Security Assurance */}
         <div className="flex items-center justify-center gap-1.5 text-[11px] font-mono text-muted-foreground/80">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-          <span>Authentification sécurisée & déterministe certifiée Supabase Auth</span>
+          <span>
+            {isFr
+              ? "Authentification sécurisée & déterministe certifiée Supabase Auth"
+              : "Secure & deterministic authentication powered by Supabase Auth"}
+          </span>
         </div>
       </div>
     </div>
@@ -337,7 +391,7 @@ function VerifyEmailContent() {
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={<div className="min-h-[85vh] flex items-center justify-center text-xs font-mono text-muted-foreground">Chargement...</div>}>
+    <Suspense fallback={<div className="min-h-[85vh] flex items-center justify-center text-xs font-mono text-muted-foreground">Loading...</div>}>
       <VerifyEmailContent />
     </Suspense>
   );
