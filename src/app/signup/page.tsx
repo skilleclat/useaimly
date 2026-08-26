@@ -433,28 +433,24 @@ function SignupFormContent() {
                 )}
               </button>
 
-              {/* Resend & Demo Fast Access Options */}
+              {/* Resend & Security Help Options */}
               <div className="pt-2 border-t border-border/70 flex flex-col items-center gap-3 text-xs">
                 <button
                   type="button"
                   onClick={handleResendOtp}
                   disabled={cooldown > 0 || isResendingOtp}
-                  className="text-muted-foreground hover:text-foreground font-medium disabled:opacity-50 transition-colors"
+                  className="text-muted-foreground hover:text-foreground font-medium disabled:opacity-50 transition-colors cursor-pointer"
                 >
                   {isResendingOtp
-                    ? "Sending new code..."
+                    ? "Envoi du nouveau code..."
                     : cooldown > 0
-                    ? `Resend code in ${cooldown}s`
-                    : "Didn't receive code? Resend Code"}
+                    ? `Renvoyer le code dans ${cooldown}s`
+                    : "Vous n'avez pas reçu le code ? Renvoyer le code"}
                 </button>
 
-                <Link
-                  href="/onboarding"
-                  className="inline-flex items-center gap-1.5 text-primary font-bold hover:underline text-xs"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Bypass Code & Start Onboarding Directly →</span>
-                </Link>
+                <p className="text-[10px] text-center text-muted-foreground/80 font-mono">
+                  Pensez à vérifier vos courriers indésirables (Spam) si le code tarde à arriver.
+                </p>
               </div>
             </div>
           ) : (

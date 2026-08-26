@@ -241,19 +241,12 @@ export async function signupAction(data: SignupInput): Promise<AuthActionResult>
       }
     }
 
-    // If user is created and needs email verification (or no active session yet), require 6-digit OTP
-    if (authData.user && !authData.session) {
-      return {
-        success: true,
-        requiresOtp: true,
-        email,
-        message: `Un code de vérification à 6 chiffres a été envoyé à ${email}.`,
-      };
-    }
-
+    // Enforce 6-digit OTP email verification for all signups
     return {
       success: true,
-      redirectTo: "/onboarding",
+      requiresOtp: true,
+      email,
+      message: `Un code de vérification à 6 chiffres a été envoyé à ${email}.`,
     };
   } catch (err: any) {
     console.error("signupAction exception:", err);
