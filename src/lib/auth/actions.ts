@@ -215,29 +215,13 @@ export async function signupAction(data: SignupInput): Promise<AuthActionResult>
       };
     }
 
-    // 2. Profile initialization (unverified by default)
-    if (authData.user) {
-      try {
-        await supabase.from("profiles").upsert({
-          id: authData.user.id,
-          full_name: fullName,
-          preferred_currency: preferredCurrency,
-          plan_tier: planTier || "free",
-          plan_status: "active",
-          onboarding_completed: false,
-        } as any);
-      } catch (profileErr) {
-        console.error("Profile upsert error:", profileErr);
-      }
-    }
-
-    // 3. STRICT: Always require 6-digit OTP verification before any access
+    // STRICT: Always require OTP verification before any profile creation or access
     return {
       success: true,
       requiresOtp: true,
       email,
       redirectTo: `/verify-email?email=${encodeURIComponent(email)}`,
-      message: `Un code de confirmation à 6 chiffres a été envoyé à ${email}.`,
+      message: `Un code de confirmation a été envoyé à ${email}.`,
     };
   } catch (err: any) {
     console.error("signupAction exception:", err);
